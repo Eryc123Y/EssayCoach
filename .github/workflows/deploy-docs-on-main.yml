@@ -29,10 +29,11 @@ jobs:
       - name: Setup Pages
         uses: actions/configure-pages@v4
 
+      
+
       - name: Build documentation
         run: |
           nix develop --command bash -c "
-            cd docs
             mkdocs build --strict
           "
 

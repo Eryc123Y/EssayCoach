@@ -9,7 +9,7 @@ EssayCoach is designed as a modern web application with the following architectu
 - **Frontend**: Vue 3 + TypeScript + Vite with Naive UI components
 - **Backend**: Django REST Framework with PostgreSQL database
 - **Development Environment**: Nix flakes for reproducible builds
-- **Deployment**: Docker containers with CI/CD pipeline
+- **Deployment**: Docker containers with CI/CD pipelines
 
 ## 🚀 Quick Start for Developers
 

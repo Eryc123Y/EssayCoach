@@ -16,7 +16,13 @@ cd backend && python manage.py runserver   # Django backend (localhost:8000)
 cd frontend && pnpm dev                    # Vite frontend (localhost:4318)
 ```
 
----
+## Features
+
+- **AI-Powered Feedback:** Get instant, detailed feedback on your essays, including grammar, style, and structure.
+- **Personalized Guidance:** Receive tailored recommendations to improve your writing based on your unique needs.
+- **Interactive Learning:** Engage with interactive exercises and tutorials to enhance your writing skills.
+- **Plagiarism Checker:** Ensure the originality of your work with our integrated plagiarism detection tool.
+- **Progress Tracking:** Monitor your improvement over time with our comprehensive progress tracking feature.
 
 ## Tech Stack
 
@@ -35,23 +41,34 @@ cd frontend && pnpm dev                    # Vite frontend (localhost:4318)
 
 ## Getting Started
 
-### 1. Prerequisites
-- [Nix](https://nixos.org/download.html) (with flakes enabled, recommended for consistent dev environments)
-- [Poetry](https://python-poetry.org/docs/#installation) (if not using Nix)
-- [Node.js 22+](https://nodejs.org/) (if not using Nix)
-- [pnpm](https://pnpm.io/installation) (if not using Nix)
+To get a local copy up and running, follow these simple steps.
 
-### 2. Clone the Repository
-```sh
-git clone https://github.com/your-org/EssayCoach.git
-cd EssayCoach
+### Prerequisites
+
+- Docker
+- Docker Compose
+
+### Installation
+
+1. Clone the repo
+   ```sh
+   git clone https://github.com/your_username_/EssayCoach.git
+   ```
+2. Build and run the containers
+   ```sh
+   docker-compose up --build
+   ```
+3. The application will be available at `http://localhost:8080`.
+
+## Project Structure
+
 ```
-
-### 3. Enter the Nix Development Shell (Recommended)
-
-#### Using Nix Flakes (Preferred)
-```sh
-nix develop
+EssayCoach/
+├── backend/         # Django backend
+├── frontend/        # Vue.js frontend
+├── docker/          # Docker configurations
+├── docs/            # Project documentation
+└── docker-compose.yml # Docker Compose file
 ```
 This will provide all necessary tools for both frontend and backend development using the flake.nix configuration.
 
@@ -183,14 +200,10 @@ When creating branches for this project, please follow these naming conventions:
 
 
 ## Contributing
-- Use feature branches and submit pull requests for review.
-- Follow code style guidelines (Prettier, ESLint for main; Black, Flake8 for backend).
-- Write tests for new features.
-- Report bugs or request features using our [issue templates](.github/ISSUE_TEMPLATE/) - choose from Bug Report, User Story, Technical Task, Documentation Update, or Spike/Research templates.
 
----
+Contributions are what make the open-source community such an amazing place to learn, inspire, and create. Any contributions you make are **greatly appreciated**.
 
-## Additional Notes
+If you have a suggestion that would make this better, please fork the repo and create a pull request. You can also simply open an issue with the tag "enhancement".
 
 - **Use the Nix shell** for a consistent, reproducible environment
 - **Development scripts** are located in `scripts/dev-env/` for easy customization
@@ -211,27 +224,6 @@ scripts/dev-env/
 └── start-frontend.sh   # Vite server startup
 ```
 
-### Current Front-End Dependencies (managed by `pnpm`)
+## License
 
-The `main/package.json` is already pre-populated with the core libraries your Vue 3 SPA needs:
-
-| Category | Package |
-|----------|---------|
-| Framework | `vue@^3` |
-| State | `pinia@^3` |
-| Router | `vue-router@^4` |
-| Build | `vite`, `@vitejs/plugin-vue`, `@vitejs/plugin-vue-jsx` |
-| Linting & Format | `eslint`, `eslint-plugin-vue`, `prettier` |
-| Testing | `vitest`, `@vue/test-utils`, `cypress` |
-
-You can add more packages at any time with `pnpm add <pkg>`.
-
-### Planned / Upcoming Dependencies
-
-The design documents outline additional services and libraries that are **not yet in the codebase**. These will be integrated iteratively:
-
-- **Frontend:** Axios (API client), a component framework (Element Plus or Vuetify), richer internationalization tooling.
-- **Backend:** FastAPI + SQLAlchemy + Alembic + Pydantic, JWT/OAuth2 libraries, OpenSearch / vector DB client, async workers (e.g. Celery, Redis Queue), LLM/AI SDKs.
-- **DevOps / Infra:** Kubernetes toolchain (`kubectl`, `helm`), Alibaba Cloud SDKs, monitoring (Prometheus / OpenTelemetry), CI/CD pipeline scripts.
-
-If you encounter a missing tool while implementing a feature, feel free to update `shell.nix`, `pyproject.toml`, or `package.json` and open a PR.
+Distributed under the MIT License. See `LICENSE` for more information.

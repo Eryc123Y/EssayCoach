@@ -31,30 +31,29 @@ start_local_pg() {
     initdb -D "$PGDATA" --auth=trust --no-locale --encoding=UTF8 -U postgres >/dev/null
   fi
 
+  # Ensure socket directory exists
+  mkdir -p "$PWD/.pg_socket"
+  
   # Start if not already running
   if ! pg_ctl -D "$PGDATA" status > /dev/null; then
     echo "[dev-pg] Starting PostgreSQL on port 5432..."
     
-    if ! pg_ctl -D "$PGDATA" -o "-p $PGPORT" -l "$PGDATA/logfile" -w start; then
+    if ! pg_ctl -D "$PGDATA" -o "-k $PWD/.pg_socket -p $PGPORT" -l "$PGDATA/logfile" -w start; then
       echo "[dev-pg] ERROR: Failed to start PostgreSQL. Check logs at '$PGDATA/logfile'."
       return 1
     fi
 
     echo "[dev-pg] PostgreSQL started on port $PGPORT."
 
-    # Ensure default role & database exist
-    psql -U postgres -p "$PGPORT" -h "$PGHOST" -tc "SELECT 1 FROM pg_roles WHERE rolname = 'essayadmin'" | grep -q 1 || \
-      psql -U postgres -p "$PGPORT" -h "$PGHOST" -c "CREATE ROLE essayadmin LOGIN PASSWORD 'changeme';" >/dev/null
-
+    # Ensure default role & database exist (using postgres superuser)
     psql -U postgres -p "$PGPORT" -h "$PGHOST" -tc "SELECT 1 FROM pg_database WHERE datname = 'essaycoach'" | grep -q 1 || \
-      psql -U postgres -p "$PGPORT" -h "$PGHOST" -c "CREATE DATABASE essaycoach OWNER essayadmin;" >/dev/null
+      psql -U postgres -p "$PGPORT" -h "$PGHOST" -c "CREATE DATABASE essaycoach OWNER postgres;" >/dev/null
 
-    echo "[dev-pg] Database 'essaycoach' with user 'essayadmin' is ready."
+    echo "[dev-pg] Database 'essaycoach' with postgres superuser is ready."
     
     # Load schema if database is empty (no tables exist)
-    if ! psql -U essayadmin -p "$PGPORT" -h "$PGHOST" -d essaycoach -tc "SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' LIMIT 1;" 2>/dev/null | grep -q 1; then
+    if ! psql -U postgres -p "$PGPORT" -h "$PGHOST" -d essaycoach -tc "SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' LIMIT 1;" 2>/dev/null | grep -q 1; then
       echo "[dev-pg] Loading database schema..."
-      # Run as postgres user who has superuser privileges
       if psql -U postgres -p "$PGPORT" -h "$PGHOST" -d essaycoach -f docker/db/init/00_init.sql >/dev/null 2>&1; then
         echo "[dev-pg] Schema loaded successfully."
       else
@@ -65,7 +64,6 @@ start_local_pg() {
     fi
 
     echo "[dev-pg] Loading mock data..."
-    # Run as postgres user for mock data as well
     if psql -U postgres -p "$PGPORT" -h "$PGHOST" -d essaycoach -f docker/db/init/01_add_data.sql >/dev/null 2>&1; then
       echo "[dev-pg] Mock data loaded successfully."
     else
