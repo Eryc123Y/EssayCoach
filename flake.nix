@@ -57,6 +57,9 @@
             # Use python312.withPackages to ensure version consistency
             (python312.withPackages (ps: with ps; [
               django
+              djangorestframework
+              markdown
+              django-filter
               psycopg2-binary
               django-cors-headers
               fastapi
