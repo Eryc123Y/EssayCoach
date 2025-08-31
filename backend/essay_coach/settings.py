@@ -39,6 +39,8 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "corsheaders",
+    "rest_framework",
+    "django_filters",
     # Custom Apps
     "core",
     "auth",
@@ -63,8 +65,8 @@ MIDDLEWARE = [
 
 # CORS settings
 CORS_ALLOW_CREDENTIALS = True
-CORS_ALLOWED_ORIGINS = ["http://localhost:5173"]
-CSRF_TRUSTED_ORIGINS = ['http://localhost:5173'] 
+CORS_ALLOWED_ORIGINS = ["http://localhost:5100"]
+CSRF_TRUSTED_ORIGINS = ['http://localhost:5100']
 
 ROOT_URLCONF = "essay_coach.urls"
 
