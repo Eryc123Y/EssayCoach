@@ -19,12 +19,12 @@ interface CellActionProps {
 
 export const CellAction: React.FC<CellActionProps> = ({ data }) => {
   const [loading] = useState(false);
-  const [openDeactivate, setOpenDeactivate] = useState(false);
+  const [openSuspend, setOpenSuspend] = useState(false);
   const [openDelete, setOpenDelete] = useState(false);
   const router = useRouter();
 
-  const onConfirmDeactivate = async () => {
-    setOpenDeactivate(false);
+  const onConfirmSuspend = async () => {
+    setOpenSuspend(false);
   };
 
   const onConfirmDelete = async () => {
@@ -34,12 +34,12 @@ export const CellAction: React.FC<CellActionProps> = ({ data }) => {
   return (
     <>
       <AlertModal
-        isOpen={openDeactivate}
-        onClose={() => setOpenDeactivate(false)}
-        onConfirm={onConfirmDeactivate}
+        isOpen={openSuspend}
+        onClose={() => setOpenSuspend(false)}
+        onConfirm={onConfirmSuspend}
         loading={loading}
-        title='Deactivate user?'
-        description='Are you sure you want to deactivate this user?'
+        title='Suspend user?'
+        description='Are you sure you want to suspend this user?'
       />
       <AlertModal
         isOpen={openDelete}
@@ -61,8 +61,8 @@ export const CellAction: React.FC<CellActionProps> = ({ data }) => {
           <DropdownMenuItem onClick={() => router.push(`/dashboard/users/${data.id}`)}>
             <IconEdit className='mr-2 h-4 w-4' /> Edit
           </DropdownMenuItem>
-          <DropdownMenuItem onClick={() => setOpenDeactivate(true)}>
-            Deactivate
+          <DropdownMenuItem onClick={() => setOpenSuspend(true)}>
+            Suspend
           </DropdownMenuItem>
           <DropdownMenuItem onClick={() => setOpenDelete(true)}>
             <IconTrash className='mr-2 h-4 w-4' /> Delete
