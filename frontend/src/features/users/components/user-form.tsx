@@ -1,5 +1,3 @@
-'use client';
-
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -17,12 +15,15 @@ import { zodResolver } from '@hookform/resolvers/zod';
 import { useForm } from 'react-hook-form';
 import * as z from 'zod';
 
+type UserRoleType = 'student' | 'lecturer' | 'admin';
+type UserStatusType = 'active' | 'unregistered' | 'suspended';
+
 const formSchema = z.object({
   firstName: z.string().min(2, { message: 'First name must be at least 2 characters.' }),
   lastName: z.string().min(2, { message: 'Last name must be at least 2 characters.' }),
   email: z.string().email({ message: 'Please enter a valid email.' }),
-  role: z.enum(['admin', 'manager', 'editor', 'viewer']),
-  status: z.enum(['active', 'inactive'])
+  role: z.enum(['student', 'lecturer', 'admin']),
+  status: z.enum(['active', 'unregistered', 'suspended'])
 });
 
 export default function UserForm({ initialData, pageTitle }: { initialData: User | null; pageTitle: string }) {
@@ -30,8 +31,8 @@ export default function UserForm({ initialData, pageTitle }: { initialData: User
     firstName: initialData?.firstName || '',
     lastName: initialData?.lastName || '',
     email: initialData?.email || '',
-    role: initialData?.role || 'viewer',
-    status: initialData?.status || 'active'
+    role: (initialData?.role as UserRoleType) ?? 'student',
+    status: (initialData?.status as UserStatusType) ?? 'unregistered'
   };
 
   const form = useForm<z.infer<typeof formSchema>>({
@@ -104,10 +105,9 @@ export default function UserForm({ initialData, pageTitle }: { initialData: User
                         </SelectTrigger>
                       </FormControl>
                       <SelectContent>
+                        <SelectItem value='student'>Student</SelectItem>
+                        <SelectItem value='lecturer'>Lecturer</SelectItem>
                         <SelectItem value='admin'>Admin</SelectItem>
-                        <SelectItem value='manager'>Manager</SelectItem>
-                        <SelectItem value='editor'>Editor</SelectItem>
-                        <SelectItem value='viewer'>Viewer</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />
@@ -128,7 +128,8 @@ export default function UserForm({ initialData, pageTitle }: { initialData: User
                       </FormControl>
                       <SelectContent>
                         <SelectItem value='active'>Active</SelectItem>
-                        <SelectItem value='inactive'>Inactive</SelectItem>
+                        <SelectItem value='unregistered'>Unregistered</SelectItem>
+                        <SelectItem value='suspended'>Suspend</SelectItem>
                       </SelectContent>
                     </Select>
                     <FormMessage />

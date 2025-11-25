@@ -6,19 +6,20 @@ export type User = {
   firstName: string;
   lastName: string;
   email: string;
-  role: 'admin' | 'manager' | 'editor' | 'viewer';
-  status: 'active' | 'inactive';
+  role: 'student' | 'lecturer' | 'admin';
+  status: 'active' | 'unregistered' | 'suspended';
   created_at: string;
   updated_at: string;
 };
 
-export const delay = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+export const delay = (ms: number) =>
+  new Promise((resolve) => setTimeout(resolve, ms));
 
 export const fakeUsers = {
   records: [] as User[],
   initialize() {
-    const roles: User['role'][] = ['admin', 'manager', 'editor', 'viewer'];
-    const statuses: User['status'][] = ['active', 'inactive'];
+    const roles: User['role'][] = ['student', 'lecturer', 'admin'];
+    const statuses: User['status'][] = ['active', 'unregistered', 'suspended'];
     const sample: User[] = [];
 
     for (let i = 1; i <= 50; i++) {
@@ -31,14 +32,24 @@ export const fakeUsers = {
         email: faker.internet.email({ firstName, lastName }),
         role: faker.helpers.arrayElement(roles),
         status: faker.helpers.arrayElement(statuses),
-        created_at: faker.date.between({ from: '2023-01-01', to: '2024-12-31' }).toISOString(),
+        created_at: faker.date
+          .between({ from: '2023-01-01', to: '2024-12-31' })
+          .toISOString(),
         updated_at: faker.date.recent().toISOString()
       });
     }
 
     this.records = sample;
   },
-  async getAll({ role, status, search }: { role?: string; status?: string; search?: string }) {
+  async getAll({
+    role,
+    status,
+    search
+  }: {
+    role?: string;
+    status?: string;
+    search?: string;
+  }) {
     let users = [...this.records];
     if (role) users = users.filter((u) => u.role === role);
     if (status) users = users.filter((u) => u.status === status);
@@ -49,7 +60,19 @@ export const fakeUsers = {
     }
     return users;
   },
-  async getUsers({ page = 1, limit = 10, role, status, search }: { page?: number; limit?: number; role?: string; status?: string; search?: string }) {
+  async getUsers({
+    page = 1,
+    limit = 10,
+    role,
+    status,
+    search
+  }: {
+    page?: number;
+    limit?: number;
+    role?: string;
+    status?: string;
+    search?: string;
+  }) {
     await delay(400);
     const all = await this.getAll({ role, status, search });
     const total = all.length;
@@ -68,11 +91,10 @@ export const fakeUsers = {
   async getUserById(id: number) {
     await delay(300);
     const user = this.records.find((u) => u.id === id) || null;
-    if (!user) return { success: false, message: `User ${id} not found` } as const;
+    if (!user)
+      return { success: false, message: `User ${id} not found` } as const;
     return { success: true, user } as const;
   }
 };
 
 fakeUsers.initialize();
-
-

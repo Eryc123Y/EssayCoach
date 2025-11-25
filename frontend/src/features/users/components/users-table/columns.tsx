@@ -43,10 +43,9 @@ export const columns: ColumnDef<User>[] = [
       label: 'Role',
       variant: 'select',
       options: [
-        { value: 'admin', label: 'Admin' },
-        { value: 'manager', label: 'Manager' },
-        { value: 'editor', label: 'Editor' },
-        { value: 'viewer', label: 'Viewer' }
+        { value: 'student', label: 'Student' },
+        { value: 'lecturer', label: 'Lecturer' },
+        { value: 'admin', label: 'Admin' }
       ]
     }
   },
@@ -64,7 +63,8 @@ export const columns: ColumnDef<User>[] = [
       variant: 'select',
       options: [
         { value: 'active', label: 'Active' },
-        { value: 'inactive', label: 'Inactive' }
+        { value: 'unregistered', label: 'Unregistered' },
+        { value: 'suspended', label: 'Suspended' }
       ]
     }
   },
