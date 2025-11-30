@@ -53,8 +53,8 @@ nix develop --command dev-up
 # This will:
 # 1. Start PostgreSQL service with postgres superuser
 # 2. Create database 'essaycoach' owned by postgres superuser
-# 3. Run Django migrations
-# 4. Load sample data
+# 3. Run Django migrations to create schema
+# 4. Seed the database with initial data
 ```
 
 ### Manual Database Setup
@@ -68,8 +68,8 @@ nix develop --command db-setup
 # Run migrations
 python backend/manage.py migrate
 
-# Load sample data
-python backend/manage.py loaddata sample_data
+# Load sample data (using the new seed command)
+python backend/manage.py seed_db
 ```
 
 ## 🔧 Development Workflow
@@ -158,7 +158,7 @@ nix develop --command dev-setup
 # This runs:
 # - Database setup
 # - Migration application
-# - Sample data loading
+# - Sample data loading (seed_db)
 # - Development server startup
 ```
 
@@ -185,13 +185,13 @@ nix develop --command dev-reset
 python backend/manage.py test
 
 # Run specific app tests
-python backend/manage.py test ai_feedback
+python backend/manage.py test auth
 
 # Run with coverage
 python backend/manage.py test --with-coverage
 
 # Run specific test file
-python backend/manage.py test ai_feedback.tests.test_models
+python backend/manage.py test auth.tests.UserLoginTests
 ```
 
 ### Frontend Testing

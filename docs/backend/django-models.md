@@ -2,7 +2,7 @@
 
 ## 🏗️ Model Architecture Overview
 
-The EssayCoach backend uses Django's ORM with an existing database schema that's optimized for educational workflows. The models are configured as `managed = False` to work with the existing database structure while providing Django authentication capabilities.
+The EssayCoach backend uses Django's ORM with a database schema optimized for educational workflows. The models are configured as `managed = True` to fully leverage Django's migration system, while maintaining a strict schema design that aligns with the project's data integrity requirements.
 
 ## 📋 Core Models
 
@@ -14,6 +14,7 @@ The EssayCoach backend uses Django's ORM with an existing database schema that's
 from django.contrib.auth.base_user import AbstractBaseUser, BaseUserManager
 from django.contrib.auth.models import PermissionsMixin
 from django.db import models
+from django.db.models import CheckConstraint, Q
 
 class CoreUserManager(BaseUserManager):
     def create_user(self, user_email, password=None, **extra_fields):
@@ -31,8 +32,8 @@ class CoreUserManager(BaseUserManager):
         return self.create_user(user_email, password, **extra_fields)
 
 class User(AbstractBaseUser, PermissionsMixin):
-    """Custom user model aligned with existing database schema"""
-    user_id = models.IntegerField(primary_key=True, db_column='user_id')
+    """Custom user model aligned with project requirements"""
+    user_id = models.AutoField(primary_key=True, db_column='user_id')
     user_email = models.EmailField(unique=True, db_column='user_email')
     user_fname = models.CharField(max_length=20, blank=True, null=True, db_column='user_fname')
     user_lname = models.CharField(max_length=20, blank=True, null=True, db_column='user_lname')
@@ -51,8 +52,12 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     class Meta:
         db_table = 'user'
-        managed = False
+        managed = True
         db_table_comment = 'A table for all user entities, including student, teacher, and admins.'
+        constraints = [
+            CheckConstraint(check=Q(user_role__in=['student', 'lecturer', 'admin']), name='user_role_ck'),
+            CheckConstraint(check=Q(user_status__in=['active', 'suspended', 'unregistered']), name='user_status_ck')
+        ]
 
     def __str__(self):
         if self.user_fname or self.user_lname:
@@ -78,7 +83,7 @@ class Unit(models.Model):
     unit_desc = models.TextField(blank=True, null=True, db_comment='details of the unit')
 
     class Meta:
-        managed = False
+        managed = True
         db_table = 'unit'
         db_table_comment = 'A table for unit entity'
 ```
@@ -89,15 +94,18 @@ class Unit(models.Model):
 class Class(models.Model):
     """Class entity under a unit"""
     class_id = models.SmallAutoField(primary_key=True, db_comment='Unique identifier for a class under a unit')
-    unit_id_unit = models.ForeignKey('Unit', models.DO_NOTHING, db_column='unit_id_unit')
-    class_size = models.SmallIntegerField(db_comment='current number of students in the class')
+    unit_id_unit = models.ForeignKey('Unit', models.CASCADE, db_column='unit_id_unit')
+    class_size = models.SmallIntegerField(default=0, db_comment='current number of students in the class')
 
     class Meta:
-        managed = False
+        managed = True
         db_table = 'class'
         db_table_comment = 'A table for class entity'
         verbose_name = 'class'
         verbose_name_plural = 'classes'
+        constraints = [
+            CheckConstraint(check=Q(class_size__gte=0), name='class_size_ck')
+        ]
 ```
 
 #### Enrollment Model
@@ -106,15 +114,17 @@ class Class(models.Model):
 class Enrollment(models.Model):
     """Student enrollment in classes"""
     enrollment_id = models.AutoField(primary_key=True, db_comment='Unique identifier for each enrollment')
-    user_id_user = models.ForeignKey('User', models.DO_NOTHING, db_column='user_id_user')
-    class_id_class = models.ForeignKey(Class, models.DO_NOTHING, db_column='class_id_class')
-    unit_id_unit = models.ForeignKey('Unit', models.DO_NOTHING, db_column='unit_id_unit')
-    enrollment_time = models.DateTimeField(db_comment='The time when the student is enrolled in the DBMS')
+    user_id_user = models.ForeignKey('User', models.CASCADE, db_column='user_id_user')
+    class_id_class = models.ForeignKey(Class, models.RESTRICT, db_column='class_id_class')
+    unit_id_unit = models.ForeignKey('Unit', models.RESTRICT, db_column='unit_id_unit')
+    enrollment_time = models.DateTimeField(auto_now_add=True, db_comment='The time when the student is enrolled in the DBMS')
 
     class Meta:
-        managed = False
+        managed = True
         db_table = 'enrollment'
-        unique_together = (('user_id_user', 'class_id_class', 'unit_id_unit'),)
+        constraints = [
+            UniqueConstraint(fields=['user_id_user', 'class_id_class', 'unit_id_unit'], name='user_id_class_id_unit_id_uq')
+        ]
         db_table_comment = 'The enrollment of student to a specific class. A student can only have one enrollment to one class of one unit anytime.'
 ```
 
@@ -124,13 +134,15 @@ class Enrollment(models.Model):
 class TeachingAssn(models.Model):
     """Assignment of teachers to classes"""
     teaching_assn_id = models.SmallAutoField(primary_key=True, db_comment='unique identifier')
-    user_id_user = models.ForeignKey('User', models.DO_NOTHING, db_column='user_id_user')
-    class_id_class = models.ForeignKey(Class, models.DO_NOTHING, db_column='class_id_class')
+    user_id_user = models.ForeignKey('User', models.CASCADE, db_column='user_id_user')
+    class_id_class = models.ForeignKey(Class, models.RESTRICT, db_column='class_id_class')
 
     class Meta:
-        managed = False
+        managed = True
         db_table = 'teaching_assn'
-        unique_together = (('user_id_user', 'class_id_class'),)
+        constraints = [
+            UniqueConstraint(fields=['user_id_user', 'class_id_class'], name='lecturer_id_class_id_uq')
+        ]
         db_table_comment = 'A weak entity for assignment of teacher to classes'
 ```
 
@@ -142,15 +154,18 @@ class TeachingAssn(models.Model):
 class Task(models.Model):
     """Tasks created by educators for students"""
     task_id = models.AutoField(primary_key=True, db_comment='Unique identifier for task.')
-    unit_id_unit = models.ForeignKey('Unit', models.DO_NOTHING, db_column='unit_id_unit')
-    rubric_id_marking_rubric = models.ForeignKey('MarkingRubric', models.DO_NOTHING, db_column='rubric_id_marking_rubric')
-    task_publish_datetime = models.DateTimeField(db_comment='time/date when the task is published')
+    unit_id_unit = models.ForeignKey('Unit', models.RESTRICT, db_column='unit_id_unit')
+    rubric_id_marking_rubric = models.ForeignKey('MarkingRubric', models.CASCADE, db_column='rubric_id_marking_rubric')
+    task_publish_datetime = models.DateTimeField(auto_now_add=True, db_comment='time/date when the task is published')
     task_due_datetime = models.DateTimeField(db_comment='time/date when the task is due')
 
     class Meta:
-        managed = False
+        managed = True
         db_table = 'task'
         db_table_comment = 'Task created by lecturer/admin for students in some classes/units to complete'
+        constraints = [
+            CheckConstraint(check=Q(task_publish_datetime__lt=models.F('task_due_datetime')), name='task_publish_time_task_due_time_ck')
+        ]
 ```
 
 #### Submission Model
@@ -159,15 +174,15 @@ class Task(models.Model):
 class Submission(models.Model):
     """Essay submissions for tasks"""
     submission_id = models.AutoField(primary_key=True, db_comment='unique identifier for submission')
-    submission_time = models.DateTimeField(db_comment='time/date of submission')
-    task_id_task = models.ForeignKey('Task', models.DO_NOTHING, db_column='task_id_task')
-    user_id_user = models.ForeignKey('User', models.DO_NOTHING, db_column='user_id_user')
+    submission_time = models.DateTimeField(auto_now_add=True, db_comment='time/date of submission')
+    task_id_task = models.ForeignKey('Task', models.RESTRICT, db_column='task_id_task')
+    user_id_user = models.ForeignKey('User', models.CASCADE, db_column='user_id_user')
     submission_txt = models.TextField(db_comment='complete content of the essay submission')
 
     class Meta:
-        managed = False
+        managed = True
         db_table = 'submission'
-        db_table_comment = 'A real entity for task submissions.'
+        db_table_comment = 'A weal entity for task submissions.'
 ```
 
 ### Assessment and Feedback Models
@@ -178,12 +193,12 @@ class Submission(models.Model):
 class MarkingRubric(models.Model):
     """Marking rubrics for assessment"""
     rubric_id = models.AutoField(primary_key=True, db_comment='unique identifier for rubrics')
-    user_id_user = models.ForeignKey('User', models.DO_NOTHING, db_column='user_id_user')
-    rubric_create_time = models.DateTimeField(db_comment='timestamp when the rubirc is created')
+    user_id_user = models.ForeignKey('User', models.CASCADE, db_column='user_id_user')
+    rubric_create_time = models.DateTimeField(auto_now_add=True, db_comment='timestamp when the rubirc is created')
     rubric_desc = models.CharField(max_length=100, blank=True, null=True, db_comment='description to the rubrics')
 
     class Meta:
-        managed = False
+        managed = True
         db_table = 'marking_rubric'
         db_table_comment = 'entity for a marking rubric. A marking rubric has many items.'
 ```
@@ -194,14 +209,17 @@ class MarkingRubric(models.Model):
 class RubricItem(models.Model):
     """Individual items within a rubric"""
     rubric_item_id = models.AutoField(primary_key=True, db_comment='unique identifier for item')
-    rubric_id_marking_rubric = models.ForeignKey(MarkingRubric, models.DO_NOTHING, db_column='rubric_id_marking_rubric')
+    rubric_id_marking_rubric = models.ForeignKey(MarkingRubric, models.CASCADE, db_column='rubric_id_marking_rubric')
     rubric_item_name = models.CharField(max_length=50, db_comment='Title(header) name for the item')
     rubric_item_weight = models.DecimalField(max_digits=3, decimal_places=1, db_comment='the weight of the item on a scale of 100%, using xx.x')
 
     class Meta:
-        managed = False
+        managed = True
         db_table = 'rubric_item'
         db_table_comment = 'An item(dimension) under one rubric'
+        constraints = [
+            CheckConstraint(check=Q(rubric_item_weight__gt=0), name='item_weight_ck')
+        ]
 ```
 
 #### Rubric Level Description Model
@@ -210,15 +228,18 @@ class RubricItem(models.Model):
 class RubricLevelDesc(models.Model):
     """Detailed descriptions for score ranges in rubric items"""
     level_desc_id = models.AutoField(primary_key=True, db_comment='unique identifier for each level desc under one rubric')
-    rubric_item_id_rubric_item = models.ForeignKey(RubricItem, models.DO_NOTHING, db_column='rubric_item_id_rubric_item')
+    rubric_item_id_rubric_item = models.ForeignKey(RubricItem, models.CASCADE, db_column='rubric_item_id_rubric_item')
     level_min_score = models.SmallIntegerField(db_comment='min for the item')
     level_max_score = models.SmallIntegerField(db_comment='max for the item')
     level_desc = models.TextField()
 
     class Meta:
-        managed = False
+        managed = True
         db_table = 'rubric_level_desc'
         db_table_comment = 'The detailed description to each of the score range under a rubric item under a rubric.'
+        constraints = [
+            CheckConstraint(check=Q(level_min_score__gte=0) & Q(level_max_score__gt=0) & Q(level_min_score__lt=models.F('level_max_score')), name='min_max_ck')
+        ]
 ```
 
 #### Feedback Model
@@ -227,11 +248,11 @@ class RubricLevelDesc(models.Model):
 class Feedback(models.Model):
     """Feedback for submissions"""
     feedback_id = models.AutoField(primary_key=True)
-    submission_id_submission = models.OneToOneField('Submission', models.DO_NOTHING, db_column='submission_id_submission')
-    user_id_user = models.ForeignKey('User', models.DO_NOTHING, db_column='user_id_user')
+    submission_id_submission = models.OneToOneField('Submission', models.CASCADE, db_column='submission_id_submission')
+    user_id_user = models.ForeignKey('User', models.RESTRICT, db_column='user_id_user')
 
     class Meta:
-        managed = False
+        managed = True
         db_table = 'feedback'
 ```
 
@@ -241,16 +262,19 @@ class Feedback(models.Model):
 class FeedbackItem(models.Model):
     """Individual feedback items with scores"""
     feedback_item_id = models.AutoField(primary_key=True, db_comment='unique identifier for feedback item')
-    feedback_id_feedback = models.ForeignKey(Feedback, models.DO_NOTHING, db_column='feedback_id_feedback')
-    rubric_item_id_rubric_item = models.ForeignKey('RubricItem', models.DO_NOTHING, db_column='rubric_item_id_rubric_item')
+    feedback_id_feedback = models.ForeignKey(Feedback, models.CASCADE, db_column='feedback_id_feedback')
+    rubric_item_id_rubric_item = models.ForeignKey('RubricItem', models.RESTRICT, db_column='rubric_item_id_rubric_item')
     feedback_item_score = models.SmallIntegerField(db_comment='actual score of the item')
     feedback_item_comment = models.TextField(blank=True, null=True, db_comment='short description to the sub-item grade')
     feedback_item_source = models.CharField(max_length=10, db_comment='the source of feedback: \nai, human, or revised if ai feedback is slightly modifed by human')
 
     class Meta:
-        managed = False
+        managed = True
         db_table = 'feedback_item'
-        unique_together = (('feedback_id_feedback', 'rubric_item_id_rubric_item'),)
+        constraints = [
+            UniqueConstraint(fields=['feedback_id_feedback', 'rubric_item_id_rubric_item'], name='feedback_id_rubric_item_id_uq'),
+            CheckConstraint(check=Q(feedback_item_source__in=['ai', 'human', 'revised']), name='feedback_item_source_ck')
+        ]
         db_table_comment = 'A section in the feedback as per the rubric'
 ```
 
@@ -304,20 +328,20 @@ RubricItem (1) ----< (Many) FeedbackItem
 
 ### Database Schema Considerations
 
-Since all models are configured with `managed = False`, they work with an existing database schema. This approach:
+All models are configured with `managed = True` (refactored from `False`) to allow Django to fully control the database schema. This approach:
 
-- **Preserves existing data structure** while providing Django ORM capabilities
-- **Requires manual database migrations** for schema changes
-- **Uses custom field mappings** via `db_column` to match existing column names
-- **Maintains referential integrity** through existing database constraints
+- **Simplifies Development**: Django automatically creates and updates tables.
+- **Enforces Integrity**: Database constraints (`CheckConstraint`, `UniqueConstraint`) are defined explicitly in the models.
+- **Eases Testing**: Django test runner handles database creation and teardown automatically.
+- **Uses custom field mappings** via `db_column` to maintain specific naming conventions where needed.
 
 ### Performance Optimizations
 ```python
 # Use select_related for foreign keys to reduce queries
-submissions = Submission.objects.select_related('user', 'task', 'task__unit')
+submissions = Submission.objects.select_related('user_id_user', 'task_id_task', 'task_id_task__unit_id_unit')
 
 # Use prefetch_related for reverse foreign keys
-users = User.objects.prefetch_related('submissions__feedback')
+users = User.objects.prefetch_related('submission_set__feedback')
 
 # Use only() for specific fields to reduce memory usage
 tasks = Task.objects.only('task_id', 'task_publish_datetime', 'task_due_datetime')
@@ -339,9 +363,9 @@ def get_user_classes(user):
 # Get submissions with feedback for a class
 def get_class_submissions_with_feedback(class_id):
     return Submission.objects.filter(
-        task__unit__class__class_id=class_id
+        task_id_task__unit_id_unit__class__class_id=class_id
     ).select_related(
-        'user', 'task', 'feedback'
+        'user_id_user', 'task_id_task', 'feedback'
     ).prefetch_related(
         'feedback__feedbackitem_set'
     )
@@ -368,31 +392,9 @@ class Submission(models.Model):
         self.full_clean()
         super().save(*args, **kwargs)
 
-# Existing database constraints are maintained:
+# Database constraints are enforced via Meta.constraints:
 # - Unique constraints on enrollment (user, class, unit)
 # - Unique constraints on teaching assignments (user, class)
-# - Foreign key relationships maintained at database level
-```
-
-### Working with Managed=False Models
-
-```python
-# When working with unmanaged models:
-
-# 1. Always use existing database constraints
-# 2. Perform schema changes manually or through SQL migrations
-# 3. Test queries against the actual database structure
-# 4. Use db_column to map Django field names to database columns
-# 5. Leverage existing database indexes and constraints
-
-# Example of complex query with joins
-def get_student_performance_in_unit(student_id, unit_id):
-    return Submission.objects.filter(
-        user_id_user=student_id,
-        task__unit_id_unit=unit_id
-    ).select_related(
-        'task', 'feedback'
-    ).prefetch_related(
-        'feedback__feedbackitem_set__rubric_item_id_rubric_item'
-    ).order_by('submission_time')
+# - Check constraints for value ranges (scores, weights) and valid choices (roles, status)
+# - Foreign key relationships maintained at database level with specific on_delete rules
 ```
