@@ -209,6 +209,58 @@ pnpm type-check
 pnpm lint
 ```
 
+### Type Checking (mypy)
+
+The project uses mypy for static type checking of Python code. Type checking is automatically run in CI/CD, but you can also run it locally.
+
+#### Quick Commands
+```bash
+# Run mypy on all backend code (recommended)
+mypy-check
+
+# Run with pretty colored output
+mypy-pretty
+
+# Check specific file
+mypy-file auth/views.py
+
+# Show statistics
+mypy-stats
+```
+
+#### Manual Usage
+```bash
+# Basic check
+cd backend && mypy .
+
+# With detailed error information
+cd backend && mypy . --show-error-codes --show-column-numbers
+
+# Check specific app
+cd backend && mypy auth/
+
+# Generate HTML report
+cd backend && mypy . --html-report mypy-report
+```
+
+#### Configuration
+- Configuration file: `backend/mypy.ini`
+- Python version: 3.12
+- Strictness: Moderate (allows untyped functions but checks them)
+- Excludes: migrations, `__pycache__`, and third-party packages
+
+#### Common Issues
+- **Module not found errors**: Ensure you're running from the `backend` directory
+- **Django model errors**: Some Django model field type annotations are optional in moderate mode
+- **Third-party imports**: Missing type stubs are ignored by default
+
+#### CI/CD Integration
+mypy runs automatically on:
+- Push to `main` or `develop` branches
+- Pull requests targeting `main` or `develop`
+
+The CI check will fail if type errors are found, preventing merge until fixed.
+
 ## 📊 Monitoring and Debugging
 
 ### Django Debug Toolbar
@@ -287,9 +339,16 @@ nix develop --command reset-env
 ### Code Standards
 - Follow PEP 8 for Python code
 - Use Black for code formatting
+- Use type hints for Python code (checked with mypy)
 - Use TypeScript for frontend code
 - Write comprehensive tests
 - Document all public APIs
+
+#### Type Checking Requirements
+- All new Python code should include type hints
+- Run `mypy-check` before committing
+- Fix type errors before submitting PRs
+- CI/CD will enforce type checking on all PRs
 
 ## 🔄 CI/CD Pipeline
 
