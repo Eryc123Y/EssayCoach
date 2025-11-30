@@ -1,9 +1,11 @@
 """
 API views for authentication endpoints.
 """
+from typing import Dict, Any, List, Union
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
 from django.contrib.auth import get_user_model
@@ -27,7 +29,7 @@ User = get_user_model()
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
-def register(request):
+def register(request: Request) -> Response:
     """
     User registration endpoint.
     POST /api/v1/auth/register
@@ -35,13 +37,13 @@ def register(request):
     serializer = UserRegistrationSerializer(data=request.data)
     
     if serializer.is_valid():
-        user = serializer.save()
-        token = get_or_create_token(user)
+        user: User = serializer.save()
+        token: Token = get_or_create_token(user)
         
         # Serialize user data
-        user_data = UserProfileSerializer(user).data
+        user_data: Dict[str, Any] = UserProfileSerializer(user).data
         
-        response_data = format_success_response(
+        response_data: Dict[str, Any] = format_success_response(
             data={
                 'token': token.key,
                 'user': user_data
@@ -51,11 +53,11 @@ def register(request):
         return Response(response_data, status=status.HTTP_201_CREATED)
     
     # Handle validation errors
-    errors = serializer.errors
+    errors: Dict[str, Any] = serializer.errors
     
     # Check for email uniqueness error
     if 'email' in errors:
-        email_error = errors['email']
+        email_error: Union[List[Any], str] = errors['email']
         if isinstance(email_error, list) and len(email_error) > 0:
             if 'already registered' in str(email_error[0]).lower():
                 return format_error_response(
@@ -66,7 +68,7 @@ def register(request):
     
     # Check for password mismatch
     if 'password' in errors or 'non_field_errors' in errors:
-        password_error = errors.get('password', [])
+        password_error: Union[List[Any], str] = errors.get('password', [])
         if password_error and 'didn\'t match' in str(password_error[0]).lower():
             return format_error_response(
                 code='INVALID_INPUT',
@@ -86,7 +88,7 @@ def register(request):
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
-def login(request):
+def login(request: Request) -> Response:
     """
     User login endpoint.
     POST /api/v1/auth/login
@@ -94,13 +96,13 @@ def login(request):
     serializer = UserLoginSerializer(data=request.data, context={'request': request})
     
     if serializer.is_valid():
-        user = serializer.validated_data['user']
-        token = get_or_create_token(user)
+        user: User = serializer.validated_data['user']
+        token: Token = get_or_create_token(user)
         
         # Serialize user data
-        user_data = UserProfileSerializer(user).data
+        user_data: Dict[str, Any] = UserProfileSerializer(user).data
         
-        response_data = format_success_response(
+        response_data: Dict[str, Any] = format_success_response(
             data={
                 'token': token.key,
                 'user': user_data
@@ -109,18 +111,18 @@ def login(request):
         return Response(response_data, status=status.HTTP_200_OK)
     
     # Handle validation errors
-    errors = serializer.errors
+    errors: Dict[str, Any] = serializer.errors
     
     # Extract error code and message from non_field_errors
     if 'non_field_errors' in errors:
-        error_list = errors['non_field_errors']
+        error_list: Union[List[Any], str] = errors['non_field_errors']
         if isinstance(error_list, list) and len(error_list) > 0:
-            error_obj = error_list[0]
+            error_obj: Any = error_list[0]
             if isinstance(error_obj, dict):
-                error_code = error_obj.get('code', 'INVALID_CREDENTIALS')
-                error_message = error_obj.get('message', 'Invalid email or password')
+                error_code: str = error_obj.get('code', 'INVALID_CREDENTIALS')
+                error_message: str = error_obj.get('message', 'Invalid email or password')
                 
-                status_code = status.HTTP_401_UNAUTHORIZED
+                status_code: int = status.HTTP_401_UNAUTHORIZED
                 if error_code == 'ACCOUNT_LOCKED':
                     status_code = status.HTTP_423_LOCKED
                 elif error_code == 'INVALID_INPUT':
@@ -142,7 +144,7 @@ def login(request):
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
-def logout(request):
+def logout(request: Request) -> Response:
     """
     User logout endpoint.
     POST /api/v1/auth/logout
@@ -154,7 +156,7 @@ def logout(request):
         # Token might not exist, which is fine
         pass
     
-    response_data = format_success_response(
+    response_data: Dict[str, Any] = format_success_response(
         data={},
         message='Successfully logged out'
     )
@@ -163,7 +165,7 @@ def logout(request):
 
 @api_view(['POST'])
 @permission_classes([AllowAny])
-def password_reset(request):
+def password_reset(request: Request) -> Response:
     """
     Reset password with email and new password (MVP: simple verification).
     POST /api/v1/auth/password-reset
@@ -171,11 +173,11 @@ def password_reset(request):
     serializer = PasswordResetSerializer(data=request.data)
     
     if not serializer.is_valid():
-        errors = serializer.errors
+        errors: Dict[str, Any] = serializer.errors
         
         # Check for email not found
         if 'email' in errors:
-            email_error = errors['email']
+            email_error: Union[List[Any], str] = errors['email']
             if isinstance(email_error, list) and len(email_error) > 0:
                 if 'not registered' in str(email_error[0]).lower():
                     return format_error_response(
@@ -186,7 +188,7 @@ def password_reset(request):
         
         # Check for password mismatch
         if 'new_password' in errors or 'non_field_errors' in errors:
-            password_error = errors.get('new_password', [])
+            password_error: Union[List[Any], str] = errors.get('new_password', [])
             if password_error and 'didn\'t match' in str(password_error[0]).lower():
                 return format_error_response(
                     code='INVALID_INPUT',
@@ -202,16 +204,16 @@ def password_reset(request):
             status_code=status.HTTP_400_BAD_REQUEST
         )
     
-    email = serializer.validated_data['email']
-    new_password = serializer.validated_data['new_password']
+    email: str = serializer.validated_data['email']
+    new_password: str = serializer.validated_data['new_password']
     
     # Get user and reset password
     try:
-        user = User.objects.get(user_email=email)
+        user: User = User.objects.get(user_email=email)
         user.set_password(new_password)
         user.save()
         
-        response_data = format_success_response(
+        response_data: Dict[str, Any] = format_success_response(
             data={},
             message='Password has been reset successfully'
         )
@@ -226,7 +228,7 @@ def password_reset(request):
 
 @api_view(['PUT'])
 @permission_classes([IsAuthenticated])
-def password_change(request):
+def password_change(request: Request) -> Response:
     """
     Change password for authenticated user.
     PUT /api/v1/auth/password-change
@@ -237,25 +239,25 @@ def password_change(request):
     )
     
     if serializer.is_valid():
-        user = request.user
-        new_password = serializer.validated_data['new_password']
+        user: User = request.user
+        new_password: str = serializer.validated_data['new_password']
         
         # Update password
         user.set_password(new_password)
         user.save()
         
-        response_data = format_success_response(
+        response_data: Dict[str, Any] = format_success_response(
             data={},
             message='Password changed successfully'
         )
         return Response(response_data, status=status.HTTP_200_OK)
     
     # Handle validation errors
-    errors = serializer.errors
+    errors: Dict[str, Any] = serializer.errors
     
     # Check for current password error
     if 'current_password' in errors:
-        current_password_error = errors['current_password']
+        current_password_error: Union[List[Any], str] = errors['current_password']
         if isinstance(current_password_error, list) and len(current_password_error) > 0:
             if 'incorrect' in str(current_password_error[0]).lower():
                 return format_error_response(
@@ -266,7 +268,7 @@ def password_change(request):
     
     # Check for password mismatch
     if 'new_password' in errors or 'non_field_errors' in errors:
-        password_error = errors.get('new_password', [])
+        password_error: Union[List[Any], str] = errors.get('new_password', [])
         if password_error and 'didn\'t match' in str(password_error[0]).lower():
             return format_error_response(
                 code='INVALID_INPUT',
@@ -286,28 +288,28 @@ def password_change(request):
 
 @api_view(['GET', 'PATCH'])
 @permission_classes([IsAuthenticated])
-def get_current_user(request):
+def get_current_user(request: Request) -> Response:
     """
     Get or update current authenticated user's profile.
     GET /api/v1/auth/me - Get user profile
     PATCH /api/v1/auth/me - Update user profile
     """
     if request.method == 'GET':
-        serializer = UserProfileSerializer(request.user)
-        response_data = format_success_response(data=serializer.data)
+        serializer: UserProfileSerializer = UserProfileSerializer(request.user)
+        response_data: Dict[str, Any] = format_success_response(data=serializer.data)
         return Response(response_data, status=status.HTTP_200_OK)
     
     elif request.method == 'PATCH':
-        serializer = UserUpdateSerializer(
+        serializer: UserUpdateSerializer = UserUpdateSerializer(
             instance=request.user,
             data=request.data,
             partial=True
         )
         
         if serializer.is_valid():
-            user = serializer.save()
-            user_data = UserProfileSerializer(user).data
-            response_data = format_success_response(data=user_data)
+            user: User = serializer.save()
+            user_data: Dict[str, Any] = UserProfileSerializer(user).data
+            response_data: Dict[str, Any] = format_success_response(data=user_data)
             return Response(response_data, status=status.HTTP_200_OK)
         
         # Handle validation errors

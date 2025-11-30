@@ -2,7 +2,9 @@
 Serializers for authentication app.
 Contains all validation logic for auth endpoints.
 """
+from typing import Dict, Any, Optional
 from rest_framework import serializers
+from rest_framework.request import Request
 from django.contrib.auth import authenticate
 from django.contrib.auth.password_validation import validate_password
 from django.contrib.auth import get_user_model
@@ -38,13 +40,13 @@ class UserRegistrationSerializer(serializers.Serializer):
         allow_null=True
     )
 
-    def validate_email(self, value):
+    def validate_email(self, value: str) -> str:
         """Validate email format and uniqueness."""
         if User.objects.filter(user_email=value).exists():
             raise serializers.ValidationError("Email is already registered.")
         return value
 
-    def validate(self, attrs):
+    def validate(self, attrs: Dict[str, Any]) -> Dict[str, Any]:
         """Validate password confirmation."""
         if attrs.get('password') != attrs.get('password_confirm'):
             raise serializers.ValidationError({
@@ -52,7 +54,7 @@ class UserRegistrationSerializer(serializers.Serializer):
             })
         return attrs
 
-    def create(self, validated_data):
+    def create(self, validated_data: Dict[str, Any]) -> User:
         """Create a new user."""
         # Remove password_confirm from validated_data
         validated_data.pop('password_confirm')
@@ -87,15 +89,16 @@ class UserLoginSerializer(serializers.Serializer):
     email = serializers.EmailField(required=True)
     password = serializers.CharField(write_only=True, required=True)
 
-    def validate(self, attrs):
+    def validate(self, attrs: Dict[str, Any]) -> Dict[str, Any]:
         """Validate user credentials."""
-        email = attrs.get('email')
-        password = attrs.get('password')
+        email: Optional[str] = attrs.get('email')
+        password: Optional[str] = attrs.get('password')
 
         if email and password:
             # Use email as username since USERNAME_FIELD is user_email
+            request: Optional[Request] = self.context.get('request')
             user = authenticate(
-                request=self.context.get('request'),
+                request=request,
                 username=email,
                 password=password
             )
@@ -137,13 +140,13 @@ class PasswordResetSerializer(serializers.Serializer):
     )
     new_password_confirm = serializers.CharField(write_only=True, required=True)
 
-    def validate_email(self, value):
+    def validate_email(self, value: str) -> str:
         """Validate email exists."""
         if not User.objects.filter(user_email=value).exists():
             raise serializers.ValidationError("Email is not registered.")
         return value
 
-    def validate(self, attrs):
+    def validate(self, attrs: Dict[str, Any]) -> Dict[str, Any]:
         """Validate password confirmation."""
         if attrs.get('new_password') != attrs.get('new_password_confirm'):
             raise serializers.ValidationError({
@@ -162,9 +165,10 @@ class PasswordChangeSerializer(serializers.Serializer):
     )
     new_password_confirm = serializers.CharField(write_only=True, required=True)
 
-    def validate(self, attrs):
+    def validate(self, attrs: Dict[str, Any]) -> Dict[str, Any]:
         """Validate password confirmation and current password."""
-        user = self.context['request'].user
+        request: Request = self.context['request']
+        user: User = request.user
         
         # Check current password
         if not user.check_password(attrs.get('current_password')):
@@ -211,7 +215,7 @@ class UserUpdateSerializer(serializers.Serializer):
         allow_null=True
     )
 
-    def update(self, instance, validated_data):
+    def update(self, instance: User, validated_data: Dict[str, Any]) -> User:
         """Update user profile fields."""
         # Map API field names to model field names
         if 'first_name' in validated_data:
