@@ -24,7 +24,7 @@ else:
 
 class UserRegistrationSerializer(serializers.Serializer):
     """Serializer for user registration with validation."""
-    email = serializers.EmailField(required=True, max_length=255)
+    email = serializers.EmailField(required=True, max_length=254)
     password = serializers.CharField(
         write_only=True,
         required=True,
@@ -56,6 +56,16 @@ class UserRegistrationSerializer(serializers.Serializer):
             raise serializers.ValidationError("Email is already registered.")
         return value
 
+    def validate_role(self, value: Optional[str]) -> Optional[str]:
+        """Validate role is one of the allowed values."""
+        if value:
+            allowed_roles = ['student', 'lecturer', 'admin']
+            if value not in allowed_roles:
+                raise serializers.ValidationError(
+                    f"Role must be one of: {', '.join(allowed_roles)}"
+                )
+        return value
+
     def validate(self, attrs: Dict[str, Any]) -> Dict[str, Any]:
         """Validate password confirmation."""
         if attrs.get('password') != attrs.get('password_confirm'):
@@ -71,11 +81,12 @@ class UserRegistrationSerializer(serializers.Serializer):
         password = validated_data.pop('password')
         email = validated_data.pop('email')
         
-        # Set default values
-        if 'role' not in validated_data or not validated_data.get('role'):
-            validated_data['user_role'] = 'student'
+        # Set default role if not provided or empty
+        role = validated_data.pop('role', None)
+        if role and role.strip():
+            validated_data['user_role'] = role.strip()
         else:
-            validated_data['user_role'] = validated_data.pop('role')
+            validated_data['user_role'] = 'student'
         
         validated_data['user_status'] = 'active'
         
