@@ -306,27 +306,27 @@ def get_current_user(request: Request) -> Response:
     PATCH /api/v1/auth/me - Update user profile
     """
     if request.method == 'GET':
-        serializer: UserProfileSerializer = UserProfileSerializer(request.user)
-        response_data: Dict[str, Any] = format_success_response(data=serializer.data)
-        return Response(response_data, status=status.HTTP_200_OK)
+        profile_serializer: UserProfileSerializer = UserProfileSerializer(request.user)
+        profile_data: Dict[str, Any] = format_success_response(data=profile_serializer.data)
+        return Response(profile_data, status=status.HTTP_200_OK)
     
     elif request.method == 'PATCH':
-        serializer: UserUpdateSerializer = UserUpdateSerializer(
+        update_serializer: UserUpdateSerializer = UserUpdateSerializer(
             instance=request.user,
             data=request.data,
             partial=True
         )
         
-        if serializer.is_valid():
-            user: User = serializer.save()
+        if update_serializer.is_valid():
+            user: User = update_serializer.save()
             user_data: Dict[str, Any] = UserProfileSerializer(user).data
-            response_data: Dict[str, Any] = format_success_response(data=user_data)
-            return Response(response_data, status=status.HTTP_200_OK)
+            patch_data: Dict[str, Any] = format_success_response(data=user_data)
+            return Response(patch_data, status=status.HTTP_200_OK)
         
         # Handle validation errors
         return format_error_response(
             code='VALIDATION_ERROR',
             message='Invalid input data',
-            details=serializer.errors,
+            details=update_serializer.errors,
             status_code=status.HTTP_400_BAD_REQUEST
         )

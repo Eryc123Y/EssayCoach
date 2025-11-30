@@ -42,7 +42,9 @@ class AuthAPITestCase(TestCase):
     ) -> User:
         """Helper method to create a test user."""
         # Get the next available user_id
-        max_id: Optional[int] = User.objects.aggregate(max_id=models.Max('user_id'))['max_id'] or 0
+        aggregate_data = User.objects.aggregate(max_id=models.Max('user_id'))
+        max_id_value: Optional[int] = aggregate_data.get('max_id')
+        max_id: int = max_id_value if isinstance(max_id_value, int) else 0
         user_id: int = max_id + 1
         
         # Determine user status based on is_active if not provided

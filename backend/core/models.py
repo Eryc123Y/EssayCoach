@@ -5,10 +5,20 @@
 #   * Make sure each ForeignKey and OneToOneField has `on_delete` set to the desired behavior
 #   * Remove `managed = False` lines if you wish to allow Django to create, modify, and delete the table
 # Feel free to rename the models, but don't rename db_table values or field names.
+from __future__ import annotations
+
+from datetime import datetime
+from decimal import Decimal
+from typing import Any, TYPE_CHECKING
+
 from django.contrib.auth.base_user import AbstractBaseUser, BaseUserManager
 from django.contrib.auth.models import PermissionsMixin
 from django.db import models
 from django.db.models import CheckConstraint, Q, UniqueConstraint
+
+
+if TYPE_CHECKING:
+    from django.db.models import Model
 
 
 class Class(models.Model):
@@ -30,7 +40,7 @@ class Class(models.Model):
 class Enrollment(models.Model):
     enrollment_id = models.AutoField(primary_key=True, db_comment='Unique identifier for each enrollment')
     user_id_user = models.ForeignKey('User', models.CASCADE, db_column='user_id_user')
-    class_id_class = models.ForeignKey(Class, models.RESTRICT, db_column='class_id_class')
+    class_id_class = models.ForeignKey('Class', models.RESTRICT, db_column='class_id_class')
     unit_id_unit = models.ForeignKey('Unit', models.RESTRICT, db_column='unit_id_unit')
     enrollment_time = models.DateTimeField(auto_now_add=True, db_comment='The time when the student is enrolled in the DBMS')
 
@@ -146,7 +156,7 @@ class Task(models.Model):
 class TeachingAssn(models.Model):
     teaching_assn_id = models.SmallAutoField(primary_key=True, db_comment='unique identifier')
     user_id_user = models.ForeignKey('User', models.CASCADE, db_column='user_id_user')
-    class_id_class = models.ForeignKey(Class, models.RESTRICT, db_column='class_id_class')
+    class_id_class = models.ForeignKey('Class', models.RESTRICT, db_column='class_id_class')
 
     class Meta:
         managed = True
@@ -169,32 +179,32 @@ class Unit(models.Model):
 
 
 class CoreUserManager(BaseUserManager):
-    def create_user(self, user_email, password=None, **extra_fields):
+    def create_user(self, user_email: str, password: str | None = None, **extra_fields: Any) -> User:
         if not user_email:
             raise ValueError("Users must have an email address")
         email = self.normalize_email(user_email)
-        user = self.model(user_email=email, **extra_fields)
+        user: User = self.model(user_email=email, **extra_fields)
         user.set_password(password)
         user.save(using=self._db)
         return user
 
-    def create_superuser(self, user_email, password, **extra_fields):
+    def create_superuser(self, user_email: str, password: str, **extra_fields: Any) -> User:
         extra_fields.setdefault('is_staff', True)
         extra_fields.setdefault('is_superuser', True)
         return self.create_user(user_email, password, **extra_fields)
 
 
 class User(AbstractBaseUser, PermissionsMixin):
-    user_id = models.AutoField(primary_key=True, db_column='user_id')
-    user_email = models.EmailField(unique=True, db_column='user_email')
-    user_fname = models.CharField(max_length=20, blank=True, null=True, db_column='user_fname')
-    user_lname = models.CharField(max_length=20, blank=True, null=True, db_column='user_lname')
-    user_role = models.CharField(max_length=10, blank=True, null=True, db_column='user_role')
-    user_status = models.CharField(max_length=15, blank=True, null=True, db_column='user_status')
-    password = models.CharField(max_length=255, db_column='user_credential')
-    is_active = models.BooleanField(default=True)
-    is_staff = models.BooleanField(default=False)
-    date_joined = models.DateTimeField(auto_now_add=True)
+    user_id: int = models.AutoField(primary_key=True, db_column='user_id')
+    user_email: str = models.EmailField(unique=True, db_column='user_email')
+    user_fname: str = models.CharField(max_length=20, blank=True, null=True, db_column='user_fname')
+    user_lname: str = models.CharField(max_length=20, blank=True, null=True, db_column='user_lname')
+    user_role: str = models.CharField(max_length=10, blank=True, null=True, db_column='user_role')
+    user_status: str = models.CharField(max_length=15, blank=True, null=True, db_column='user_status')
+    password: str = models.CharField(max_length=255, db_column='user_credential')
+    is_active: bool = models.BooleanField(default=True)
+    is_staff: bool = models.BooleanField(default=False)
+    date_joined: datetime = models.DateTimeField(auto_now_add=True)
 
     objects = CoreUserManager()
 
