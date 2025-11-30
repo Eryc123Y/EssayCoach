@@ -104,18 +104,23 @@ class UserLoginSerializer(serializers.Serializer):
             )
 
             if not user:
+                # Check if failure is due to inactive account
+                try:
+                    existing_user = User.objects.get(user_email=email)
+                    if existing_user.check_password(password) and not existing_user.is_active:
+                        raise serializers.ValidationError({
+                            'non_field_errors': [{
+                                'code': 'ACCOUNT_LOCKED',
+                                'message': 'Account is locked. Please contact administrator.'
+                            }]
+                        })
+                except User.DoesNotExist:
+                    pass
+
                 raise serializers.ValidationError({
                     'non_field_errors': [{
                         'code': 'INVALID_CREDENTIALS',
                         'message': 'Invalid email or password'
-                    }]
-                })
-
-            if not user.is_active:
-                raise serializers.ValidationError({
-                    'non_field_errors': [{
-                        'code': 'ACCOUNT_LOCKED',
-                        'message': 'Account is locked. Please contact administrator.'
                     }]
                 })
 
