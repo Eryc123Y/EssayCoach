@@ -1,7 +1,7 @@
 from django.core.management.base import BaseCommand
 from django.contrib.auth.models import Group
 from core.models import User, Unit, Class, Enrollment, TeachingAssn, MarkingRubric, RubricItem, RubricLevelDesc, Task, Submission, Feedback, FeedbackItem
-from django.db import transaction
+from django.db import transaction, connection
 from django.utils import timezone
 from django.contrib.auth.hashers import make_password
 import random
@@ -123,9 +123,14 @@ class Command(BaseCommand):
                 except Group.DoesNotExist:
                     pass
         
-        # Reset sequence
-        # with connection.cursor() as cursor:
-        #     cursor.execute("SELECT setval(pg_get_serial_sequence('user', 'user_id'), max(user_id)) FROM user;")
+        # Reset sequence to prevent duplicate key errors on next insert
+        # After bulk creating users with explicit user_id values, we need to advance
+        # the sequence to the next available value (max + 1)
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "SELECT setval(pg_get_serial_sequence('\"user\"', 'user_id'), "
+                "(SELECT COALESCE(MAX(user_id), 0) + 1 FROM \"user\"));"
+            )
 
 
     def create_units(self):
