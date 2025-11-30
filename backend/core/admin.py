@@ -22,6 +22,7 @@ https://docs.djangoproject.com/en/stable/ref/contrib/admin/#django.contrib.admin
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.utils.translation import gettext_lazy as _
+
 from .models import (
     User,
     Unit,
@@ -36,6 +37,7 @@ from .models import (
     Feedback,
     FeedbackItem,
 )
+
 
 class CustomUserAdmin(BaseUserAdmin):
     # Fields to display in the admin interface.

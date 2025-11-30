@@ -1,11 +1,14 @@
-from django.core.management.base import BaseCommand
-from django.contrib.auth.models import Group
-from core.models import User, Unit, Class, Enrollment, TeachingAssn, MarkingRubric, RubricItem, RubricLevelDesc, Task, Submission, Feedback, FeedbackItem
-from django.db import transaction, connection
-from django.utils import timezone
-from django.contrib.auth.hashers import make_password
 import random
 from datetime import timedelta
+
+from core.models import User, Unit, Class, Enrollment, TeachingAssn, MarkingRubric, RubricItem, RubricLevelDesc, Task, \
+    Submission, Feedback, FeedbackItem
+from django.contrib.auth.hashers import make_password
+from django.contrib.auth.models import Group
+from django.core.management.base import BaseCommand
+from django.db import transaction, connection
+from django.utils import timezone
+
 
 class Command(BaseCommand):
     help = 'Seeds the database with initial data'

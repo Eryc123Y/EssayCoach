@@ -3,11 +3,12 @@ Serializers for authentication app.
 Contains all validation logic for auth endpoints.
 """
 from typing import Dict, Any, Optional, TYPE_CHECKING
+
+from django.contrib.auth import authenticate
+from django.contrib.auth import get_user_model
+from django.contrib.auth.password_validation import validate_password
 from rest_framework import serializers
 from rest_framework.request import Request
-from django.contrib.auth import authenticate
-from django.contrib.auth.password_validation import validate_password
-from django.contrib.auth import get_user_model
 
 # Use TYPE_CHECKING to provide type hints while maintaining runtime flexibility.
 # This pattern allows type checkers (mypy/pyright) to see the concrete User model

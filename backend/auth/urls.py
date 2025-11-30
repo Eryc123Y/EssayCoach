@@ -2,6 +2,7 @@
 URL configuration for authentication app.
 """
 from django.urls import path
+
 from . import views
 
 app_name = 'auth'

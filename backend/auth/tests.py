@@ -1,13 +1,14 @@
 """
 Comprehensive tests for authentication API endpoints.
 """
-from typing import Optional, Dict, Any, TYPE_CHECKING
-from django.test import TestCase
+from typing import Optional, Any, TYPE_CHECKING
+
 from django.contrib.auth import get_user_model
-from django.db import models, connection
-from rest_framework.test import APIClient
+from django.db import models
+from django.test import TestCase
 from rest_framework import status
 from rest_framework.authtoken.models import Token
+from rest_framework.test import APIClient
 
 # Use TYPE_CHECKING to provide type hints while maintaining runtime flexibility.
 # This pattern allows type checkers (mypy/pyright) to see the concrete User model

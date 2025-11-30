@@ -2,9 +2,10 @@
 Utility functions for authentication app.
 """
 from typing import Dict, Any, Optional, TYPE_CHECKING
-from rest_framework.response import Response
-from rest_framework.authtoken.models import Token
+
 from django.contrib.auth import get_user_model
+from rest_framework.authtoken.models import Token
+from rest_framework.response import Response
 
 # Use TYPE_CHECKING to provide type hints while maintaining runtime flexibility.
 # This pattern allows type checkers (mypy/pyright) to see the concrete User model
