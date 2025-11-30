@@ -1,13 +1,21 @@
 """
 Utility functions for authentication app.
 """
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, TYPE_CHECKING
 from rest_framework.response import Response
-from rest_framework import status
 from rest_framework.authtoken.models import Token
 from django.contrib.auth import get_user_model
 
-User = get_user_model()
+# Use TYPE_CHECKING to provide type hints while maintaining runtime flexibility.
+# This pattern allows type checkers (mypy/pyright) to see the concrete User model
+# for accurate type checking, while Python runtime uses get_user_model() to support
+# custom user models as per Django best practices.
+if TYPE_CHECKING:
+    # Type checkers will see this import and know the exact User model type
+    from ..core.models import User
+else:
+    # Python runtime will execute this, maintaining flexibility for custom user models
+    User = get_user_model()
 
 
 def format_success_response(
@@ -79,4 +87,3 @@ def get_or_create_token(user: User) -> Token:
     """
     token, created = Token.objects.get_or_create(user=user)
     return token
-

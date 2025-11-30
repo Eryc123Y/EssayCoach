@@ -8,6 +8,7 @@ from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.authtoken.models import Token
+from typing import TYPE_CHECKING
 from django.contrib.auth import get_user_model
 
 from .serializers import (
@@ -24,7 +25,16 @@ from .utils import (
     get_or_create_token
 )
 
-User = get_user_model()
+# Use TYPE_CHECKING to provide type hints while maintaining runtime flexibility.
+# This pattern allows type checkers (mypy/pyright) to see the concrete User model
+# for accurate type checking, while Python runtime uses get_user_model() to support
+# custom user models as per Django best practices.
+if TYPE_CHECKING:
+    # Type checkers will see this import and know the exact User model type
+    from ..core.models import User
+else:
+    # Python runtime will execute this, maintaining flexibility for custom user models
+    User = get_user_model()
 
 
 @api_view(['POST'])

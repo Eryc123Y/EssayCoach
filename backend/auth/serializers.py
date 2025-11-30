@@ -2,14 +2,23 @@
 Serializers for authentication app.
 Contains all validation logic for auth endpoints.
 """
-from typing import Dict, Any, Optional
+from typing import Dict, Any, Optional, TYPE_CHECKING
 from rest_framework import serializers
 from rest_framework.request import Request
 from django.contrib.auth import authenticate
 from django.contrib.auth.password_validation import validate_password
 from django.contrib.auth import get_user_model
 
-User = get_user_model()
+# Use TYPE_CHECKING to provide type hints while maintaining runtime flexibility.
+# This pattern allows type checkers (mypy/pyright) to see the concrete User model
+# for accurate type checking, while Python runtime uses get_user_model() to support
+# custom user models as per Django best practices.
+if TYPE_CHECKING:
+    # Type checkers will see this import and know the exact User model type
+    from ..core.models import User
+else:
+    # Python runtime will execute this, maintaining flexibility for custom user models
+    User = get_user_model()
 
 
 class UserRegistrationSerializer(serializers.Serializer):
@@ -230,4 +239,3 @@ class UserUpdateSerializer(serializers.Serializer):
         
         instance.save()
         return instance
-
