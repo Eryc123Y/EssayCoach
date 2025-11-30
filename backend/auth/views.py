@@ -11,8 +11,7 @@ from django.contrib.auth import get_user_model
 from .serializers import (
     UserRegistrationSerializer,
     UserLoginSerializer,
-    PasswordResetRequestSerializer,
-    PasswordResetConfirmSerializer,
+    PasswordResetSerializer,
     PasswordChangeSerializer,
     UserProfileSerializer,
     UserUpdateSerializer
@@ -166,50 +165,24 @@ def logout(request):
 @permission_classes([AllowAny])
 def password_reset(request):
     """
-    Request password reset email.
+    Reset password with email and new password (MVP: simple verification).
     POST /api/v1/auth/password-reset
-    
-    Note: Always returns success to prevent email enumeration attacks.
     """
-    serializer = PasswordResetRequestSerializer(data=request.data)
-    
-    if not serializer.is_valid():
-        return format_error_response(
-            code='INVALID_INPUT',
-            message='Valid email address is required',
-            status_code=status.HTTP_400_BAD_REQUEST
-        )
-    
-    email = serializer.validated_data['email']
-    
-    # TODO: Implement email sending logic
-    # For now, just check if user exists (but don't reveal it)
-    user_exists = User.objects.filter(user_email=email).exists()
-    
-    if user_exists:
-        # TODO: Generate reset token and send email
-        # For now, just return success
-        pass
-    
-    # Always return success to prevent email enumeration
-    response_data = format_success_response(
-        data={},
-        message='Password reset email sent. Please check your inbox.'
-    )
-    return Response(response_data, status=status.HTTP_200_OK)
-
-
-@api_view(['POST'])
-@permission_classes([AllowAny])
-def password_reset_confirm(request):
-    """
-    Confirm password reset with token.
-    POST /api/v1/auth/password-reset/confirm
-    """
-    serializer = PasswordResetConfirmSerializer(data=request.data)
+    serializer = PasswordResetSerializer(data=request.data)
     
     if not serializer.is_valid():
         errors = serializer.errors
+        
+        # Check for email not found
+        if 'email' in errors:
+            email_error = errors['email']
+            if isinstance(email_error, list) and len(email_error) > 0:
+                if 'not registered' in str(email_error[0]).lower():
+                    return format_error_response(
+                        code='EMAIL_NOT_FOUND',
+                        message='Email is not registered',
+                        status_code=status.HTTP_404_NOT_FOUND
+                    )
         
         # Check for password mismatch
         if 'new_password' in errors or 'non_field_errors' in errors:
@@ -229,16 +202,26 @@ def password_reset_confirm(request):
             status_code=status.HTTP_400_BAD_REQUEST
         )
     
-    token = serializer.validated_data['token']
+    email = serializer.validated_data['email']
     new_password = serializer.validated_data['new_password']
     
-    # TODO: Implement token validation and password reset logic
-    # For now, return error indicating token validation is not implemented
-    return format_error_response(
-        code='INVALID_TOKEN',
-        message='Invalid or expired reset token',
-        status_code=status.HTTP_400_BAD_REQUEST
-    )
+    # Get user and reset password
+    try:
+        user = User.objects.get(user_email=email)
+        user.set_password(new_password)
+        user.save()
+        
+        response_data = format_success_response(
+            data={},
+            message='Password has been reset successfully'
+        )
+        return Response(response_data, status=status.HTTP_200_OK)
+    except User.DoesNotExist:
+        return format_error_response(
+            code='EMAIL_NOT_FOUND',
+            message='Email is not registered',
+            status_code=status.HTTP_404_NOT_FOUND
+        )
 
 
 @api_view(['PUT'])

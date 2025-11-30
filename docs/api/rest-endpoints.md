@@ -211,54 +211,22 @@ When not authenticated:
 ```
 
 ### POST /api/v1/auth/password-reset
-Request a password reset email.
+Reset password with email and new password (MVP: simple verification, no email required).
 
 **Request**
 
 ```json
 {
-  "email": "user@example.com"
-}
-```
-
-**Response** `200 OK`
-
-```json
-{
-  "success": true,
-  "message": "Password reset email sent. Please check your inbox."
-}
-```
-
-**Note:** This endpoint always returns success (even if email doesn't exist) to prevent email enumeration attacks.
-
-**Error Responses**
-
-When input is invalid:
-**Response** `400 Bad Request`
-
-```json
-{
-  "success": false,
-  "error": {
-    "code": "INVALID_INPUT",
-    "message": "Valid email address is required"
-  }
-}
-```
-
-### POST /api/v1/auth/password-reset/confirm
-Confirm password reset with token from email.
-
-**Request**
-
-```json
-{
-  "token": "reset-token-from-email",
+  "email": "user@example.com",
   "new_password": "newSecurePassword123!",
   "new_password_confirm": "newSecurePassword123!"
 }
 ```
+
+**Request Fields:**
+- `email` (required): User's email address
+- `new_password` (required): New password (must meet validation requirements)
+- `new_password_confirm` (required): Password confirmation (must match new_password)
 
 **Response** `200 OK`
 
@@ -271,15 +239,15 @@ Confirm password reset with token from email.
 
 **Error Responses**
 
-When token is invalid or expired:
-**Response** `400 Bad Request`
+When email is not registered:
+**Response** `404 Not Found`
 
 ```json
 {
   "success": false,
   "error": {
-    "code": "INVALID_TOKEN",
-    "message": "Invalid or expired reset token"
+    "code": "EMAIL_NOT_FOUND",
+    "message": "Email is not registered"
   }
 }
 ```
@@ -292,7 +260,42 @@ When passwords don't match:
   "success": false,
   "error": {
     "code": "INVALID_INPUT",
-    "message": "Password fields didn't match"
+    "message": "Password fields didn't match",
+    "details": {
+      "new_password": ["Password fields didn't match."]
+    }
+  }
+}
+```
+
+When password validation fails:
+**Response** `400 Bad Request`
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": "INVALID_INPUT",
+    "message": "Password does not meet requirements",
+    "details": {
+      "new_password": ["This password is too short. It must contain at least 8 characters."]
+    }
+  }
+}
+```
+
+When input is invalid:
+**Response** `400 Bad Request`
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": "INVALID_INPUT",
+    "message": "Invalid input data",
+    "details": {
+      "email": ["Enter a valid email address."]
+    }
   }
 }
 ```

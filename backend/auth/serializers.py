@@ -127,25 +127,21 @@ class UserLoginSerializer(serializers.Serializer):
             })
 
 
-class PasswordResetRequestSerializer(serializers.Serializer):
-    """Serializer for password reset request."""
+class PasswordResetSerializer(serializers.Serializer):
+    """Serializer for password reset (MVP: simple email + password reset)."""
     email = serializers.EmailField(required=True)
-
-    def validate_email(self, value):
-        """Validate email format."""
-        # Note: We don't check if email exists to prevent enumeration attacks
-        return value
-
-
-class PasswordResetConfirmSerializer(serializers.Serializer):
-    """Serializer for password reset confirmation."""
-    token = serializers.CharField(required=True)
     new_password = serializers.CharField(
         write_only=True,
         required=True,
         validators=[validate_password]
     )
     new_password_confirm = serializers.CharField(write_only=True, required=True)
+
+    def validate_email(self, value):
+        """Validate email exists."""
+        if not User.objects.filter(user_email=value).exists():
+            raise serializers.ValidationError("Email is not registered.")
+        return value
 
     def validate(self, attrs):
         """Validate password confirmation."""
