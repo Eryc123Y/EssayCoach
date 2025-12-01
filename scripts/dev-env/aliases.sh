@@ -39,6 +39,12 @@ alias createsuperuser='python manage.py createsuperuser'
 alias shell='python manage.py shell'
 alias dbshell='python manage.py dbshell'
 
+# Type checking aliases (mypy)
+alias mypy-check='cd backend && mypy . --show-error-codes --show-column-numbers'
+alias mypy-pretty='cd backend && mypy . --show-error-codes --pretty'
+alias mypy-file='cd backend && mypy'
+alias mypy-stats='cd backend && mypy . --show-error-codes --show-stats'
+
 # PostgreSQL aliases
 alias pg-connect='psql -U essayadmin -d essaycoach -h localhost -p $PGPORT'
 alias pg-logs='tail -f .dev_pg/logfile'
