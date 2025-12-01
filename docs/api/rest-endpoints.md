@@ -211,7 +211,9 @@ When not authenticated:
 ```
 
 ### POST /api/v1/auth/password-reset
-Reset password with email and new password (MVP: simple verification, no email required).
+Reset password with email and new password.
+
+> **Note:** This is a dummy endpoint for the MVP phase. It currently resets the password directly without verification. In the future, this will require email or SMS validation (e.g., sending a reset token).
 
 **Request**
 
@@ -301,7 +303,7 @@ When input is invalid:
 ```
 
 ### PUT /api/v1/auth/password-change
-Change password for authenticated user.
+Change password for authenticated user. Requires validation of the current password before setting a new one.
 
 **Headers:**
 - `Authorization: Token <token>` (required)

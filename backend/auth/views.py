@@ -251,8 +251,17 @@ def password_change(request: Request) -> Response:
     
     if serializer.is_valid():
         user: User = request.user
+        password: str = serializer.validated_data['current_password']
         new_password: str = serializer.validated_data['new_password']
         
+        # Double check password (defensive programming)
+        if not user.check_password(password):
+            return format_error_response(
+                code='INVALID_PASSWORD',
+                message='Current password is incorrect',
+                status_code=status.HTTP_400_BAD_REQUEST
+            )
+
         # Update password
         user.set_password(new_password)
         user.save()
