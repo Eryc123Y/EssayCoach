@@ -302,8 +302,19 @@ class Migration(migrations.Migration):
                 "managed": False,
             },
         ),
-        migrations.AlterModelTableComment(
-            name="user",
-            table_comment="A table for all user entities, including student, teacher, and admins.",
+        migrations.RunSQL(
+            sql=r'''
+            DO $$
+            BEGIN
+                IF EXISTS (
+                    SELECT FROM information_schema.tables 
+                    WHERE table_schema = 'public' 
+                    AND table_name = 'user'
+                ) THEN
+                    COMMENT ON TABLE public."user" IS 'A table for all user entities, including student, teacher, and admins.';
+                END IF;
+            END$$;
+            ''',
+            reverse_sql=migrations.RunSQL.noop,
         ),
     ]
