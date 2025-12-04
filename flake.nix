@@ -72,6 +72,8 @@
               mkdocs-git-revision-date-localized-plugin
               mkdocs-minify-plugin
               pymdown-extensions
+              langchain
+              langchain-deepseek
             ]))
             black
           ];
