@@ -1,6 +1,6 @@
 # REST API Endpoints (MVP)
 
-All endpoints are prefixed with `/api/v1` and use JSON for request and response bodies.  Authentication is handled via a JWT token supplied in the `Authorization: Bearer <token>` header.  Unless noted otherwise, responses follow the structure:
+All endpoints are prefixed with `/api/v1` and use JSON for request and response bodies. Authentication is handled via a Token supplied in the `Authorization: Token <token>` header (or `Authorization: Bearer <token>` for compatibility). Unless noted otherwise, responses follow the structure:
 
 ```json
 {
@@ -15,26 +15,126 @@ Error responses return `success: false` with an `error` object describing the is
 
 ## Authentication
 
-### POST /api/v1/auth/login
-Authenticate a user and return access and refresh tokens.
+All authentication endpoints are under `/api/v1/auth/`.
+
+### POST /api/v1/auth/register
+Register a new user account and return authentication token.
 
 **Request**
 
 ```json
 {
   "email": "user@example.com",
-  "password": "securePassword"
+  "password": "securePassword123!",
+  "password_confirm": "securePassword123!",
+  "first_name": "John",
+  "last_name": "Doe",
+  "role": "student"
 }
 ```
+
+**Request Fields:**
+- `email` (required): Valid email address
+- `password` (required): Password (must meet validation requirements)
+- `password_confirm` (required): Password confirmation (must match password)
+- `first_name` (optional): User's first name
+- `last_name` (optional): User's last name
+- `role` (optional): User role - `student`, `teacher`, or `admin` (defaults to `student`)
 
 **Response** `201 Created`
 
 ```json
 {
   "success": true,
+  "message": "User registered successfully",
   "data": {
-    "access": "...",
-    "refresh": "...",
+    "token": "9944b09199c62bcf9418ad846dd0e4bbdfc6ee4b",
+    "user": {
+      "id": 1,
+      "email": "user@example.com",
+      "first_name": "John",
+      "last_name": "Doe",
+      "role": "student",
+      "status": "active"
+    }
+  }
+}
+```
+
+**Error Responses**
+
+When email is already taken:
+**Response** `409 Conflict`
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": "EMAIL_TAKEN",
+    "message": "Email is already registered"
+  }
+}
+```
+
+When passwords don't match:
+**Response** `400 Bad Request`
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": "INVALID_INPUT",
+    "message": "Password fields didn't match",
+    "details": {
+      "password": ["Password fields didn't match."]
+    }
+  }
+}
+```
+
+When password validation fails:
+**Response** `400 Bad Request`
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": "INVALID_INPUT",
+    "message": "Password does not meet requirements",
+    "details": {
+      "password": ["This password is too short. It must contain at least 8 characters."]
+    }
+  }
+}
+```
+
+### POST /api/v1/auth/login
+Authenticate a user and return authentication token.
+
+**Request**
+
+```json
+{
+  "email": "user@example.com",
+  "password": "securePassword123!"
+}
+```
+
+**Response** `200 OK`
+
+```json
+{
+  "success": true,
+  "data": {
+    "token": "9944b09199c62bcf9418ad846dd0e4bbdfc6ee4b",
+    "user": {
+      "id": 1,
+      "email": "user@example.com",
+      "first_name": "John",
+      "last_name": "Doe",
+      "role": "student",
+      "status": "active"
+    }
   }
 }
 ```
@@ -54,7 +154,7 @@ When credentials are invalid:
 }
 ```
 
-When account is suspended:
+When account is locked/suspended:
 **Response** `423 Locked`
 
 ```json
@@ -62,7 +162,7 @@ When account is suspended:
   "success": false,
   "error": {
     "code": "ACCOUNT_LOCKED",
-    "message": "Account is locked due to multiple failed attempts. Try again later."
+    "message": "Account is locked. Please contact administrator."
   }
 }
 ```
@@ -75,62 +175,73 @@ When input is invalid:
   "success": false,
   "error": {
     "code": "INVALID_INPUT",
-    "message": "Invalid email format or missing password"
+    "message": "Email and password are required"
   }
 }
 ```
 
-When server error occurs:
-**Response** `500 Internal Server Error`
+### POST /api/v1/auth/logout
+Log out the current user and invalidate their token.
+
+**Headers:**
+- `Authorization: Token <token>` (required)
+
+**Response** `200 OK`
+
+```json
+{
+  "success": true,
+  "message": "Successfully logged out"
+}
+```
+
+**Error Responses**
+
+When not authenticated:
+**Response** `401 Unauthorized`
 
 ```json
 {
   "success": false,
   "error": {
-    "code": "SERVER_ERROR",
-    "message": "Internal server error. Please try again later."
+    "code": "AUTHENTICATION_REQUIRED",
+    "message": "Authentication credentials were not provided"
   }
 }
 ```
 
-### POST /api/v1/auth/register
-Register a new user and return access and refresh tokens.
+### POST /api/v1/auth/password-reset
+Reset password with email and new password.
+
+> **Note:** This is a dummy endpoint for the MVP phase. It currently resets the password directly without verification. In the future, this will require email or SMS validation (e.g., sending a reset token).
 
 **Request**
 
 ```json
 {
   "email": "user@example.com",
-  "password": "securePassword",
+  "new_password": "newSecurePassword123!",
+  "new_password_confirm": "newSecurePassword123!"
 }
 ```
 
-**Response** `201 Created`
+**Request Fields:**
+- `email` (required): User's email address
+- `new_password` (required): New password (must meet validation requirements)
+- `new_password_confirm` (required): Password confirmation (must match new_password)
+
+**Response** `200 OK`
 
 ```json
 {
   "success": true,
-  "message": "User registered successfully",
-  "data": {
-    "access": "...",
-    "refresh": "...",
-  }
-}
-```
-When email is already taken:
-**Response** `409 Conflict`
-
-```json
-{
-  "success": false,
-  "error": {
-    "code": "EMAIL_TAKEN",
-    "message": "Email is already registered"
-  }
+  "message": "Password has been reset successfully"
 }
 ```
 
-When email is non-existent:
+**Error Responses**
+
+When email is not registered:
 **Response** `404 Not Found`
 
 ```json
@@ -143,14 +254,67 @@ When email is non-existent:
 }
 ```
 
-### POST /api/v1/auth/refresh
-Exchange a refresh token for a new access token.
+When passwords don't match:
+**Response** `400 Bad Request`
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": "INVALID_INPUT",
+    "message": "Password fields didn't match",
+    "details": {
+      "new_password": ["Password fields didn't match."]
+    }
+  }
+}
+```
+
+When password validation fails:
+**Response** `400 Bad Request`
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": "INVALID_INPUT",
+    "message": "Password does not meet requirements",
+    "details": {
+      "new_password": ["This password is too short. It must contain at least 8 characters."]
+    }
+  }
+}
+```
+
+When input is invalid:
+**Response** `400 Bad Request`
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": "INVALID_INPUT",
+    "message": "Invalid input data",
+    "details": {
+      "email": ["Enter a valid email address."]
+    }
+  }
+}
+```
+
+### PUT /api/v1/auth/password-change
+Change password for authenticated user. Requires validation of the current password before setting a new one.
+
+**Headers:**
+- `Authorization: Token <token>` (required)
 
 **Request**
 
 ```json
 {
-  "refresh": "..."
+  "current_password": "oldPassword123!",
+  "new_password": "newSecurePassword123!",
+  "new_password_confirm": "newSecurePassword123!"
 }
 ```
 
@@ -159,16 +323,43 @@ Exchange a refresh token for a new access token.
 ```json
 {
   "success": true,
-  "data": {"access": "..."}
+  "message": "Password changed successfully"
 }
 ```
 
----
+**Error Responses**
 
-## Users
+When current password is incorrect:
+**Response** `400 Bad Request`
 
-### GET /api/v1/users/info
-Retrieve the current user's profile.
+```json
+{
+  "success": false,
+  "error": {
+    "code": "INVALID_PASSWORD",
+    "message": "Current password is incorrect"
+  }
+}
+```
+
+When not authenticated:
+**Response** `401 Unauthorized`
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": "AUTHENTICATION_REQUIRED",
+    "message": "Authentication credentials were not provided"
+  }
+}
+```
+
+### GET /api/v1/auth/me
+Retrieve the current authenticated user's profile.
+
+**Headers:**
+- `Authorization: Token <token>` (required)
 
 **Response** `200 OK`
 
@@ -178,24 +369,49 @@ Retrieve the current user's profile.
   "data": {
     "id": 1,
     "email": "user@example.com",
-    "firstName": "John",
-    "lastName": "Doe",
-    "role": "student"
+    "first_name": "John",
+    "last_name": "Doe",
+    "role": "student",
+    "status": "active",
+    "date_joined": "2024-01-15T10:30:00Z"
   }
 }
 ```
 
-### PATCH /api/v1/users/info
-Update selected profile fields for the current user.
+**Error Responses**
+
+When not authenticated:
+**Response** `401 Unauthorized`
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": "AUTHENTICATION_REQUIRED",
+    "message": "Authentication credentials were not provided"
+  }
+}
+```
+
+### PATCH /api/v1/auth/me
+Update the current authenticated user's profile.
+
+**Headers:**
+- `Authorization: Token <token>` (required)
 
 **Request**
 
 ```json
 {
-  "firstName": "Jane",
-  "lastName": "Smith"
+  "first_name": "Jane",
+  "last_name": "Smith"
 }
 ```
+
+**Request Fields:**
+- `first_name` (optional): User's first name
+- `last_name` (optional): User's last name
+- Note: `email` and `role` cannot be changed via this endpoint
 
 **Response** `200 OK`
 
@@ -204,8 +420,99 @@ Update selected profile fields for the current user.
   "success": true,
   "data": {
     "id": 1,
-    "firstName": "Jane",
-    "lastName": "Smith"
+    "email": "user@example.com",
+    "first_name": "Jane",
+    "last_name": "Smith",
+    "role": "student",
+    "status": "active"
+  }
+}
+```
+
+**Error Responses**
+
+When not authenticated:
+**Response** `401 Unauthorized`
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": "AUTHENTICATION_REQUIRED",
+    "message": "Authentication credentials were not provided"
+  }
+}
+```
+
+When validation fails:
+**Response** `400 Bad Request`
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": "VALIDATION_ERROR",
+    "message": "Invalid input data",
+    "details": {
+      "first_name": ["This field may not be longer than 20 characters."]
+    }
+  }
+}
+```
+
+---
+
+## Users
+
+**Note:** User management endpoints are under `/api/v1/users/`. For current user operations, use `/api/v1/auth/me` instead.
+
+### GET /api/v1/users/{user-id}
+Retrieve a specific user's public profile (admin/teacher only).
+
+**Headers:**
+- `Authorization: Token <token>` (required)
+- Requires `admin` or `teacher` role
+
+**Response** `200 OK`
+
+```json
+{
+  "success": true,
+  "data": {
+    "id": 1,
+    "email": "user@example.com",
+    "first_name": "John",
+    "last_name": "Doe",
+    "role": "student",
+    "status": "active"
+  }
+}
+```
+
+**Error Responses**
+
+When user not found:
+**Response** `404 Not Found`
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": "NOT_FOUND",
+    "message": "User with id 123 not found"
+  }
+}
+```
+
+When permission denied:
+**Response** `403 Forbidden`
+
+```json
+{
+  "success": false,
+  "error": {
+    "code": "PERMISSION_DENIED",
+    "message": "You do not have permission to perform this action"
   }
 }
 ```

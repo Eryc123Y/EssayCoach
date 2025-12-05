@@ -39,8 +39,8 @@ The development environment automatically:
 
 1. **Starts PostgreSQL**: Using the nix-provided PostgreSQL service
 2. **Creates Database**: Creates the `essaycoach` database if it doesn't exist
-3. **Loads Schema**: Applies the database schema from `docker/db/init/00_init.sql`
-4. **Loads Sample Data**: Populates the database with mock data from `docker/db/init/01_add_data.sql`
+3. **Applies Migrations**: Runs Django migrations to create/update the schema (`python manage.py migrate`)
+4. **Seeds Data**: Populates the database with mock data using the seed command (`python manage.py seed_db`)
 
 ### Manual Database Operations
 
@@ -89,20 +89,10 @@ PGHOST=localhost
 - **Automatic**: Django handles schema changes via migrations
 - **Safe**: Migrations are applied in controlled manner
 - **Reversible**: All migrations can be rolled back if needed
+- **Database Trigger Management**: Custom migrations (e.g., `0002_triggers.py`) handle database triggers and functions.
 
 #### Manual Schema Changes
-For direct database modifications:
-
-```sql
--- Connect as superuser
-psql -U postgres -d essaycoach
-
--- Example: Add a new column
-ALTER TABLE essays ADD COLUMN new_column TEXT;
-
--- Example: Create an index
-CREATE INDEX idx_essays_status ON essays(status);
-```
+Schema changes should primarily be done through Django models and migrations. Direct SQL modifications are discouraged to maintain consistency between the code and the database.
 
 ### Troubleshooting
 
@@ -152,5 +142,5 @@ psql -U postgres -d essaycoach < backup.sql
 
 #### Schema Documentation
 - Current schema: `docs/database/schema-overview.md`
-- Migration files: `backend/*/migrations/`
-- Initialization scripts: `docker/db/init/`
+- Migration files: `backend/core/migrations/`
+- Seed data logic: `backend/core/management/commands/seed_db.py`
