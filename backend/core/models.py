@@ -7,6 +7,8 @@
 # Feel free to rename the models, but don't rename db_table values or field names.
 from __future__ import annotations
 
+from datetime import datetime
+from decimal import Decimal
 from typing import Any, TYPE_CHECKING
 
 from django.contrib.auth.base_user import AbstractBaseUser, BaseUserManager
@@ -193,16 +195,16 @@ class CoreUserManager(BaseUserManager):
 
 
 class User(AbstractBaseUser, PermissionsMixin):
-    user_id: models.AutoField = models.AutoField(primary_key=True, db_column='user_id')
-    user_email: models.EmailField = models.EmailField(unique=True, db_column='user_email')
-    user_fname: models.CharField = models.CharField(max_length=20, blank=True, null=True, db_column='user_fname')
-    user_lname: models.CharField = models.CharField(max_length=20, blank=True, null=True, db_column='user_lname')
-    user_role: models.CharField = models.CharField(max_length=10, blank=True, null=True, db_column='user_role')
-    user_status: models.CharField = models.CharField(max_length=15, blank=True, null=True, db_column='user_status')
-    password: models.CharField = models.CharField(max_length=255, db_column='user_credential')
-    is_active: models.BooleanField = models.BooleanField(default=True)
-    is_staff: models.BooleanField = models.BooleanField(default=False)
-    date_joined: models.DateTimeField = models.DateTimeField(auto_now_add=True)
+    user_id: int = models.AutoField(primary_key=True, db_column='user_id')
+    user_email: str = models.EmailField(unique=True, db_column='user_email')
+    user_fname: str = models.CharField(max_length=20, blank=True, null=True, db_column='user_fname')
+    user_lname: str = models.CharField(max_length=20, blank=True, null=True, db_column='user_lname')
+    user_role: str = models.CharField(max_length=10, blank=True, null=True, db_column='user_role')
+    user_status: str = models.CharField(max_length=15, blank=True, null=True, db_column='user_status')
+    password: str = models.CharField(max_length=255, db_column='user_credential')
+    is_active: bool = models.BooleanField(default=True)
+    is_staff: bool = models.BooleanField(default=False)
+    date_joined: datetime = models.DateTimeField(auto_now_add=True)
 
     objects = CoreUserManager()
 

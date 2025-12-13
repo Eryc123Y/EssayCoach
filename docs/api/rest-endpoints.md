@@ -603,10 +603,10 @@ Fetch the rubric associated with a task.
 
 ## Feedback
 
-### GET /api/v1/core/submissions/{submissionId}/feedback
+### GET /api/v1/submissions/{submissionId}/feedback
 Return AI and human feedback for a submission.
 
-### POST /api/v1/core/submissions/{submissionId}/feedback
+### POST /api/v1/submissions/{submissionId}/feedback
 Add or update coach feedback for the submission.
 
 **Request**
@@ -627,7 +627,7 @@ Add or update coach feedback for the submission.
 
 ## Instant Feedback
 
-### POST /api/v1/core/instant-feedback
+### POST /api/v1/instant-feedback
 Provide immediate AI evaluation for ad‑hoc writing practice. Each request includes the text and an optional rubric.
 
 **Request**
@@ -668,52 +668,4 @@ Provide immediate AI evaluation for ad‑hoc writing practice. Each request incl
 - `403 Forbidden` – Authenticated but not permitted
 - `404 Not Found` – Resource does not exist
 - `500 Internal Server Error` – Unexpected server error
-
----
-
-## Changelog
-
-### Version 1.0.0 - December 13, 2025
-
-#### Added
-- ✅ Basic CRUD endpoints for all core models (User, Unit, Class, Enrollment, Task, Submission, Feedback, MarkingRubric, RubricItem, RubricLevelDesc, FeedbackItem, TeachingAssn)
-- ✅ Authentication endpoints (register, login, logout)
-- ✅ RESTful resource routing at `/api/v1/core/`
-- ✅ JSON request/response format
-- ✅ Standard HTTP method support (GET, POST, PUT, PATCH, DELETE)
-- ✅ Token-based authentication via Authorization header
-- ✅ Default pagination for list endpoints
-
-#### Implemented Features
-- ✅ List all resources: `GET /api/v1/core/{resource}/`
-- ✅ Retrieve by ID: `GET /api/v1/core/{resource}/{id}/`
-- ✅ Create resource: `POST /api/v1/core/{resource}/`
-- ✅ Full update: `PUT /api/v1/core/{resource}/{id}/`
-- ✅ Partial update: `PATCH /api/v1/core/{resource}/{id}/`
-- ✅ Delete resource: `DELETE /api/v1/core/{resource}/{id}/`
-
-#### Planned (Not Yet Implemented)
-- ❌ Advanced filtering by field values
-- ❌ Full-text search across resources
-- ❌ Result ordering/sorting
-- ❌ Custom permissions (IsOwnerOrReadOnly, IsEducatorOrAdmin)
-- ❌ Custom ViewSet actions (@action decorators)
-- ❌ Nested serializers with related object expansion
-- ❌ Computed/calculated read-only fields
-- ❌ Input validation logic in serializers
-- ❌ Role-based access control (RBAC)
-- ❌ API response envelope standardization
-
-#### Known Limitations
-- No filtering support on list endpoints
-- No search functionality
-- No sorting/ordering configuration
-- Basic serializers without relationship expansion
-- Limited permission structure (authentication-only)
-- No custom business logic actions
-
----
-
-### Version 0.5.0 - In Development
-Initial API specification and architecture planning phase. See documentation files for planned features.
 
