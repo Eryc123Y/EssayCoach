@@ -111,8 +111,11 @@ SPECTACULAR_SETTINGS = {
     "TAGS": [
         {"name": "Authentication", "description": "User authentication and authorization endpoints"},
         {"name": "Users", "description": "User management endpoints"},
-        {"name": "Education", "description": "Educational resources (Units, Classes, Enrollments)"},
-        {"name": "Assessment", "description": "Assessment and grading (Tasks, Submissions, Rubrics, Feedback)"},
+        {"name": "Courses", "description": "Course structure management (Units, Classes, Enrollments, Teaching Assignments)"},
+        {"name": "Rubrics", "description": "Rubric configuration and management (Marking Rubrics, Rubric Items, Rubric Level Descriptions)"},
+        {"name": "Tasks", "description": "Assignment and task management"},
+        {"name": "Submissions", "description": "Student submission management"},
+        {"name": "Feedback", "description": "Feedback and evaluation management (Feedbacks, Feedback Items)"},
     ],
     "SWAGGER_UI_SETTINGS": {
         "deepLinking": True,
