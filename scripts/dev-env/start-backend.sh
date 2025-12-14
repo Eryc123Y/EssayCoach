@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+set -Eeuo pipefail
 cd backend
 
 # Use the current shell's environment directly
@@ -101,11 +102,7 @@ fi
 # Test if Django is available in the current environment
 if python -c "import django; print(f'Django {django.get_version()} found')" 2>/dev/null; then
     echo "Django is available, running migrations and starting server..."
-    
-    # Create migrations for any model changes
-    echo "Creating new migrations if needed..."
-    python manage.py makemigrations --noinput
-    
+
     # Run database migrations
     echo "Running Django migrations..."
     python manage.py migrate --noinput

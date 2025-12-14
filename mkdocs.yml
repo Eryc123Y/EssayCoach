@@ -97,10 +97,10 @@ nav:
     - Environment Setup: development/environment-setup.md
     - Debugging Guide: development/debugging.md
     - Contributing: development/contributing.md
-  - API Reference:
-    - REST Endpoints: api/rest-endpoints.md
-    - WebSocket Events: api/websocket-events.md
-    - Error Handling: api/error-handling.md
+  - Agentic Workflow:
+    - Agentic Design Plans: agentic-workflow/agentic-design.md
+    - Workflow Orchestration: agentic-workflow/workflow-orchestration.md
+    - Technique Stacks: agentic-workflow/technique-stacks.md
 
 # Markdown extensions for technical content
 markdown_extensions:
