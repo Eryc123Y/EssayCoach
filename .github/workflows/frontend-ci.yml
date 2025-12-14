@@ -1,0 +1,73 @@
+name: Frontend CI
+
+on:
+  pull_request:
+    paths:
+      - 'frontend/**'
+      - '.github/workflows/frontend-ci.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'frontend/**'
+      - '.github/workflows/frontend-ci.yml'
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-frontend
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    name: Lint, type-check, and build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    env:
+      NEXT_TELEMETRY_DISABLED: 1
+      CI: true
+
+    steps:
+      # Checkout repository
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          # "Last updated time" and other git log-related information require fetching all commit records.
+          fetch-depth: 0
+
+      # Setup Node 22 and enable npm caching
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      # Install dependencies (prefer npm ci when lockfile exists)
+      - name: Install Dependencies
+        run: |
+          if [ -f package-lock.json ]; then
+            npm ci --no-audit --no-fund
+          else
+            npm install --no-audit --no-fund
+          fi
+
+      # Cache Next.js build cache for faster builds
+      - name: Cache Next.js build cache
+        uses: actions/cache@v4
+        with:
+          path: frontend/.next/cache
+          key: ${{ runner.os }}-nextjs-${{ hashFiles('frontend/package.json', 'frontend/next.config.ts') }}
+          restore-keys: |
+            ${{ runner.os }}-nextjs-
+
+      # Lint using Next.js ESLint integration
+      - name: Lint
+        run: npm run lint
+
+      # TypeScript type-check (no emit)
+      - name: Type check
+        run: npx tsc --noEmit
+
+      # Production build
+      - name: Build
+        run: npm run build

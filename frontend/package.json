@@ -18,7 +18,11 @@
     "prepare": "husky"
   },
   "lint-staged": {
-    "**/*.{js,jsx,tsx,ts,css,less,scss,sass}": [
+    "*.{js,jsx,ts,tsx}": [
+      "eslint --fix",
+      "prettier --write --no-error-on-unmatched-pattern"
+    ],
+    "*.{css,less,scss,sass,md,json,yml,yaml}": [
       "prettier --write --no-error-on-unmatched-pattern"
     ]
   },
@@ -65,8 +69,6 @@
     "clsx": "^2.1.1",
     "cmdk": "^1.1.1",
     "date-fns": "^4.1.0",
-    "eslint": "8.48.0",
-    "eslint-config-next": "15.1.0",
     "input-otp": "^1.4.2",
     "kbar": "^0.1.0-beta.45",
     "lucide-react": "^0.476.0",
@@ -105,6 +107,8 @@
     "@types/sort-by": "^1.2.3",
     "@types/uuid": "^10.0.0",
     "@typescript-eslint/eslint-plugin": "^6.11.0",
+    "eslint": "8.48.0",
+    "eslint-config-next": "15.1.0",
     "husky": "^9.1.7",
     "lint-staged": "^15.2.11",
     "prettier": "3.4.2",
