@@ -141,8 +141,8 @@ class WorkflowRunStatusView(APIView):
         },
     )
     def get(self, request, workflow_run_id: str) -> Response:
-        client = DifyClient()
         try:
+            client = DifyClient()
             result = client.get_workflow_run(workflow_run_id)
         except DifyClientError as exc:
             return Response({"error": str(exc)}, status=status.HTTP_502_BAD_GATEWAY)
