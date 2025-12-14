@@ -49,7 +49,7 @@ This project uses [Nix](https://nixos.org/) to provide a reproducible developmen
    # This starts both the Django backend and Next.js frontend using Overmind.
    ```
 
-   - Frontend: http://localhost:3000
+   - Frontend: http://localhost:5100
    - Backend API: http://localhost:8000
    - PostgreSQL: localhost:5432
 
