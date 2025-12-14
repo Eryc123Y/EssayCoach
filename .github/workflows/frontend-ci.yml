@@ -1,0 +1,71 @@
+name: Frontend CI
+
+on:
+  pull_request:
+    paths:
+      - 'frontend/**'
+      - '.github/workflows/frontend-ci.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'frontend/**'
+      - '.github/workflows/frontend-ci.yml'
+
+# Prevent duplicate runs for the same branch
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}-frontend
+  cancel-in-progress: true
+
+jobs:
+  checks:
+    name: Lint, type-check, and build
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    env:
+      NEXT_TELEMETRY_DISABLED: 1
+      CI: true
+
+    steps:
+      # 1) Checkout code
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # 2) Setup Node and pnpm with caching
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'pnpm'
+          cache-dependency-path: frontend/pnpm-lock.yaml
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 9
+
+      # 3) Install deps (reproducible)
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      # 4) Cache Next.js build cache to speed up subsequent builds
+      - name: Cache Next.js build cache
+        uses: actions/cache@v4
+        with:
+          path: frontend/.next/cache
+          key: ${{ runner.os }}-nextjs-${{ hashFiles('frontend/pnpm-lock.yaml', 'frontend/next.config.ts') }}
+          restore-keys: |
+            ${{ runner.os }}-nextjs-
+
+      # 5) Lint (use lint:strict to fail on warnings if desired)
+      - name: Lint
+        run: pnpm lint
+
+      # 6) TypeScript type-check (no emit)
+      - name: Type check
+        run: pnpm exec tsc --noEmit
+
+      # 7) Build to ensure production build stays healthy
+      - name: Build
+        run: pnpm build
