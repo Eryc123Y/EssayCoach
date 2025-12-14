@@ -7,6 +7,7 @@ from typing import Dict, Any, Optional, TYPE_CHECKING
 from django.contrib.auth import authenticate
 from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
+from drf_spectacular.utils import extend_schema_serializer
 from rest_framework import serializers
 from rest_framework.request import Request
 
@@ -22,8 +23,36 @@ else:
     User = get_user_model()
 
 
+@extend_schema_serializer(
+    examples=[
+        {
+            "email": "student@example.com",
+            "password": "SecurePassword123!",
+            "password_confirm": "SecurePassword123!",
+            "first_name": "John",
+            "last_name": "Doe",
+            "role": "student"
+        }
+    ]
+)
 class UserRegistrationSerializer(serializers.Serializer):
-    """Serializer for user registration with validation."""
+    """
+    Serializer for user registration with validation.
+    
+    Fields:
+    - email: Email address (required, max 254 chars, must be unique)
+    - password: Password (required, write-only, must pass Django password validation)
+    - password_confirm: Password confirmation (required, write-only, must match password)
+    - first_name: First name (optional, max 20 chars)
+    - last_name: Last name (optional, max 20 chars)
+    - role: User role - 'student', 'lecturer', or 'admin' (optional, defaults to 'student')
+    
+    Validation:
+    - Email must be unique
+    - Passwords must match
+    - Password must meet Django's password validation requirements
+    - Role must be one of: 'student', 'lecturer', 'admin'
+    """
     email = serializers.EmailField(required=True, max_length=254)
     password = serializers.CharField(
         write_only=True,
@@ -105,8 +134,30 @@ class UserRegistrationSerializer(serializers.Serializer):
         return user
 
 
+@extend_schema_serializer(
+    examples=[
+        {
+            "email": "student@example.com",
+            "password": "SecurePassword123!"
+        }
+    ]
+)
 class UserLoginSerializer(serializers.Serializer):
-    """Serializer for user login with validation."""
+    """
+    Serializer for user login with validation.
+    
+    Fields:
+    - email: Email address (required)
+    - password: Password (required, write-only)
+    
+    Validation:
+    - Email and password are required
+    - Credentials must be valid
+    - Account must be active (not locked)
+    
+    Returns:
+    - user: Authenticated user object (in validated_data)
+    """
     email = serializers.EmailField(required=True)
     password = serializers.CharField(write_only=True, required=True)
 
@@ -156,8 +207,29 @@ class UserLoginSerializer(serializers.Serializer):
             })
 
 
+@extend_schema_serializer(
+    examples=[
+        {
+            "email": "student@example.com",
+            "new_password": "NewSecurePassword123!",
+            "new_password_confirm": "NewSecurePassword123!"
+        }
+    ]
+)
 class PasswordResetSerializer(serializers.Serializer):
-    """Serializer for password reset (MVP: simple email + password reset)."""
+    """
+    Serializer for password reset (MVP: simple email + password reset).
+    
+    Fields:
+    - email: Email address (required, must exist in system)
+    - new_password: New password (required, write-only, must pass Django password validation)
+    - new_password_confirm: New password confirmation (required, write-only, must match new_password)
+    
+    Validation:
+    - Email must be registered
+    - Passwords must match
+    - New password must meet Django's password validation requirements
+    """
     email = serializers.EmailField(required=True)
     new_password = serializers.CharField(
         write_only=True,
@@ -181,8 +253,29 @@ class PasswordResetSerializer(serializers.Serializer):
         return attrs
 
 
+@extend_schema_serializer(
+    examples=[
+        {
+            "current_password": "OldPassword123!",
+            "new_password": "NewSecurePassword123!",
+            "new_password_confirm": "NewSecurePassword123!"
+        }
+    ]
+)
 class PasswordChangeSerializer(serializers.Serializer):
-    """Serializer for password change (authenticated user)."""
+    """
+    Serializer for password change (authenticated user).
+    
+    Fields:
+    - current_password: Current password (required, write-only)
+    - new_password: New password (required, write-only, must pass Django password validation)
+    - new_password_confirm: New password confirmation (required, write-only, must match new_password)
+    
+    Validation:
+    - Current password must be correct
+    - Passwords must match
+    - New password must meet Django's password validation requirements
+    """
     current_password = serializers.CharField(write_only=True, required=True)
     new_password = serializers.CharField(
         write_only=True,
@@ -211,8 +304,32 @@ class PasswordChangeSerializer(serializers.Serializer):
         return attrs
 
 
+@extend_schema_serializer(
+    examples=[
+        {
+            "id": 1,
+            "email": "student@example.com",
+            "first_name": "John",
+            "last_name": "Doe",
+            "role": "student",
+            "status": "active",
+            "date_joined": "2024-01-15T10:30:00Z"
+        }
+    ]
+)
 class UserProfileSerializer(serializers.ModelSerializer):
-    """Serializer for user profile information."""
+    """
+    Serializer for user profile information (read-only).
+    
+    Fields (all read-only):
+    - id: User ID (mapped from user_id)
+    - email: Email address (mapped from user_email)
+    - first_name: First name (mapped from user_fname)
+    - last_name: Last name (mapped from user_lname)
+    - role: User role - 'student', 'lecturer', or 'admin' (mapped from user_role)
+    - status: Account status - 'active', 'suspended', or 'unregistered' (mapped from user_status)
+    - date_joined: Account creation timestamp
+    """
     id = serializers.IntegerField(source='user_id', read_only=True)
     email = serializers.EmailField(source='user_email', read_only=True)
     first_name = serializers.CharField(source='user_fname', read_only=True)
@@ -226,8 +343,25 @@ class UserProfileSerializer(serializers.ModelSerializer):
         fields = ['id', 'email', 'first_name', 'last_name', 'role', 'status', 'date_joined']
 
 
+@extend_schema_serializer(
+    examples=[
+        {
+            "first_name": "Jane",
+            "last_name": "Smith"
+        }
+    ]
+)
 class UserUpdateSerializer(serializers.Serializer):
-    """Serializer for updating user profile (only first_name and last_name)."""
+    """
+    Serializer for updating user profile (only first_name and last_name).
+    
+    Fields (all optional):
+    - first_name: First name (optional, max 20 chars, can be blank/null)
+    - last_name: Last name (optional, max 20 chars, can be blank/null)
+    
+    Note: Only first_name and last_name can be updated via this serializer.
+    Other fields (email, role, status) require different endpoints or admin access.
+    """
     first_name = serializers.CharField(
         max_length=20,
         required=False,
