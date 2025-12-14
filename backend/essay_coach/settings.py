@@ -47,10 +47,6 @@ INSTALLED_APPS = [
     "core",
     "auth",
     "analytics",
-    "essay_submission",
-    "feedback_report",
-    "grader_comments",
-    "notification",
     'ai_feedback',
 ]
 
