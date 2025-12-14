@@ -67,25 +67,26 @@ class WorkflowRunView(APIView):
     def post(self, request) -> Response:
         serializer = DifyWorkflowRunSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
-        client = DifyClient()
-        workflow_id = client.default_workflow_id or settings.DIFY_DEFAULT_WORKFLOW_ID
-        if not workflow_id:
-            return Response(
-                {"detail": "DIFY_WORKFLOW_ID must be configured in the environment."},
-                status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            )
-
-        user_id = serializer.validated_data["user_id"]
-        inputs = {
-            "essay_question": serializer.validated_data["essay_question"],
-            "essay_content": serializer.validated_data["essay_content"],
-            "language": serializer.validated_data.get("language", "English"),
-            "essay_rubric": client.build_rubric_file_input(
-                client.get_rubric_upload_id(user_id)
-            ),
-        }
 
         try:
+            client = DifyClient()
+            workflow_id = client.default_workflow_id or settings.DIFY_DEFAULT_WORKFLOW_ID
+            if not workflow_id:
+                return Response(
+                    {"detail": "DIFY_WORKFLOW_ID must be configured in the environment."},
+                    status=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                )
+
+            user_id = serializer.validated_data["user_id"]
+            inputs = {
+                "essay_question": serializer.validated_data["essay_question"],
+                "essay_content": serializer.validated_data["essay_content"],
+                "language": serializer.validated_data.get("language", "English"),
+                "essay_rubric": client.build_rubric_file_input(
+                    client.get_rubric_upload_id(user_id)
+                ),
+            }
+
             result = client.run_workflow(
                 inputs=inputs,
                 user=user_id,

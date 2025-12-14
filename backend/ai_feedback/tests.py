@@ -8,8 +8,13 @@ from django.test import TestCase
 from rest_framework import status
 from rest_framework.authtoken.models import Token
 from rest_framework.test import APIClient
+from typing import TYPE_CHECKING
 
-User = get_user_model()
+
+if TYPE_CHECKING:
+    from ..core.models import User as CoreUser
+else:
+    CoreUser = get_user_model()
 
 
 class DifyWorkflowAPITestCase(TestCase):
@@ -21,7 +26,7 @@ class DifyWorkflowAPITestCase(TestCase):
         self.base_url = "/api/v1/ai-feedback/agent/workflows/"
 
         # Create test user and authenticate
-        self.user = User.objects.create_user(
+        self.user = CoreUser.objects.create_user(
             user_email="test@example.com",
             password="TestPassword123!",
             user_fname="Test",
@@ -29,7 +34,7 @@ class DifyWorkflowAPITestCase(TestCase):
             user_role="student",
         )
         self.token = Token.objects.create(user=self.user)
-        self.client.credentials(HTTP_AUTHORIZATION=f"Token {self.token.key}")
+        self.client.credentials(HTTP_AUTHORIZATION=f"Token {self.token.key}")  # type: ignore[attr-defined]
 
         # Sample essay data provided by user
         self.sample_essay_question = (
@@ -200,7 +205,7 @@ class WorkflowRunViewTests(DifyWorkflowAPITestCase):
 
     def test_run_workflow_unauthorized(self):
         """Test that unauthenticated requests are rejected."""
-        self.client.credentials()  # Remove auth
+        self.client.credentials()  # Remove auth  # type: ignore[attr-defined]
         url = f"{self.base_url}run/"
         payload = self._get_valid_payload()
         response = self.client.post(url, payload, format="json")
@@ -291,7 +296,7 @@ class WorkflowRunStatusViewTests(DifyWorkflowAPITestCase):
 
     def test_get_workflow_status_unauthorized(self):
         """Test that unauthenticated requests are rejected."""
-        self.client.credentials()  # Remove auth
+        self.client.credentials()  # Remove auth  # type: ignore[attr-defined]
         url = f"{self.base_url}run/test-run-id-12345/status/"
         response = self.client.get(url)
         # DRF returns 403 Forbidden for unauthenticated requests with IsAuthenticated permission
