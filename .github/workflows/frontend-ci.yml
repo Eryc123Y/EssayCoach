@@ -30,6 +30,9 @@ jobs:
       # Checkout repository
       - name: Checkout
         uses: actions/checkout@v4
+        with:
+          # "Last updated time" and other git log-related information require fetching all commit records.
+          fetch-depth: 0
 
       # Setup Node 22 and enable npm caching
       - name: Setup Node
@@ -39,9 +42,14 @@ jobs:
           cache: 'npm'
           cache-dependency-path: frontend/package-lock.json
 
-      # Install dependencies (uses package-lock.json if present)
-      - name: Install dependencies
-        run: npm install --no-audit --no-fund
+      # Install dependencies (prefer npm ci when lockfile exists)
+      - name: Install Dependencies
+        run: |
+          if [ -f package-lock.json ]; then
+            npm ci --no-audit --no-fund
+          else
+            npm install --no-audit --no-fund
+          fi
 
       # Cache Next.js build cache for faster builds
       - name: Cache Next.js build cache
