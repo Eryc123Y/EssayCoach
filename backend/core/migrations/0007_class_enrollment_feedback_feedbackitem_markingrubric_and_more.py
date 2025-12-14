@@ -6,7 +6,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ("core", "0005_widen_user_email_len"),
+        ("core", "0006_widen_user_email_len"),
     ]
 
     operations = [

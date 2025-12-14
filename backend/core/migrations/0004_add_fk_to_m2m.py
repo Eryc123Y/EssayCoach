@@ -62,7 +62,7 @@ END$$;
 
 class Migration(migrations.Migration):
     dependencies = [
-        ('core', '0002_default_groups'),
+        ('core', '0003_default_groups'),
         ('auth', '0012_alter_user_first_name_max_length'),
     ]
 

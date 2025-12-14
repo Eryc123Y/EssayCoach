@@ -7,7 +7,7 @@ class Migration(migrations.Migration):
 
     dependencies = [
         ("core", "0003_default_groups"),
-        ("core", "0007_alter_user_table_comment"),
+        ("core", "0008_alter_user_table_comment"),
     ]
 
     operations = []

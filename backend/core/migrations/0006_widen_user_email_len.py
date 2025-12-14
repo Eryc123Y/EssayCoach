@@ -34,7 +34,7 @@ END$$;
 
 class Migration(migrations.Migration):
     dependencies = [
-        ('core', '0004_setup_permissions'),
+        ('core', '0005_setup_permissions'),
     ]
 
     operations = [
