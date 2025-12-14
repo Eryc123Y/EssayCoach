@@ -14,22 +14,27 @@ EssayCoach is designed as a modern web application with the following architectu
 ## 🚀 Quick Start for Developers
 
 ### Environment Setup
+
 Enter the development environment:
+
 ```bash
 nix develop
 ```
 
 This sets up:
+
 - PostgreSQL database with schema and mock data
 - Django development environment
 - Frontend development tools (Node.js, pnpm, Next.js)
 - All documentation tools (MkDocs, material theme)
 
 ### Start Documentation Server
+
 ```bash
 mkdocs serve --dev-addr=0.0.0.0:8000
 ```
-Visit http://localhost:8000 to view the documentation locally.
+
+Visit <http://localhost:8000> to view the documentation locally.
 
 ## 📁 Documentation Structure
 
@@ -39,7 +44,7 @@ This documentation is organized for developers and contributors:
 - **Database Schema**: Complete database design with relationships and constraints
 - **Backend Deep Dive**: Django models, serializers, views, and async processing
 - **Frontend Architecture**: Next.js component structure and state management
-- **API Reference**: REST endpoints and WebSocket events
+- **Agentic Workflow**: Plans for agentic design, orchestration, and technique stacks
 - **Development Guide**: Setup instructions and contribution guidelines
 
 ## 🔄 Development Workflow
@@ -66,4 +71,4 @@ This documentation is organized for developers and contributors:
 - [System Architecture](architecture/system-architecture.md)
 - [Database Design](database/schema-overview.md)
 - [Database Configuration](database/configuration.md)
-- [API Documentation](api/rest-endpoints.md)
+- [Agentic Workflow](agentic-workflow/agentic-design.md)
