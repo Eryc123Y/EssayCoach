@@ -42,6 +42,7 @@ INSTALLED_APPS = [
     "rest_framework",
     "rest_framework.authtoken", # For token-based authentication
     "django_filters",
+    "drf_spectacular",  # OpenAPI 3.0 schema generation
     # Custom Apps
     "core",
     "auth",
@@ -74,6 +75,7 @@ REST_FRAMEWORK = {
     "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
     "PAGE_SIZE": 50,
     "DATETIME_FORMAT": "%Y-%m-%d %H:%M:%S",
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
     "DEFAULT_RENDERER_CLASSES": [
         "rest_framework.renderers.JSONRenderer",
         "rest_framework.renderers.BrowsableAPIRenderer",
@@ -91,6 +93,37 @@ REST_FRAMEWORK = {
         "rest_framework.authentication.BasicAuthentication",
         "rest_framework.authentication.TokenAuthentication",
     ],
+}
+
+# drf-spectacular settings for OpenAPI 3.0 documentation
+SPECTACULAR_SETTINGS = {
+    "TITLE": "EssayCoach API",
+    "DESCRIPTION": "Comprehensive REST API documentation for EssayCoach - An intelligent essay feedback platform that leverages AI to provide students with instant, in-depth, multi-dimensional essay feedback.",
+    "VERSION": "1.0.0",
+    "SERVE_INCLUDE_SCHEMA": False,
+    "COMPONENT_SPLIT_REQUEST": True,
+    "SCHEMA_PATH_PREFIX": "/api/v1",
+    "AUTHENTICATION_WHITELIST": [
+        "rest_framework.authentication.SessionAuthentication",
+        "rest_framework.authentication.BasicAuthentication",
+        "rest_framework.authentication.TokenAuthentication",
+    ],
+    "TAGS": [
+        {"name": "Authentication", "description": "User authentication and authorization endpoints"},
+        {"name": "Users", "description": "User management endpoints"},
+        {"name": "Courses", "description": "Course structure management (Units, Classes, Enrollments, Teaching Assignments)"},
+        {"name": "Rubrics", "description": "Rubric configuration and management (Marking Rubrics, Rubric Items, Rubric Level Descriptions)"},
+        {"name": "Tasks", "description": "Assignment and task management"},
+        {"name": "Submissions", "description": "Student submission management"},
+        {"name": "Feedback", "description": "Feedback and evaluation management (Feedbacks, Feedback Items)"},
+    ],
+    "SWAGGER_UI_SETTINGS": {
+        "deepLinking": True,
+        "displayOperationId": True,
+        "filter": True,
+        "showExtensions": True,
+        "showCommonExtensions": True,
+    },
 }
 
 ROOT_URLCONF = "essay_coach.urls"
