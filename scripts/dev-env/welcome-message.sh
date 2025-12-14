@@ -7,7 +7,7 @@ echo "💡 Useful aliases: ll, tree, cat (bat), pg-connect, pg-logs, runserver, 
 echo "🔍 Use Ctrl+R for fuzzy history search, 'hf' for history finder"
 echo "📂 Current directory: $(pwd)"
 echo "🐍 Python environment configured with Django"
-echo "🔗 Database URL: postgresql://essayadmin:changeme@localhost:$PGPORT/essaycoach"
+echo "🔗 Database URL: postgresql://postgres:postgres@localhost:${PGPORT:-5432}/essaycoach"
 echo ""
 echo "🎯 Development servers can be managed with:"
 echo "   dev          - Start both frontend and backend servers"
