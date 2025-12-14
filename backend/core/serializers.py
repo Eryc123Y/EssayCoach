@@ -1,4 +1,4 @@
-from drf_spectacular.utils import extend_schema_serializer
+from drf_spectacular.utils import extend_schema_serializer, OpenApiExample
 from rest_framework import serializers
 from .models import (
     Class,
@@ -18,17 +18,20 @@ from .models import (
 
 @extend_schema_serializer(
     examples=[
-        {
-            "user_id": 1,
-            "user_email": "student@example.com",
-            "user_fname": "John",
-            "user_lname": "Doe",
-            "user_role": "student",
-            "user_status": "active",
-            "is_active": True,
-            "is_staff": False,
-            "date_joined": "2024-01-15T10:30:00Z"
-        }
+        OpenApiExample(
+            "User Model",
+            value={
+                "user_id": 1,
+                "user_email": "student@example.com",
+                "user_fname": "John",
+                "user_lname": "Doe",
+                "user_role": "student",
+                "user_status": "active",
+                "is_active": True,
+                "is_staff": False,
+                "date_joined": "2024-01-15T10:30:00Z"
+            }
+        )
     ]
 )
 class UserSerializer(serializers.ModelSerializer):
@@ -55,11 +58,14 @@ class UserSerializer(serializers.ModelSerializer):
 
 @extend_schema_serializer(
     examples=[
-        {
-            "unit_id": "CS101",
-            "unit_name": "Introduction to Computer Science",
-            "unit_desc": "A foundational course covering basic programming concepts and algorithms."
-        }
+        OpenApiExample(
+            "Unit Model",
+            value={
+                "unit_id": "CS101",
+                "unit_name": "Introduction to Computer Science",
+                "unit_desc": "A foundational course covering basic programming concepts and algorithms."
+            }
+        )
     ]
 )
 class UnitSerializer(serializers.ModelSerializer):
@@ -78,11 +84,14 @@ class UnitSerializer(serializers.ModelSerializer):
 
 @extend_schema_serializer(
     examples=[
-        {
-            "class_id": 1,
-            "unit_id_unit": "CS101",
-            "class_size": 30
-        }
+        OpenApiExample(
+            "Class Model",
+            value={
+                "class_id": 1,
+                "unit_id_unit": "CS101",
+                "class_size": 30
+            }
+        )
     ]
 )
 class ClassSerializer(serializers.ModelSerializer):
@@ -101,13 +110,16 @@ class ClassSerializer(serializers.ModelSerializer):
 
 @extend_schema_serializer(
     examples=[
-        {
-            "enrollment_id": 1,
-            "user_id_user": 1,
-            "class_id_class": 1,
-            "unit_id_unit": "CS101",
-            "enrollment_time": "2024-01-15T10:30:00Z"
-        }
+        OpenApiExample(
+            "Enrollment Model",
+            value={
+                "enrollment_id": 1,
+                "user_id_user": 1,
+                "class_id_class": 1,
+                "unit_id_unit": "CS101",
+                "enrollment_time": "2024-01-15T10:30:00Z"
+            }
+        )
     ]
 )
 class EnrollmentSerializer(serializers.ModelSerializer):
@@ -130,12 +142,15 @@ class EnrollmentSerializer(serializers.ModelSerializer):
 
 @extend_schema_serializer(
     examples=[
-        {
-            "rubric_id": 1,
-            "user_id_user": 2,
-            "rubric_create_time": "2024-01-15T10:30:00Z",
-            "rubric_desc": "Standard rubric for introductory essays"
-        }
+        OpenApiExample(
+            "Marking Rubric Model",
+            value={
+                "rubric_id": 1,
+                "user_id_user": 2,
+                "rubric_create_time": "2024-01-15T10:30:00Z",
+                "rubric_desc": "Standard rubric for introductory essays"
+            }
+        )
     ]
 )
 class MarkingRubricSerializer(serializers.ModelSerializer):
@@ -155,12 +170,15 @@ class MarkingRubricSerializer(serializers.ModelSerializer):
 
 @extend_schema_serializer(
     examples=[
-        {
-            "rubric_item_id": 1,
-            "rubric_id_marking_rubric": 1,
-            "rubric_item_name": "Content",
-            "rubric_item_weight": "40.0"
-        }
+        OpenApiExample(
+            "Rubric Item Model",
+            value={
+                "rubric_item_id": 1,
+                "rubric_id_marking_rubric": 1,
+                "rubric_item_name": "Content",
+                "rubric_item_weight": "40.0"
+            }
+        )
     ]
 )
 class RubricItemSerializer(serializers.ModelSerializer):
@@ -180,13 +198,16 @@ class RubricItemSerializer(serializers.ModelSerializer):
 
 @extend_schema_serializer(
     examples=[
-        {
-            "level_desc_id": 1,
-            "rubric_item_id_rubric_item": 1,
-            "level_min_score": 0,
-            "level_max_score": 4,
-            "level_desc": "Poor - Lacks clarity and coherence"
-        }
+        OpenApiExample(
+            "Rubric Level Desc Model",
+            value={
+                "level_desc_id": 1,
+                "rubric_item_id_rubric_item": 1,
+                "level_min_score": 0,
+                "level_max_score": 4,
+                "level_desc": "Poor - Lacks clarity and coherence"
+            }
+        )
     ]
 )
 class RubricLevelDescSerializer(serializers.ModelSerializer):
@@ -209,13 +230,16 @@ class RubricLevelDescSerializer(serializers.ModelSerializer):
 
 @extend_schema_serializer(
     examples=[
-        {
-            "task_id": 1,
-            "unit_id_unit": "CS101",
-            "rubric_id_marking_rubric": 1,
-            "task_publish_datetime": "2024-01-15T10:30:00Z",
-            "task_due_datetime": "2024-02-15T23:59:59Z"
-        }
+        OpenApiExample(
+            "Task Model",
+            value={
+                "task_id": 1,
+                "unit_id_unit": "CS101",
+                "rubric_id_marking_rubric": 1,
+                "task_publish_datetime": "2024-01-15T10:30:00Z",
+                "task_due_datetime": "2024-02-15T23:59:59Z"
+            }
+        )
     ]
 )
 class TaskSerializer(serializers.ModelSerializer):
@@ -236,13 +260,16 @@ class TaskSerializer(serializers.ModelSerializer):
 
 @extend_schema_serializer(
     examples=[
-        {
-            "submission_id": 1,
-            "submission_time": "2024-02-10T14:30:00Z",
-            "task_id_task": 1,
-            "user_id_user": 1,
-            "submission_txt": "This is the complete essay content submitted by the student..."
-        }
+        OpenApiExample(
+            "Submission Model",
+            value={
+                "submission_id": 1,
+                "submission_time": "2024-02-10T14:30:00Z",
+                "task_id_task": 1,
+                "user_id_user": 1,
+                "submission_txt": "This is the complete essay content submitted by the student..."
+            }
+        )
     ]
 )
 class SubmissionSerializer(serializers.ModelSerializer):
@@ -263,11 +290,14 @@ class SubmissionSerializer(serializers.ModelSerializer):
 
 @extend_schema_serializer(
     examples=[
-        {
-            "feedback_id": 1,
-            "submission_id_submission": 1,
-            "user_id_user": 2
-        }
+        OpenApiExample(
+            "Feedback Model",
+            value={
+                "feedback_id": 1,
+                "submission_id_submission": 1,
+                "user_id_user": 2
+            }
+        )
     ]
 )
 class FeedbackSerializer(serializers.ModelSerializer):
@@ -286,14 +316,17 @@ class FeedbackSerializer(serializers.ModelSerializer):
 
 @extend_schema_serializer(
     examples=[
-        {
-            "feedback_item_id": 1,
-            "feedback_id_feedback": 1,
-            "rubric_item_id_rubric_item": 1,
-            "feedback_item_score": 8,
-            "feedback_item_comment": "Good work on thesis statement and supporting arguments.",
-            "feedback_item_source": "human"
-        }
+        OpenApiExample(
+            "Feedback Item Model",
+            value={
+                "feedback_item_id": 1,
+                "feedback_id_feedback": 1,
+                "rubric_item_id_rubric_item": 1,
+                "feedback_item_score": 8,
+                "feedback_item_comment": "Good work on thesis statement and supporting arguments.",
+                "feedback_item_source": "human"
+            }
+        )
     ]
 )
 class FeedbackItemSerializer(serializers.ModelSerializer):
@@ -317,11 +350,14 @@ class FeedbackItemSerializer(serializers.ModelSerializer):
 
 @extend_schema_serializer(
     examples=[
-        {
-            "teaching_assn_id": 1,
-            "user_id_user": 2,
-            "class_id_class": 1
-        }
+        OpenApiExample(
+            "Teaching Assignment Model",
+            value={
+                "teaching_assn_id": 1,
+                "user_id_user": 2,
+                "class_id_class": 1
+            }
+        )
     ]
 )
 class TeachingAssnSerializer(serializers.ModelSerializer):

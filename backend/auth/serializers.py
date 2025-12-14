@@ -7,7 +7,7 @@ from typing import Dict, Any, Optional, TYPE_CHECKING
 from django.contrib.auth import authenticate
 from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password
-from drf_spectacular.utils import extend_schema_serializer
+from drf_spectacular.utils import extend_schema_serializer, OpenApiExample
 from rest_framework import serializers
 from rest_framework.request import Request
 
@@ -25,14 +25,17 @@ else:
 
 @extend_schema_serializer(
     examples=[
-        {
-            "email": "student@example.com",
-            "password": "SecurePassword123!",
-            "password_confirm": "SecurePassword123!",
-            "first_name": "John",
-            "last_name": "Doe",
-            "role": "student"
-        }
+        OpenApiExample(
+            "Registration Request",
+            value={
+                "email": "student@example.com",
+                "password": "SecurePassword123!",
+                "password_confirm": "SecurePassword123!",
+                "first_name": "John",
+                "last_name": "Doe",
+                "role": "student"
+            }
+        )
     ]
 )
 class UserRegistrationSerializer(serializers.Serializer):
@@ -136,10 +139,13 @@ class UserRegistrationSerializer(serializers.Serializer):
 
 @extend_schema_serializer(
     examples=[
-        {
-            "email": "student@example.com",
-            "password": "SecurePassword123!"
-        }
+        OpenApiExample(
+            "Login Request",
+            value={
+                "email": "student@example.com",
+                "password": "SecurePassword123!"
+            }
+        )
     ]
 )
 class UserLoginSerializer(serializers.Serializer):
@@ -209,11 +215,14 @@ class UserLoginSerializer(serializers.Serializer):
 
 @extend_schema_serializer(
     examples=[
-        {
-            "email": "student@example.com",
-            "new_password": "NewSecurePassword123!",
-            "new_password_confirm": "NewSecurePassword123!"
-        }
+        OpenApiExample(
+            "Password Reset Request",
+            value={
+                "email": "student@example.com",
+                "new_password": "NewSecurePassword123!",
+                "new_password_confirm": "NewSecurePassword123!"
+            }
+        )
     ]
 )
 class PasswordResetSerializer(serializers.Serializer):
@@ -255,11 +264,14 @@ class PasswordResetSerializer(serializers.Serializer):
 
 @extend_schema_serializer(
     examples=[
-        {
-            "current_password": "OldPassword123!",
-            "new_password": "NewSecurePassword123!",
-            "new_password_confirm": "NewSecurePassword123!"
-        }
+        OpenApiExample(
+            "Password Change Request",
+            value={
+                "current_password": "OldPassword123!",
+                "new_password": "NewSecurePassword123!",
+                "new_password_confirm": "NewSecurePassword123!"
+            }
+        )
     ]
 )
 class PasswordChangeSerializer(serializers.Serializer):
@@ -306,15 +318,18 @@ class PasswordChangeSerializer(serializers.Serializer):
 
 @extend_schema_serializer(
     examples=[
-        {
-            "id": 1,
-            "email": "student@example.com",
-            "first_name": "John",
-            "last_name": "Doe",
-            "role": "student",
-            "status": "active",
-            "date_joined": "2024-01-15T10:30:00Z"
-        }
+        OpenApiExample(
+            "User Profile",
+            value={
+                "id": 1,
+                "email": "student@example.com",
+                "first_name": "John",
+                "last_name": "Doe",
+                "role": "student",
+                "status": "active",
+                "date_joined": "2024-01-15T10:30:00Z"
+            }
+        )
     ]
 )
 class UserProfileSerializer(serializers.ModelSerializer):
@@ -345,10 +360,13 @@ class UserProfileSerializer(serializers.ModelSerializer):
 
 @extend_schema_serializer(
     examples=[
-        {
-            "first_name": "Jane",
-            "last_name": "Smith"
-        }
+        OpenApiExample(
+            "User Update Request",
+            value={
+                "first_name": "Jane",
+                "last_name": "Smith"
+            }
+        )
     ]
 )
 class UserUpdateSerializer(serializers.Serializer):

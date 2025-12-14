@@ -321,6 +321,7 @@ def login(request: Request) -> Response:
     tags=["Authentication"],
     summary="User logout",
     description="Invalidate the current user's authentication token. Requires authentication.",
+    request=None,
     responses={
         200: OpenApiResponse(
             description="Logout successful",
