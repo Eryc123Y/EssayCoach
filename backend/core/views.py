@@ -51,7 +51,7 @@ class UserViewSet(viewsets.ModelViewSet):
 
 
 @extend_schema(
-    tags=["Education"],
+    tags=["Courses"],
     summary="Unit management",
     description="CRUD operations for educational units (courses/subjects). Units are identified by unique unit codes.",
 )
@@ -69,7 +69,7 @@ class UnitViewSet(viewsets.ModelViewSet):
 
 
 @extend_schema(
-    tags=["Education"],
+    tags=["Courses"],
     summary="Class management",
     description="CRUD operations for classes. Classes are instances of units with a specific class size.",
 )
@@ -87,7 +87,7 @@ class ClassViewSet(viewsets.ModelViewSet):
 
 
 @extend_schema(
-    tags=["Education"],
+    tags=["Courses"],
     summary="Enrollment management",
     description="CRUD operations for student enrollments. Students enroll in classes for specific units.",
 )
@@ -107,7 +107,7 @@ class EnrollmentViewSet(viewsets.ModelViewSet):
 
 
 @extend_schema(
-    tags=["Assessment"],
+    tags=["Rubrics"],
     summary="Marking rubric management",
     description="CRUD operations for marking rubrics. Rubrics define the criteria and structure for evaluating submissions.",
 )
@@ -125,7 +125,7 @@ class MarkingRubricViewSet(viewsets.ModelViewSet):
 
 
 @extend_schema(
-    tags=["Assessment"],
+    tags=["Rubrics"],
     summary="Rubric item management",
     description="CRUD operations for rubric items. Rubric items are individual criteria within a marking rubric.",
 )
@@ -143,7 +143,7 @@ class RubricItemViewSet(viewsets.ModelViewSet):
 
 
 @extend_schema(
-    tags=["Assessment"],
+    tags=["Rubrics"],
     summary="Rubric level description management",
     description="CRUD operations for rubric level descriptions. These define score ranges and their meanings for each rubric item.",
 )
@@ -161,7 +161,7 @@ class RubricLevelDescViewSet(viewsets.ModelViewSet):
 
 
 @extend_schema(
-    tags=["Assessment"],
+    tags=["Tasks"],
     summary="Task management",
     description="CRUD operations for tasks/assignments. Tasks are created by lecturers for students to complete.",
 )
@@ -180,7 +180,7 @@ class TaskViewSet(viewsets.ModelViewSet):
 
 
 @extend_schema(
-    tags=["Assessment"],
+    tags=["Submissions"],
     summary="Submission management",
     description="CRUD operations for essay submissions. Students submit their work for tasks, which can then receive feedback.",
 )
@@ -199,7 +199,7 @@ class SubmissionViewSet(viewsets.ModelViewSet):
 
 
 @extend_schema(
-    tags=["Assessment"],
+    tags=["Feedback"],
     summary="Feedback management",
     description="CRUD operations for feedback. Feedback is provided by lecturers/admins for student submissions.",
 )
@@ -218,7 +218,7 @@ class FeedbackViewSet(viewsets.ModelViewSet):
 
 
 @extend_schema(
-    tags=["Assessment"],
+    tags=["Feedback"],
     summary="Feedback item management",
     description="CRUD operations for feedback items. Feedback items are individual scores and comments for each rubric criterion.",
 )
@@ -237,7 +237,7 @@ class FeedbackItemViewSet(viewsets.ModelViewSet):
 
 
 @extend_schema(
-    tags=["Education"],
+    tags=["Courses"],
     summary="Teaching assignment management",
     description="CRUD operations for teaching assignments. Assigns lecturers to specific classes.",
 )
