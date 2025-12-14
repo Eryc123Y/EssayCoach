@@ -174,6 +174,68 @@ python manage.py test ai_feedback
 - celery (for async processing)
 - redis (for caching)
 
+## Dify Workflow Agent APIs
+
+### Required configuration
+
+- `.env` must define:
+  - `DIFY_API_KEY` (server-side only)
+  - `DIFY_WORKFLOW_ID` or `DIFY_DEFAULT_WORKFLOW_ID` (published workflow)
+  - `DIFY_BASE_URL` (optional, defaults to `https://api.dify.ai/v1`)
+  - `DIFY_DEFAULT_WORKFLOW_ID` mirrors the published version used by the Essay Agent
+
+### Endpoints
+
+#### `POST /api/v1/ai-feedback/agent/workflows/run/`
+-+- **Purpose**: Trigger the Essay Agent workflow using the bundled `rubric.pdf` located at the repository root. The view uploads the rubric once per user identifier and sends it as the `essay_rubric` file array required by the Dify DSL.
+- **Request body** (JSON):
+  ```json
+  {
+    "essay_question": "The task prompt students are answering",
+    "essay_content": "Full student essay text (max ~20k chars)",
+    "language": "English",            # optional language hint
+    "response_mode": "blocking",      # choose streaming or blocking
+    "user_id": "student-123"          # optional override for Dify user tracking
+  }
+  ```
+- **File input**: The API automatically populates `essay_rubric` using `rubric.pdf` as:
+  ```json
+  "essay_rubric": [{
+    "transfer_method": "local_file",
+    "upload_file_id": "<id-from-dify>",
+    "type": "document"
+  }]
+  ```
+- **Response**: Returns `workflow_run_id`, `task_id`, `data`, and the recorded inputs for frontend tracing.
+
+#### `POST /api/v1/ai-feedback/agent/workflows/{workflow_id}/run/`
+- Same payload as above but lets frontend lock a specific published workflow version per URL path (overrides the default `DIFY_DEFAULT_WORKFLOW_ID`).
+
+#### `GET /api/v1/ai-feedback/agent/workflows/run/{workflow_run_id}/status/`
+- Fetches the latest Dify workflow run metadata (`status`, `outputs`, `elapsed_time`, tokens, etc.). Useful for polling after a blocking run or retrieving final output after streaming.
+
+> **Note:** `workflow_id` is returned by Dify inside responses and identifies the workflow definition. It does not get submitted in the request body—only `inputs`, `response_mode`, and `user` are needed when calling the run endpoint.
+
+### Sample cURL (blocking)
+
+```bash
+curl -X POST http://localhost:8000/api/v1/ai-feedback/agent/workflows/run/ \
+  -H "Authorization: Token <your-token>" \
+  -H "Content-Type: application/json" \
+  --data-raw '{
+    "essay_question": "Explain the importance of biodiversity.",
+    "essay_content": "Saved essay text goes here...",
+    "response_mode": "blocking",
+    "user_id": "student-123"
+  }'
+```
+
+### Notes for frontend
+
+- Always send `essay_question` and `essay_content`. The `essay_rubric` file is handled server-side (the rubric PDF is never uploaded by the client).
+- `response_mode` can be `blocking` for synchronous responses or `streaming` when you want to consume SSE chunks later (the backend still returns the workflow metadata immediately).
+- Use the `/status/` endpoint to poll for completion when the run returns `status != "succeeded"`.
+
 ## Contributing
 
 When contributing to the AI feedback app:
