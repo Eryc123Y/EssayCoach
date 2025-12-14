@@ -21,7 +21,7 @@ const formSchema = z.object({
   email: z.string().email({ message: 'Enter a valid email address' }),
   password: z
     .string()
-    .min(6, { message: 'Password must be at least 6 characters' })
+    .min(5, { message: 'Password must be at least 6 characters' })
 });
 
 type UserFormValue = z.infer<typeof formSchema>;
@@ -29,11 +29,10 @@ type UserFormValue = z.infer<typeof formSchema>;
 export default function UserAuthForm() {
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get('callbackUrl');
-  const [loading, startTransition] = useTransition();
   const router = useRouter();
   const defaultValues = {
-    email: 'dev@essaycoach.com',
-    password: 'password'
+    email: '',
+    password: ''
   };
   const form = useForm<UserFormValue>({
     resolver: zodResolver(formSchema),
@@ -48,12 +47,12 @@ export default function UserAuthForm() {
         body: JSON.stringify({ email: data.email, password: data.password })
       });
       if (!response.ok) {
-        const err = await response.json().catch(() => ({}));
-        throw new Error(err?.message || 'Request failed');
+        const result = await response.json().catch(() => ({}));
+        throw new Error(result.error?.message || 'Request failed');
       }
       const result = await response.json();
-      console.log('Backend auth (mock) result:', result);
-      toast.success('Signed in with backend (mock)');
+      console.log('Backend auth result:', result);
+      toast.success('Signed in with backend');
       const target = callbackUrl || '/dashboard/overview';
       router.push(target);
     } catch (error: unknown) {
@@ -79,7 +78,7 @@ export default function UserAuthForm() {
                   <Input
                     type='email'
                     placeholder='Enter your email...'
-                    disabled={loading}
+                    disabled={form.formState.isSubmitting}
                     {...field}
                   />
                 </FormControl>
@@ -98,7 +97,7 @@ export default function UserAuthForm() {
                   <Input
                     type='password'
                     placeholder='Enter your password...'
-                    disabled={loading}
+                    disabled={form.formState.isSubmitting}
                     {...field}
                   />
                 </FormControl>
@@ -108,11 +107,11 @@ export default function UserAuthForm() {
           />
 
           <Button
-            disabled={loading}
+            disabled={form.formState.isSubmitting}
             className='mt-2 ml-auto w-full'
             type='submit'
           >
-            Sign In (Mock)
+            Sign In
           </Button>
         </form>
       </Form>

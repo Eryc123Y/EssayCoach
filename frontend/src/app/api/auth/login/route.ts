@@ -1,64 +1,92 @@
 import { NextRequest, NextResponse } from 'next/server';
 
+const API_BASE_URL = process.env.API_BASE_URL ?? 'http://127.0.0.1:8000/api/v1';
+
 type LoginRequestBody = {
   email?: string;
   password?: string;
 };
 
 export async function POST(req: NextRequest) {
+  const { email, password } = ((await req.json().catch(() => ({}))) ??
+    {}) as LoginRequestBody;
+
+  if (!email || !password) {
+    return NextResponse.json(
+      {
+        success: false,
+        error: {
+          code: 'INVALID_INPUT',
+          message: 'Email and password are required'
+        }
+      },
+      { status: 400 }
+    );
+  }
+
   try {
-    const body = (await req.json().catch(() => ({}))) as LoginRequestBody;
-    // Accept any input for mock success
-    const email = body?.email || 'user@example.com';
+    const backendResponse = await fetch(`${API_BASE_URL}/auth/login/`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Accept: 'application/json'
+      },
+      body: JSON.stringify({ email, password }),
+      cache: 'no-store'
+    });
 
-    // Mock delay to simulate network/backend processing
-    await new Promise((resolve) => setTimeout(resolve, 500));
+    const payload = await backendResponse.json().catch(() => ({}));
+    if (!backendResponse.ok) {
+      return NextResponse.json(
+        payload?.error
+          ? { success: false, error: payload.error }
+          : {
+              success: false,
+              error: {
+                code: 'LOGIN_FAILED',
+                message: 'Unable to authenticate with the provided credentials'
+              }
+            },
+        { status: backendResponse.status }
+      );
+    }
 
-    // Mock tokens and user payload
-    const access = 'mock_access_token_eyJ0eXAiOiJKV1QiLCJhbGc';
-    const refresh = 'mock_refresh_token_eyJ0eXAiOiJKV1QiLCJhbGc';
-    const user = {
-      id: 1,
-      email,
-      first_name: 'John',
-      last_name: 'Doe'
-    };
+    const token: string = payload?.data?.token;
+    const response = NextResponse.json(payload, {
+      status: backendResponse.status
+    });
 
-    const res = NextResponse.json({ access, refresh, user });
-    // Set HttpOnly cookies for mock tokens and user context
-    res.cookies.set('access_token', access, {
-      httpOnly: false, // use presence of a non-HttpOnly mirror for demo
-      sameSite: 'lax',
-      path: '/',
-      maxAge: 60 * 60 // 1 hour
-    });
-    res.cookies.set('refresh_token', refresh, {
-      httpOnly: true,
-      sameSite: 'lax',
-      path: '/',
-      maxAge: 60 * 60 * 24 * 7 // 7 days
-    });
-    // Non-HttpOnly for mock demo so client can read and show basic user info
-    res.cookies.set('user_email', email, {
-      httpOnly: false,
-      sameSite: 'lax',
-      path: '/',
-      maxAge: 60 * 60 * 24 * 7
-    });
-    res.cookies.set('user_first_name', user.first_name, {
-      httpOnly: false,
-      sameSite: 'lax',
-      path: '/',
-      maxAge: 60 * 60 * 24 * 7
-    });
-    res.cookies.set('user_last_name', user.last_name, {
-      httpOnly: false,
-      sameSite: 'lax',
-      path: '/',
-      maxAge: 60 * 60 * 24 * 7
-    });
-    return res;
-  } catch (_e) {
-    return NextResponse.json({ message: 'Invalid JSON' }, { status: 400 });
+    if (token) {
+      response.cookies.set('access_token', token, {
+        httpOnly: true,
+        sameSite: 'lax',
+        secure: process.env.NODE_ENV === 'production',
+        path: '/',
+        maxAge: 60 * 60 * 24
+      });
+    }
+
+    if (payload?.data?.user) {
+      response.cookies.set('user_profile', JSON.stringify(payload.data.user), {
+        httpOnly: false,
+        sameSite: 'lax',
+        secure: process.env.NODE_ENV === 'production',
+        path: '/',
+        maxAge: 60 * 60 * 24
+      });
+    }
+
+    return response;
+  } catch {
+    return NextResponse.json(
+      {
+        success: false,
+        error: {
+          code: 'UPSTREAM_UNAVAILABLE',
+          message: 'Authentication service is temporarily unavailable'
+        }
+      },
+      { status: 502 }
+    );
   }
 }
