@@ -5,6 +5,7 @@ from typing import Dict, Any, List, Union
 from typing import TYPE_CHECKING
 
 from django.contrib.auth import get_user_model
+from drf_spectacular.utils import extend_schema, OpenApiExample, OpenApiResponse
 from rest_framework import status
 from rest_framework.authtoken.models import Token
 from rest_framework.decorators import api_view, permission_classes
@@ -38,6 +39,83 @@ else:
     User = get_user_model()
 
 
+@extend_schema(
+    tags=["Authentication"],
+    summary="Register a new user",
+    description="Create a new user account and receive an authentication token. The user will be assigned the 'student' role by default if not specified.",
+    request=UserRegistrationSerializer,
+    responses={
+        201: OpenApiResponse(
+            response=UserProfileSerializer,
+            description="User registered successfully",
+            examples=[
+                OpenApiExample(
+                    "Success Response",
+                    value={
+                        "success": True,
+                        "message": "User registered successfully",
+                        "data": {
+                            "token": "9944b09199c62bcf9418ad846dd0e4bbdfc6ee4b",
+                            "user": {
+                                "id": 1,
+                                "email": "student@example.com",
+                                "first_name": "John",
+                                "last_name": "Doe",
+                                "role": "student",
+                                "status": "active",
+                                "date_joined": "2024-01-15T10:30:00Z"
+                            }
+                        }
+                    }
+                )
+            ]
+        ),
+        400: OpenApiResponse(
+            description="Invalid input data",
+            examples=[
+                OpenApiExample(
+                    "Validation Error",
+                    value={
+                        "success": False,
+                        "error": {
+                            "code": "INVALID_INPUT",
+                            "message": "Password fields didn't match",
+                            "details": {"password": ["Password fields didn't match."]}
+                        }
+                    }
+                )
+            ]
+        ),
+        409: OpenApiResponse(
+            description="Email already registered",
+            examples=[
+                OpenApiExample(
+                    "Email Taken",
+                    value={
+                        "success": False,
+                        "error": {
+                            "code": "EMAIL_TAKEN",
+                            "message": "Email is already registered"
+                        }
+                    }
+                )
+            ]
+        )
+    },
+    examples=[
+        OpenApiExample(
+            "Registration Request",
+            value={
+                "email": "student@example.com",
+                "password": "SecurePassword123!",
+                "password_confirm": "SecurePassword123!",
+                "first_name": "John",
+                "last_name": "Doe",
+                "role": "student"
+            }
+        )
+    ]
+)
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def register(request: Request) -> Response:
@@ -97,6 +175,92 @@ def register(request: Request) -> Response:
     )
 
 
+@extend_schema(
+    tags=["Authentication"],
+    summary="User login",
+    description="Authenticate a user with email and password. Returns an authentication token and user profile information.",
+    request=UserLoginSerializer,
+    responses={
+        200: OpenApiResponse(
+            response=UserProfileSerializer,
+            description="Login successful",
+            examples=[
+                OpenApiExample(
+                    "Success Response",
+                    value={
+                        "success": True,
+                        "data": {
+                            "token": "9944b09199c62bcf9418ad846dd0e4bbdfc6ee4b",
+                            "user": {
+                                "id": 1,
+                                "email": "student@example.com",
+                                "first_name": "John",
+                                "last_name": "Doe",
+                                "role": "student",
+                                "status": "active",
+                                "date_joined": "2024-01-15T10:30:00Z"
+                            }
+                        }
+                    }
+                )
+            ]
+        ),
+        400: OpenApiResponse(
+            description="Invalid input",
+            examples=[
+                OpenApiExample(
+                    "Missing Fields",
+                    value={
+                        "success": False,
+                        "error": {
+                            "code": "INVALID_INPUT",
+                            "message": "Email and password are required"
+                        }
+                    }
+                )
+            ]
+        ),
+        401: OpenApiResponse(
+            description="Invalid credentials",
+            examples=[
+                OpenApiExample(
+                    "Invalid Credentials",
+                    value={
+                        "success": False,
+                        "error": {
+                            "code": "INVALID_CREDENTIALS",
+                            "message": "Invalid email or password"
+                        }
+                    }
+                )
+            ]
+        ),
+        423: OpenApiResponse(
+            description="Account locked",
+            examples=[
+                OpenApiExample(
+                    "Account Locked",
+                    value={
+                        "success": False,
+                        "error": {
+                            "code": "ACCOUNT_LOCKED",
+                            "message": "Account is locked. Please contact administrator."
+                        }
+                    }
+                )
+            ]
+        )
+    },
+    examples=[
+        OpenApiExample(
+            "Login Request",
+            value={
+                "email": "student@example.com",
+                "password": "SecurePassword123!"
+            }
+        )
+    ]
+)
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def login(request: Request) -> Response:
@@ -153,6 +317,38 @@ def login(request: Request) -> Response:
     )
 
 
+@extend_schema(
+    tags=["Authentication"],
+    summary="User logout",
+    description="Invalidate the current user's authentication token. Requires authentication.",
+    request=None,
+    responses={
+        200: OpenApiResponse(
+            description="Logout successful",
+            examples=[
+                OpenApiExample(
+                    "Success Response",
+                    value={
+                        "success": True,
+                        "message": "Successfully logged out",
+                        "data": {}
+                    }
+                )
+            ]
+        ),
+        401: OpenApiResponse(
+            description="Authentication required",
+            examples=[
+                OpenApiExample(
+                    "Unauthorized",
+                    value={
+                        "detail": "Authentication credentials were not provided."
+                    }
+                )
+            ]
+        )
+    }
+)
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def logout(request: Request) -> Response:
@@ -174,6 +370,68 @@ def logout(request: Request) -> Response:
     return Response(response_data, status=status.HTTP_200_OK)
 
 
+@extend_schema(
+    tags=["Authentication"],
+    summary="Reset password",
+    description="Reset a user's password using their email address. No authentication required. This is a simple MVP implementation.",
+    request=PasswordResetSerializer,
+    responses={
+        200: OpenApiResponse(
+            description="Password reset successful",
+            examples=[
+                OpenApiExample(
+                    "Success Response",
+                    value={
+                        "success": True,
+                        "message": "Password has been reset successfully",
+                        "data": {}
+                    }
+                )
+            ]
+        ),
+        400: OpenApiResponse(
+            description="Invalid input",
+            examples=[
+                OpenApiExample(
+                    "Password Mismatch",
+                    value={
+                        "success": False,
+                        "error": {
+                            "code": "INVALID_INPUT",
+                            "message": "Password fields didn't match",
+                            "details": {"new_password": ["Password fields didn't match."]}
+                        }
+                    }
+                )
+            ]
+        ),
+        404: OpenApiResponse(
+            description="Email not found",
+            examples=[
+                OpenApiExample(
+                    "Email Not Found",
+                    value={
+                        "success": False,
+                        "error": {
+                            "code": "EMAIL_NOT_FOUND",
+                            "message": "Email is not registered"
+                        }
+                    }
+                )
+            ]
+        )
+    },
+    examples=[
+        OpenApiExample(
+            "Password Reset Request",
+            value={
+                "email": "student@example.com",
+                "new_password": "NewSecurePassword123!",
+                "new_password_confirm": "NewSecurePassword123!"
+            }
+        )
+    ]
+)
 @api_view(['POST'])
 @permission_classes([AllowAny])
 def password_reset(request: Request) -> Response:
@@ -237,6 +495,74 @@ def password_reset(request: Request) -> Response:
         )
 
 
+@extend_schema(
+    tags=["Authentication"],
+    summary="Change password",
+    description="Change the password for the currently authenticated user. Requires current password verification.",
+    request=PasswordChangeSerializer,
+    responses={
+        200: OpenApiResponse(
+            description="Password changed successfully",
+            examples=[
+                OpenApiExample(
+                    "Success Response",
+                    value={
+                        "success": True,
+                        "message": "Password changed successfully",
+                        "data": {}
+                    }
+                )
+            ]
+        ),
+        400: OpenApiResponse(
+            description="Invalid input or incorrect current password",
+            examples=[
+                OpenApiExample(
+                    "Incorrect Current Password",
+                    value={
+                        "success": False,
+                        "error": {
+                            "code": "INVALID_PASSWORD",
+                            "message": "Current password is incorrect"
+                        }
+                    }
+                ),
+                OpenApiExample(
+                    "Password Mismatch",
+                    value={
+                        "success": False,
+                        "error": {
+                            "code": "INVALID_INPUT",
+                            "message": "Password fields didn't match",
+                            "details": {"new_password": ["Password fields didn't match."]}
+                        }
+                    }
+                )
+            ]
+        ),
+        401: OpenApiResponse(
+            description="Authentication required",
+            examples=[
+                OpenApiExample(
+                    "Unauthorized",
+                    value={
+                        "detail": "Authentication credentials were not provided."
+                    }
+                )
+            ]
+        )
+    },
+    examples=[
+        OpenApiExample(
+            "Password Change Request",
+            value={
+                "current_password": "OldPassword123!",
+                "new_password": "NewSecurePassword123!",
+                "new_password_confirm": "NewSecurePassword123!"
+            }
+        )
+    ]
+)
 @api_view(['PUT'])
 @permission_classes([IsAuthenticated])
 def password_change(request: Request) -> Response:
@@ -306,6 +632,86 @@ def password_change(request: Request) -> Response:
     )
 
 
+@extend_schema(
+    tags=["Authentication"],
+    summary="Get or update current user profile",
+    description="Retrieve or update the profile information of the currently authenticated user.",
+    request=UserUpdateSerializer,
+    responses={
+        200: OpenApiResponse(
+            response=UserProfileSerializer,
+            description="User profile retrieved or updated successfully",
+            examples=[
+                OpenApiExample(
+                    "GET Response",
+                    value={
+                        "success": True,
+                        "data": {
+                            "id": 1,
+                            "email": "student@example.com",
+                            "first_name": "John",
+                            "last_name": "Doe",
+                            "role": "student",
+                            "status": "active",
+                            "date_joined": "2024-01-15T10:30:00Z"
+                        }
+                    }
+                ),
+                OpenApiExample(
+                    "PATCH Response",
+                    value={
+                        "success": True,
+                        "data": {
+                            "id": 1,
+                            "email": "student@example.com",
+                            "first_name": "Jane",
+                            "last_name": "Smith",
+                            "role": "student",
+                            "status": "active",
+                            "date_joined": "2024-01-15T10:30:00Z"
+                        }
+                    }
+                )
+            ]
+        ),
+        400: OpenApiResponse(
+            description="Validation error",
+            examples=[
+                OpenApiExample(
+                    "Validation Error",
+                    value={
+                        "success": False,
+                        "error": {
+                            "code": "VALIDATION_ERROR",
+                            "message": "Invalid input data",
+                            "details": {"first_name": ["This field may not be blank."]}
+                        }
+                    }
+                )
+            ]
+        ),
+        401: OpenApiResponse(
+            description="Authentication required",
+            examples=[
+                OpenApiExample(
+                    "Unauthorized",
+                    value={
+                        "detail": "Authentication credentials were not provided."
+                    }
+                )
+            ]
+        )
+    },
+    examples=[
+        OpenApiExample(
+            "PATCH Request",
+            value={
+                "first_name": "Jane",
+                "last_name": "Smith"
+            }
+        )
+    ]
+)
 @api_view(['GET', 'PATCH'])
 @permission_classes([IsAuthenticated])
 def get_current_user(request: Request) -> Response:

@@ -50,25 +50,10 @@ start_local_pg() {
       psql -U postgres -p "$PGPORT" -h "$PGHOST" -c "CREATE DATABASE essaycoach OWNER postgres;" >/dev/null
 
     echo "[dev-pg] Database 'essaycoach' with postgres superuser is ready."
-    
-    # Load schema if database is empty (no tables exist)
-    if ! psql -U postgres -p "$PGPORT" -h "$PGHOST" -d essaycoach -tc "SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' LIMIT 1;" 2>/dev/null | grep -q 1; then
-      echo "[dev-pg] Loading database schema..."
-      if psql -U postgres -p "$PGPORT" -h "$PGHOST" -d essaycoach -f docker/db/init/00_init.sql >/dev/null 2>&1; then
-        echo "[dev-pg] Schema loaded successfully."
-      else
-        echo "[dev-pg] ERROR: Failed to load schema. Check docker/db/init/00_init.sql"
-      fi
-    else
-      echo "[dev-pg] Database already contains tables. Skipping schema load."
-    fi
 
-    echo "[dev-pg] Loading mock data..."
-    if psql -U postgres -p "$PGPORT" -h "$PGHOST" -d essaycoach -f docker/db/init/01_add_data.sql >/dev/null 2>&1; then
-      echo "[dev-pg] Mock data loaded successfully."
-    else
-      echo "[dev-pg] ERROR: Failed to load mock data. Check docker/db/init/01_add_data.sql"
-    fi
+    # Migrations-only strategy:
+    # Do NOT attempt SQL cold-start (`docker/db/init/*.sql`). Schema/data should be created
+    # via Django migrations + `python manage.py seed_db`.
   else
     # If already running, retrieve port from the pid file
     export PGPORT=$(head -n 4 "$PGDATA/postmaster.pid" | tail -n 1)

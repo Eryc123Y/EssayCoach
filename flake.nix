@@ -63,6 +63,7 @@
               django-filter
               psycopg2-binary
               django-cors-headers
+              drf-spectacular
               fastapi
               uvicorn
               requests
