@@ -27,9 +27,9 @@ EssayCoach is a future-oriented intelligent education platform designed to lever
 Our technology selection adheres to "API-first," "front-end/back-end separation," and "microservices" principles, ensuring system scalability, maintainability, and cross-platform compatibility.
 
 *   **Frontend:**
-    *   **Framework:** **Vue.js (Vue 3)** - As per your decision. Its component-based architecture, rich ecosystem (e.g., Vue Router, Pinia), and excellent performance are ideal for building complex Single Page Applications (SPAs).
-    *   **UI Library:** Using Naive UI components for modern, responsive design, and a consistent user experience.
-    *   **Build Tool:** Vite - Offers an extremely fast development server and optimized bundling.
+    *   **Framework:** **Next.js 15 (React 19)** — providing hybrid static/SSR rendering, file-based routing, and strong TypeScript support for building complex applications.
+    *   **UI Library:** shadcn/ui built on Radix components and Tailwind CSS for a modern, responsive design system.
+    *   **Build Tool:** Next.js (Turbopack) - Offers a fast development server and optimized bundling.
 
 *   **Backend:**
     *   **Main Framework:** **Python (Django)** - Python is the preferred language for AI/ML. Django provides a robust, batteries-included framework with excellent ORM, admin interface, and mature ecosystem. While FastAPI offers high performance for AI services, Django's comprehensive features and stability make it ideal for the core backend architecture. We may consider adding Flask API or Node.js services in the future if we need to handle more concurrent AI API calls.

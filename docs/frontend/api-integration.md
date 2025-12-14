@@ -11,13 +11,13 @@ The frontend integrates with the Django REST API using Axios with interceptors f
 import axios from 'axios'
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL,
+  baseURL: process.env.NEXT_PUBLIC_API_BASE_URL,
   timeout: 10000
 })
 
 // Request interceptor
 api.interceptors.request.use((config) => {
-  const token = useAuthStore().token
+    const token = useAuthStore.getState().token
   if (token) {
     config.headers.Authorization = `Bearer ${token}`
   }

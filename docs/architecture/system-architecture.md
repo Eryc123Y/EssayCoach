@@ -7,8 +7,8 @@ EssayCoach is built as a modern microservices-ready web application with a clear
 ```mermaid
 graph LR
     subgraph "Frontend Layer"
-        Client[Vue 3 SPA Client]
-        Vite[Vite Dev Server]
+        Client[Next.js Web App]
+        DevServer[Next.js Dev Server]
     end
     
     subgraph "Backend Layer"
@@ -26,19 +26,19 @@ graph LR
     API -- Queue Tasks --> Async
     API -- Cache Data --> Cache
     Async -- Process --> DB
-    Vite -- Hot Reload --> Client
+    DevServer -- Fast Refresh --> Client
 ```
 
 ## 🔧 Technology Stack
 
 ### Frontend Architecture
-- **Framework**: Vue 3 with Composition API
-- **Build Tool**: Vite for fast development and optimized builds
-- **UI Library**: Naive UI for consistent design system
-- **State Management**: Pinia for predictable state
-- **Routing**: Vue Router 4 with nested routes
+- **Framework**: Next.js 15 with React 19
+- **Build Tool**: Next.js (Turbopack) for fast development and optimized builds
+- **UI Library**: shadcn/ui (Radix + Tailwind) for consistent design system
+- **State Management**: Zustand for predictable state
+- **Routing**: Next.js App Router with nested routes
 - **HTTP Client**: Axios with interceptors
-- **Testing**: Vitest for unit tests, Cypress for E2E
+- **Testing**: Jest for unit tests, Playwright for E2E
 
 ### Backend Architecture
 - **Framework**: Django 4.x with Django REST Framework
@@ -152,7 +152,7 @@ graph TD
 ```mermaid
 sequenceDiagram
     participant User as Student/Teacher
-    participant Frontend as Vue.js SPA
+    participant Frontend as Next.js App
     participant API as Django REST API
     participant Auth as JWT Auth
     participant DB as PostgreSQL
@@ -211,15 +211,15 @@ graph TD
         Locust[Locust Load Testing]
     end
     subgraph "Frontend"
-        Vitest[Vitest Components]
-        Cypress[Cypress E2E]
+        Jest[Jest + Testing Library]
+        Playwright[Playwright E2E]
         PerfTest[Performance Tests]
         Lighthouse[Lighthouse Performance]
     end
     Unit --> Pytest
-    Unit --> Vitest
+    Unit --> Jest
     Integration --> APITest
-    E2E --> Cypress
+    E2E --> Playwright
     LoadTest --> Locust
     PerfTest --> Lighthouse
 ```

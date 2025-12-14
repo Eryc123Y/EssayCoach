@@ -9,7 +9,7 @@ This document formalises, in developer-friendly language, the **end-to-end busin
 | **Student** | Submits a single essay per task, reviews AI reports, performs inline edits after grading; may replace submission only if teacher returns it. |
 | **Teacher** | Creates tasks, defines rubrics, monitors progress, issues final grades. |
 | **Administrator** | Manages users, global settings, feature toggles, compliance. |
-| **Frontend (Vue SPA)** | Collects user input, renders dashboards, orchestrates client-side state. |
+| **Frontend (Next.js App)** | Collects user input, renders dashboards, orchestrates client-side state. |
 | **API Gateway** | Single public entry-point; enforces authN/Z, throttling and routing. |
 | **Microservices** | UMS, ESS, AES, ARS… perform domain logic (see functional-module doc). |
 | **Async Processing** | MVP: Django async views + PostgreSQL. Future: Redis + Celery for scalable queueing. |

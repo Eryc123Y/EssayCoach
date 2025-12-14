@@ -1,12 +1,12 @@
 # EssayCoach Developer Documentation
 
-Welcome to the technical documentation for EssayCoach, an AI-powered essay coaching platform built with Vue 3 frontend and Django backend.
+Welcome to the technical documentation for EssayCoach, an AI-powered essay coaching platform built with a Next.js frontend and Django backend.
 
 ## 🏗️ Architecture Overview
 
 EssayCoach is designed as a modern web application with the following architecture:
 
-- **Frontend**: Vue 3 + TypeScript + Vite with Naive UI components
+- **Frontend**: Next.js 15 + React 19 + TypeScript + Tailwind CSS with shadcn/ui components
 - **Backend**: Django REST Framework with PostgreSQL database
 - **Development Environment**: Nix flakes for reproducible builds
 - **Deployment**: Docker containers with CI/CD pipelines
@@ -22,7 +22,7 @@ nix develop
 This sets up:
 - PostgreSQL database with schema and mock data
 - Django development environment
-- Frontend development tools (Node.js, pnpm, Vite)
+- Frontend development tools (Node.js, pnpm, Next.js)
 - All documentation tools (MkDocs, material theme)
 
 ### Start Documentation Server
@@ -38,7 +38,7 @@ This documentation is organized for developers and contributors:
 - **Architecture & Design**: System design decisions and technical specifications
 - **Database Schema**: Complete database design with relationships and constraints
 - **Backend Deep Dive**: Django models, serializers, views, and async processing
-- **Frontend Architecture**: Vue 3 component structure and state management
+- **Frontend Architecture**: Next.js component structure and state management
 - **API Reference**: REST endpoints and WebSocket events
 - **Development Guide**: Setup instructions and contribution guidelines
 
@@ -53,12 +53,12 @@ This documentation is organized for developers and contributors:
 
 | Component | Technology | Purpose |
 |-----------|------------|---------|
-| Frontend | Vue 3 + TypeScript | Modern reactive UI |
+| Frontend | Next.js + React + TypeScript | Server-rendered React UI |
 | Backend | Django REST Framework | RESTful API server |
 | Database | PostgreSQL | Primary data store |
 | Dev Environment | Nix flakes | Reproducible builds |
 | Documentation | MkDocs Material | Technical documentation |
-| Testing | Pytest + Vitest | Comprehensive test suite |
+| Testing | Pytest + Jest | Comprehensive test suite |
 
 ## 🔗 Useful Links
 

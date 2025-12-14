@@ -6,10 +6,10 @@ Comprehensive debugging tools and techniques for EssayCoach development.
 
 ## Frontend Debugging
 
-### Vue DevTools
-- Install Vue DevTools browser extension
-- Inspect component state and props
-- Time-travel debugging with Pinia stores
+### React DevTools
+- Install React DevTools browser extension
+- Inspect component tree, state, and props
+- Debug Zustand store updates
 - Performance profiling
 
 ### Console Debugging
@@ -18,8 +18,13 @@ Comprehensive debugging tools and techniques for EssayCoach development.
 localStorage.setItem('debug', 'essays:*')
 
 // Component debugging
-console.log('Component state:', this.$data)
-console.table('Essays array:', essays)
+import React from 'react'
+
+function Example() {
+  const state = useExampleStore()
+  console.log('Component state:', state)
+  return <div />
+}
 ```
 
 ### Network Debugging

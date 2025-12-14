@@ -7,7 +7,7 @@ This document decomposes the EssayCoach platform into discrete **functional modu
 ```mermaid
 graph LR
     subgraph "Client Tier"
-        Vue["Vue 3 SPA"]
+        Next["Next.js Web App"]
     end
 
     subgraph "Gateway Tier"
@@ -31,7 +31,7 @@ graph LR
         VS[("Vector Search\n(OpenSearch)")]
     end
 
-    Vue --> APIGW
+    Next --> APIGW
     APIGW -->|REST| UMS
     APIGW -->|REST| ESS
     APIGW -->|REST| ARS

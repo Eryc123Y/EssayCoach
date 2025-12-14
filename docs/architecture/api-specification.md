@@ -210,7 +210,7 @@ Authorization: Bearer {access_token}
 ### Request Lifecycle
 ```mermaid
 sequenceDiagram
-    participant Client as Vue.js Client
+    participant Client as Next.js Client
     participant API as Django REST API
     participant JWT as JWT Authentication
     participant Models as Django Models
@@ -309,7 +309,7 @@ flowchart TD
 ```mermaid
 graph LR
     subgraph "WebSocket Architecture"
-        Client[Vue.js Client]
+        Client[Next.js Client]
         WS1[WebSocket Connection 1]
         WS2[WebSocket Connection 2]
         Redis[Redis PubSub]
