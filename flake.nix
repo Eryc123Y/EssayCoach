@@ -67,6 +67,7 @@
               fastapi
               uvicorn
               requests
+              types-requests
               pillow
               flake8
               mypy

@@ -47,10 +47,6 @@ INSTALLED_APPS = [
     "core",
     "auth",
     "analytics",
-    "essay_submission",
-    "feedback_report",
-    "grader_comments",
-    "notification",
     'ai_feedback',
 ]
 
@@ -111,8 +107,11 @@ SPECTACULAR_SETTINGS = {
     "TAGS": [
         {"name": "Authentication", "description": "User authentication and authorization endpoints"},
         {"name": "Users", "description": "User management endpoints"},
-        {"name": "Education", "description": "Educational resources (Units, Classes, Enrollments)"},
-        {"name": "Assessment", "description": "Assessment and grading (Tasks, Submissions, Rubrics, Feedback)"},
+        {"name": "Courses", "description": "Course structure management (Units, Classes, Enrollments, Teaching Assignments)"},
+        {"name": "Rubrics", "description": "Rubric configuration and management (Marking Rubrics, Rubric Items, Rubric Level Descriptions)"},
+        {"name": "Tasks", "description": "Assignment and task management"},
+        {"name": "Submissions", "description": "Student submission management"},
+        {"name": "Feedback", "description": "Feedback and evaluation management (Feedbacks, Feedback Items)"},
     ],
     "SWAGGER_UI_SETTINGS": {
         "deepLinking": True,
@@ -198,7 +197,12 @@ STATIC_URL = "static/"
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
+# Environment-aware Dify defaults
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# Dify workflow integration
+DIFY_DEFAULT_WORKFLOW_ID = os.environ.get("DIFY_DEFAULT_WORKFLOW_ID") or os.environ.get("DIFY_WORKFLOW_ID")
+
 
 # Use custom user model
 AUTH_USER_MODEL = "core.User"
