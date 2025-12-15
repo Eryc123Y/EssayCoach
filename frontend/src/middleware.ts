@@ -5,15 +5,26 @@ export default async function middleware(req: NextRequest) {
   const pathname = nextUrl.pathname;
 
   // Bypass our checks for auth endpoints and static assets
-  if (pathname.startsWith('/api/auth')) return NextResponse.next();
+  if (pathname.includes('/auth/login/')) return NextResponse.next();
   if (pathname.startsWith('/_next')) return NextResponse.next();
 
-  const isProtected = pathname.startsWith('/dashboard');
-  if (!isProtected) return NextResponse.next();
+  // const isProtected = pathname.startsWith('/dashboard');
+  // if (!isProtected) return NextResponse.next();
 
+  // all sites except login require authentication
   const access = cookies.get('access_token')?.value;
-  if (access) return NextResponse.next();
+  if (access) {
+    const headers = new Headers(req.headers);
+    headers.set('Authorization', `Bearer ${access}`);
 
+    return NextResponse.next({
+      request: {
+        headers
+      }
+    });
+  }
+
+  // Redirect to login if no access token is present
   const url = req.nextUrl.clone();
   url.pathname = '/auth/sign-in';
   url.searchParams.set('callbackUrl', pathname);
