@@ -20,10 +20,14 @@ The EssayCoach system is designed as a State-Machine-Based Multi-Agent System. U
 
 The high-level architecture consists of a **Main Supervisor Graph** that branches into three distinct analysis nodes. One of these nodes (Fact Checker) acts as a nested state machine.
 
+![Evaluation Pipeline Diagram](evaluation_pipeline.svg "Evaluation Pipeline Diagram")
+
 Component Breakdown
 **The Supervisor (State Manager)**: Orchestrates the flow and holds the OverallState (essay content, rubrics, and final reports).
 
 **Agent A (Fact Checker - CRAG Subgraph)**: A dedicated loop for extracting claims, retrieving evidence, and verifying accuracy.
+
+![CRAG Subgraph](crag_subgraph.svg "CRAG Subgraph")
 
 **Agent B (Language Analyst)**: A single-shot LLM node focused on syntax, tone, and style.
 
@@ -31,4 +35,3 @@ Component Breakdown
 
 **Agent D (Rubric Extractor)**: A specialized tool-use agent that parses unstructured rubric text into a structured grading schema.
 
-![Evaluation Pipeline Diagram](evaluation_pipeline.svg)
