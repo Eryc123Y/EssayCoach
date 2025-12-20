@@ -79,7 +79,15 @@
               mkdocs-minify-plugin
               pymdown-extensions
               langchain
+              langchain-anthropic
+              langchain-experimental
               langchain-deepseek
+              langchain-huggingface
+              langchain-perplexity
+              langchain-community
+              langchain-google-genai
+              langchain-ollama
+              langchain-openai
             ]))
             black
           ];
