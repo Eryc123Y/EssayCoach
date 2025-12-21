@@ -67,6 +67,7 @@
               fastapi
               uvicorn
               requests
+              types-requests
               pillow
               flake8
               mypy
@@ -77,6 +78,16 @@
               mkdocs-git-revision-date-localized-plugin
               mkdocs-minify-plugin
               pymdown-extensions
+              langchain
+              langchain-anthropic
+              langchain-experimental
+              langchain-deepseek
+              langchain-huggingface
+              langchain-perplexity
+              langchain-community
+              langchain-google-genai
+              langchain-ollama
+              langchain-openai
             ]))
             black
           ];

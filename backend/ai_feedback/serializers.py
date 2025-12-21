@@ -1,0 +1,46 @@
+from __future__ import annotations
+
+from typing import Any
+
+from rest_framework import serializers
+
+
+class DifyWorkflowRunSerializer(serializers.Serializer):
+    """
+    Serializer for running the HTTP-triggered Essay Agent workflow.
+
+    It enforces the DSL inputs that Dify expects and normalizes defaults that
+    the backend forwards to the workflow.
+    """
+
+    essay_question = serializers.CharField(
+        max_length=2000,
+        help_text="Prompt or question that the student is responding to",
+    )
+    essay_content = serializers.CharField(
+        max_length=20000,
+        help_text="The full essay text submitted by the student",
+    )
+    language = serializers.CharField(
+        max_length=48,
+        required=False,
+        default="English",
+        help_text="Optional language hint for the workflow",
+    )
+    response_mode = serializers.ChoiceField(
+        choices=("blocking", "streaming"),
+        default="blocking",
+        help_text="Blocking waits for completion, streaming returns SSE chunks",
+    )
+    user_id = serializers.CharField(
+        max_length=128,
+        required=False,
+        help_text="Unique user identifier that Dify uses for analytics",
+    )
+
+    def validate(self, attrs: dict[str, Any]) -> dict[str, Any]:
+        attrs.setdefault("language", "English")
+        attrs.setdefault("response_mode", "blocking")
+        if not attrs.get("user_id"):
+            attrs["user_id"] = "essaycoach-service"
+        return attrs

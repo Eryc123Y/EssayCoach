@@ -47,10 +47,6 @@ INSTALLED_APPS = [
     "core",
     "auth",
     "analytics",
-    "essay_submission",
-    "feedback_report",
-    "grader_comments",
-    "notification",
     'ai_feedback',
 ]
 
@@ -201,7 +197,12 @@ STATIC_URL = "static/"
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field
 
+# Environment-aware Dify defaults
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
+
+# Dify workflow integration
+DIFY_DEFAULT_WORKFLOW_ID = os.environ.get("DIFY_DEFAULT_WORKFLOW_ID") or os.environ.get("DIFY_WORKFLOW_ID")
+
 
 # Use custom user model
 AUTH_USER_MODEL = "core.User"

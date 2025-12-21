@@ -364,6 +364,31 @@ class CustomTokenObtainPairView(TokenObtainPairView):
         return response
 ```
 
+### Dify Workflow Agent Views
+
+The `ai_feedback` app exposes three new API endpoints that wrap the Essay Agent DSL and surface the Dify workflow run/status APIs via DRF and drf-spectacular. The request schema is defined in `backend/ai_feedback/serializers.py`.
+
+```python
+# backend/ai_feedback/serializers.py
+class DifyWorkflowRunSerializer(serializers.Serializer):
+    essay_question = serializers.CharField(max_length=2000)
+    essay_content = serializers.CharField(max_length=20000)
+    language = serializers.CharField(max_length=48, required=False, default="English")
+    response_mode = serializers.ChoiceField(choices=("blocking", "streaming"), default="blocking")
+    user_id = serializers.CharField(max_length=128, required=False)
+```
+
+The serializer ensures `language` and `response_mode` default to valid values and adds a `user_id` that the backend uses when talking to Dify. The view described in `backend/ai_feedback/views.py` attaches the root-level `rubric.pdf` file as the required `essay_rubric` variable by uploading it through `DifyClient` and converting it into a file-array payload.
+
+The new endpoints are:
+
+- `POST /api/v1/ai-feedback/agent/workflows/run/` – triggers the default workflow while sending the DSL inputs. The response includes `workflow_run_id`, `task_id`, `data`, and the input payload.
+- `POST /api/v1/ai-feedback/agent/workflows/{workflow_id}/run/` – executes a pinned workflow version from the URL.
+- `GET /api/v1/ai-feedback/agent/workflows/run/{workflow_run_id}/status/` – proxies Dify’s `/workflows/run/{workflow_run_id}` endpoint so the frontend can poll for `status`, `outputs`, and token usage.
+- **Note**: `workflow_id` only exists in the Dify response payload (it names the workflow definition). You never supply it in the POST body; Dify infers it from the published workflow being executed.
+
+Each view is decorated with `extend_schema` to render precise request/response documentation in Swagger (matching the `auth`/`core` style), helping frontend developers know exactly how to format the JSON body and what to expect back.
+
 ### AI Feedback Views
 ```python
 # backend/ai_feedback/views.py

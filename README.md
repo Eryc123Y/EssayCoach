@@ -78,7 +78,6 @@ EssayCoach/
 ├── backend/            # Django backend application
 │   ├── essay_coach/    # Project settings
 │   ├── core/           # Core functionality & User management
-│   ├── essay_submission/ # Submission handling
 │   └── ...
 ├── frontend/           # Next.js frontend application
 │   ├── src/app/        # App router pages
