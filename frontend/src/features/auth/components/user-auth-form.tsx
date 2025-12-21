@@ -11,11 +11,9 @@ import {
 import { Input } from '@/components/ui/input';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useTransition } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import * as z from 'zod';
-import GithubSignInButton from './github-auth-button';
 
 const formSchema = z.object({
   email: z.string().email({ message: 'Enter a valid email address' }),
@@ -50,8 +48,7 @@ export default function UserAuthForm() {
         const result = await response.json().catch(() => ({}));
         throw new Error(result.error?.message || 'Request failed');
       }
-      const result = await response.json();
-      console.log('Backend auth result:', result);
+      await response.json();
       toast.success('Signed in with backend');
       const target = callbackUrl || '/dashboard/overview';
       router.push(target);
@@ -115,17 +112,6 @@ export default function UserAuthForm() {
           </Button>
         </form>
       </Form>
-      {/* <div className='relative'>
-        <div className='absolute inset-0 flex items-center'>
-          <span className='w-full border-t' />
-        </div>
-        <div className='relative flex justify-center text-xs uppercase'>
-          <span className='bg-background text-muted-foreground px-2'>
-            Or continue with
-          </span>
-        </div>
-      </div> */}
-      {/* <GithubSignInButton /> */}
     </>
   );
 }
