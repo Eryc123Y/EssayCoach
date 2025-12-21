@@ -5,11 +5,15 @@ on:
     paths:
       - "frontend/**"
       - ".github/workflows/frontend-ci.yml"
+      - "flake.nix"
+      - "flake.lock"
   push:
     branches: [main]
     paths:
       - "frontend/**"
       - ".github/workflows/frontend-ci.yml"
+      - "flake.nix"
+      - "flake.lock"
 
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}-frontend
@@ -19,56 +23,41 @@ jobs:
   checks:
     name: Lint, type-check, and build
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: frontend
-    env:
-      NEXT_TELEMETRY_DISABLED: 1
-      CI: true
-
+    
     steps:
-      # Checkout repository
       - name: Checkout
         uses: actions/checkout@v4
         with:
-          # "Last updated time" and other git log-related information require fetching all commit records.
           fetch-depth: 0
 
-      # Setup Node 22 and enable npm caching
-      - name: Setup Node
-        uses: actions/setup-node@v4
+      - name: Install Nix
+        uses: cachix/install-nix-action@v27
         with:
-          node-version: "22"
-          cache: "npm"
-          cache-dependency-path: frontend/package-lock.json
+          nix_path: nixpkgs=channel:nixos-unstable
 
-      # Install dependencies (prefer npm ci when lockfile exists)
+      # Optional: Setup Cachix if you have a binary cache configured
+      # - uses: cachix/cachix-action@v12
+      #   with:
+      #     name: your-cache-name
+      #     authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
+
       - name: Install Dependencies
-        working-directory: frontend
         run: |
-          if [ -f package-lock.json ]; then
-            npm ci --no-audit --no-fund
-          else
-            npm install --no-audit --no-fund
-          fi
+          nix develop --command bash -c "cd frontend && pnpm install --frozen-lockfile"
 
-      # Cache Next.js build cache for faster builds
       - name: Cache Next.js build cache
         uses: actions/cache@v4
         with:
           path: frontend/.next/cache
-          key: ${{ runner.os }}-nextjs-${{ hashFiles('frontend/package.json', 'frontend/next.config.ts') }}
+          key: ${{ runner.os }}-nextjs-${{ hashFiles('frontend/pnpm-lock.yaml', 'frontend/next.config.ts') }}
           restore-keys: |
             ${{ runner.os }}-nextjs-
 
-      # Lint using Next.js ESLint integration
       - name: Lint
-        run: npm run lint
+        run: nix develop --command bash -c "cd frontend && pnpm run lint"
 
-      # TypeScript type-check (no emit)
       - name: Type check
-        run: npx tsc --noEmit
+        run: nix develop --command bash -c "cd frontend && npx tsc --noEmit"
 
-      # Production build
       - name: Build
-        run: npm run build
+        run: nix develop --command bash -c "cd frontend && pnpm run build"
