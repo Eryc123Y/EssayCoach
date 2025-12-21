@@ -1,7 +1,7 @@
 # Frontend Component Structure
 
 ## Overview
-The EssayCoach frontend is built with React and follows a modular component architecture organized by feature domains.
+The EssayCoach frontend is built with Next.js (React) and follows a modular component architecture organized by feature domains.
 
 ## Directory Structure
 ```

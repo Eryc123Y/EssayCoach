@@ -2,40 +2,35 @@
 
 ## Overview
 
-Frontend testing uses Vitest for unit tests, Vue Test Utils for component testing, and Cypress for e2e tests.
+Frontend testing uses Jest for unit tests, React Testing Library for component testing, and Playwright for e2e tests.
 
 ## Unit Testing
 
 ### Component Tests
 ```typescript
-// tests/components/EssayForm.test.ts
-import { describe, it, expect } from 'vitest'
-import { mount } from '@vue/test-utils'
-import EssayForm from '@/components/EssayForm.vue'
+// tests/components/EssayForm.test.tsx
+import { render, screen } from '@testing-library/react'
+import EssayForm from '@/components/EssayForm'
 
 describe('EssayForm', () => {
   it('renders form fields', () => {
-    const wrapper = mount(EssayForm)
-    expect(wrapper.find('input[name="title"]').exists()).toBe(true)
+    render(<EssayForm />)
+    expect(screen.getByLabelText(/title/i)).toBeInTheDocument()
   })
 })
 ```
 
 ### Store Tests
 ```typescript
-// tests/stores/essay.test.ts
-import { setActivePinia, createPinia } from 'pinia'
-import { useEssayStore } from '@/stores/essay'
+// tests/state/essay.test.ts
+import { act } from 'react'
+import { useEssayStore } from '@/state/essay'
 
 describe('Essay Store', () => {
-  beforeEach(() => {
-    setActivePinia(createPinia())
-  })
-
   it('sets loading state', () => {
-    const store = useEssayStore()
-    store.setLoading(true)
-    expect(store.isLoading).toBe(true)
+    const store = useEssayStore.getState()
+    act(() => store.setLoading(true))
+    expect(useEssayStore.getState().isLoading).toBe(true)
   })
 })
 ```
@@ -54,16 +49,16 @@ afterAll(() => server.close())
 
 ## E2E Testing
 
-### Cypress Tests
+### Playwright Tests
 ```typescript
-// cypress/e2e/essay.cy.ts
-describe('Essay Creation', () => {
-  it('creates a new essay', () => {
-    cy.visit('/essays/new')
-    cy.get('[data-testid="title-input"]').type('Test Essay')
-    cy.get('[data-testid="submit-btn"]').click()
-    cy.url().should('include', '/essays/')
-  })
+// e2e/essay.spec.ts
+import { test, expect } from '@playwright/test'
+
+test('creates a new essay', async ({ page }) => {
+  await page.goto('/essays/new')
+  await page.getByTestId('title-input').fill('Test Essay')
+  await page.getByTestId('submit-btn').click()
+  await expect(page).toHaveURL(/\/essays\//)
 })
 ```
 

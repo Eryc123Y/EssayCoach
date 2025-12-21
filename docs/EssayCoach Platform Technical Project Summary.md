@@ -16,18 +16,18 @@ We will implement a **distributed microservices architecture**, designed for hig
 *   **Cloud-Native:** Leveraging Alibaba Cloud's managed services for databases, storage, AI inferencing, and container orchestration.
 
 ### High-Level Data Flow:
-`Student Web App (Vue.js)` <--> `Alibaba Cloud CDN/OSS` <--> `Alibaba Cloud API Gateway` <--> `Core Microservices (FastAPI)` <--> `Alibaba Cloud Message Queue` <--> `AI Worker Services (FastAPI/PAI-EAS)` <--> `ApsaraDB for RDS (PostgreSQL)` / `ApsaraDB for OpenSearch (Vector Search)` / `OSS`
+`Student Web App (Next.js)` <--> `Alibaba Cloud CDN/OSS` <--> `Alibaba Cloud API Gateway` <--> `Core Microservices (FastAPI)` <--> `Alibaba Cloud Message Queue` <--> `AI Worker Services (FastAPI/PAI-EAS)` <--> `ApsaraDB for RDS (PostgreSQL)` / `ApsaraDB for OpenSearch (Vector Search)` / `OSS`
 
 ## 3. Core Technical Components & Services
 
-### 3.1 Frontend (Vue.js 3 SPA)
-*   **Framework:** Vue.js 3 — leveraging the **Celeris Web Vue template** (Composition API & Vite powered).
-*   **State Management:** Pinia for lightweight, modular global state.
-*   **Routing:** Vue Router.
-*   **UI Library:** **Naive UI** for a modern, theme-able component set.
-*   **CSS Utility:** **UnoCSS** for atomic/utility-first styling and design tokens.
+### 3.1 Frontend (Next.js Application)
+*   **Framework:** Next.js 15 with React 19 and TypeScript.
+*   **State Management:** Zustand for lightweight, modular global state.
+*   **Routing:** Next.js App Router.
+*   **UI Library:** shadcn/ui (Radix + Tailwind) for a modern, theme-able component set.
+*   **CSS Utility:** Tailwind CSS for utility-first styling and design tokens.
 *   **API Client:** Axios for HTTP requests.
-*   **Build & Deployment:** Production builds (static assets) will be deployed to **Alibaba Cloud OSS** buckets and served via **Alibaba Cloud CDN** for global low-latency access within China.
+*   **Build & Deployment:** Production builds will be deployed to **Alibaba Cloud OSS** buckets and served via **Alibaba Cloud CDN** for low-latency access within China.
 
 ### 3.2 Backend Microservices (Python / Django)
 The backend is built using **Django** with a modular app structure. While initially designed as microservices, the current implementation uses Django's built-in app structure for rapid development. Each Django app handles specific domain responsibilities, with the flexibility to extract into separate services later if needed. We use Django's ORM, admin interface, and REST framework for API development.

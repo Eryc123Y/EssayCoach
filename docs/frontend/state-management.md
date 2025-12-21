@@ -2,40 +2,56 @@
 
 ## Overview
 
-The EssayCoach frontend uses a centralized state management approach with Pinia for Vue 3 applications.
+The EssayCoach frontend uses a lightweight global state management approach with [Zustand](https://zustand-demo.pmnd.rs/) for React applications built with Next.js.
 
 ## Store Structure
 
 ### Root Store
 ```typescript
-// stores/root.ts
-export const useRootStore = defineStore('root', {
-  state: () => ({
-    user: null,
-    isAuthenticated: false,
-    theme: 'light'
-  })
-})
+// state/root.ts
+import { create } from 'zustand'
+
+interface RootState {
+  user: any
+  isAuthenticated: boolean
+  theme: 'light' | 'dark'
+  setUser: (u: any) => void
+}
+
+export const useRootStore = create<RootState>((set) => ({
+  user: null,
+  isAuthenticated: false,
+  theme: 'light',
+  setUser: (user) => set({ user, isAuthenticated: !!user })
+}))
 ```
 
 ### Essay Store
 ```typescript
-// stores/essay.ts
-export const useEssayStore = defineStore('essay', {
-  state: () => ({
-    currentEssay: null,
-    essays: [],
-    isLoading: false
-  })
-})
+// state/essay.ts
+import { create } from 'zustand'
+
+interface EssayState {
+  currentEssay: any
+  essays: any[]
+  isLoading: boolean
+  setLoading: (v: boolean) => void
+}
+
+export const useEssayStore = create<EssayState>((set) => ({
+  currentEssay: null,
+  essays: [],
+  isLoading: false,
+  setLoading: (v) => set({ isLoading: v })
+}))
 ```
 
 ## Patterns & Best Practices
 
-- Use composition API for store access
+- Access stores through React hooks
 - Implement proper TypeScript types
 - Handle async operations with proper loading states
-- Use store plugins for persistence
+- Persist critical data via middleware (e.g., localStorage)
 
 ## Development Notes
 

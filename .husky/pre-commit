@@ -1,0 +1,14 @@
+#!/usr/bin/env sh
+
+# Exit on errors
+set -e
+
+# Source Husky helpers if available
+if [ -f "$(dirname -- "$0")/_/husky.sh" ]; then
+  . "$(dirname -- "$0")/_/husky.sh"
+fi
+
+# Run lint-staged for the frontend package
+pnpm -C frontend lint-staged
+
+

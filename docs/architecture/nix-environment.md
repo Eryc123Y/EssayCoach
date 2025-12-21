@@ -141,7 +141,7 @@ python backend/manage.py test ai_feedback
 
 ### Frontend Development
 ```bash
-# Start Vite development server
+# Start Next.js development server
 cd frontend && pnpm dev
 
 # Build for production

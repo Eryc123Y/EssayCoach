@@ -40,7 +40,7 @@ export default function UserForm({ initialData, pageTitle }: { initialData: User
     values: defaultValues
   });
 
-  function onSubmit(values: z.infer<typeof formSchema>) {
+  function onSubmit(_values: z.infer<typeof formSchema>) {
     // TODO: Connect to POST/PUT endpoints when backend is ready.
   }
 

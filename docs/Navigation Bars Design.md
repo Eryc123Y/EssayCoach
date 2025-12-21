@@ -258,29 +258,29 @@ graph TD
 ```
 src/layouts/
 ├── header/
-│   ├── AppHeader.vue (main header component)
+│   ├── AppHeader.tsx (main header component)
 │   ├── components/
-│   │   ├── BreadcrumbNav.vue
-│   │   ├── GlobalSearch.vue
-│   │   ├── NotificationBell.vue
-│   │   └── UserDropdown.vue
+│   │   ├── BreadcrumbNav.tsx
+│   │   ├── GlobalSearch.tsx
+│   │   ├── NotificationBell.tsx
+│   │   └── UserDropdown.tsx
 ├── sidebar/
-│   ├── AppSidebar.vue (main sidebar component)
+│   ├── AppSidebar.tsx (main sidebar component)
 │   ├── components/
-│   │   ├── NavMenuItem.vue
-│   │   ├── CollapseToggle.vue
-│   │   └── QuickActions.vue
+│   │   ├── NavMenuItem.tsx
+│   │   ├── CollapseToggle.tsx
+│   │   └── QuickActions.tsx
 └── fab/
-    ├── FloatingActionButton.vue
-    ├── SpeedDial.vue
-    └── FABManager.vue (context-aware controller)
+    ├── FloatingActionButton.tsx
+    ├── SpeedDial.tsx
+    └── FABManager.tsx (context-aware controller)
 ```
 
 ### 7.2 State Management Integration
-- **Sidebar state**: `store/modules/app.ts` → `sidebarCollapsed`, `sidebarWidth`
-- **Navigation state**: `store/modules/navigation.ts` → `activeRoute`, `breadcrumbs`
-- **FAB state**: `store/modules/fab.ts` → `activeFABs`, `fabContext`
-- **Notification state**: `store/modules/notification.ts` → `unreadCount`, `alerts`
+- **Sidebar state**: `state/app.ts` → `sidebarCollapsed`, `sidebarWidth`
+- **Navigation state**: `state/navigation.ts` → `activeRoute`, `breadcrumbs`
+- **FAB state**: `state/fab.ts` → `activeFABs`, `fabContext`
+- **Notification state**: `state/notification.ts` → `unreadCount`, `alerts`
 
 ### 7.3 Accessibility Requirements
 - **ARIA labels**: All navigation elements properly labeled

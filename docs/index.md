@@ -1,12 +1,12 @@
 # EssayCoach Developer Documentation
 
-Welcome to the technical documentation for EssayCoach, an AI-powered essay coaching platform built with Vue 3 frontend and Django backend.
+Welcome to the technical documentation for EssayCoach, an AI-powered essay coaching platform built with a Next.js frontend and Django backend.
 
 ## 🏗️ Architecture Overview
 
 EssayCoach is designed as a modern web application with the following architecture:
 
-- **Frontend**: Vue 3 + TypeScript + Vite with Naive UI components
+- **Frontend**: Next.js 15 + React 19 + TypeScript + Tailwind CSS with shadcn/ui components
 - **Backend**: Django REST Framework with PostgreSQL database
 - **Development Environment**: Nix flakes for reproducible builds
 - **Deployment**: Docker containers with CI/CD pipelines
@@ -14,22 +14,27 @@ EssayCoach is designed as a modern web application with the following architectu
 ## 🚀 Quick Start for Developers
 
 ### Environment Setup
+
 Enter the development environment:
+
 ```bash
 nix develop
 ```
 
 This sets up:
+
 - PostgreSQL database with schema and mock data
 - Django development environment
-- Frontend development tools (Node.js, pnpm, Vite)
+- Frontend development tools (Node.js, pnpm, Next.js)
 - All documentation tools (MkDocs, material theme)
 
 ### Start Documentation Server
+
 ```bash
 mkdocs serve --dev-addr=0.0.0.0:8000
 ```
-Visit http://localhost:8000 to view the documentation locally.
+
+Visit <http://localhost:8000> to view the documentation locally.
 
 ## 📁 Documentation Structure
 
@@ -38,8 +43,8 @@ This documentation is organized for developers and contributors:
 - **Architecture & Design**: System design decisions and technical specifications
 - **Database Schema**: Complete database design with relationships and constraints
 - **Backend Deep Dive**: Django models, serializers, views, and async processing
-- **Frontend Architecture**: Vue 3 component structure and state management
-- **API Reference**: REST endpoints and WebSocket events
+- **Frontend Architecture**: Next.js component structure and state management
+- **Agentic Workflow**: Plans for agentic design, orchestration, and technique stacks
 - **Development Guide**: Setup instructions and contribution guidelines
 
 ## 🔄 Development Workflow
@@ -53,12 +58,12 @@ This documentation is organized for developers and contributors:
 
 | Component | Technology | Purpose |
 |-----------|------------|---------|
-| Frontend | Vue 3 + TypeScript | Modern reactive UI |
+| Frontend | Next.js + React + TypeScript | Server-rendered React UI |
 | Backend | Django REST Framework | RESTful API server |
 | Database | PostgreSQL | Primary data store |
 | Dev Environment | Nix flakes | Reproducible builds |
 | Documentation | MkDocs Material | Technical documentation |
-| Testing | Pytest + Vitest | Comprehensive test suite |
+| Testing | Pytest + Jest | Comprehensive test suite |
 
 ## 🔗 Useful Links
 
@@ -66,4 +71,4 @@ This documentation is organized for developers and contributors:
 - [System Architecture](architecture/system-architecture.md)
 - [Database Design](database/schema-overview.md)
 - [Database Configuration](database/configuration.md)
-- [API Documentation](api/rest-endpoints.md)
+- [Agentic Workflow](agentic-workflow/agentic-design.md)

@@ -54,8 +54,8 @@ export const columns: ColumnDef<User>[] = [
     header: 'Status',
     cell: ({ cell }) => {
       const status = cell.getValue<User['status']>();
-      const variant = status === 'active' ? 'default' : 'secondary';
-      return <Badge variant={variant as any} className='capitalize'>{status}</Badge>;
+      const variant: 'default' | 'secondary' = status === 'active' ? 'default' : 'secondary';
+      return <Badge variant={variant} className='capitalize'>{status}</Badge>;
     },
     enableColumnFilter: true,
     meta: {

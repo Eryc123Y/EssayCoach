@@ -1,4 +1,5 @@
 #!/usr/bin/env bash
+set -Eeuo pipefail
 cd backend
 
 # Use the current shell's environment directly
@@ -62,17 +63,6 @@ ensure_database_setup() {
     psql -U "$POSTGRES_SUPERUSER" -p "$PGPORT" -h "$PGHOST" -tc "SELECT 1 FROM pg_database WHERE datname = '$POSTGRES_DB'" | grep -q 1 || \
         psql -U "$POSTGRES_SUPERUSER" -p "$PGPORT" -h "$PGHOST" -c "CREATE DATABASE $POSTGRES_DB OWNER $POSTGRES_SUPERUSER;" >/dev/null
 
-    # Load schema if database is empty
-    if ! psql -U "$POSTGRES_SUPERUSER" -p "$PGPORT" -h "$PGHOST" -d "$POSTGRES_DB" -tc "SELECT 1 FROM information_schema.tables WHERE table_schema = 'public' LIMIT 1;" 2>/dev/null | grep -q 1; then
-        echo "[dev-pg] Loading database schema..."
-        if psql -U "$POSTGRES_SUPERUSER" -p "$PGPORT" -h "$PGHOST" -d "$POSTGRES_DB" -f "$PWD/../docker/db/init/00_init.sql" >/dev/null 2>&1; then
-            echo "[dev-pg] Schema loaded successfully"
-            if psql -U "$POSTGRES_SUPERUSER" -p "$PGPORT" -h "$PGHOST" -d "$POSTGRES_DB" -f "$PWD/../docker/db/init/01_add_data.sql" >/dev/null 2>&1; then
-                echo "[dev-pg] Mock data loaded successfully"
-            fi
-        fi
-    fi
-    
     echo "[dev-pg] Database setup complete"
 }
 
@@ -112,14 +102,14 @@ fi
 # Test if Django is available in the current environment
 if python -c "import django; print(f'Django {django.get_version()} found')" 2>/dev/null; then
     echo "Django is available, running migrations and starting server..."
-    
-    # Create migrations for any model changes
-    echo "Creating new migrations if needed..."
-    python manage.py makemigrations --noinput
-    
+
     # Run database migrations
     echo "Running Django migrations..."
     python manage.py migrate --noinput
+    
+    # Seed database if empty
+    echo "Seeding database if empty..."
+    python manage.py seed_db
 
     # create a superuser if it doesn't exist
     echo "Ensuring default admin superuser exists..."
@@ -151,100 +141,18 @@ with connection.cursor() as cur:
 
     if not updated:
         # Insert a new admin user with the requested username/email 'admin'
+        # Use default if next_id is None (fresh DB)
         cur.execute('SELECT COALESCE(MAX(user_id)+1, 1) FROM "user"')
-        next_id = cur.fetchone()[0]
+        row = cur.fetchone()
+        next_id = row[0] if row else 1
+        
         cur.execute(
-            'INSERT INTO "user" (user_id, user_fname, user_lname, user_email, user_role, user_status, user_credential, is_superuser, is_staff, is_active)\n'
-            'VALUES (%s, %s, %s, %s, %s, %s, %s, TRUE, TRUE, TRUE)',
+            'INSERT INTO "user" (user_id, user_fname, user_lname, user_email, user_role, user_status, user_credential, is_superuser, is_staff, is_active, date_joined)\n'
+            'VALUES (%s, %s, %s, %s, %s, %s, %s, TRUE, TRUE, TRUE, NOW())',
             [next_id, 'Admin', 'User', 'admin', 'admin', 'active', hashed]
         )
 
 print('Admin user ensured (email: "admin" or "admin@example.com")')
-PY
-
-    # Ensure default groups exist and add admin to 'admin' group
-    echo "Ensuring default groups and admin membership..."
-    python - <<'PY'
-from django.db import connection
-
-group_names = ['admin', 'lecturer', 'student']
-
-with connection.cursor() as cur:
-    # Create groups if missing
-    for name in group_names:
-        cur.execute('INSERT INTO auth_group (name) SELECT %s WHERE NOT EXISTS (SELECT 1 FROM auth_group WHERE name=%s)', [name, name])
-
-    # Get admin user_id (prefer 'admin' email)
-    cur.execute('SELECT user_id FROM "user" WHERE user_email = %s OR user_email = %s ORDER BY user_email = %s DESC LIMIT 1', ['admin', 'admin@example.com', 'admin'])
-    row = cur.fetchone()
-    if row:
-        admin_id = row[0]
-        # Find admin group id
-        cur.execute('SELECT id FROM auth_group WHERE name = %s', ['admin'])
-        gid = cur.fetchone()[0]
-        # Assign membership if not exists
-        cur.execute('INSERT INTO core_user_groups (user_id, group_id) SELECT %s, %s WHERE NOT EXISTS (SELECT 1 FROM core_user_groups WHERE user_id=%s AND group_id=%s)', [admin_id, gid, admin_id, gid])
-
-print('Default groups ensured and admin added to admin group')
-PY
-
-    # Ensure custom permission and baseline group permissions (idempotent)
-    echo "Ensuring core user permissions and assignments..."
-    python - <<'PY'
-from django.db import connection
-
-# Get content_type id for core.user
-with connection.cursor() as cur:
-    cur.execute("SELECT id FROM django_content_type WHERE app_label=%s AND model=%s", ['core', 'user'])
-    row = cur.fetchone()
-    if not row:
-        # In case content types not ready yet; skip silently
-        raise SystemExit(0)
-    ct_id = row[0]
-
-    # Ensure custom permission exists
-    cur.execute("""
-        INSERT INTO auth_permission (name, content_type_id, codename)
-        SELECT %s, %s, %s
-        WHERE NOT EXISTS (
-            SELECT 1 FROM auth_permission WHERE content_type_id=%s AND codename=%s
-        )
-    """, ['Can view student stats', ct_id, 'view_student_stats', ct_id, 'view_student_stats'])
-
-    # Resolve permission ids we care about
-    wanted = ['add_user','change_user','delete_user','view_user','view_student_stats']
-    cur.execute(
-        "SELECT codename, id FROM auth_permission WHERE content_type_id=%s AND codename = ANY(%s)",
-        [ct_id, wanted]
-    )
-    perm_map = dict(cur.fetchall())
-
-    # Resolve group ids
-    cur.execute("SELECT name, id FROM auth_group WHERE name = ANY(%s)", [['admin','lecturer','student']])
-    group_map = dict(cur.fetchall())
-
-    def grant(group, codes):
-        gid = group_map.get(group)
-        if not gid:
-            return
-        for code in codes:
-            pid = perm_map.get(code)
-            if not pid:
-                continue
-            cur.execute(
-                "INSERT INTO auth_group_permissions (group_id, permission_id)\n"
-                "SELECT %s, %s\n"
-                "WHERE NOT EXISTS (SELECT 1 FROM auth_group_permissions WHERE group_id=%s AND permission_id=%s)",
-                [gid, pid, gid, pid]
-            )
-
-    # Admin: full perms
-    grant('admin', wanted)
-    # Lecturer: view_user + view_student_stats
-    grant('lecturer', ['view_user','view_student_stats'])
-    # Student: no model-level perms here
-
-print('Core user permissions ensured and assigned to groups')
 PY
 
     # Start the development server
@@ -252,9 +160,5 @@ PY
     python manage.py runserver
 else
     echo "ERROR: Django not found in Python environment"
-    echo "Python version: $(python --version)"
-    echo "Python executable: $(which python)"
-    echo "Trying to import Django..."
-    python -c "import django" || echo "Import failed"
     exit 1
 fi
