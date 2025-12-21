@@ -2,10 +2,28 @@
   "extends": "next/core-web-vitals",
   "plugins": ["@typescript-eslint"],
   "rules": {
-    "@typescript-eslint/no-unused-vars": "warn",
+    "@typescript-eslint/no-unused-vars": [
+      "warn",
+      {
+        "argsIgnorePattern": "^_",
+        "varsIgnorePattern": "^_",
+        "caughtErrorsIgnorePattern": "^_"
+      }
+    ],
     "import/no-unresolved": "off",
     "import/named": "off",
-    "no-console": "warn",
-    "react-hooks/exhaustive-deps": "warn"
-  }
+    "no-console": ["warn", { "allow": ["warn", "error"] }],
+    "react-hooks/exhaustive-deps": "warn",
+    "prefer-const": "warn",
+    "@typescript-eslint/no-explicit-any": "warn"
+  },
+  "overrides": [
+    {
+      "files": ["*.test.ts", "*.test.tsx", "*.spec.ts", "*.spec.tsx"],
+      "rules": {
+        "@typescript-eslint/no-unused-vars": "off",
+        "no-console": "off"
+      }
+    }
+  ]
 }
