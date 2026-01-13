@@ -151,6 +151,9 @@ NEXT_PUBLIC_API_URL=http://localhost:8000
 DIFY_API_KEY=your-dify-api-key
 DIFY_WORKFLOW_ID=your-workflow-id
 DIFY_BASE_URL=https://api.dify.ai/v1
+
+> [!TIP]
+> If you encounter 404 errors when calling the API from the frontend, please refer to the [Debugging Guide](debugging.md#404-error-on-api-calls).
 ```
 
 ## 🚀 Quick Start Commands
