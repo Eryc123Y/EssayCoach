@@ -3,7 +3,7 @@ from __future__ import annotations
 from django.conf import settings
 from drf_spectacular.utils import OpenApiExample, OpenApiResponse, extend_schema
 from rest_framework import status
-from rest_framework.permissions import IsAuthenticated
+from rest_framework.permissions import IsAuthenticated, AllowAny
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -11,6 +11,7 @@ from .client import DifyClient, DifyClientError
 from .serializers import (
     DifyWorkflowRunSerializer,
 )
+
 
 class WorkflowRunView(APIView):
     """
@@ -20,7 +21,7 @@ class WorkflowRunView(APIView):
     returns the workflow run metadata so clients can track the execution.
     """
 
-    permission_classes = [IsAuthenticated]
+    permission_classes = [AllowAny]
 
     @extend_schema(
         tags=["AI Feedback"],
@@ -70,10 +71,14 @@ class WorkflowRunView(APIView):
 
         try:
             client = DifyClient()
-            workflow_id = client.default_workflow_id or settings.DIFY_DEFAULT_WORKFLOW_ID
+            workflow_id = (
+                client.default_workflow_id or settings.DIFY_DEFAULT_WORKFLOW_ID
+            )
             if not workflow_id:
                 return Response(
-                    {"detail": "DIFY_WORKFLOW_ID must be configured in the environment."},
+                    {
+                        "detail": "DIFY_WORKFLOW_ID must be configured in the environment."
+                    },
                     status=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 )
 
@@ -130,9 +135,7 @@ class WorkflowRunStatusView(APIView):
                             "id": "b1ad3277-089e-42c6-9dff-6820d94fbc76",
                             "workflow_id": "19eff89f-ec03-4f75-b0fc-897e7effea02",
                             "status": "succeeded",
-                            "outputs": {
-                                "text": "Nice to meet you."
-                            },
+                            "outputs": {"text": "Nice to meet you."},
                             "total_steps": 3,
                         },
                     )

@@ -35,7 +35,7 @@ export async function request<T = any>(config: RequestConfig): Promise<T> {
         .split('; ')
         .find((row) => row.startsWith('access_token='))
         ?.split('=')[1];
-      if (cookieValue) {
+      if (cookieValue && !cookieValue.startsWith('mock_')) {
         authToken = `Token ${cookieValue}`;
       }
     }
