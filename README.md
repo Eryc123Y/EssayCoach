@@ -5,10 +5,10 @@ EssayCoach is a future-oriented intelligent education platform designed to lever
 ## 🚀 Features
 
 ### For Students
-- **Instant AI Feedback**: Get comprehensive evaluation reports covering grading, fact-checking, and writing advice immediately after submission.
-- **Intelligent Grading**: Automated, objective scoring based on teacher-uploaded rubrics using RAG (Retrieval-Augmented Generation).
+- **Instant AI Feedback**: ✅ Get comprehensive evaluation reports covering grading, fact-checking, and writing advice immediately after submission.
+- **Intelligent Grading**: ✅ Automated, objective scoring based on teacher-uploaded rubrics using RAG (Retrieval-Augmented Generation).
 - **Fact Verification**: AI-driven identification and verification of factual claims against authoritative sources.
-- **Writing Advisor**: Specific, actionable suggestions for grammar, syntax, vocabulary enrichment, and logical flow.
+- **Writing Advisor**: ✅ Specific, actionable suggestions for grammar, syntax, vocabulary enrichment, and logical flow.
 - **Revision History**: Track progress through multiple drafts with version-specific AI feedback.
 
 ### For Educators

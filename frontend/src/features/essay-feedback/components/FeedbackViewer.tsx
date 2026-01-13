@@ -1,0 +1,229 @@
+'use client';
+
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription
+} from '@/components/ui/card';
+import { Progress } from '@/components/ui/progress';
+import { Badge } from '@/components/ui/badge';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import type { DifyWorkflowStatus } from '@/types/dify';
+import { FeedbackCharts } from './FeedbackCharts';
+import { RevisionChat } from './RevisionChat';
+import { CheckCircle2, FileText, BarChart3, Sparkles, AlertCircle, FileEdit } from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
+import { Button } from '@/components/ui/button';
+
+interface FeedbackViewerProps {
+  result: DifyWorkflowStatus | null;
+  isRunning: boolean;
+  progress: number;
+  error: string | null;
+  onRetry?: () => void;
+}
+
+export function FeedbackViewer({
+  result,
+  isRunning,
+  progress,
+  error,
+  onRetry
+}: FeedbackViewerProps) {
+  if (error) {
+    return (
+      <Alert
+        variant='destructive'
+        className='animate-in fade-in slide-in-from-top-2 duration-300'
+      >
+        <AlertCircle className="h-4 w-4" />
+        <AlertDescription className="flex flex-col gap-2">
+          <span className="font-medium">Error analyzing essay: {error}</span>
+          <span className="text-sm opacity-90">Please try submitting your essay again.</span>
+          {onRetry && (
+            <Button 
+              variant="outline" 
+              size="sm" 
+              onClick={onRetry}
+              className="w-fit mt-2 bg-background/20 hover:bg-background/40 border-background/40 text-inherit"
+            >
+              Retry
+            </Button>
+          )}
+        </AlertDescription>
+      </Alert>
+    );
+  }
+
+  const getAnalysisStep = (progress: number) => {
+    if (progress < 30) return "Analyzing essay structure...";
+    if (progress < 60) return "Checking grammar and style...";
+    if (progress < 90) return "Generating detailed feedback...";
+    return "Finalizing report...";
+  };
+
+  if (isRunning) {
+    return (
+      <Card className='bg-background/60 border-none shadow-xl backdrop-blur-md'>
+        <CardHeader className='pb-2'>
+          <CardTitle className='text-xl font-medium tracking-tight'>
+            Analyzing Essay...
+          </CardTitle>
+        </CardHeader>
+        <CardContent className='space-y-6 pt-4'>
+          <div className='relative'>
+            <Progress value={progress} className='bg-secondary h-2 w-full' />
+            <div className='absolute top-0 left-0 h-full w-full animate-pulse bg-gradient-to-r from-transparent via-white/20 to-transparent' />
+          </div>
+          <div className='text-muted-foreground flex items-center justify-between text-sm'>
+            <span className='flex items-center gap-2'>
+              <Sparkles className='animate-spin-slow h-4 w-4 text-indigo-500' />
+              <span className="animate-in fade-in duration-300 key={getAnalysisStep(progress)}">
+                {getAnalysisStep(progress)}
+              </span>
+            </span>
+            <span className='font-mono font-medium'>
+              {Math.round(progress)}%
+            </span>
+          </div>
+          
+          <div className="grid grid-cols-4 gap-2 pt-2">
+            {[0, 1, 2, 3].map((i) => (
+              <div key={i} className="flex flex-col items-center gap-1">
+                <div className={`h-1.5 w-full rounded-full transition-colors duration-500 ${
+                  progress > i * 25 ? 'bg-indigo-500/80' : 'bg-secondary'
+                }`} />
+              </div>
+            ))}
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  if (!result?.outputs) {
+    return (
+      <Card className="border-dashed border-2 bg-muted/30">
+        <CardContent className="flex flex-col items-center justify-center py-12 text-center text-muted-foreground space-y-4">
+          <div className="p-4 rounded-full bg-background border shadow-sm">
+            <FileEdit className="h-8 w-8 text-muted-foreground/50" />
+          </div>
+          <div className="space-y-1">
+            <h3 className="font-semibold text-lg text-foreground">No feedback yet</h3>
+            <p className="text-sm max-w-sm mx-auto">
+              Submit an essay to receive comprehensive AI-powered analysis, grading, and revision suggestions.
+            </p>
+          </div>
+        </CardContent>
+      </Card>
+    );
+  }
+
+  const outputs = result.outputs;
+
+  return (
+    <div className='animate-in fade-in slide-in-from-bottom-4 space-y-6 duration-500'>
+      <div className='flex items-center justify-between'>
+        <div>
+          <h2 className='flex items-center gap-2 text-2xl font-bold tracking-tight'>
+            Feedback Report
+            <CheckCircle2 className='h-6 w-6 text-green-500' />
+          </h2>
+          <p className='text-muted-foreground text-sm'>
+            Generated by EssayCoach AI
+          </p>
+        </div>
+
+        {outputs.overall_score !== undefined && (
+          <div className='flex flex-col items-end'>
+            <span className='text-muted-foreground text-sm font-medium tracking-wider uppercase'>
+              Overall Score
+            </span>
+            <span className='text-4xl font-extrabold text-indigo-600 dark:text-indigo-400'>
+              {outputs.overall_score}
+              <span className='text-muted-foreground text-lg font-normal'>
+                /100
+              </span>
+            </span>
+          </div>
+        )}
+      </div>
+
+      <div className='grid grid-cols-1 gap-6 lg:grid-cols-3'>
+        <div className='space-y-6 lg:col-span-1'>
+          <FeedbackCharts outputs={outputs} />
+
+          <div className='sticky top-4'>
+            <RevisionChat />
+          </div>
+        </div>
+
+        <div className='space-y-6 lg:col-span-2'>
+          <Card className='border-border/60 h-full shadow-md'>
+            <CardHeader className='border-border/40 border-b pb-4'>
+              <div className='flex items-center justify-between'>
+                <CardTitle className='flex items-center gap-2 text-lg'>
+                  <FileText className='h-5 w-5 text-indigo-500' />
+                  Detailed Analysis
+                </CardTitle>
+              </div>
+            </CardHeader>
+            <CardContent className='pt-6'>
+              {outputs.feedback_summary ? (
+                <div className='prose prose-indigo dark:prose-invert max-w-none'>
+                  <div className='text-foreground/90 leading-relaxed whitespace-pre-wrap'>
+                    {outputs.feedback_summary}
+                  </div>
+                </div>
+              ) : (
+                <div className='text-muted-foreground flex flex-col items-center justify-center py-12'>
+                  <p>No text feedback available.</p>
+                </div>
+              )}
+
+              {outputs.overall_score && (
+                <div className='border-border/40 mt-8 border-t pt-6'>
+                  <h4 className='text-muted-foreground mb-4 text-sm font-semibold tracking-wider uppercase'>
+                    Score Breakdown
+                  </h4>
+                  <div className='grid grid-cols-2 gap-4 md:grid-cols-4'>
+                    <ScoreBadge
+                      label='Structure'
+                      score={outputs.structure_analysis?.score}
+                    />
+                    <ScoreBadge
+                      label='Content'
+                      score={outputs.content_analysis?.score}
+                    />
+                    <ScoreBadge
+                      label='Style'
+                      score={outputs.style_analysis?.score}
+                    />
+                    <ScoreBadge
+                      label='Grammar'
+                      score={100 - (outputs.grammar_notes?.length || 0) * 5}
+                    />
+                  </div>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function ScoreBadge({ label, score }: { label: string; score?: number }) {
+  if (score === undefined) return null;
+  return (
+    <div className='bg-secondary/30 border-border/50 flex flex-col rounded-lg border p-3 text-center'>
+      <span className='text-muted-foreground mb-1 text-xs font-medium'>
+        {label}
+      </span>
+      <span className='text-foreground text-xl font-bold'>{score}</span>
+    </div>
+  );
+}

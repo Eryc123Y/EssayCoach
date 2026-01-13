@@ -1,20 +1,19 @@
 import {
-  Geist,
-  Geist_Mono,
   Instrument_Sans,
   Inter,
+  JetBrains_Mono,
   Mulish,
   Noto_Sans_Mono
 } from 'next/font/google';
 
 import { cn } from '@/lib/utils';
 
-const fontSans = Geist({
+const fontSans = Inter({
   subsets: ['latin'],
   variable: '--font-sans'
 });
 
-const fontMono = Geist_Mono({
+const fontMono = JetBrains_Mono({
   subsets: ['latin'],
   variable: '--font-mono'
 });

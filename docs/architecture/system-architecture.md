@@ -61,36 +61,35 @@ graph LR
 flowchart LR
     Start([Student Uploads Essay]) --> Validation[Frontend Validation]
     Validation --> API[Backend API Endpoint]
-    API --> Storage[Database Storage]
-    Storage --> Async[Async AI Analysis]
-    Async --> Generation[Feedback Generation]
-    Generation --> Updates[Real-time Updates]
-    Updates --> Dashboard[Student Dashboard]
+    API --> Dify[Synchronous Dify Workflow]
+    Dify --> Generation[Feedback Generation]
+    Generation --> Dashboard[Student Dashboard]
     Dashboard --> Review([Student Reviews Feedback])
 ```
 
-### AI Integration Architecture
+### AI Integration Architecture (Current)
 ```mermaid
 graph LR
-    subgraph "AI Processing Flow"
-        ExtAI[External AI Service]
-        Queue[Celery Queue]
-        Cache[Redis Cache]
-        WS[WebSocket Server]
-        Worker[Celery Worker]
+    subgraph "Frontend"
+        UI[Essay Analysis Page]
+        Service[Dify API Service]
     end
-    subgraph "Data Storage"
-        DB[(PostgreSQL)]
-        FileStore[File Storage]
+    subgraph "Backend (ai_feedback)"
+        View[WorkflowRunView]
+        Client[DifyClient]
     end
-    Queue -- Tasks --> Worker
-    Worker -- Process --> ExtAI
-    ExtAI -- Results --> Worker
-    Worker -- Store --> DB
-    Worker -- Cache --> Cache
-    WS -- Real-time Updates --> Cache
-    DB -- Read Cached --> Cache
-    Cache -- Serve --> WS
+    subgraph "External"
+        DifyPlatform[Dify.ai Workflow]
+    end
+
+    UI -- Submit --> Service
+    Service -- POST --> View
+    View -- Request --> Client
+    Client -- Sync Call --> DifyPlatform
+    DifyPlatform -- JSON Response --> Client
+    Client -- Result --> View
+    View -- Response --> Service
+    Service -- Display --> UI
 ```
 
 ## 🚀 Scalability Considerations

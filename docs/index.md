@@ -40,6 +40,7 @@ Visit <http://localhost:8000> to view the documentation locally.
 
 This documentation is organized for developers and contributors:
 
+- **Project Status**: [Frontend Status](frontend/current-status.md) | [Backend Status](backend/current-status.md) (Actual implementation state)
 - **Architecture & Design**: System design decisions and technical specifications
 - **Database Schema**: Complete database design with relationships and constraints
 - **Backend Deep Dive**: Django models, serializers, views, and async processing

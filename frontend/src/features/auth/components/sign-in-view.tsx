@@ -42,9 +42,7 @@ export default function SignInViewPage({ stars }: { stars: number }) {
         </div>
         <div className='relative z-20 mt-auto'>
           <blockquote className='space-y-2'>
-            <p className='text-lg'>
-              Development Console
-            </p>
+            <p className='text-lg'>Development Console</p>
           </blockquote>
         </div>
       </div>

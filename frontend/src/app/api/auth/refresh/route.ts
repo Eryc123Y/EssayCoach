@@ -32,5 +32,3 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ message: 'Invalid JSON' }, { status: 400 });
   }
 }
-
-

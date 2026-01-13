@@ -25,8 +25,13 @@ start_local_pg() {
     sleep 2
   fi
   
-  # Init DB if it doesn't exist
-  if [ ! -d "$PGDATA" ]; then
+  # Init DB if it doesn't exist or is corrupted/incomplete
+  # PG_VERSION is the canonical marker of a valid PostgreSQL data directory
+  if [ ! -d "$PGDATA" ] || [ ! -f "$PGDATA/PG_VERSION" ]; then
+    if [ -d "$PGDATA" ]; then
+      echo "[dev-pg] Data directory exists but is invalid/corrupted. Cleaning up..."
+      rm -rf "$PGDATA"
+    fi
     echo "Initializing PostgreSQL data directory..."
     initdb -D "$PGDATA" --auth=trust --no-locale --encoding=UTF8 -U postgres >/dev/null
   fi

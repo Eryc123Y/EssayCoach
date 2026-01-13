@@ -1,5 +1,11 @@
 'use client';
-import React, { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import React, {
+  createContext,
+  useContext,
+  useEffect,
+  useMemo,
+  useState
+} from 'react';
 
 type SimpleUser = {
   email: string;
@@ -47,7 +53,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       user,
       logout: async () => {
         await fetch('/api/auth/logout', { method: 'POST' });
-        if (typeof window !== 'undefined') window.location.href = '/auth/sign-in';
+        if (typeof window !== 'undefined')
+          window.location.href = '/auth/sign-in';
       }
     }),
     [user]
@@ -61,5 +68,3 @@ export function useAuth() {
   if (!ctx) throw new Error('useAuth must be used within AuthProvider');
   return ctx;
 }
-
-

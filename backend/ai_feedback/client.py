@@ -115,10 +115,12 @@ class DifyClient:
 
     def get_workflow_run(self, workflow_run_id: str) -> Dict[str, Any]:
         url = f"{self.base_url}/workflows/run/{workflow_run_id}"
-        response = requests.get(url, headers={**self.headers, "Content-Type": "application/json"})
+        response = requests.get(
+            url, headers={**self.headers, "Content-Type": "application/json"}
+        )
         self._raise_for_status(response)
         return response.json()
 
     def get_rubric_upload_id(self, user: str) -> str:
-        rubric_path = Path(settings.BASE_DIR) / "rubric.pdf"
+        rubric_path = Path(settings.BASE_DIR).parent / "rubric.pdf"
         return self.upload_file(rubric_path, user)
