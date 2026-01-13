@@ -17,7 +17,7 @@ class DifyClient:
     def __init__(self) -> None:
         self.api_key = os.environ.get(
             "DIFY_API_KEY",
-            os.environ.get("APP_DIFY_API_KEY", None),
+            os.environ.get("APP_DIFY_API_KEY", os.environ.get("DIFY_API", None)),
         )
         if not self.api_key:
             raise DifyClientError("DIFY_API_KEY must be set in the environment")
