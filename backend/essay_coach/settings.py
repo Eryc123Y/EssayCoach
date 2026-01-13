@@ -40,14 +40,14 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "corsheaders",
     "rest_framework",
-    "rest_framework.authtoken", # For token-based authentication
+    "rest_framework.authtoken",  # For token-based authentication
     "django_filters",
     "drf_spectacular",  # OpenAPI 3.0 schema generation
     # Custom Apps
     "core",
     "auth",
     "analytics",
-    'ai_feedback',
+    "ai_feedback",
 ]
 
 MIDDLEWARE = [
@@ -64,8 +64,14 @@ MIDDLEWARE = [
 
 # CORS settings
 CORS_ALLOW_CREDENTIALS = True
-CORS_ALLOWED_ORIGINS = ["http://localhost:5100"]
-CSRF_TRUSTED_ORIGINS = ['http://localhost:5100']
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:5100",
+    "http://localhost:3000",
+]
+CSRF_TRUSTED_ORIGINS = [
+    "http://localhost:5100",
+    "http://localhost:3000",
+]
 
 # Django REST Framework settings (DRF global)
 REST_FRAMEWORK = {
@@ -78,9 +84,9 @@ REST_FRAMEWORK = {
         "rest_framework.renderers.BrowsableAPIRenderer",
     ],
     "DEFAULT_PARSER_CLASSES": [
-    "rest_framework.parsers.JSONParser",
-    "rest_framework.parsers.FormParser",
-    "rest_framework.parsers.MultiPartParser",
+        "rest_framework.parsers.JSONParser",
+        "rest_framework.parsers.FormParser",
+        "rest_framework.parsers.MultiPartParser",
     ],
     "DEFAULT_PERMISSION_CLASSES": [
         "rest_framework.permissions.IsAuthenticated",
@@ -106,13 +112,25 @@ SPECTACULAR_SETTINGS = {
         "rest_framework.authentication.TokenAuthentication",
     ],
     "TAGS": [
-        {"name": "Authentication", "description": "User authentication and authorization endpoints"},
+        {
+            "name": "Authentication",
+            "description": "User authentication and authorization endpoints",
+        },
         {"name": "Users", "description": "User management endpoints"},
-        {"name": "Courses", "description": "Course structure management (Units, Classes, Enrollments, Teaching Assignments)"},
-        {"name": "Rubrics", "description": "Rubric configuration and management (Marking Rubrics, Rubric Items, Rubric Level Descriptions)"},
+        {
+            "name": "Courses",
+            "description": "Course structure management (Units, Classes, Enrollments, Teaching Assignments)",
+        },
+        {
+            "name": "Rubrics",
+            "description": "Rubric configuration and management (Marking Rubrics, Rubric Items, Rubric Level Descriptions)",
+        },
         {"name": "Tasks", "description": "Assignment and task management"},
         {"name": "Submissions", "description": "Student submission management"},
-        {"name": "Feedback", "description": "Feedback and evaluation management (Feedbacks, Feedback Items)"},
+        {
+            "name": "Feedback",
+            "description": "Feedback and evaluation management (Feedbacks, Feedback Items)",
+        },
     ],
     "SWAGGER_UI_SETTINGS": {
         "deepLinking": True,
@@ -202,7 +220,9 @@ STATIC_URL = "static/"
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # Dify workflow integration
-DIFY_DEFAULT_WORKFLOW_ID = os.environ.get("DIFY_DEFAULT_WORKFLOW_ID") or os.environ.get("DIFY_WORKFLOW_ID")
+DIFY_DEFAULT_WORKFLOW_ID = os.environ.get("DIFY_DEFAULT_WORKFLOW_ID") or os.environ.get(
+    "DIFY_WORKFLOW_ID"
+)
 
 
 # Use custom user model

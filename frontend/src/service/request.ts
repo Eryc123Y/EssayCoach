@@ -26,19 +26,24 @@ export async function request<T = any>(config: RequestConfig): Promise<T> {
 
   const isFormData = data instanceof FormData;
 
-  // Get auth token from localStorage if available
+  // Get auth token from cookies if available
   let authToken = headers['Authorization'];
   if (!authToken) {
-    if (typeof window !== 'undefined') {
-      const token = localStorage.getItem('auth_token');
-      if (token) {
-        authToken = `Token ${token}`;
+    if (typeof document !== 'undefined') {
+      // Read access_token from cookie (set by login API)
+      const cookieValue = document.cookie
+        .split('; ')
+        .find((row) => row.startsWith('access_token='))
+        ?.split('=')[1];
+      if (cookieValue) {
+        authToken = `Token ${cookieValue}`;
       }
     }
   }
 
   const response = await fetch(fullUrl, {
     method,
+    credentials: 'include', // Include cookies for session authentication
     headers: {
       ...(!isFormData && { 'Content-Type': 'application/json' }),
       ...headers,
