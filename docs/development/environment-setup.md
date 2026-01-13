@@ -146,6 +146,11 @@ DEBUG=True
 
 # Frontend
 NEXT_PUBLIC_API_URL=http://localhost:8000
+
+# AI Feedback (Dify)
+DIFY_API_KEY=your-dify-api-key
+DIFY_WORKFLOW_ID=your-workflow-id
+DIFY_BASE_URL=https://api.dify.ai/v1
 ```
 
 ## 🚀 Quick Start Commands

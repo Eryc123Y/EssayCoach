@@ -7,6 +7,10 @@
 
 ## 📋 执行摘要 (Executive Summary)
 
+> [!CAUTION]
+> **Deprecation Notice**: The legacy `dashboard/essay` page and `essay-feedback` feature folder are deprecated.
+> All new development should focus on the `Essay Analysis` module (`/dashboard/essay-analysis`), which provides a superior AI-driven experience.
+
 当前前端基于 **next-shadcn-dashboard-starter** 模板搭建，拥有完整的技术基础设施，但 **EssayCoach 特定功能尚未实现**。前端处于"脚手架完成、业务待开发"阶段。
 
 | 维度 | 状态 | 说明 |
