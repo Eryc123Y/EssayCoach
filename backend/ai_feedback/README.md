@@ -179,7 +179,7 @@ python manage.py test ai_feedback
 ### Required configuration
 
 - `.env` must define:
-  - `DIFY_API_KEY` (server-side only)
+  - `DIFY_API_KEY` (server-side only). *Note: `DIFY_API` is accepted as a fallback.*
   - `DIFY_WORKFLOW_ID` or `DIFY_DEFAULT_WORKFLOW_ID` (published workflow)
   - `DIFY_BASE_URL` (optional, defaults to `https://api.dify.ai/v1`)
   - `DIFY_DEFAULT_WORKFLOW_ID` mirrors the published version used by the Essay Agent
