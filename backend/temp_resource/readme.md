@@ -1,1 +1,0 @@
-This file contains the temporal resources for backend development.

@@ -65,7 +65,6 @@ class DifyWorkflowAPITestCase(TestCase):
             "task_id": "test-task-id-67890",
             "data": {
                 "id": "test-run-id-12345",
-                "workflow_id": "test-workflow-id",
                 "status": "succeeded",
                 "outputs": {
                     "text": "Mock feedback output",
@@ -305,7 +304,6 @@ class WorkflowRunStatusViewTests(DifyWorkflowAPITestCase):
         mock_client_class.return_value = mock_client
         mock_status_response = {
             "id": "test-run-id-12345",
-            "workflow_id": "test-workflow-id",
             "status": "succeeded",
             "outputs": {"text": "Final feedback output"},
             "total_steps": 3,
@@ -455,7 +453,7 @@ class WorkflowRunViewResponseTests(DifyWorkflowAPITestCase):
 
         # Verify data is a dictionary with expected structure
         self.assertIsInstance(response.data["data"], dict)
-        data_fields = ["id", "workflow_id", "status", "outputs"]
+        data_fields = ["id", "status", "outputs"]
         for field in data_fields:
             self.assertIn(
                 field, response.data["data"], f"Missing field in data: {field}"

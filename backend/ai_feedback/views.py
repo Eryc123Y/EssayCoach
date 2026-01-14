@@ -44,7 +44,6 @@ class WorkflowRunView(APIView):
                             "status": "running",
                             "data": {
                                 "id": "fdlsjfjejkghjda",
-                                "workflow_id": "fldjaslkfjlsda",
                             },
                         },
                     )
@@ -122,7 +121,6 @@ class WorkflowRunStatusView(APIView):
                         "Status response",
                         value={
                             "id": "b1ad3277-089e-42c6-9dff-6820d94fbc76",
-                            "workflow_id": "19eff89f-ec03-4f75-b0fc-897e7effea02",
                             "status": "succeeded",
                             "outputs": {"text": "Nice to meet you."},
                             "total_steps": 3,

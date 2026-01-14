@@ -30,6 +30,21 @@ EssayCoach is a future-oriented intelligent education platform designed to lever
 | **Dev Environment** | Nix flakes + Overmind |
 | **Infrastructure** | Docker + Kubernetes (Alibaba Cloud ACK) |
 
+### 🔑 Environment Variables
+
+The project requires several environment variables to be set for full functionality.
+
+1. **Backend Secrets**: Create a `.env` file in the **root** directory.
+   ```bash
+   DIFY_API_KEY=your_dify_api_key_here
+   ```
+   *Note: This file is automatically loaded by the `dev` scripts.*
+
+2. **Frontend Configuration**: Create a `.env.local` file in the `frontend/` directory.
+   ```bash
+   NEXT_PUBLIC_API_URL=http://localhost:8000
+   ```
+
 ## ⚡ Quick Start
 
 **Zero-config development with Nix:**

@@ -71,14 +71,12 @@ class DifyClient:
         self._rubric_upload_cache[cache_key] = upload_id
         return upload_id
 
-    def build_rubric_file_input(self, upload_file_id: str) -> List[Dict[str, Any]]:
-        return [
-            {
-                "transfer_method": "local_file",
-                "upload_file_id": upload_file_id,
-                "type": "document",
-            }
-        ]
+    def build_rubric_file_input(self, upload_file_id: str) -> Dict[str, Any]:
+        return {
+            "transfer_method": "local_file",
+            "upload_file_id": upload_file_id,
+            "type": "document",
+        }
 
     def run_workflow(
         self,

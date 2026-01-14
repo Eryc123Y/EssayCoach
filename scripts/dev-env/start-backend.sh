@@ -1,5 +1,13 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
+
+# Load .env from project root for secrets (DIFY_API_KEY, etc.)
+if [ -f ".env" ]; then
+  set -a
+  source ".env"
+  set +a
+fi
+
 cd backend
 
 # Use the current shell's environment directly
