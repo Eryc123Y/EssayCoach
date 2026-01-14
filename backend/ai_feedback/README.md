@@ -177,9 +177,16 @@ python manage.py test ai_feedback
 
 ### Required configuration
 
-- `.env` must define:
-  - `DIFY_API_KEY` (server-side only). *Note: `DIFY_API` is accepted as a fallback.*
-  - `DIFY_BASE_URL` (optional, defaults to `https://api.dify.ai/v1`)
+- **Important**: Backend secrets should be placed in the **root** `.env` file of the repository. They are automatically loaded by the development scripts.
+- Root `.env` must define:
+  - `DIFY_API_KEY`: Your Dify API key (server-side only).
+  - `DIFY_BASE_URL`: (Optional, defaults to `https://api.dify.ai/v1`)
+
+### Dify Setup
+1. Create a **Workflow** in Dify.
+2. Configure your agents and prompts.
+3. **CRITICAL**: You must **Publish** the workflow for the API to work.
+4. The integration now uses the default published workflow; no specific `DIFY_WORKFLOW_ID` is required in the environment.
 
 ### Endpoints
 

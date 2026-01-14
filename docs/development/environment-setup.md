@@ -126,9 +126,29 @@ docker-compose down
 
 ## 🔍 Environment Variables
 
-### Development Defaults
+The project uses multiple environment files to manage configuration.
+
+### 1. Root `.env` (Backend Secrets)
+Create this file in the repository root. It is used for sensitive backend keys and is automatically loaded by `scripts/dev-env/start-backend.sh`.
+
 ```bash
-# Database
+# AI Feedback (Dify)
+DIFY_API_KEY=your-dify-api-key
+DIFY_BASE_URL=https://api.dify.ai/v1
+```
+
+### 2. Frontend `.env.local`
+Create this file in the `frontend/` directory for frontend-specific configuration.
+
+```bash
+NEXT_PUBLIC_API_URL=http://localhost:8000
+```
+
+### 3. Development Defaults (Informational)
+These values are generally handled by the Nix environment or are defaults within the code.
+
+```bash
+# Database (Managed by Nix in development)
 DATABASE_URL=postgresql://postgres:postgres@localhost:5432/essaycoach
 POSTGRES_HOST=localhost
 POSTGRES_PORT=5432
@@ -143,17 +163,10 @@ REDIS_URL=redis://localhost:6379
 DJANGO_SETTINGS_MODULE=essay_coach.settings.development
 DJANGO_SECRET_KEY=dev-secret-key-change-in-production
 DEBUG=True
-
-# Frontend
-NEXT_PUBLIC_API_URL=http://localhost:8000
-
-# AI Feedback (Dify)
-DIFY_API_KEY=your-dify-api-key
-DIFY_BASE_URL=https://api.dify.ai/v1
+```
 
 > [!TIP]
 > If you encounter 404 errors when calling the API from the frontend, please refer to the [Debugging Guide](debugging.md#404-error-on-api-calls).
-```
 
 ## 🚀 Quick Start Commands
 

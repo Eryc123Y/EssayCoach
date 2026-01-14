@@ -6,23 +6,17 @@ The frontend integrates with the Django REST API using Axios with interceptors f
 
 ## API Client Setup
 
+The frontend uses a centralized request utility that reads the base URL from environment variables.
+
 ```typescript
-// services/api.ts
-import axios from 'axios'
+// frontend/src/service/request.ts
+const BASE_URL = process.env.NEXT_PUBLIC_API_URL || '';
+```
 
-const api = axios.create({
-  baseURL: process.env.NEXT_PUBLIC_API_BASE_URL,
-  timeout: 10000
-})
-
-// Request interceptor
-api.interceptors.request.use((config) => {
-    const token = useAuthStore.getState().token
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`
-  }
-  return config
-})
+### Configuration
+Ensure you have a `.env.local` file in the `frontend/` directory with the following:
+```bash
+NEXT_PUBLIC_API_URL=http://localhost:8000
 ```
 
 ## Service Modules
