@@ -43,7 +43,6 @@ Core analysis results for submitted essays:
 - `style_analysis`: JSON analysis of writing style and tone
 - `grammar_notes`: JSON array of language mechanics issues
 - `feedback_summary`: Generated feedback overview
-- `agent_workflow_id`: Reference to workflow used
 - `processing_metadata`: JSON metadata about analysis process
 
 ### AnalysisWorkflow
@@ -180,9 +179,7 @@ python manage.py test ai_feedback
 
 - `.env` must define:
   - `DIFY_API_KEY` (server-side only). *Note: `DIFY_API` is accepted as a fallback.*
-  - `DIFY_WORKFLOW_ID` or `DIFY_DEFAULT_WORKFLOW_ID` (published workflow)
   - `DIFY_BASE_URL` (optional, defaults to `https://api.dify.ai/v1`)
-  - `DIFY_DEFAULT_WORKFLOW_ID` mirrors the published version used by the Essay Agent
 
 ### Endpoints
 
@@ -208,13 +205,8 @@ python manage.py test ai_feedback
   ```
 - **Response**: Returns `workflow_run_id`, `task_id`, `data`, and the recorded inputs for frontend tracing.
 
-#### `POST /api/v1/ai-feedback/agent/workflows/{workflow_id}/run/`
-- Same payload as above but lets frontend lock a specific published workflow version per URL path (overrides the default `DIFY_DEFAULT_WORKFLOW_ID`).
-
 #### `GET /api/v1/ai-feedback/agent/workflows/run/{workflow_run_id}/status/`
 - Fetches the latest Dify workflow run metadata (`status`, `outputs`, `elapsed_time`, tokens, etc.). Useful for polling after a blocking run or retrieving final output after streaming.
-
-> **Note:** `workflow_id` is returned by Dify inside responses and identifies the workflow definition. It does not get submitted in the request body—only `inputs`, `response_mode`, and `user` are needed when calling the run endpoint.
 
 ### Sample cURL (blocking)
 

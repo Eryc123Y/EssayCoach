@@ -119,7 +119,6 @@ class WorkflowRunViewTests(DifyWorkflowAPITestCase):
         # Setup mock
         mock_client = MagicMock()
         mock_client_class.return_value = mock_client
-        mock_client.default_workflow_id = "default-workflow-id"
         mock_client.get_rubric_upload_id.return_value = "uploaded-rubric-id"
         mock_client.build_rubric_file_input.return_value = [
             {
@@ -170,13 +169,13 @@ class WorkflowRunViewTests(DifyWorkflowAPITestCase):
         self.assertIn("essay_question", call_kwargs["inputs"])
         self.assertIn("essay_content", call_kwargs["inputs"])
         self.assertIn("essay_rubric", call_kwargs["inputs"])
+        # workflow_id is no longer passed explicitly - it uses the client's default
 
     @patch("ai_feedback.views.DifyClient")
     def test_run_workflow_with_defaults(self, mock_client_class):
         """Test that default values are applied correctly."""
         mock_client = MagicMock()
         mock_client_class.return_value = mock_client
-        mock_client.default_workflow_id = "default-workflow-id"
         mock_client.get_rubric_upload_id.return_value = "uploaded-rubric-id"
         mock_client.build_rubric_file_input.return_value = [
             {
@@ -205,7 +204,6 @@ class WorkflowRunViewTests(DifyWorkflowAPITestCase):
         """Test workflow run with custom language parameter."""
         mock_client = MagicMock()
         mock_client_class.return_value = mock_client
-        mock_client.default_workflow_id = "default-workflow-id"
         mock_client.get_rubric_upload_id.return_value = "uploaded-rubric-id"
         mock_client.build_rubric_file_input.return_value = [
             {
@@ -229,7 +227,6 @@ class WorkflowRunViewTests(DifyWorkflowAPITestCase):
         """Test workflow run with streaming response mode."""
         mock_client = MagicMock()
         mock_client_class.return_value = mock_client
-        mock_client.default_workflow_id = "default-workflow-id"
         mock_client.get_rubric_upload_id.return_value = "uploaded-rubric-id"
         mock_client.build_rubric_file_input.return_value = [
             {
@@ -280,7 +277,6 @@ class WorkflowRunViewTests(DifyWorkflowAPITestCase):
 
         mock_client = MagicMock()
         mock_client_class.return_value = mock_client
-        mock_client.default_workflow_id = "default-workflow-id"
         mock_client.get_rubric_upload_id.return_value = "uploaded-rubric-id"
         mock_client.build_rubric_file_input.return_value = [
             {
@@ -297,24 +293,6 @@ class WorkflowRunViewTests(DifyWorkflowAPITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_502_BAD_GATEWAY)
         self.assertIn("error", response.data)
-
-    @patch("ai_feedback.views.DifyClient")
-    def test_run_workflow_missing_workflow_id(self, mock_client_class):
-        """Test error when DIFY_WORKFLOW_ID is not configured."""
-        mock_client = MagicMock()
-        mock_client_class.return_value = mock_client
-        mock_client.default_workflow_id = None
-
-        # Mock settings to also return None
-        with patch("ai_feedback.views.settings.DIFY_DEFAULT_WORKFLOW_ID", None):
-            url = f"{self.base_url}run/"
-            payload = self._get_valid_payload()
-            response = self.client.post(url, payload, format="json")
-
-            self.assertEqual(
-                response.status_code, status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
-            self.assertIn("detail", response.data)
 
 
 class WorkflowRunStatusViewTests(DifyWorkflowAPITestCase):
@@ -444,7 +422,6 @@ class WorkflowRunViewResponseTests(DifyWorkflowAPITestCase):
         """Test that response contains all expected fields for frontend integration."""
         mock_client = MagicMock()
         mock_client_class.return_value = mock_client
-        mock_client.default_workflow_id = "default-workflow-id"
         mock_client.get_rubric_upload_id.return_value = "uploaded-rubric-id"
         mock_client.build_rubric_file_input.return_value = [
             {
@@ -498,7 +475,6 @@ class WorkflowRunViewResponseTests(DifyWorkflowAPITestCase):
         """Test response_mode 'blocking' is correctly passed and returned."""
         mock_client = MagicMock()
         mock_client_class.return_value = mock_client
-        mock_client.default_workflow_id = "default-workflow-id"
         mock_client.get_rubric_upload_id.return_value = "uploaded-rubric-id"
         mock_client.build_rubric_file_input.return_value = [
             {
@@ -525,7 +501,6 @@ class WorkflowRunViewResponseTests(DifyWorkflowAPITestCase):
         """Test response_mode 'streaming' is correctly passed and returned."""
         mock_client = MagicMock()
         mock_client_class.return_value = mock_client
-        mock_client.default_workflow_id = "default-workflow-id"
         mock_client.get_rubric_upload_id.return_value = "uploaded-rubric-id"
         mock_client.build_rubric_file_input.return_value = [
             {
@@ -552,7 +527,6 @@ class WorkflowRunViewResponseTests(DifyWorkflowAPITestCase):
         """Test that language parameter is correctly included in inputs."""
         mock_client = MagicMock()
         mock_client_class.return_value = mock_client
-        mock_client.default_workflow_id = "default-workflow-id"
         mock_client.get_rubric_upload_id.return_value = "uploaded-rubric-id"
         mock_client.build_rubric_file_input.return_value = [
             {
@@ -583,7 +557,6 @@ class WorkflowRunViewResponseTests(DifyWorkflowAPITestCase):
 
         mock_client = MagicMock()
         mock_client_class.return_value = mock_client
-        mock_client.default_workflow_id = "default-workflow-id"
         mock_client.get_rubric_upload_id.return_value = "uploaded-rubric-id"
         mock_client.build_rubric_file_input.return_value = [
             {
@@ -612,7 +585,6 @@ class WorkflowRunViewResponseTests(DifyWorkflowAPITestCase):
         """Test that outputs structure matches frontend expectations."""
         mock_client = MagicMock()
         mock_client_class.return_value = mock_client
-        mock_client.default_workflow_id = "default-workflow-id"
         mock_client.get_rubric_upload_id.return_value = "uploaded-rubric-id"
         mock_client.build_rubric_file_input.return_value = [
             {
@@ -663,7 +635,6 @@ class WorkflowRunViewResponseTests(DifyWorkflowAPITestCase):
         """Test that rubric file input is correctly structured for Dify."""
         mock_client = MagicMock()
         mock_client_class.return_value = mock_client
-        mock_client.default_workflow_id = "default-workflow-id"
         mock_client.get_rubric_upload_id.return_value = "test-upload-id-12345"
         mock_client.build_rubric_file_input.return_value = [
             {
@@ -700,11 +671,10 @@ class WorkflowRunViewResponseTests(DifyWorkflowAPITestCase):
         )
 
     @patch("ai_feedback.views.DifyClient")
-    def test_workflow_id_from_settings_or_client(self, mock_client_class):
-        """Test that workflow ID is correctly obtained from settings or client."""
+    def test_workflow_id_removed_from_run_workflow(self, mock_client_class):
+        """Test that workflow_id is no longer passed to run_workflow - it uses the default from client or settings."""
         mock_client = MagicMock()
         mock_client_class.return_value = mock_client
-        mock_client.default_workflow_id = "client-workflow-id"
         mock_client.get_rubric_upload_id.return_value = "uploaded-rubric-id"
         mock_client.build_rubric_file_input.return_value = [
             {
@@ -721,21 +691,11 @@ class WorkflowRunViewResponseTests(DifyWorkflowAPITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        # Verify the client was called with the correct workflow_id
+        # Verify run_workflow was called without workflow_id kwarg
+        mock_client.run_workflow.assert_called_once()
         call_kwargs = mock_client.run_workflow.call_args[1]
-        self.assertEqual(call_kwargs["workflow_id"], "client-workflow-id")
-
-        # Verify that the client's default_workflow_id was used (not settings)
-        mock_client.default_workflow_id = None
-
-        # Mock settings to return a workflow ID
-        with patch(
-            "ai_feedback.views.settings.DIFY_DEFAULT_WORKFLOW_ID",
-            "settings-workflow-id",
-        ):
-            response = self.client.post(url, payload, format="json")
-
-            self.assertEqual(response.status_code, status.HTTP_200_OK)
-
-            call_kwargs = mock_client.run_workflow.call_args[1]
-            self.assertEqual(call_kwargs["workflow_id"], "settings-workflow-id")
+        # workflow_id should NOT be in the kwargs anymore
+        self.assertNotIn("workflow_id", call_kwargs)
+        # But inputs and response_mode should still be there
+        self.assertIn("inputs", call_kwargs)
+        self.assertIn("response_mode", call_kwargs)

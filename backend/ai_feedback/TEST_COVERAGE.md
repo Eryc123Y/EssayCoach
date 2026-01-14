@@ -28,7 +28,6 @@ This document summarizes the test coverage for the `ai_feedback` app's API endpo
 - ✅ `test_run_workflow_missing_required_fields`: Tests validation (400 Bad Request)
 - ✅ `test_run_workflow_unauthorized`: Tests authentication (403 Forbidden)
 - ✅ `test_run_workflow_dify_error`: Tests DifyClientError handling (502 Bad Gateway)
-- ✅ `test_run_workflow_missing_workflow_id`: Tests missing workflow ID configuration (500 Internal Server Error)
 
 ### 3. `WorkflowRunStatusViewTests`
 **Endpoint**: `GET /api/v1/ai-feedback/agent/workflows/run/{workflow_run_id}/status/`
@@ -59,7 +58,6 @@ This document summarizes the test coverage for the `ai_feedback` app's API endpo
 - ✅ `test_workflow_error_response_format`: Tests error response format
 - ✅ `test_outputs_structure_for_frontend_consumption`: Verifies nested outputs structure
 - ✅ `test_rubric_file_input_structure`: Tests rubric file input formatting
-- ✅ `test_workflow_id_from_settings_or_client`: Tests workflow ID resolution
 
 ## Mock Response Structure
 
@@ -122,7 +120,6 @@ The tests use a comprehensive mock response that matches the frontend's expected
 ## DifyClient Mocking Strategy
 - All tests use `@patch("ai_feedback.views.DifyClient")` decorator
 - Mock client properly configured with:
-  - `default_workflow_id`
   - `get_rubric_upload_id.return_value`
   - `build_rubric_file_input.return_value`
   - `run_workflow.return_value` (or `side_effect` for error testing)

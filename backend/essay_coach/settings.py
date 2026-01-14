@@ -223,11 +223,6 @@ STATIC_URL = "static/"
 # Environment-aware Dify defaults
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-# Dify workflow integration
-DIFY_DEFAULT_WORKFLOW_ID = os.environ.get("DIFY_DEFAULT_WORKFLOW_ID") or os.environ.get(
-    "DIFY_WORKFLOW_ID"
-)
-
 
 # Use custom user model
 AUTH_USER_MODEL = "core.User"

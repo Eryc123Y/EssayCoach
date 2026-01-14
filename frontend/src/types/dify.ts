@@ -18,7 +18,6 @@ export interface DifyWorkflowRunResponse {
   status: 'running' | 'succeeded' | 'failed';
   data: {
     id: string;
-    workflow_id: string;
     outputs?: {
       overall_score: number;
       feedback_summary: string;
@@ -38,7 +37,6 @@ export interface DifyWorkflowRunResponse {
 
 export interface DifyWorkflowStatus {
   id: string;
-  workflow_id: string;
   status: 'running' | 'succeeded' | 'failed' | 'stopped';
   outputs?: DifyWorkflowRunResponse['data']['outputs'];
   total_steps: number;

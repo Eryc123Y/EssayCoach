@@ -106,14 +106,13 @@ If you encounter a `500 Internal Server Error` when submitting an essay, it is l
 
 **Symptoms:**
 - Frontend error: `Request to /api/v1/ai-feedback/agent/workflows/run/ failed with status 500`
-- Backend logs show error related to `DIFY_WORKFLOW_ID` or `DifyClientError`.
+- Backend logs show error related to `DifyClientError`.
 
 **Fix:**
 1. Check your `.env` file (at project root or `backend/.env`).
 2. Ensure the following variables are set:
    ```bash
    DIFY_API_KEY=your-api-key
-   DIFY_WORKFLOW_ID=your-workflow-id
    ```
    *Note: `DIFY_API` is also supported as a fallback for `DIFY_API_KEY`.*
 3. Verify that `rubric.pdf` exists in the project root.

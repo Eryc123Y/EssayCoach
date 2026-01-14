@@ -33,7 +33,6 @@ describe('useDifyWorkflow', () => {
       task_id: 'task-123',
       data: {
         id: mockWorkflowRunId,
-        workflow_id: 'wf-123',
         status: 'running',
         outputs: {},
         error: null,
@@ -54,7 +53,6 @@ describe('useDifyWorkflow', () => {
     // Mock fetchWorkflowStatus response
     vi.mocked(difyApi.fetchWorkflowStatus).mockResolvedValue({
       id: mockWorkflowRunId,
-      workflow_id: 'wf-123',
       status: 'succeeded',
       outputs: mockOutputs,
       error: undefined,

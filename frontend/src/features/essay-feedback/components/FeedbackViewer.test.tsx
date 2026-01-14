@@ -89,7 +89,6 @@ describe('FeedbackViewer', () => {
 
   const createMockResult = (overrides = {}): DifyWorkflowStatus => ({
     id: 'run-123',
-    workflow_id: 'wf-123',
     status: 'succeeded',
     outputs: createMockOutputs(),
     total_steps: 5,

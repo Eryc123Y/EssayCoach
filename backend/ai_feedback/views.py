@@ -71,16 +71,6 @@ class WorkflowRunView(APIView):
 
         try:
             client = DifyClient()
-            workflow_id = (
-                client.default_workflow_id or settings.DIFY_DEFAULT_WORKFLOW_ID
-            )
-            if not workflow_id:
-                return Response(
-                    {
-                        "detail": "DIFY_WORKFLOW_ID must be configured in the environment."
-                    },
-                    status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                )
 
             user_id = serializer.validated_data["user_id"]
             inputs = {
@@ -96,7 +86,6 @@ class WorkflowRunView(APIView):
                 inputs=inputs,
                 user=user_id,
                 response_mode=serializer.validated_data["response_mode"],
-                workflow_id=workflow_id,
             )
         except DifyClientError as exc:
             return Response({"error": str(exc)}, status=status.HTTP_502_BAD_GATEWAY)

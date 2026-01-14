@@ -23,7 +23,6 @@ class DifyClient:
             raise DifyClientError("DIFY_API_KEY must be set in the environment")
 
         self.base_url = os.environ.get("DIFY_BASE_URL", "https://api.dify.ai/v1")
-        self.default_workflow_id = os.environ.get("DIFY_WORKFLOW_ID")
         self._rubric_upload_cache: Dict[str, str] = {}
 
     @property
@@ -86,7 +85,6 @@ class DifyClient:
         inputs: Dict[str, Any],
         user: str,
         response_mode: str = "blocking",
-        workflow_id: Optional[str] = None,
         trace_id: Optional[str] = None,
     ) -> Dict[str, Any]:
         if response_mode not in {"blocking", "streaming"}:
@@ -100,10 +98,7 @@ class DifyClient:
         if trace_id:
             payload["trace_id"] = trace_id
 
-        if workflow_id:
-            url = f"{self.base_url}/workflows/{workflow_id}/run"
-        else:
-            url = f"{self.base_url}/workflows/run"
+        url = f"{self.base_url}/workflows/run"
 
         response = requests.post(
             url,

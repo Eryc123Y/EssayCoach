@@ -17,7 +17,7 @@ def check_env():
     # Since this script runs standalone, we need to load .env manually or expect user to run with it loaded
     # But usually devs use direnv or python-dotenv
 
-    required_keys = ["DIFY_API_KEY", "DIFY_WORKFLOW_ID", "DIFY_BASE_URL"]
+    required_keys = ["DIFY_API_KEY", "DIFY_BASE_URL"]
 
     # Check keys present in file content (safe check)
     if env_path.exists():

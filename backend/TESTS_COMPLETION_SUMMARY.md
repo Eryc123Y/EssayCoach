@@ -12,7 +12,7 @@
 - ✅ Checked DifyClient implementation in `backend/ai_feedback/client.py`
 
 ### 2. Enhanced Test Coverage
-The test suite now includes **24 test methods** across **4 test classes**:
+The test suite now includes **22 test methods** across **4 test classes**:
 
 #### Test Classes:
 1. **`DifyWorkflowAPITestCase`** - Base setup class
@@ -42,7 +42,6 @@ All tests properly mock `DifyClient` to avoid external API calls:
 def test_run_workflow_success(self, mock_client_class):
     mock_client = MagicMock()
     mock_client_class.return_value = mock_client
-    mock_client.default_workflow_id = "default-workflow-id"
     mock_client.get_rubric_upload_id.return_value = "uploaded-rubric-id"
     mock_client.build_rubric_file_input.return_value = [...]
     mock_client.run_workflow.return_value = self.mock_dify_response
@@ -50,7 +49,6 @@ def test_run_workflow_success(self, mock_client_class):
 
 ### 5. Error Handling Coverage
 - ✅ `DifyClientError` handling (502 Bad Gateway)
-- ✅ Missing workflow ID (500 Internal Server Error)
 - ✅ Missing required fields (400 Bad Request)
 - ✅ Unauthorized requests (403 Forbidden)
 - ✅ Invalid response_mode validation
@@ -71,12 +69,12 @@ $ python verify_tests.py
 AI Feedback Test File Verification
 ============================================================
 ✅ ai_feedback/tests.py has valid Python syntax
-📊 Found 4 test classes with 24 test methods
+📊 Found 4 test classes with 22 test methods
 
 ============================================================
 Verification Complete
 ============================================================
-✅ Test file is ready with 24 tests
+✅ Test file is ready with 22 tests
 ```
 
 ## Key Test Examples
@@ -159,4 +157,4 @@ python verify_tests.py
 ✅ **Error handling comprehensive**
 ✅ **Test coverage complete**
 
-The backend tests are now ready for production use and will ensure API contract compliance between the Django backend and the Next.js frontend.
+The backend tests are now updated to reflect the simplified Dify integration (API key only).
