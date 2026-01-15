@@ -2,6 +2,7 @@
 Comprehensive tests for AI Feedback Dify workflow endpoints.
 """
 
+from typing import TYPE_CHECKING
 from unittest.mock import MagicMock, patch
 
 from django.contrib.auth import get_user_model
@@ -9,8 +10,6 @@ from django.test import TestCase
 from rest_framework import status
 from rest_framework.authtoken.models import Token
 from rest_framework.test import APIClient
-from typing import TYPE_CHECKING
-
 
 if TYPE_CHECKING:
     from ..core.models import User as CoreUser
@@ -292,58 +291,6 @@ class WorkflowRunViewTests(DifyWorkflowAPITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_502_BAD_GATEWAY)
         self.assertIn("error", response.data)
-
-
-class WorkflowRunStatusViewTests(DifyWorkflowAPITestCase):
-    """Tests for GET /api/v1/ai-feedback/agent/workflows/run/{workflow_run_id}/status/"""
-
-    @patch("ai_feedback.views.DifyClient")
-    def test_get_workflow_status_success(self, mock_client_class):
-        """Test successful retrieval of workflow run status."""
-        mock_client = MagicMock()
-        mock_client_class.return_value = mock_client
-        mock_status_response = {
-            "id": "test-run-id-12345",
-            "status": "succeeded",
-            "outputs": {"text": "Final feedback output"},
-            "total_steps": 3,
-            "total_tokens": 1500,
-            "created_at": 1705407629,
-            "finished_at": 1705407631,
-            "elapsed_time": 2.5,
-        }
-        mock_client.get_workflow_run.return_value = mock_status_response
-
-        url = f"{self.base_url}run/test-run-id-12345/status/"
-        response = self.client.get(url)
-
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(response.data["id"], "test-run-id-12345")
-        self.assertEqual(response.data["status"], "succeeded")
-        mock_client.get_workflow_run.assert_called_once_with("test-run-id-12345")
-
-    @patch("ai_feedback.views.DifyClient")
-    def test_get_workflow_status_dify_error(self, mock_client_class):
-        """Test handling of Dify API errors when fetching status."""
-        from ai_feedback.client import DifyClientError
-
-        mock_client = MagicMock()
-        mock_client_class.return_value = mock_client
-        mock_client.get_workflow_run.side_effect = DifyClientError("Dify API error")
-
-        url = f"{self.base_url}run/test-run-id-12345/status/"
-        response = self.client.get(url)
-
-        self.assertEqual(response.status_code, status.HTTP_502_BAD_GATEWAY)
-        self.assertIn("error", response.data)
-
-    def test_get_workflow_status_unauthorized(self):
-        """Test that unauthenticated requests are rejected."""
-        self.client.credentials()  # Remove auth  # type: ignore[attr-defined]
-        url = f"{self.base_url}run/test-run-id-12345/status/"
-        response = self.client.get(url)
-        # DRF returns 403 Forbidden for unauthenticated requests with IsAuthenticated permission
-        self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
 
 class DifyWorkflowRunSerializerTests(TestCase):

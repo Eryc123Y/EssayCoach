@@ -3,7 +3,7 @@ from __future__ import annotations
 from django.conf import settings
 from drf_spectacular.utils import OpenApiExample, OpenApiResponse, extend_schema
 from rest_framework import status
-from rest_framework.permissions import IsAuthenticated, AllowAny
+from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -97,44 +97,3 @@ class WorkflowRunView(APIView):
             "response_mode": serializer.validated_data["response_mode"],
         }
         return Response(payload, status=status.HTTP_200_OK)
-
-
-class WorkflowRunStatusView(APIView):
-    """
-    Fetch the latest status and outputs of a running workflow.
-
-    Delegates to Dify's `/workflows/run/{workflow_run_id}` endpoint so the
-    frontend can poll asynchronously after a blocking request or stream.
-    """
-
-    permission_classes = [IsAuthenticated]
-
-    @extend_schema(
-        tags=["AI Feedback"],
-        summary="Get Dify workflow run status",
-        description="Fetches the latest status/outputs of a workflow run by ID.",
-        responses={
-            200: OpenApiResponse(
-                description="Current state of the workflow run",
-                examples=[
-                    OpenApiExample(
-                        "Status response",
-                        value={
-                            "id": "b1ad3277-089e-42c6-9dff-6820d94fbc76",
-                            "status": "succeeded",
-                            "outputs": {"text": "Nice to meet you."},
-                            "total_steps": 3,
-                        },
-                    )
-                ],
-            )
-        },
-    )
-    def get(self, request, workflow_run_id: str) -> Response:
-        try:
-            client = DifyClient()
-            result = client.get_workflow_run(workflow_run_id)
-        except DifyClientError as exc:
-            return Response({"error": str(exc)}, status=status.HTTP_502_BAD_GATEWAY)
-
-        return Response(result, status=status.HTTP_200_OK)
