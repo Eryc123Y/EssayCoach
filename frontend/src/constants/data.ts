@@ -30,6 +30,14 @@ export const navItems: NavItem[] = [
     items: []
   },
   {
+    title: 'Rubrics',
+    url: '/dashboard/rubrics',
+    icon: 'clipboard',
+    shortcut: ['r', 'r'],
+    isActive: false,
+    items: []
+  },
+  {
     title: 'Product',
     url: '/dashboard/product',
     icon: 'product',
