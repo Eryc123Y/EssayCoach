@@ -13,23 +13,24 @@ from .views import (
     FeedbackViewSet,
     FeedbackItemViewSet,
     TeachingAssnViewSet,
+    RubricViewSet,
 )
 
 router = DefaultRouter()
-router.register(r'users', UserViewSet)
-router.register(r'units', UnitViewSet)
-router.register(r'classes', ClassViewSet)
-router.register(r'enrollments', EnrollmentViewSet)
-router.register(r'marking-rubrics', MarkingRubricViewSet)
-router.register(r'rubric-items', RubricItemViewSet)
-router.register(r'rubric-level-descs', RubricLevelDescViewSet)
-router.register(r'tasks', TaskViewSet)
-router.register(r'submissions', SubmissionViewSet)
-router.register(r'feedbacks', FeedbackViewSet)
-router.register(r'feedback-items', FeedbackItemViewSet)
-router.register(r'teaching-assignments', TeachingAssnViewSet)
+router.register(r"users", UserViewSet)
+router.register(r"units", UnitViewSet)
+router.register(r"classes", ClassViewSet)
+router.register(r"enrollments", EnrollmentViewSet)
+router.register(r"marking-rubrics", MarkingRubricViewSet)
+router.register(r"rubric-items", RubricItemViewSet)
+router.register(r"rubric-level-descs", RubricLevelDescViewSet)
+router.register(r"tasks", TaskViewSet)
+router.register(r"submissions", SubmissionViewSet)
+router.register(r"feedbacks", FeedbackViewSet)
+router.register(r"feedback-items", FeedbackItemViewSet)
+router.register(r"teaching-assignments", TeachingAssnViewSet)
+router.register(r"rubrics", RubricViewSet)
 
 urlpatterns = [
-    path('', include(router.urls)),
+    path("", include(router.urls)),
 ]
-

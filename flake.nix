@@ -69,14 +69,19 @@
               requests
               types-requests
               pillow
+              pypdf2
               flake8
               mypy
+              pytest
+              pytest-django
+              pytest-mock
               # Documentation tools
               mkdocs
               mkdocs-material
               mkdocs-mermaid2-plugin
               mkdocs-git-revision-date-localized-plugin
               mkdocs-minify-plugin
+
               pymdown-extensions
               langchain
             ]))

@@ -169,6 +169,10 @@ WSGI_APPLICATION = "essay_coach.wsgi.application"
 # Database
 # https://docs.djangoproject.com/en/4.2/ref/settings/#databases
 
+import sys
+
+IS_TESTING = "pytest" in sys.modules or "test" in sys.argv
+
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql",
@@ -179,6 +183,12 @@ DATABASES = {
         "PORT": os.environ.get("POSTGRES_PORT", "5432"),
     }
 }
+
+if IS_TESTING:
+    DATABASES["default"] = {
+        "ENGINE": "django.db.backends.sqlite3",
+        "NAME": ":memory:",
+    }
 
 
 # Password validation
@@ -226,3 +236,8 @@ DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
 # Use custom user model
 AUTH_USER_MODEL = "core.User"
+
+# SiliconFlow AI Configuration (for rubric parsing)
+SILICONFLOW_API_KEY = os.environ.get("SILICONFLOW_API_KEY", "")
+SILICONFLOW_API_URL = "https://api.siliconflow.ai/v1/chat/completions"
+SILICONFLOW_MODEL = "deepseek-ai/DeepSeek-V3-Llama-3.1-70B-Instruct-Turbo"
