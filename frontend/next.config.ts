@@ -3,6 +3,7 @@ import { withSentryConfig } from '@sentry/nextjs';
 
 // Define the base Next.js configuration
 const baseConfig: NextConfig = {
+  trailingSlash: true,
   images: {
     remotePatterns: [
       {
@@ -11,14 +12,6 @@ const baseConfig: NextConfig = {
         port: ''
       }
     ]
-  },
-  async rewrites() {
-    return [
-      {
-        source: '/api/v1/:path*',
-        destination: `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/v1/:path*`,
-      },
-    ];
   },
 };
 
