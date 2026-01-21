@@ -21,7 +21,8 @@ class WorkflowRunView(APIView):
     returns the workflow run metadata so clients can track the execution.
     """
 
-    permission_classes = [AllowAny]
+    permission_classes = [IsAuthenticated]
+    # authentication_classes = []  # Removed to restore global TokenAuthentication
 
     @extend_schema(
         tags=["AI Feedback"],
@@ -70,15 +71,21 @@ class WorkflowRunView(APIView):
 
         try:
             client = DifyClient()
+            print(
+                f"DEBUG: DifyClient initialized. Key starts with: {client.api_key[:5] if client.api_key else 'None'}"
+            )
 
             user_id = serializer.validated_data["user_id"]
+            print(f"DEBUG: User ID: {user_id}")
+
+            rubric_id = client.get_rubric_upload_id(user_id)
+            print(f"DEBUG: Rubric Upload ID: {rubric_id}")
+
             inputs = {
                 "essay_question": serializer.validated_data["essay_question"],
                 "essay_content": serializer.validated_data["essay_content"],
                 "language": serializer.validated_data.get("language", "English"),
-                "essay_rubric": client.build_rubric_file_input(
-                    client.get_rubric_upload_id(user_id)
-                ),
+                "essay_rubric": client.build_rubric_file_input(rubric_id),
             }
 
             result = client.run_workflow(
@@ -86,8 +93,18 @@ class WorkflowRunView(APIView):
                 user=user_id,
                 response_mode=serializer.validated_data["response_mode"],
             )
+            print(f"DEBUG: Dify Result: {result}")  # Add debug logging
         except DifyClientError as exc:
+            print(f"ERROR: DifyClientError in WorkflowRunView: {exc}")
             return Response({"error": str(exc)}, status=status.HTTP_502_BAD_GATEWAY)
+        except Exception as exc:
+            print(f"ERROR: Unexpected exception in WorkflowRunView: {exc}")
+            import traceback
+
+            traceback.print_exc()
+            return Response(
+                {"error": str(exc)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 
         payload = {
             "workflow_run_id": result.get("workflow_run_id"),

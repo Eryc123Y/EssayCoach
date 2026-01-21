@@ -1,16 +1,5 @@
 import { NavItem } from '@/types';
 
-export type Product = {
-  photo_url: string;
-  name: string;
-  description: string;
-  created_at: string;
-  price: number;
-  id: number;
-  category: string;
-  updated_at: string;
-};
-
 //Info: The following data is used for the sidebar navigation and Cmd K bar.
 export const navItems: NavItem[] = [
   {
@@ -38,14 +27,6 @@ export const navItems: NavItem[] = [
     items: []
   },
   {
-    title: 'Product',
-    url: '/dashboard/product',
-    icon: 'product',
-    shortcut: ['p', 'p'],
-    isActive: false,
-    items: [] // No child items
-  },
-  {
     title: 'Account',
     url: '#', // Placeholder as there is no direct link for the parent
     icon: 'billing',
@@ -65,14 +46,6 @@ export const navItems: NavItem[] = [
         icon: 'login'
       }
     ]
-  },
-  {
-    title: 'Kanban',
-    url: '/dashboard/kanban',
-    icon: 'kanban',
-    shortcut: ['k', 'k'],
-    isActive: false,
-    items: [] // No child items
   }
 ];
 
@@ -90,7 +63,7 @@ export const recentSalesData: SaleUser[] = [
     id: 1,
     name: 'Olivia Martin',
     email: 'olivia.martin@email.com',
-    amount: '+,999.00',
+    amount: '+$1,999.00',
     image: 'https://api.slingacademy.com/public/sample-users/1.png',
     initials: 'OM'
   },
@@ -98,7 +71,7 @@ export const recentSalesData: SaleUser[] = [
     id: 2,
     name: 'Jackson Lee',
     email: 'jackson.lee@email.com',
-    amount: '+.00',
+    amount: '+$39.00',
     image: 'https://api.slingacademy.com/public/sample-users/2.png',
     initials: 'JL'
   },
@@ -106,7 +79,7 @@ export const recentSalesData: SaleUser[] = [
     id: 3,
     name: 'Isabella Nguyen',
     email: 'isabella.nguyen@email.com',
-    amount: '+.00',
+    amount: '+$299.00',
     image: 'https://api.slingacademy.com/public/sample-users/3.png',
     initials: 'IN'
   },
@@ -114,7 +87,7 @@ export const recentSalesData: SaleUser[] = [
     id: 4,
     name: 'William Kim',
     email: 'will@email.com',
-    amount: '+.00',
+    amount: '+$99.00',
     image: 'https://api.slingacademy.com/public/sample-users/4.png',
     initials: 'WK'
   },
@@ -122,7 +95,7 @@ export const recentSalesData: SaleUser[] = [
     id: 5,
     name: 'Sofia Davis',
     email: 'sofia.davis@email.com',
-    amount: '+.00',
+    amount: '+$39.00',
     image: 'https://api.slingacademy.com/public/sample-users/5.png',
     initials: 'SD'
   }

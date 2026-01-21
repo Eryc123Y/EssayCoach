@@ -179,3 +179,27 @@ class TestRubricManager:
         assert result["detection"]["is_rubric"] is False
         assert result["detection"]["reason"] == "This is a grocery list"
         assert MarkingRubric.objects.count() == 0
+
+    def test_generate_rubric_text(self, manager, teacher):
+        """Test rubric text generation for AI prompt."""
+        # Create a sample rubric
+        rubric = MarkingRubric.objects.create(
+            user_id_user=teacher, rubric_desc="Test Rubric"
+        )
+        item = RubricItem.objects.create(
+            rubric_id_marking_rubric=rubric,
+            rubric_item_name="Grammar",
+            rubric_item_weight=Decimal("50.0"),
+        )
+        RubricLevelDesc.objects.create(
+            rubric_item_id_rubric_item=item,
+            level_min_score=0,
+            level_max_score=10,
+            level_desc="Poor grammar",
+        )
+
+        text = manager.generate_rubric_text(rubric)
+
+        assert "Rubric: Test Rubric" in text
+        assert "Dimension: Grammar (Weight: 50.0%)" in text
+        assert "- Score 0-10: Poor grammar" in text

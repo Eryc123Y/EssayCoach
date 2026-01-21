@@ -44,7 +44,12 @@ class DifyClient:
         user: str,
         file_type: str = "PDF",
     ) -> str:
-        cache_key = f"{user}:{file_path.name}"
+        import hashlib
+
+        # Use hash of content + user for the cache key
+        file_hash = hashlib.md5(file_path.read_bytes()).hexdigest()
+        cache_key = f"{user}:{file_hash}"
+
         if cache_key in self._rubric_upload_cache:
             return self._rubric_upload_cache[cache_key]
 
@@ -116,4 +121,21 @@ class DifyClient:
 
     def get_rubric_upload_id(self, user: str) -> str:
         rubric_path = Path(settings.BASE_DIR).parent / "rubric.pdf"
+        print(f"DEBUG: Looking for rubric at: {rubric_path}")
         return self.upload_file(rubric_path, user)
+
+    def upload_rubric_content(self, content: str, filename: str, user: str) -> str:
+        """Upload rubric content as a temporary file."""
+        import tempfile
+
+        with tempfile.NamedTemporaryFile(
+            mode="w+", suffix=".txt", delete=False
+        ) as temp:
+            temp.write(content)
+            temp_path = Path(temp.name)
+
+        try:
+            return self.upload_file(temp_path, user)
+        finally:
+            if temp_path.exists():
+                temp_path.unlink()

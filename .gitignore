@@ -148,7 +148,7 @@ cython_debug/
 .pyright_canary
 .pyright
 .pyright.lock
-  
+
 # Node.js
 node_modules
 npm-debug.log*
@@ -185,6 +185,7 @@ result*
 .direnv/
 .nix-zsh/
 .dev_pg/
+.envrc
 .DS_Store
 
 # SQLite
@@ -201,7 +202,7 @@ cypress/videos/
 cypress/screenshots/
 
 # TypeScript incremental build info
-*.tsbuildinfo 
+*.tsbuildinfo
 
 # Local PostgreSQL volumes & dev cluster
 .docker/

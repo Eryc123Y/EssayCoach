@@ -4,6 +4,7 @@ export interface DifyWorkflowRunRequest {
   language?: string;
   response_mode: 'blocking' | 'streaming';
   user_id?: string;
+  rubric_id?: number;
 }
 
 export interface SectionAnalysis {

@@ -46,7 +46,7 @@ alias mypy-file='cd backend && mypy'
 alias mypy-stats='cd backend && mypy . --show-error-codes --show-stats'
 
 # PostgreSQL aliases
-alias pg-connect='psql -U essayadmin -d essaycoach -h localhost -p $PGPORT'
+alias pg-connect='psql -U postgres -d essaycoach -h localhost -p $PGPORT'
 alias pg-logs='tail -f .dev_pg/logfile'
 alias pg-status='pg_ctl -D "$PGDATA" status'
 

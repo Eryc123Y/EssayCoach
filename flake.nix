@@ -61,13 +61,14 @@
               djangorestframework
               markdown
               django-filter
-              psycopg2-binary
+              psycopg2
               django-cors-headers
               drf-spectacular
               fastapi
               uvicorn
               requests
               types-requests
+              pysocks  # SOCKS5 proxy support
               pillow
               pypdf2
               flake8
@@ -75,12 +76,16 @@
               pytest
               pytest-django
               pytest-mock
-              # Documentation tools
-              mkdocs
-              mkdocs-material
-              mkdocs-mermaid2-plugin
-              mkdocs-git-revision-date-localized-plugin
-              mkdocs-minify-plugin
+            # Documentation tools
+            mkdocs
+            mkdocs-material
+            mkdocs-mermaid2-plugin
+            mkdocs-minify-plugin
+            mkdocs-git-revision-date-localized-plugin
+            mkdocs-minify-plugin
+            
+            # DNS resolution fix
+            dnspython
 
               pymdown-extensions
               langchain
@@ -89,6 +94,22 @@
           ];
           NIX_PYTEST_SKIP_TESTS = "1";
           shellHook = ''
+            # Set proxy environment variables for external API calls
+            # Clash Verge Mixed Port (7897) supports SOCKS5, which works better for HTTPS
+            # Http(s) Port (7899) is HTTP proxy, may have SSL issues
+            # Prefer SOCKS5 proxy via Mixed Port
+            # Proxy configuration for external API calls
+            # Clash Verge handles DNS resolution properly, so we don't need to bypass it
+            if [ -z "$DISABLE_PROXY" ]; then
+              export SOCKS_PROXY=socks5h://127.0.0.1:7897
+              # Fallback to HTTP proxy if SOCKS5 not available
+              export HTTPS_PROXY=http://127.0.0.1:7899
+              export HTTP_PROXY=http://127.0.0.1:7899
+            fi
+            
+            # Only bypass proxy for local development services
+            export NO_PROXY=localhost,127.0.0.1
+
             # Load modular shell configuration
             source scripts/dev-env/bash-config.sh
             source scripts/dev-env/prompt-setup.sh

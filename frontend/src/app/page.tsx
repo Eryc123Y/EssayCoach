@@ -1,9 +1,24 @@
-import { cookies } from 'next/headers';
-import { redirect } from 'next/navigation';
+'use client';
+import { useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 
-export default async function Page() {
-  const cookieStore = await cookies();
-  const access = cookieStore.get('access_token')?.value;
-  if (!access) return redirect('/auth/sign-in');
-  return redirect('/dashboard/overview');
+export default function Page() {
+  const router = useRouter();
+
+  useEffect(() => {
+    const match = document.cookie.match(new RegExp('(^| )access_token=([^;]+)'));
+    const access = match ? match[2] : null;
+
+    if (!access) {
+      router.push('/auth/sign-in');
+    } else {
+      router.push('/dashboard/overview');
+    }
+  }, [router]);
+
+  return (
+    <div className="flex items-center justify-center min-h-screen">
+      <div className="animate-pulse">Loading EssayCoach...</div>
+    </div>
+  );
 }

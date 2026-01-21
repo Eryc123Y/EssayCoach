@@ -61,9 +61,12 @@ Defined in `backend/core/models.py` using `Meta.constraints`:
 - `user_role_ck`: `user_role IN ('student', 'lecturer', 'admin')`
 - `user_status_ck`: `user_status IN ('active', 'suspended', 'unregistered')`
 - `item_weight_ck`: `rubric_item_weight > 0`
-- `min_max_ck`: `level_min_score >= 0 AND level_max_score > 0 AND level_min_score < level_max_score`
+- `min_max_ck`: `level_min_score >= 0 AND level_max_score >= 0 AND level_min_score <= level_max_score`
 - `task_publish_time_task_due_time_ck`: `task_publish_datetime < task_due_datetime`
 - `feedback_item_source_ck`: `feedback_item_source IN ('ai', 'human', 'revised')`
+
+**Special Note on `min_max_ck` Constraint**:
+The `RubricLevelDesc` table allows `level_min_score <= level_max_score` (not strictly less than), which enables "No submission" levels where both scores are equal (e.g., 0-0). This is a valid educational assessment practice supported by major rubric systems (IB, AP, university standards, Turnitin, Canvas). The constraint enforces `<=` to allow equality while still preventing invalid ranges where `min > max`. Python validation in `rubric_manager.py` ensures equal scores are only used for legitimate "No submission" cases.
 
 ## 📈 Performance Optimizations
 

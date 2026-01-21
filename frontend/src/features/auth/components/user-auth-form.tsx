@@ -21,7 +21,7 @@ const formSchema = z.object({
   email: z.string().email({ message: 'Enter a valid email address' }),
   password: z
     .string()
-    .min(6, { message: 'Password must be at least 6 characters' })
+    .min(1, { message: 'Password is required' })
 });
 
 type UserFormValue = z.infer<typeof formSchema>;
@@ -32,8 +32,8 @@ export default function UserAuthForm() {
   const [loading, startTransition] = useTransition();
   const router = useRouter();
   const defaultValues = {
-    email: 'dev@essaycoach.com',
-    password: 'password'
+    email: 'admin@example.com',
+    password: 'admin'
   };
   const form = useForm<UserFormValue>({
     resolver: zodResolver(formSchema),
@@ -52,8 +52,8 @@ export default function UserAuthForm() {
         throw new Error(err?.message || 'Request failed');
       }
       const result = await response.json();
-      console.log('Backend auth (mock) result:', result);
-      toast.success('Signed in with backend (mock)');
+      console.log('Backend auth result:', result);
+      toast.success('Signed in successfully');
       const target = callbackUrl || '/dashboard/overview';
       router.push(target);
     } catch (error: unknown) {
@@ -112,7 +112,7 @@ export default function UserAuthForm() {
             className='mt-2 ml-auto w-full'
             type='submit'
           >
-            Sign In (Mock)
+            Sign In
           </Button>
         </form>
       </Form>

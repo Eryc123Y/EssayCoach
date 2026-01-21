@@ -57,6 +57,26 @@ MarkingRubric (1) -----> (M) RubricItem
 RubricItem (1) -----> (M) RubricLevelDesc
 ```
 
+### Special Handling: Rubric Score Ranges
+
+The `RubricLevelDesc` model allows `score_min <= score_max`, supporting a special case where both values are equal (e.g., 0-0).
+
+**Constraint**: `level_min_score <= level_max_score`
+
+**Special Case - "No Submission" Levels**:
+- Rubrics may include a "No submission" or "0" level with identical min/max scores (0-0)
+- This is a valid educational assessment practice used by:
+  - IB (International Baccalaureate) rubrics
+  - AP (Advanced Placement) assessment systems
+  - University grading systems
+  - Major LMS platforms (Turnitin, Canvas)
+- Allowed only when level name is "0" or description contains "no submission"/"absent"
+
+**Implementation**:
+- Python validation in `rubric_manager.py` (lines 208-218) checks for these conditions
+- Database constraint `min_max_ck` enforces `<=` relationship
+- Prevents invalid ranges where `score_min > score_max`
+
 ## Testing
 
 ### Test Coverage

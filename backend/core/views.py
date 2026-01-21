@@ -283,9 +283,11 @@ class TeachingAssnViewSet(viewsets.ModelViewSet):
 class RubricViewSet(viewsets.ModelViewSet):
     """Manage marking rubrics with AI-assisted PDF import."""
 
-    queryset = MarkingRubric.objects.all()
     serializer_class = MarkingRubricSerializer
-    permission_classes = []
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        return MarkingRubric.objects.filter(user_id_user=self.request.user)
 
     @extend_schema(
         request=RubricUploadSerializer,
@@ -322,7 +324,7 @@ class RubricViewSet(viewsets.ModelViewSet):
 
             return Response(result, status=status.HTTP_201_CREATED)
 
-        except (RubricParseError, RubricImportError) as e:
+        except (RubricParseError, RubricImportError, ValueError) as e:
             return Response(
                 {"success": False, "error": str(e)}, status=status.HTTP_400_BAD_REQUEST
             )

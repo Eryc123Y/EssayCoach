@@ -37,6 +37,10 @@ class DifyWorkflowRunSerializer(serializers.Serializer):
         required=False,
         help_text="Unique user identifier that Dify uses for analytics",
     )
+    rubric_id = serializers.IntegerField(
+        required=False,
+        help_text="ID of the marking rubric to use for grading",
+    )
 
     def validate(self, attrs: dict[str, Any]) -> dict[str, Any]:
         attrs.setdefault("language", "English")

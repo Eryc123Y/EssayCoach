@@ -6,8 +6,9 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { fetchRubricDetail, RubricDetail } from '@/service/api/rubric';
 import { toast } from 'sonner';
-import { IconLoader2, IconArrowLeft, IconClipboardList } from '@tabler/icons-react';
+import { IconLoader2, IconArrowLeft, IconClipboardList, IconList, IconScale, IconChartBar } from '@tabler/icons-react';
 import { Badge } from '@/components/ui/badge';
+import { motion } from 'motion/react';
 import {
   Accordion,
   AccordionContent,
@@ -75,19 +76,25 @@ export default function RubricDetailPage() {
   }
 
   return (
-    <div className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
+    <motion.div 
+      initial={{ opacity: 0, y: 20 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.5 }}
+      className="flex flex-1 flex-col gap-6 p-4 md:gap-8 md:p-8"
+    >
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-4">
           <Button
-            variant="outline"
+            variant="ghost"
             size="sm"
             onClick={() => router.push('/dashboard/rubrics')}
+            className="hover:bg-transparent hover:text-primary"
           >
             <IconArrowLeft className="mr-2 h-4 w-4" />
             Back
           </Button>
           <div>
-            <h1 className="text-3xl font-bold tracking-tight">{rubric.rubric_desc}</h1>
+            <h1 className="text-3xl font-bold tracking-tight text-foreground">{rubric.rubric_desc}</h1>
             <p className="text-sm text-muted-foreground">
               Created {formatDate(rubric.rubric_create_time)}
             </p>
@@ -95,88 +102,132 @@ export default function RubricDetailPage() {
         </div>
       </div>
 
-      <Card>
+      <div className="grid gap-4 md:grid-cols-3">
+        <Card className="border-border/50 bg-card/50 shadow-sm backdrop-blur-sm">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Total Dimensions
+            </CardTitle>
+            <IconList className="h-4 w-4 text-primary" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">{rubric.rubric_items.length}</div>
+            <p className="text-xs text-muted-foreground">
+              Evaluation criteria
+            </p>
+          </CardContent>
+        </Card>
+        <Card className="border-border/50 bg-card/50 shadow-sm backdrop-blur-sm">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Total Levels
+            </CardTitle>
+            <IconChartBar className="h-4 w-4 text-purple-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {rubric.rubric_items.reduce((sum, item) => sum + item.level_descriptions.length, 0)}
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Scoring definitions
+            </p>
+          </CardContent>
+        </Card>
+        <Card className="border-border/50 bg-card/50 shadow-sm backdrop-blur-sm">
+          <CardHeader className="flex flex-row items-center justify-between pb-2">
+            <CardTitle className="text-sm font-medium text-muted-foreground">
+              Total Weight
+            </CardTitle>
+            <IconScale className="h-4 w-4 text-blue-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold">
+              {rubric.rubric_items.reduce((sum, item) => sum + parseFloat(item.rubric_item_weight), 0).toFixed(1)}%
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Cumulative score weight
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
+      <Card className="border-border/50 shadow-sm">
         <CardHeader>
           <div className="flex items-center justify-between">
             <div>
               <CardTitle>Rubric Structure</CardTitle>
               <CardDescription>
-                {rubric.rubric_items.length} dimensions with detailed scoring levels
+                Detailed breakdown of grading dimensions and scoring levels
               </CardDescription>
             </div>
-            <Badge variant="secondary" className="text-sm">
-              {rubric.rubric_items.reduce((sum, item) => sum + item.level_descriptions.length, 0)} total levels
-            </Badge>
           </div>
         </CardHeader>
         <CardContent>
           <Accordion type="multiple" className="w-full">
-            {rubric.rubric_items.map((item) => (
-              <AccordionItem key={item.rubric_item_id} value={`item-${item.rubric_item_id}`}>
-                <AccordionTrigger className="hover:no-underline">
-                  <div className="flex items-center justify-between w-full pr-4">
-                    <span className="font-semibold">{item.rubric_item_name}</span>
-                    <Badge variant="outline">Weight: {item.rubric_item_weight}%</Badge>
-                  </div>
-                </AccordionTrigger>
-                <AccordionContent>
-                  <div className="space-y-3 pt-2">
-                    {item.level_descriptions
-                      .sort((a, b) => b.max_score - a.max_score) // Sort by score descending
-                      .map((level) => (
-                        <Card key={level.level_id} className="border-l-4 border-l-primary">
-                          <CardHeader className="pb-3">
-                            <div className="flex items-center justify-between">
-                              <CardTitle className="text-base">
-                                Score Range: {level.min_score} - {level.max_score}
-                              </CardTitle>
-                              <Badge 
-                                variant={level.max_score >= 80 ? 'default' : level.max_score >= 60 ? 'secondary' : 'outline'}
-                              >
-                                {Math.round((level.max_score / Math.max(...item.level_descriptions.map(l => l.max_score))) * 100)}%
-                              </Badge>
+            {rubric.rubric_items.map((item, index) => (
+              <motion.div
+                key={item.rubric_item_id}
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.1 }}
+              >
+                <AccordionItem value={`item-${item.rubric_item_id}`} className="border-b-border/50">
+                  <AccordionTrigger className="hover:no-underline py-4">
+                    <div className="flex items-center justify-between w-full pr-4">
+                      <div className="flex items-center gap-3">
+                        <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">
+                          {index + 1}
+                        </span>
+                        <span className="font-semibold text-foreground">{item.rubric_item_name}</span>
+                      </div>
+                      <Badge variant="secondary" className="bg-secondary/50 font-mono">
+                        {item.rubric_item_weight}%
+                      </Badge>
+                    </div>
+                  </AccordionTrigger>
+                  <AccordionContent>
+                    <div className="space-y-3 pt-2 pb-4 pl-9">
+                      {item.level_descriptions
+                        .sort((a, b) => b.max_score - a.max_score)
+                        .map((level) => (
+                          <div 
+                            key={level.level_id} 
+                            className="relative overflow-hidden rounded-lg border border-border/50 bg-card/30 p-4 transition-colors hover:bg-card/50"
+                          >
+                            <div className="absolute left-0 top-0 bottom-0 w-1 bg-gradient-to-b from-primary/50 to-purple-500/50" />
+                            <div className="flex flex-col gap-2 sm:flex-row sm:items-start sm:justify-between">
+                              <div className="flex-1">
+                                <p className="text-sm text-muted-foreground whitespace-pre-wrap leading-relaxed">
+                                  {level.level_desc}
+                                </p>
+                              </div>
+                              <div className="flex items-center gap-2 sm:flex-col sm:items-end sm:gap-1 min-w-[100px]">
+                                <span className="text-sm font-bold">
+                                  {level.min_score} - {level.max_score} pts
+                                </span>
+                                <Badge 
+                                  variant="outline" 
+                                  className={cn(
+                                    "text-[10px]",
+                                    level.max_score >= 80 ? "border-green-500/30 text-green-600 bg-green-500/5" :
+                                    level.max_score >= 60 ? "border-yellow-500/30 text-yellow-600 bg-yellow-500/5" :
+                                    "border-red-500/30 text-red-600 bg-red-500/5"
+                                  )}
+                                >
+                                  {level.max_score >= 80 ? 'Excellent' : level.max_score >= 60 ? 'Standard' : 'Needs Work'}
+                                </Badge>
+                              </div>
                             </div>
-                          </CardHeader>
-                          <CardContent>
-                            <p className="text-sm text-muted-foreground whitespace-pre-wrap">
-                              {level.level_desc}
-                            </p>
-                          </CardContent>
-                        </Card>
-                      ))}
-                  </div>
-                </AccordionContent>
-              </AccordionItem>
+                          </div>
+                        ))}
+                    </div>
+                  </AccordionContent>
+                </AccordionItem>
+              </motion.div>
             ))}
           </Accordion>
         </CardContent>
       </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Summary Statistics</CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="grid gap-4 md:grid-cols-3">
-            <div className="space-y-1">
-              <p className="text-sm font-medium text-muted-foreground">Total Dimensions</p>
-              <p className="text-2xl font-bold">{rubric.rubric_items.length}</p>
-            </div>
-            <div className="space-y-1">
-              <p className="text-sm font-medium text-muted-foreground">Total Scoring Levels</p>
-              <p className="text-2xl font-bold">
-                {rubric.rubric_items.reduce((sum, item) => sum + item.level_descriptions.length, 0)}
-              </p>
-            </div>
-            <div className="space-y-1">
-              <p className="text-sm font-medium text-muted-foreground">Total Weight</p>
-              <p className="text-2xl font-bold">
-                {rubric.rubric_items.reduce((sum, item) => sum + parseFloat(item.rubric_item_weight), 0).toFixed(1)}%
-              </p>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    </div>
+    </motion.div>
   );
 }

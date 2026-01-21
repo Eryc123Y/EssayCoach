@@ -7,7 +7,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { RubricUpload } from '@/components/rubric/RubricUpload';
 import { fetchRubricList, RubricListItem, deleteRubric } from '@/service/api/rubric';
 import { toast } from 'sonner';
-import { IconLoader2, IconEye, IconTrash, IconClipboardList, IconAlertCircle } from '@tabler/icons-react';
+import { IconLoader2, IconEye, IconTrash, IconClipboardList, IconAlertCircle, IconCalendar } from '@tabler/icons-react';
+import { motion } from 'motion/react';
 import {
   Table,
   TableBody,
@@ -96,6 +97,21 @@ export default function RubricsPage() {
     });
   };
 
+  const containerVariants = {
+    hidden: { opacity: 0 },
+    show: {
+      opacity: 1,
+      transition: {
+        staggerChildren: 0.1
+      }
+    }
+  };
+
+  const itemVariants = {
+    hidden: { opacity: 0, y: 20 },
+    show: { opacity: 1, y: 0 }
+  };
+
   return (
     <div className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
       <div className="flex items-center justify-between">
@@ -113,7 +129,7 @@ export default function RubricsPage() {
         </div>
 
         <div className="lg:col-span-2">
-          <Card>
+          <Card className="h-full border-border/50 shadow-sm">
             <CardHeader>
               <CardTitle>Your Rubrics</CardTitle>
               <CardDescription>
@@ -134,49 +150,99 @@ export default function RubricsPage() {
                   </p>
                 </div>
               ) : (
-                <div className="rounded-md border">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Name</TableHead>
-                        <TableHead>Created</TableHead>
-                        <TableHead className="text-right">Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {rubrics.map((rubric) => (
-                        <TableRow key={rubric.rubric_id}>
-                          <TableCell className="font-medium">
-                            {rubric.rubric_desc}
-                          </TableCell>
-                          <TableCell className="text-sm text-muted-foreground">
-                            {formatDate(rubric.rubric_create_time)}
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <div className="flex justify-end gap-2">
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handleViewRubric(rubric.rubric_id)}
-                              >
-                                <IconEye className="mr-1 h-4 w-4" />
-                                View
-                              </Button>
-                              <Button
-                                variant="outline"
-                                size="sm"
-                                onClick={() => handleDeleteClick(rubric)}
-                              >
-                                <IconTrash className="mr-1 h-4 w-4" />
-                                Delete
-                              </Button>
-                            </div>
-                          </TableCell>
+                <motion.div 
+                  variants={containerVariants}
+                  initial="hidden"
+                  animate="show"
+                  className="space-y-4"
+                >
+                  {/* Desktop View: Table */}
+                  <div className="hidden rounded-md border md:block">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Name</TableHead>
+                          <TableHead>Created</TableHead>
+                          <TableHead className="text-right">Actions</TableHead>
                         </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </div>
+                      </TableHeader>
+                      <TableBody>
+                        {rubrics.map((rubric) => (
+                          <TableRow key={rubric.rubric_id}>
+                            <TableCell className="font-medium">
+                              {rubric.rubric_desc}
+                            </TableCell>
+                            <TableCell className="text-sm text-muted-foreground">
+                              {formatDate(rubric.rubric_create_time)}
+                            </TableCell>
+                            <TableCell className="text-right">
+                              <div className="flex justify-end gap-2">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleViewRubric(rubric.rubric_id)}
+                                >
+                                  <IconEye className="mr-1 h-4 w-4" />
+                                  View
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => handleDeleteClick(rubric)}
+                                  className="text-destructive hover:text-destructive"
+                                >
+                                  <IconTrash className="mr-1 h-4 w-4" />
+                                  Delete
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+
+                  {/* Mobile View: Cards */}
+                  <div className="space-y-4 md:hidden">
+                    {rubrics.map((rubric) => (
+                      <motion.div
+                        key={rubric.rubric_id}
+                        variants={itemVariants}
+                        className="rounded-lg border bg-card p-4 shadow-sm"
+                      >
+                        <div className="mb-2 flex items-start justify-between">
+                          <div>
+                            <h4 className="font-medium line-clamp-2">{rubric.rubric_desc}</h4>
+                            <div className="mt-1 flex items-center text-xs text-muted-foreground">
+                              <IconCalendar className="mr-1 h-3 w-3" />
+                              {formatDate(rubric.rubric_create_time)}
+                            </div>
+                          </div>
+                        </div>
+                        <div className="mt-4 flex gap-2">
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="flex-1"
+                            onClick={() => handleViewRubric(rubric.rubric_id)}
+                          >
+                            <IconEye className="mr-1 h-4 w-4" />
+                            View
+                          </Button>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            className="flex-1 text-destructive hover:text-destructive"
+                            onClick={() => handleDeleteClick(rubric)}
+                          >
+                            <IconTrash className="mr-1 h-4 w-4" />
+                            Delete
+                          </Button>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </div>
+                </motion.div>
               )}
             </CardContent>
           </Card>

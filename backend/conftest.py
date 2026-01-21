@@ -18,6 +18,7 @@ def pytest_configure(config):
     settings.DATABASES["default"] = {
         "ENGINE": "django.db.backends.sqlite3",
         "NAME": ":memory:",
+        "ATOMIC_REQUESTS": False,
     }
 
     # Mock RunSQL to avoid Postgres-specific triggers during SQLite tests
@@ -30,7 +31,7 @@ def pytest_configure(config):
             # Skip Postgres-specific SQL in SQLite
             if any(
                 pg_keyword in self.sql.upper()
-                for pg_keyword in ["FUNCTION", "TRIGGER", "PLPGSQL"]
+                for pg_keyword in ["FUNCTION", "TRIGGER", "PLPGSQL", "DO"]
             ):
                 return
         return original_database_forwards(

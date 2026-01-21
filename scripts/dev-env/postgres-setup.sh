@@ -11,7 +11,9 @@
 # removed to ensure a clean start for the next session.
 
 export PGDATA="$PWD/.dev_pg"
-export PGHOST="localhost"
+# IMPORTANT: Use explicit IPv4 address to avoid IPv6/IPv4 resolution issues
+# with Node.js v24+ and Python's psycopg2 on macOS
+export PGHOST="127.0.0.1"
 
 start_local_pg() {
   # Force PostgreSQL to run on port 5432 only
@@ -24,6 +26,10 @@ start_local_pg() {
     lsof -ti:5432 | xargs kill -9 2>/dev/null || true
     sleep 2
   fi
+  
+  # Clean up any stray postmaster*.pid files that might cause startup issues
+  # These can be left behind from previous crashes
+  rm -f "$PGDATA/postmaster"*.pid 2>/dev/null || true
   
   # Init DB if it doesn't exist or is corrupted/incomplete
   # PG_VERSION is the canonical marker of a valid PostgreSQL data directory
@@ -43,7 +49,7 @@ start_local_pg() {
   if ! pg_ctl -D "$PGDATA" status > /dev/null; then
     echo "[dev-pg] Starting PostgreSQL on port 5432..."
     
-    if ! pg_ctl -D "$PGDATA" -o "-k \"$PWD/.pg_socket\" -p $PGPORT" -l "$PGDATA/logfile" -w start; then
+    if ! pg_ctl -D "$PGDATA" -o "-k \"$PWD/.pg_socket\" -p $PGPORT -h 127.0.0.1" -l "$PGDATA/logfile" -w start; then
       echo "[dev-pg] ERROR: Failed to start PostgreSQL. Check logs at '$PGDATA/logfile'."
       return 1
     fi
@@ -66,15 +72,16 @@ start_local_pg() {
   fi
 }
 
-# Stop the server and remove the data directory on exit.
+# Stop the server on exit, but preserve data directory for persistence.
 cleanup_on_exit() {
-    echo -e "\n[dev-pg] Exiting shell. Cleaning up PostgreSQL..."
+    echo -e "\n[dev-pg] Exiting shell. Stopping PostgreSQL..."
     # Stop the server managed by our PGDATA directory.
     if pg_ctl -D "$PGDATA" status > /dev/null; then
         pg_ctl -D "$PGDATA" -w -m fast stop >/dev/null
     fi
-    rm -rf "$PGDATA"
-    echo "[dev-pg] Cleanup complete."
+    # NOTE: Data directory preserved at $PGDATA for next session
+    # To reset DB manually: rm -rf .dev_pg
+    echo "[dev-pg] PostgreSQL stopped. Data preserved in $PGDATA"
 }
 
 start_local_pg

@@ -33,7 +33,11 @@ export default function AIAnalysisPage() {
   
   const { user } = useAuth();
 
-  const handleSubmit = async (data: { question: string; content: string }) => {
+  const handleSubmit = async (data: {
+    question: string;
+    content: string;
+    rubricId?: number;
+  }) => {
     setEssayData(data);
     setState('analyzing');
     setIsLoading(true);
@@ -46,50 +50,108 @@ export default function AIAnalysisPage() {
         language: 'English', // Could be made dynamic
         response_mode: 'blocking',
         user_id: user?.id || 'anonymous-student',
+        rubric_id: data.rubricId
       });
 
       // Parse the response
-      if (response.status === 'succeeded' && response.data.outputs) {
-        const outputs = response.data.outputs;
+      // Backend returns: { data: { status: 'succeeded', outputs: { ... } }, ... }
+      const runStatus = response.data?.status;
+      const outputs = response.data?.outputs;
+
+      if (runStatus === 'succeeded' && outputs) {
         
         // Transform scores
-        const scores: ScoreData[] = [
-          {
-            category: 'Structure',
-            score: outputs.structure_analysis?.score || 0,
-            fullMark: 100,
-            description: outputs.structure_analysis?.comments
-          },
-          {
-            category: 'Content',
-            score: outputs.content_analysis?.score || 0,
-            fullMark: 100,
-            description: outputs.content_analysis?.comments
-          },
-          {
-            category: 'Style',
-            score: outputs.style_analysis?.score || 0,
-            fullMark: 100,
-            description: outputs.style_analysis?.comments
-          }
-        ];
+        let scores: ScoreData[] = [];
+        let insights: Insight[] = [];
+        let overallScore = 0;
 
-        // Transform grammar notes to insights
-        const insights: Insight[] = (outputs.grammar_notes || []).map((note, index) => ({
-          id: `grammar-${index}`,
-          type: 'critical', // Defaulting to critical for grammar issues
-          category: 'Grammar',
-          title: note.type || 'Correction',
-          description: `${note.explanation} (Original: "${note.original}" -> Suggestion: "${note.suggestion}")`,
-          location: undefined // Location info might not be available
-        }));
+        // Case 1: Structured JSON output (Ideal)
+        if (outputs.structure_analysis) {
+            scores = [
+              {
+                category: 'Structure',
+                score: outputs.structure_analysis?.score || 0,
+                fullMark: 100,
+                description: outputs.structure_analysis?.comments
+              },
+              {
+                category: 'Content',
+                score: outputs.content_analysis?.score || 0,
+                fullMark: 100,
+                description: outputs.content_analysis?.comments
+              },
+              {
+                category: 'Style',
+                score: outputs.style_analysis?.score || 0,
+                fullMark: 100,
+                description: outputs.style_analysis?.comments
+              }
+            ];
+            overallScore = outputs.overall_score || 0;
+            
+            // Transform grammar notes to insights
+            insights = (outputs.grammar_notes || []).map((note: any, index: number) => ({
+              id: `grammar-${index}`,
+              type: 'critical', 
+              category: 'Grammar',
+              title: note.type || 'Correction',
+              description: `${note.explanation} (Original: "${note.original}" -> Suggestion: "${note.suggestion}")`,
+              location: undefined
+            }));
+
+        } 
+        // Case 2: Markdown Text output (Fallback for current Dify App)
+        else if (outputs.text) {
+            // Attempt to parse Markdown table for scores
+            // Look for | Criterion | Score |
+            const text = outputs.text;
+            
+            // Helper to extract score from "X/Y" format
+            const extractScore = (regex: RegExp): number => {
+                const match = text.match(regex);
+                if (match && match[1]) {
+                    const [num, den] = match[1].split('/').map(Number);
+                    return den ? Math.round((num / den) * 100) : 0;
+                }
+                return 0;
+            };
+
+            const structureScore = extractScore(/\| Organization & Flow \| (\d+\/\d+) \|/);
+            const contentScore = (extractScore(/\| Topic Focus \| (\d+\/\d+) \|/) + extractScore(/\| Evidence & Support \| (\d+\/\d+) \|/)) / 2;
+            const styleScore = extractScore(/\| Language & Mechanics \| (\d+\/\d+) \|/);
+            
+            // Extract Total Score
+            const totalMatch = text.match(/\|\s*\*\*TOTAL\*\*\s*\|\s*\*\*(\d+\/\d+)\*\*\s*\|/);
+            if (totalMatch) {
+                const [num, den] = totalMatch[1].split('/').map(Number);
+                overallScore = den ? Math.round((num / den) * 100) : 0;
+            }
+
+            scores = [
+                { category: 'Structure', score: structureScore, fullMark: 100, description: "Derived from Organization & Flow" },
+                { category: 'Content', score: contentScore, fullMark: 100, description: "Derived from Topic Focus & Evidence" },
+                { category: 'Style', score: styleScore, fullMark: 100, description: "Derived from Language & Mechanics" }
+            ];
+
+            // Create a generic insight pointing to the full report
+            insights = [{
+                id: 'full-report',
+                type: 'info',
+                category: 'General',
+                title: 'Full Assessment',
+                description: 'See the detailed Markdown report for full feedback.',
+            }];
+            
+            // Also store the raw text somewhere if possible, but for now we adapt to the UI
+        }
 
         setAnalysisResult({
-          overallScore: outputs.overall_score || 0,
+          overallScore,
           scores,
           insights
         });
       } else {
+        console.error('Unexpected Dify response status:', response);
         throw new Error('Analysis failed to complete successfully.');
       }
     } catch (error) {

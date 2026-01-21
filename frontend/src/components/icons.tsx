@@ -15,7 +15,6 @@ import {
   IconLoader2,
   IconLogin,
   IconProps,
-  IconShoppingBag,
   IconMoon,
   IconDotsVertical,
   IconPizza,
@@ -29,7 +28,6 @@ import {
   IconUserEdit,
   IconUserX,
   IconX,
-  IconLayoutKanban,
   IconBrandGithub,
   IconClipboardList
 } from '@tabler/icons-react';
@@ -41,9 +39,7 @@ export const Icons = {
   logo: IconCommand,
   login: IconLogin,
   close: IconX,
-  product: IconShoppingBag,
   spinner: IconLoader2,
-  kanban: IconLayoutKanban,
   chevronLeft: IconChevronLeft,
   chevronRight: IconChevronRight,
   trash: IconTrash,

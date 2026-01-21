@@ -6,7 +6,7 @@ export interface RequestConfig {
   headers?: Record<string, string>;
 }
 
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL || '';
+const BASE_URL = '';
 
 export async function request<T = any>(config: RequestConfig): Promise<T> {
   const { url, method = 'GET', data, params, headers = {} } = config;
@@ -26,28 +26,12 @@ export async function request<T = any>(config: RequestConfig): Promise<T> {
 
   const isFormData = data instanceof FormData;
 
-  // Get auth token from cookies if available
-  let authToken = headers['Authorization'];
-  if (!authToken) {
-    if (typeof document !== 'undefined') {
-      // Read access_token from cookie (set by login API)
-      const cookieValue = document.cookie
-        .split('; ')
-        .find((row) => row.startsWith('access_token='))
-        ?.split('=')[1];
-      if (cookieValue && !cookieValue.startsWith('mock_')) {
-        authToken = `Token ${cookieValue}`;
-      }
-    }
-  }
-
   const response = await fetch(fullUrl, {
     method,
-    credentials: 'include', // Include cookies for session authentication
+    credentials: 'include',
     headers: {
       ...(!isFormData && { 'Content-Type': 'application/json' }),
       ...headers,
-      ...(authToken && { 'Authorization': authToken })
     },
     body: isFormData ? data : data ? JSON.stringify(data) : undefined
   });
@@ -55,7 +39,8 @@ export async function request<T = any>(config: RequestConfig): Promise<T> {
   if (!response.ok) {
     const errorBody = await response.json().catch(() => ({}));
     throw new Error(
-      errorBody.message ||
+      errorBody.error || 
+        errorBody.message ||
         errorBody.detail ||
         `Request to ${fullUrl} failed with status ${response.status}`
     );

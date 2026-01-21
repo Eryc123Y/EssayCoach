@@ -17,19 +17,19 @@ need_install=0
 if [ ! -d node_modules ]; then
   need_install=1
 else
-  # If key dev deps are missing (e.g., after template change), install
-  if [ ! -d node_modules/@vitejs/plugin-vue-jsx ] || [ ! -d node_modules/@vitejs/plugin-vue ]; then
+  # Check for core Next.js dependency
+  if [ ! -d node_modules/next ]; then
     need_install=1
   fi
 fi
 
 if [ "$need_install" -eq 1 ]; then
   echo "Installing frontend dependencies..."
-  pnpm install --silent
+  pnpm install
 else
   echo "Dependencies look OK; skipping install. Run 'pnpm i' if needed."
 fi
 
-echo "Starting Vite development server (mode: test)..."
-# package.json -> scripts.dev: "vite --mode test"
-pnpm run dev
+echo "Starting Next.js development server..."
+# package.json -> scripts.dev: "next dev"
+PORT=5100 pnpm run dev

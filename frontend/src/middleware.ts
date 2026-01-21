@@ -1,28 +1,23 @@
-import { NextRequest, NextResponse } from 'next/server';
+import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
 
-export default async function middleware(req: NextRequest) {
-  const { nextUrl, cookies } = req;
-  const pathname = nextUrl.pathname;
+export default function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl;
 
-  // Bypass our checks for auth endpoints and static assets
-  if (pathname.startsWith('/api/auth')) return NextResponse.next();
-  if (pathname.startsWith('/_next')) return NextResponse.next();
+  if (pathname.startsWith('/dashboard')) {
+    const token = request.cookies.get('access_token')?.value;
 
-  const isProtected = pathname.startsWith('/dashboard');
-  if (!isProtected) return NextResponse.next();
+    if (!token) {
+      const url = request.nextUrl.clone();
+      url.pathname = '/auth/sign-in';
+      url.searchParams.set('callbackUrl', pathname);
+      return NextResponse.redirect(url);
+    }
+  }
 
-  const access = cookies.get('access_token')?.value;
-  if (access) return NextResponse.next();
-
-  const url = req.nextUrl.clone();
-  url.pathname = '/auth/sign-in';
-  url.searchParams.set('callbackUrl', pathname);
-  return NextResponse.redirect(url);
+  return NextResponse.next();
 }
 
 export const config = {
-  matcher: [
-    '/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)',
-    '/(api|trpc)(.*)'
-  ]
+  matcher: ['/((?!api|_next/static|_next/image|favicon.ico).*)'],
 };

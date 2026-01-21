@@ -1,13 +1,15 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useCallback, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { uploadRubricPDF, RubricImportResponse } from '@/service/api/rubric';
 import { toast } from 'sonner';
-import { IconUpload, IconLoader2, IconFile, IconX } from '@tabler/icons-react';
+import { IconUpload, IconLoader2, IconFile, IconX, IconCloudUpload } from '@tabler/icons-react';
+import { cn } from '@/lib/utils';
+import { motion, AnimatePresence } from 'motion/react';
 
 interface RubricUploadProps {
   onSuccess?: (response: RubricImportResponse) => void;
@@ -17,6 +19,8 @@ export function RubricUpload({ onSuccess }: RubricUploadProps) {
   const [file, setFile] = useState<File | null>(null);
   const [rubricName, setRubricName] = useState('');
   const [isUploading, setIsUploading] = useState(false);
+  const [dragActive, setDragActive] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
 
   const validateFile = (file: File): string | null => {
     // Check file type
@@ -35,27 +39,46 @@ export function RubricUpload({ onSuccess }: RubricUploadProps) {
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
-    if (!selectedFile) {
-      setFile(null);
-      return;
-    }
+    if (selectedFile) processFile(selectedFile);
+  };
 
+  const processFile = (selectedFile: File) => {
     const error = validateFile(selectedFile);
     if (error) {
       toast.error(error);
-      e.target.value = ''; // Reset input
       return;
     }
-
     setFile(selectedFile);
+    // Auto-fill name if empty
+    if (!rubricName) {
+      setRubricName(selectedFile.name.replace('.pdf', ''));
+    }
   };
+
+  const handleDrag = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (e.type === 'dragenter' || e.type === 'dragover') {
+      setDragActive(true);
+    } else if (e.type === 'dragleave') {
+      setDragActive(false);
+    }
+  }, []);
+
+  const handleDrop = useCallback((e: React.DragEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    setDragActive(false);
+    
+    if (e.dataTransfer.files && e.dataTransfer.files[0]) {
+      processFile(e.dataTransfer.files[0]);
+    }
+  }, [rubricName]);
 
   const handleRemoveFile = () => {
     setFile(null);
-    // Reset the file input
-    const fileInput = document.getElementById('rubric-file') as HTMLInputElement;
-    if (fileInput) {
-      fileInput.value = '';
+    if (inputRef.current) {
+      inputRef.current.value = '';
     }
   };
 
@@ -78,9 +101,8 @@ export function RubricUpload({ onSuccess }: RubricUploadProps) {
         // Reset form
         setFile(null);
         setRubricName('');
-        const fileInput = document.getElementById('rubric-file') as HTMLInputElement;
-        if (fileInput) {
-          fileInput.value = '';
+        if (inputRef.current) {
+          inputRef.current.value = '';
         }
 
         onSuccess?.(response);
@@ -96,75 +118,124 @@ export function RubricUpload({ onSuccess }: RubricUploadProps) {
   };
 
   return (
-    <Card>
+    <Card className="overflow-hidden border-border/50 shadow-sm transition-all hover:shadow-md">
       <CardHeader>
-        <CardTitle>Upload Rubric PDF</CardTitle>
+        <CardTitle className="flex items-center gap-2">
+          <IconUpload className="h-5 w-5 text-primary" />
+          Upload Rubric PDF
+        </CardTitle>
         <CardDescription>
-          Upload a PDF rubric for AI-powered parsing and import. The system will automatically extract dimensions, weights, and scoring levels.
+          Drag and drop a PDF rubric for AI-powered parsing. We'll automatically extract dimensions and scoring levels.
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-6">
           <div className="space-y-2">
             <Label htmlFor="rubric-name">Rubric Name (Optional)</Label>
             <Input
               id="rubric-name"
               type="text"
-              placeholder="Leave blank to use name from PDF"
+              placeholder="e.g., Argumentative Essay Rubric"
               value={rubricName}
               onChange={(e) => setRubricName(e.target.value)}
               disabled={isUploading}
+              className="bg-background/50"
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="rubric-file">PDF File *</Label>
-            <div className="flex items-center gap-2">
-              <Input
-                id="rubric-file"
-                type="file"
-                accept=".pdf"
-                onChange={handleFileChange}
-                disabled={isUploading}
-                className="flex-1"
-              />
-            </div>
-            {file && (
-              <div className="flex items-center justify-between p-3 border rounded-md bg-muted/50">
-                <div className="flex items-center gap-2">
-                  <IconFile className="h-4 w-4 text-muted-foreground" />
-                  <span className="text-sm font-medium">{file.name}</span>
-                  <span className="text-xs text-muted-foreground">
-                    ({(file.size / 1024).toFixed(1)} KB)
-                  </span>
-                </div>
-                <Button
-                  type="button"
-                  variant="ghost"
-                  size="sm"
-                  onClick={handleRemoveFile}
-                  disabled={isUploading}
+            <Label>PDF File</Label>
+            <AnimatePresence mode="wait">
+              {!file ? (
+                <motion.div
+                  key="dropzone"
+                  initial={{ opacity: 0, scale: 0.95 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0, scale: 0.95 }}
+                  className={cn(
+                    "relative flex flex-col items-center justify-center rounded-lg border-2 border-dashed p-8 transition-colors duration-200 ease-in-out cursor-pointer",
+                    dragActive 
+                      ? "border-primary bg-primary/5" 
+                      : "border-muted-foreground/25 hover:border-primary/50 hover:bg-muted/25",
+                    isUploading && "pointer-events-none opacity-50"
+                  )}
+                  onDragEnter={handleDrag}
+                  onDragLeave={handleDrag}
+                  onDragOver={handleDrag}
+                  onDrop={handleDrop}
+                  onClick={() => inputRef.current?.click()}
                 >
-                  <IconX className="h-4 w-4" />
-                </Button>
-              </div>
-            )}
+                  <input
+                    ref={inputRef}
+                    id="rubric-file"
+                    type="file"
+                    accept=".pdf"
+                    onChange={handleFileChange}
+                    disabled={isUploading}
+                    className="hidden"
+                  />
+                  <div className="flex flex-col items-center gap-2 text-center">
+                    <div className="rounded-full bg-primary/10 p-4">
+                      <IconCloudUpload className="h-8 w-8 text-primary" />
+                    </div>
+                    <div className="text-sm font-medium">
+                      <span className="text-primary">Click to upload</span> or drag and drop
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      PDF (max. 10MB)
+                    </p>
+                  </div>
+                </motion.div>
+              ) : (
+                <motion.div
+                  key="file-preview"
+                  initial={{ opacity: 0, y: 10 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -10 }}
+                  className="flex items-center justify-between p-4 border rounded-lg bg-card border-primary/20 shadow-sm"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="rounded-md bg-red-100 p-2 dark:bg-red-900/20">
+                      <IconFile className="h-6 w-6 text-red-600 dark:text-red-400" />
+                    </div>
+                    <div className="flex flex-col">
+                      <span className="text-sm font-medium line-clamp-1 max-w-[200px]">
+                        {file.name}
+                      </span>
+                      <span className="text-xs text-muted-foreground">
+                        {(file.size / 1024 / 1024).toFixed(2)} MB
+                      </span>
+                    </div>
+                  </div>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon"
+                    onClick={handleRemoveFile}
+                    disabled={isUploading}
+                    className="text-muted-foreground hover:text-destructive"
+                  >
+                    <IconX className="h-5 w-5" />
+                  </Button>
+                </motion.div>
+              )}
+            </AnimatePresence>
           </div>
 
           <Button
             type="submit"
             disabled={!file || isUploading}
-            className="w-full"
+            className="w-full bg-gradient-to-r from-primary to-purple-600 hover:from-primary/90 hover:to-purple-600/90 transition-all duration-300"
           >
             {isUploading ? (
               <>
                 <IconLoader2 className="mr-2 h-4 w-4 animate-spin" />
-                Uploading and processing...
+                AI is analyzing your rubric...
               </>
             ) : (
               <>
                 <IconUpload className="mr-2 h-4 w-4" />
-                Upload Rubric
+                Start AI Import
               </>
             )}
           </Button>

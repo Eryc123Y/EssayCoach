@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import json
 import logging
 from decimal import Decimal
 from typing import TYPE_CHECKING, Any
@@ -205,10 +206,35 @@ class RubricManager:
                         f"Level '{level.get('name')}' in dimension '{dimension.get('name')}' "
                         "missing score range"
                     )
-                if level["score_min"] >= level["score_max"]:
+                # Allow score_min == score_max only for "No submission" or "0" level
+                if level["score_min"] > level["score_max"]:
+                    logger.error(
+                        f"Invalid score range detected. Full AI response:\n"
+                        f"{json.dumps(parsed_data, indent=2, ensure_ascii=False)}"
+                    )
                     raise RubricImportError(
                         f"Level '{level.get('name')}' has invalid score range: "
                         f"{level['score_min']}-{level['score_max']}"
+                    )
+                # Allow 0-0 range for "No submission" levels
+                elif level["score_min"] == level["score_max"]:
+                    level_name = level.get("name", "").lower()
+                    level_desc = level.get("description", "").lower()
+                    if (
+                        level_name != "0"
+                        and "no submission" not in level_desc
+                        and "absent" not in level_desc
+                    ):
+                        logger.error(
+                            f"Invalid score range detected. Full AI response:\n"
+                            f"{json.dumps(parsed_data, indent=2, ensure_ascii=False)}"
+                        )
+                        raise RubricImportError(
+                            f"Level '{level.get('name')}' has invalid score range: "
+                            f"{level['score_min']}-{level['score_max']}"
+                        )
+                    logger.info(
+                        f"Allowed special score range {level['score_min']}-{level['score_max']} for level: '{level.get('name')}'"
                     )
 
         if not (Decimal("99") <= total_weight <= Decimal("101")):
@@ -275,3 +301,40 @@ class RubricManager:
         except Exception as e:
             logger.error(f"Database save failed: {e}")
             raise RubricImportError(f"Failed to save rubric to database: {e}") from e
+
+    def generate_rubric_text(self, rubric: MarkingRubric) -> str:
+        """Generate a text representation of the rubric for AI processing.
+
+        Args:
+            rubric: MarkingRubric instance
+
+        Returns:
+            Formatted text string
+        """
+        lines = [f"Rubric: {rubric.rubric_desc}\n"]
+
+        # Use prefetch_related to optimize database queries (Fix N+1 problem)
+        items = RubricItem.objects.filter(
+            rubric_id_marking_rubric=rubric
+        ).prefetch_related("rubricleveldesc_set")
+
+        for item in items:
+            lines.append(
+                f"Dimension: {item.rubric_item_name} (Weight: {item.rubric_item_weight}%)"
+            )
+
+            # Sort in Python to avoid hitting DB again if possible, or use the prefetched set
+            # Since we need ordering, doing it in Python is efficient for small sets like rubric levels
+            levels = sorted(
+                item.rubricleveldesc_set.all(),
+                key=lambda l: l.level_max_score,
+                reverse=True,
+            )
+
+            for level in levels:
+                lines.append(
+                    f"- Score {level.level_min_score}-{level.level_max_score}: {level.level_desc}"
+                )
+            lines.append("")
+
+        return "\n".join(lines)
