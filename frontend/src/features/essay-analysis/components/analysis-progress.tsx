@@ -20,7 +20,10 @@ const STEPS = [
   { id: 5, label: 'Finalizing insights' }
 ];
 
-export function AnalysisProgress({ isLoading, onComplete }: AnalysisProgressProps) {
+export function AnalysisProgress({
+  isLoading,
+  onComplete
+}: AnalysisProgressProps) {
   const [currentStep, setCurrentStep] = useState(0);
   const [progress, setProgress] = useState(0);
 

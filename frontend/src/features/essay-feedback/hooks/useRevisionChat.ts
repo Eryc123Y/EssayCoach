@@ -19,7 +19,8 @@ const DEFAULT_INITIAL_MESSAGES: ChatMessage[] = [
 ];
 
 export function useRevisionChat(options?: UseRevisionChatOptions) {
-  const { onSendMessage, initialMessages = DEFAULT_INITIAL_MESSAGES } = options ?? {};
+  const { onSendMessage, initialMessages = DEFAULT_INITIAL_MESSAGES } =
+    options ?? {};
 
   const [messages, setMessages] = useState<ChatMessage[]>(initialMessages);
   const [inputValue, setInputValue] = useState('');

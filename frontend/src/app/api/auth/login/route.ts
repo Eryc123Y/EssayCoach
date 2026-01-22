@@ -12,12 +12,17 @@ export async function POST(req: NextRequest) {
     const password = body?.password;
 
     if (!email || !password) {
-      return NextResponse.json({ message: 'Email and password are required' }, { status: 400 });
+      return NextResponse.json(
+        { message: 'Email and password are required' },
+        { status: 400 }
+      );
     }
 
     // Call the real Django backend
     // Force 127.0.0.1 to avoid Node.js ipv6 resolution issues
-    const apiUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000').replace('localhost', '127.0.0.1');
+    const apiUrl = (
+      process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000'
+    ).replace('localhost', '127.0.0.1');
     const response = await fetch(`${apiUrl}/api/v1/auth/login/`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -26,7 +31,8 @@ export async function POST(req: NextRequest) {
 
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
-      const message = errorData?.error?.message || errorData?.detail || 'Invalid credentials';
+      const message =
+        errorData?.error?.message || errorData?.detail || 'Invalid credentials';
       return NextResponse.json({ message }, { status: response.status });
     }
 
@@ -34,7 +40,7 @@ export async function POST(req: NextRequest) {
     const { token, user } = result.data;
 
     const res = NextResponse.json({ access: token, user });
-    
+
     // Set cookie for frontend request.ts to use
     res.cookies.set('access_token', token, {
       httpOnly: true,
@@ -66,6 +72,9 @@ export async function POST(req: NextRequest) {
     return res;
   } catch (error) {
     console.error('Login error:', error);
-    return NextResponse.json({ message: 'Internal server error' }, { status: 500 });
+    return NextResponse.json(
+      { message: 'Internal server error' },
+      { status: 500 }
+    );
   }
 }

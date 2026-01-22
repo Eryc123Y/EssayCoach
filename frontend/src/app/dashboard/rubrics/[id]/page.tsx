@@ -14,11 +14,10 @@ import {
   Scale,
   ChartBar,
   Info,
-  ChevronUp,
   ChevronDown
 } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { cn } from '@/lib/utils';
 import {
   Accordion,
@@ -185,41 +184,64 @@ import {
       </div>
 
       <div className='space-y-6'>
-        <div className='flex items-center justify-between gap-2 pb-2 border-b border-border/50'>
-          <ClipboardList className="h-5 w-5 text-indigo-500" />
-          <h2 className="text-xl font-semibold tracking-tight text-foreground">Rubric Structure</h2>
+        <motion.div
+          layout
+          className='flex items-center justify-between gap-2 pb-2 border-b border-border/50'
+        >
+          <div className='flex items-center gap-2'>
+            <ClipboardList className="h-5 w-5 text-indigo-500" />
+            <h2 className="text-xl font-semibold tracking-tight text-foreground">Rubric Structure</h2>
+          </div>
           <Button
             variant='outline'
             size='sm'
             onClick={() => setShowInfo(!showInfo)}
             className={cn(
-              'text-muted-foreground hover:text-foreground transition-all duration-200',
+              'text-muted-foreground hover:text-foreground transition-colors duration-300',
               showInfo && 'bg-indigo-50 border-indigo-200 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400'
             )}
           >
             <motion.div
-              animate={{ rotate: showInfo ? 180 : 0 }}
-              transition={{ duration: 0.2, ease: "easeInOut" }}
+              animate={{
+                scale: showInfo ? [1, 0.9, 1] : 1,
+                color: showInfo ? 'rgb(67, 56, 202)' : 'rgb(100, 116, 139)'
+              }}
+              transition={{
+                scale: { duration: 0.3, ease: [0.4, 0, 0.2, 1] },
+                color: { duration: 0.2 }
+              }}
+              className="mr-2"
             >
-              <Info className="h-4 w-4 mr-2" />
+              <Info className="h-4 w-4" />
             </motion.div>
             <span className="text-sm font-medium">
               {showInfo ? 'Hide Information' : 'Understanding This Rubric'}
             </span>
             <motion.div
               animate={{ rotate: showInfo ? 180 : 0 }}
-              transition={{ duration: 0.2, ease: "easeInOut" }}
+              transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
+              className="ml-2"
             >
-              {showInfo ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+              <ChevronDown className="h-4 w-4" />
             </motion.div>
           </Button>
-        </div>
-        
-        {showInfo && (
+        </motion.div>
+
+        <AnimatePresence mode='wait'>
+          {showInfo && (
           <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: 'auto' }}
-            className='mt-4 mb-6 rounded-xl border border-border/50 bg-slate-50 dark:bg-slate-900/50 p-6'
+            layout
+            initial={{ opacity: 0, scale: 0.98 }}
+            animate={{
+              opacity: 1,
+              scale: 1
+            }}
+            exit={{ opacity: 0, scale: 0.98 }}
+            transition={{
+              duration: 0.25,
+              ease: [0.4, 0, 0.2, 1]
+            }}
+            className='mb-6 rounded-xl border border-border/50 bg-slate-50 dark:bg-slate-900/50 p-6'
           >
             <h3 className="text-lg font-semibold tracking-tight text-foreground mb-4">
               Understanding This Rubric
@@ -329,8 +351,9 @@ import {
               </div>
             </div>
           </motion.div>
-        )}
-        
+          )}
+        </AnimatePresence>
+
         <Accordion
           type='multiple'
           defaultValue={rubric.rubric_items?.map(

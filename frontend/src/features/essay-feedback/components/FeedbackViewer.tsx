@@ -13,7 +13,14 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import type { DifyWorkflowStatus } from '@/types/dify';
 import { FeedbackCharts } from './FeedbackCharts';
 import { RevisionChat } from './RevisionChat';
-import { CheckCircle2, FileText, BarChart3, Sparkles, AlertCircle, FileEdit } from 'lucide-react';
+import {
+  CheckCircle2,
+  FileText,
+  BarChart3,
+  Sparkles,
+  AlertCircle,
+  FileEdit
+} from 'lucide-react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Button } from '@/components/ui/button';
 
@@ -38,16 +45,18 @@ export function FeedbackViewer({
         variant='destructive'
         className='animate-in fade-in slide-in-from-top-2 duration-300'
       >
-        <AlertCircle className="h-4 w-4" />
-        <AlertDescription className="flex flex-col gap-2">
-          <span className="font-medium">Error analyzing essay: {error}</span>
-          <span className="text-sm opacity-90">Please try submitting your essay again.</span>
+        <AlertCircle className='h-4 w-4' />
+        <AlertDescription className='flex flex-col gap-2'>
+          <span className='font-medium'>Error analyzing essay: {error}</span>
+          <span className='text-sm opacity-90'>
+            Please try submitting your essay again.
+          </span>
           {onRetry && (
-            <Button 
-              variant="outline" 
-              size="sm" 
+            <Button
+              variant='outline'
+              size='sm'
               onClick={onRetry}
-              className="w-fit mt-2 bg-background/20 hover:bg-background/40 border-background/40 text-inherit"
+              className='bg-background/20 hover:bg-background/40 border-background/40 mt-2 w-fit text-inherit'
             >
               Retry
             </Button>
@@ -58,10 +67,10 @@ export function FeedbackViewer({
   }
 
   const getAnalysisStep = (progress: number) => {
-    if (progress < 30) return "Analyzing essay structure...";
-    if (progress < 60) return "Checking grammar and style...";
-    if (progress < 90) return "Generating detailed feedback...";
-    return "Finalizing report...";
+    if (progress < 30) return 'Analyzing essay structure...';
+    if (progress < 60) return 'Checking grammar and style...';
+    if (progress < 90) return 'Generating detailed feedback...';
+    return 'Finalizing report...';
   };
 
   if (isRunning) {
@@ -80,7 +89,7 @@ export function FeedbackViewer({
           <div className='text-muted-foreground flex items-center justify-between text-sm'>
             <span className='flex items-center gap-2'>
               <Sparkles className='animate-spin-slow h-4 w-4 text-indigo-500' />
-              <span className="animate-in fade-in duration-300 key={getAnalysisStep(progress)}">
+              <span className='animate-in fade-in key={getAnalysisStep(progress)} duration-300'>
                 {getAnalysisStep(progress)}
               </span>
             </span>
@@ -88,13 +97,15 @@ export function FeedbackViewer({
               {Math.round(progress)}%
             </span>
           </div>
-          
-          <div className="grid grid-cols-4 gap-2 pt-2">
+
+          <div className='grid grid-cols-4 gap-2 pt-2'>
             {[0, 1, 2, 3].map((i) => (
-              <div key={i} className="flex flex-col items-center gap-1">
-                <div className={`h-1.5 w-full rounded-full transition-colors duration-500 ${
-                  progress > i * 25 ? 'bg-indigo-500/80' : 'bg-secondary'
-                }`} />
+              <div key={i} className='flex flex-col items-center gap-1'>
+                <div
+                  className={`h-1.5 w-full rounded-full transition-colors duration-500 ${
+                    progress > i * 25 ? 'bg-indigo-500/80' : 'bg-secondary'
+                  }`}
+                />
               </div>
             ))}
           </div>
@@ -105,15 +116,18 @@ export function FeedbackViewer({
 
   if (!result?.outputs) {
     return (
-      <Card className="border-dashed border-2 bg-muted/30">
-        <CardContent className="flex flex-col items-center justify-center py-12 text-center text-muted-foreground space-y-4">
-          <div className="p-4 rounded-full bg-background border shadow-sm">
-            <FileEdit className="h-8 w-8 text-muted-foreground/50" />
+      <Card className='bg-muted/30 border-2 border-dashed'>
+        <CardContent className='text-muted-foreground flex flex-col items-center justify-center space-y-4 py-12 text-center'>
+          <div className='bg-background rounded-full border p-4 shadow-sm'>
+            <FileEdit className='text-muted-foreground/50 h-8 w-8' />
           </div>
-          <div className="space-y-1">
-            <h3 className="font-semibold text-lg text-foreground">No feedback yet</h3>
-            <p className="text-sm max-w-sm mx-auto">
-              Submit an essay to receive comprehensive AI-powered analysis, grading, and revision suggestions.
+          <div className='space-y-1'>
+            <h3 className='text-foreground text-lg font-semibold'>
+              No feedback yet
+            </h3>
+            <p className='mx-auto max-w-sm text-sm'>
+              Submit an essay to receive comprehensive AI-powered analysis,
+              grading, and revision suggestions.
             </p>
           </div>
         </CardContent>

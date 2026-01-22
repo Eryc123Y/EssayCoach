@@ -20,53 +20,53 @@ import {
 } from '@/components/ui/chart';
 
 const chartData = [
-  { browser: 'chrome', visitors: 275, fill: 'var(--primary)' },
-  { browser: 'safari', visitors: 200, fill: 'var(--primary-light)' },
-  { browser: 'firefox', visitors: 287, fill: 'var(--primary-lighter)' },
-  { browser: 'edge', visitors: 173, fill: 'var(--primary-dark)' },
-  { browser: 'other', visitors: 190, fill: 'var(--primary-darker)' }
+  { category: 'Grammar', count: 12, fill: 'var(--primary)' },
+  { category: 'Citations', count: 8, fill: 'var(--primary-light)' },
+  { category: 'Structure', count: 15, fill: 'var(--primary-lighter)' },
+  { category: 'Thesis', count: 5, fill: 'var(--primary-dark)' },
+  { category: 'Style', count: 10, fill: 'var(--primary-darker)' }
 ];
 
 const chartConfig = {
-  visitors: {
-    label: 'Visitors'
+  count: {
+    label: 'Issues'
   },
-  chrome: {
-    label: 'Chrome',
+  Grammar: {
+    label: 'Grammar',
     color: 'var(--primary)'
   },
-  safari: {
-    label: 'Safari',
+  Citations: {
+    label: 'Citations',
     color: 'var(--primary)'
   },
-  firefox: {
-    label: 'Firefox',
+  Structure: {
+    label: 'Structure',
     color: 'var(--primary)'
   },
-  edge: {
-    label: 'Edge',
+  Thesis: {
+    label: 'Thesis',
     color: 'var(--primary)'
   },
-  other: {
-    label: 'Other',
+  Style: {
+    label: 'Style',
     color: 'var(--primary)'
   }
 } satisfies ChartConfig;
 
 export function PieGraph() {
-  const totalVisitors = React.useMemo(() => {
-    return chartData.reduce((acc, curr) => acc + curr.visitors, 0);
+  const totalIssues = React.useMemo(() => {
+    return chartData.reduce((acc, curr) => acc + curr.count, 0);
   }, []);
 
   return (
     <Card className='@container/card'>
       <CardHeader>
-        <CardTitle>Pie Chart - Donut with Text</CardTitle>
+        <CardTitle>Common Error Categories</CardTitle>
         <CardDescription>
           <span className='hidden @[540px]/card:block'>
-            Total visitors by browser for the last 6 months
+            Distribution of feedback issues in recent submissions
           </span>
-          <span className='@[540px]/card:hidden'>Browser distribution</span>
+          <span className='@[540px]/card:hidden'>Error distribution</span>
         </CardDescription>
       </CardHeader>
       <CardContent className='px-2 pt-4 sm:px-6 sm:pt-6'>
@@ -76,11 +76,11 @@ export function PieGraph() {
         >
           <PieChart>
             <defs>
-              {['chrome', 'safari', 'firefox', 'edge', 'other'].map(
-                (browser, index) => (
+              {['Grammar', 'Citations', 'Structure', 'Thesis', 'Style'].map(
+                (category, index) => (
                   <linearGradient
-                    key={browser}
-                    id={`fill${browser}`}
+                    key={category}
+                    id={`fill${category}`}
                     x1='0'
                     y1='0'
                     x2='0'
@@ -107,10 +107,10 @@ export function PieGraph() {
             <Pie
               data={chartData.map((item) => ({
                 ...item,
-                fill: `url(#fill${item.browser})`
+                fill: `url(#fill${item.category})`
               }))}
-              dataKey='visitors'
-              nameKey='browser'
+              dataKey='count'
+              nameKey='category'
               innerRadius={60}
               strokeWidth={2}
               stroke='var(--background)'
@@ -130,14 +130,14 @@ export function PieGraph() {
                           y={viewBox.cy}
                           className='fill-foreground text-3xl font-bold'
                         >
-                          {totalVisitors.toLocaleString()}
+                          {totalIssues.toLocaleString()}
                         </tspan>
                         <tspan
                           x={viewBox.cx}
                           y={(viewBox.cy || 0) + 24}
                           className='fill-muted-foreground text-sm'
                         >
-                          Total Visitors
+                          Total Issues
                         </tspan>
                       </text>
                     );
@@ -150,12 +150,11 @@ export function PieGraph() {
       </CardContent>
       <CardFooter className='flex-col gap-2 text-sm'>
         <div className='flex items-center gap-2 leading-none font-medium'>
-          Chrome leads with{' '}
-          {((chartData[0].visitors / totalVisitors) * 100).toFixed(1)}%{' '}
-          <IconTrendingUp className='h-4 w-4' />
+          Structure needs attention{' '}
+          <IconTrendingUp className='h-4 w-4 text-amber-500' />
         </div>
         <div className='text-muted-foreground leading-none'>
-          Based on data from January - June 2024
+          Based on last 5 graded essays
         </div>
       </CardFooter>
     </Card>

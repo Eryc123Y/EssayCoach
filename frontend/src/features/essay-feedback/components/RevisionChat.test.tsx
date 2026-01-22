@@ -11,7 +11,9 @@ describe('RevisionChat', () => {
     it('should display the initial assistant message on mount', () => {
       render(<RevisionChat />);
 
-      expect(screen.getByText(/Hello! I've analyzed your essay/i)).toBeInTheDocument();
+      expect(
+        screen.getByText(/Hello! I've analyzed your essay/i)
+      ).toBeInTheDocument();
     });
 
     it('should display chat card with correct title', () => {
@@ -31,8 +33,12 @@ describe('RevisionChat', () => {
     it('should allow user to type in the input field', () => {
       render(<RevisionChat />);
 
-      const input = screen.getByPlaceholderText(/Ask about your essay.../i) as HTMLInputElement;
-      fireEvent.input(input, { target: { value: 'How can I improve my conclusion?' } });
+      const input = screen.getByPlaceholderText(
+        /Ask about your essay.../i
+      ) as HTMLInputElement;
+      fireEvent.input(input, {
+        target: { value: 'How can I improve my conclusion?' }
+      });
 
       expect(input.value).toBe('How can I improve my conclusion?');
     });
@@ -40,7 +46,9 @@ describe('RevisionChat', () => {
     it('should have correct placeholder text', () => {
       render(<RevisionChat />);
 
-      expect(screen.getByPlaceholderText(/Ask about your essay.../i)).toBeInTheDocument();
+      expect(
+        screen.getByPlaceholderText(/Ask about your essay.../i)
+      ).toBeInTheDocument();
     });
   });
 
@@ -53,7 +61,7 @@ describe('RevisionChat', () => {
 
       // Button should be disabled when empty (via button element near input)
       const buttons = screen.getAllByRole('button');
-      const sendButton = buttons.find(btn => btn.querySelector('svg'));
+      const sendButton = buttons.find((btn) => btn.querySelector('svg'));
       expect(sendButton).toBeDisabled();
     });
 
@@ -64,7 +72,7 @@ describe('RevisionChat', () => {
       fireEvent.input(input, { target: { value: 'Valid input' } });
 
       const buttons = screen.getAllByRole('button');
-      const sendButton = buttons.find(btn => btn.querySelector('svg'));
+      const sendButton = buttons.find((btn) => btn.querySelector('svg'));
       expect(sendButton).not.toBeDisabled();
     });
   });
@@ -73,12 +81,14 @@ describe('RevisionChat', () => {
     it('should trigger send on Enter key when input has value', () => {
       render(<RevisionChat />);
 
-      const input = screen.getByPlaceholderText(/Ask about your essay.../i) as HTMLInputElement;
-      
+      const input = screen.getByPlaceholderText(
+        /Ask about your essay.../i
+      ) as HTMLInputElement;
+
       // Type a message first
       fireEvent.input(input, { target: { value: 'Test message' } });
       expect(input.value).toBe('Test message');
-      
+
       // Press Enter
       fireEvent.keyDown(input, { key: 'Enter', shiftKey: false });
 
@@ -89,12 +99,14 @@ describe('RevisionChat', () => {
     it('should not trigger send on Shift+Enter', () => {
       render(<RevisionChat />);
 
-      const input = screen.getByPlaceholderText(/Ask about your essay.../i) as HTMLInputElement;
-      
+      const input = screen.getByPlaceholderText(
+        /Ask about your essay.../i
+      ) as HTMLInputElement;
+
       // Type a message first
       fireEvent.input(input, { target: { value: 'Test message' } });
       expect(input.value).toBe('Test message');
-      
+
       // Press Shift+Enter (should NOT send)
       fireEvent.keyDown(input, { key: 'Enter', shiftKey: true });
 
@@ -117,7 +129,7 @@ describe('RevisionChat', () => {
 
       // Should have a button with an SVG (send icon)
       const buttons = screen.getAllByRole('button');
-      const sendButton = buttons.find(btn => btn.querySelector('svg'));
+      const sendButton = buttons.find((btn) => btn.querySelector('svg'));
       expect(sendButton).toBeInTheDocument();
     });
 
@@ -133,8 +145,12 @@ describe('RevisionChat', () => {
     it('initial message should contain helpful text', () => {
       render(<RevisionChat />);
 
-      expect(screen.getByText(/Hello! I've analyzed your essay/i)).toBeInTheDocument();
-      expect(screen.getByText(/Ask me specifically about grammar/i)).toBeInTheDocument();
+      expect(
+        screen.getByText(/Hello! I've analyzed your essay/i)
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText(/Ask me specifically about grammar/i)
+      ).toBeInTheDocument();
     });
 
     it('should have input field for user messages', () => {

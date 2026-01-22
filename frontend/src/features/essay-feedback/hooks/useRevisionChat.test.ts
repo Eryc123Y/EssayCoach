@@ -14,7 +14,9 @@ describe('useRevisionChat', () => {
 
       expect(result.current.messages).toHaveLength(1);
       expect(result.current.messages[0].role).toBe('assistant');
-      expect(result.current.messages[0].content).toContain("I've analyzed your essay");
+      expect(result.current.messages[0].content).toContain(
+        "I've analyzed your essay"
+      );
     });
 
     it('should start with empty input value', () => {
@@ -39,7 +41,7 @@ describe('useRevisionChat', () => {
         }
       ];
 
-      const { result } = renderHook(() => 
+      const { result } = renderHook(() =>
         useRevisionChat({ initialMessages: customMessages })
       );
 
@@ -104,7 +106,9 @@ describe('useRevisionChat', () => {
       });
 
       await act(async () => {
-        result.current.handleKeyDown(keyboardEvent as unknown as React.KeyboardEvent<HTMLInputElement>);
+        result.current.handleKeyDown(
+          keyboardEvent as unknown as React.KeyboardEvent<HTMLInputElement>
+        );
       });
 
       // Should have sent the message (2 messages: initial + user)
@@ -204,9 +208,7 @@ describe('useRevisionChat', () => {
     it('should handle onSendMessage errors gracefully', async () => {
       const onSendMessage = vi.fn().mockRejectedValue(new Error('API error'));
 
-      const { result } = renderHook(() => 
-        useRevisionChat({ onSendMessage })
-      );
+      const { result } = renderHook(() => useRevisionChat({ onSendMessage }));
 
       await act(async () => {
         result.current.setInputValue('Question');

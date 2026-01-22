@@ -4,7 +4,13 @@ import { useForm } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription
+} from '@/components/ui/card';
 import {
   Form,
   FormControl,
@@ -39,7 +45,8 @@ export function EssayForm({ onSubmit, isSubmitting }: EssayFormProps) {
       <CardHeader>
         <CardTitle>Submit Essay</CardTitle>
         <CardDescription>
-          Enter your essay topic and content below to receive detailed AI feedback and grading.
+          Enter your essay topic and content below to receive detailed AI
+          feedback and grading.
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -69,10 +76,13 @@ export function EssayForm({ onSubmit, isSubmitting }: EssayFormProps) {
               rules={{ required: 'Please enter your essay content' }}
               render={({ field }) => (
                 <FormItem>
-                  <div className="flex items-center justify-between">
+                  <div className='flex items-center justify-between'>
                     <FormLabel>Essay Content</FormLabel>
-                    <span className={`text-xs ${charCount > maxChars ? 'text-destructive' : 'text-muted-foreground'}`}>
-                      {charCount.toLocaleString()} / {maxChars.toLocaleString()} characters
+                    <span
+                      className={`text-xs ${charCount > maxChars ? 'text-destructive' : 'text-muted-foreground'}`}
+                    >
+                      {charCount.toLocaleString()} / {maxChars.toLocaleString()}{' '}
+                      characters
                     </span>
                   </div>
                   <FormControl>

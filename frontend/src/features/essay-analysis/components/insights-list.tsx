@@ -62,7 +62,9 @@ export function InsightsList({ insights }: InsightsListProps) {
       </CardHeader>
       <CardContent className='max-h-[600px] flex-1 space-y-4 overflow-y-auto pr-2'>
         {insights.length === 0 ? (
-          <div className="text-center text-muted-foreground p-4">No specific insights generated.</div>
+          <div className='text-muted-foreground p-4 text-center'>
+            No specific insights generated.
+          </div>
         ) : (
           insights.map((insight, index) => (
             <motion.div

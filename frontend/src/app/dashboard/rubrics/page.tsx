@@ -3,11 +3,29 @@
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle
+} from '@/components/ui/card';
 import { RubricUpload } from '@/components/rubric/RubricUpload';
-import { fetchRubricList, RubricListItem, deleteRubric } from '@/service/api/rubric';
+import {
+  fetchRubricList,
+  RubricListItem,
+  deleteRubric
+} from '@/service/api/rubric';
 import { toast } from 'sonner';
-import { IconLoader2, IconEye, IconTrash, IconClipboardList, IconAlertCircle, IconCalendar } from '@tabler/icons-react';
+import {
+  Loader2,
+  Eye,
+  Trash,
+  ClipboardList,
+  AlertCircle,
+  Calendar,
+  BookOpen
+} from 'lucide-react';
 import { motion } from 'motion/react';
 import {
   Table,
@@ -15,7 +33,7 @@ import {
   TableCell,
   TableHead,
   TableHeader,
-  TableRow,
+  TableRow
 } from '@/components/ui/table';
 import {
   AlertDialog,
@@ -25,7 +43,7 @@ import {
   AlertDialogDescription,
   AlertDialogFooter,
   AlertDialogHeader,
-  AlertDialogTitle,
+  AlertDialogTitle
 } from '@/components/ui/alert-dialog';
 
 export default function RubricsPage() {
@@ -33,7 +51,9 @@ export default function RubricsPage() {
   const [rubrics, setRubrics] = useState<RubricListItem[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [rubricToDelete, setRubricToDelete] = useState<RubricListItem | null>(null);
+  const [rubricToDelete, setRubricToDelete] = useState<RubricListItem | null>(
+    null
+  );
   const [isDeleting, setIsDeleting] = useState(false);
 
   const loadRubrics = async () => {
@@ -54,7 +74,6 @@ export default function RubricsPage() {
   }, []);
 
   const handleUploadSuccess = () => {
-    // Reload rubrics list after successful upload
     loadRubrics();
   };
 
@@ -73,10 +92,13 @@ export default function RubricsPage() {
     setIsDeleting(true);
     try {
       await deleteRubric(rubricToDelete.rubric_id);
-      toast.success(`Rubric "${rubricToDelete.rubric_desc}" deleted successfully`);
-      
-      // Remove from list
-      setRubrics(rubrics.filter(r => r.rubric_id !== rubricToDelete.rubric_id));
+      toast.success(
+        `Rubric "${rubricToDelete.rubric_desc}" deleted successfully`
+      );
+
+      setRubrics(
+        rubrics.filter((r) => r.rubric_id !== rubricToDelete.rubric_id)
+      );
       setDeleteDialogOpen(false);
       setRubricToDelete(null);
     } catch (error: any) {
@@ -113,86 +135,110 @@ export default function RubricsPage() {
   };
 
   return (
-    <div className="flex flex-1 flex-col gap-4 p-4 md:gap-8 md:p-8">
-      <div className="flex items-center justify-between">
-        <div>
-          <h1 className="text-3xl font-bold tracking-tight">Rubrics</h1>
-          <p className="text-muted-foreground">
-            Manage your grading rubrics and upload new ones
-          </p>
-        </div>
+    <div className='mx-auto flex w-full max-w-[1600px] flex-col gap-8 p-6 md:p-8'>
+      <div className='flex flex-col gap-2 rounded-3xl border border-slate-200 bg-slate-50 p-8 md:p-12 dark:border-slate-800 dark:bg-slate-900/50'>
+        <h1 className='text-foreground text-3xl font-bold tracking-tight'>
+          Rubric Library
+        </h1>
+        <p className='text-muted-foreground max-w-2xl text-lg'>
+          Standardized grading criteria for your classes. Manage, upload, and
+          organize your assessment tools.
+        </p>
       </div>
 
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        <div className="lg:col-span-1">
+      <div className='grid items-start gap-8 lg:grid-cols-12'>
+        <div className='sticky top-8 lg:col-span-4 xl:col-span-3'>
           <RubricUpload onSuccess={handleUploadSuccess} />
         </div>
 
-        <div className="lg:col-span-2">
-          <Card className="h-full border-border/50 shadow-sm">
+        <div className='lg:col-span-8 xl:col-span-9'>
+          <Card className='bg-card h-full border-slate-200 shadow-sm dark:border-slate-800'>
             <CardHeader>
-              <CardTitle>Your Rubrics</CardTitle>
-              <CardDescription>
-                View and manage all your uploaded rubrics
-              </CardDescription>
+              <div className='flex items-center gap-3'>
+                <div className='rounded-xl bg-indigo-50 p-2.5 text-indigo-600 dark:bg-indigo-950/30 dark:text-indigo-400'>
+                  <BookOpen className='h-5 w-5' />
+                </div>
+                <div>
+                  <CardTitle>Your Rubrics</CardTitle>
+                  <CardDescription>
+                    View and manage all your uploaded rubrics
+                  </CardDescription>
+                </div>
+              </div>
             </CardHeader>
             <CardContent>
               {isLoading ? (
-                <div className="flex items-center justify-center py-8">
-                  <IconLoader2 className="h-8 w-8 animate-spin text-muted-foreground" />
+                <div className='flex items-center justify-center py-12'>
+                  <Loader2 className='text-muted-foreground h-8 w-8 animate-spin' />
                 </div>
               ) : rubrics.length === 0 ? (
-                <div className="flex flex-col items-center justify-center py-8 text-center">
-                  <IconClipboardList className="h-12 w-12 text-muted-foreground mb-4" />
-                  <h3 className="text-lg font-semibold">No rubrics yet</h3>
-                  <p className="text-sm text-muted-foreground">
-                    Upload your first rubric to get started
+                <div className='flex flex-col items-center justify-center py-16 text-center'>
+                  <div className='bg-muted/50 mb-4 rounded-full p-4'>
+                    <ClipboardList className='text-muted-foreground h-8 w-8' />
+                  </div>
+                  <h3 className='text-foreground text-lg font-semibold'>
+                    No rubrics yet
+                  </h3>
+                  <p className='text-muted-foreground mt-1 max-w-xs text-sm'>
+                    Upload your first rubric using the form on the left to get
+                    started with AI grading.
                   </p>
                 </div>
               ) : (
-                <motion.div 
+                <motion.div
                   variants={containerVariants}
-                  initial="hidden"
-                  animate="show"
-                  className="space-y-4"
+                  initial='hidden'
+                  animate='show'
+                  className='space-y-4'
                 >
-                  {/* Desktop View: Table */}
-                  <div className="hidden rounded-md border md:block">
+                  <div className='border-border/50 hidden overflow-hidden rounded-xl border md:block'>
                     <Table>
-                      <TableHeader>
-                        <TableRow>
-                          <TableHead>Name</TableHead>
-                          <TableHead>Created</TableHead>
-                          <TableHead className="text-right">Actions</TableHead>
+                      <TableHeader className='bg-muted/30'>
+                        <TableRow className='hover:bg-transparent'>
+                          <TableHead className='text-foreground font-semibold'>
+                            Name
+                          </TableHead>
+                          <TableHead className='text-foreground font-semibold'>
+                            Created
+                          </TableHead>
+                          <TableHead className='text-foreground text-right font-semibold'>
+                            Actions
+                          </TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
                         {rubrics.map((rubric) => (
-                          <TableRow key={rubric.rubric_id}>
-                            <TableCell className="font-medium">
+                          <TableRow
+                            key={rubric.rubric_id}
+                            className='hover:bg-muted/30 transition-colors'
+                          >
+                            <TableCell className='text-foreground py-4 font-medium'>
                               {rubric.rubric_desc}
                             </TableCell>
-                            <TableCell className="text-sm text-muted-foreground">
+                            <TableCell className='text-muted-foreground text-sm'>
                               {formatDate(rubric.rubric_create_time)}
                             </TableCell>
-                            <TableCell className="text-right">
-                              <div className="flex justify-end gap-2">
+                            <TableCell className='text-right'>
+                              <div className='flex justify-end gap-2'>
                                 <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => handleViewRubric(rubric.rubric_id)}
+                                  variant='ghost'
+                                  size='sm'
+                                  onClick={() =>
+                                    handleViewRubric(rubric.rubric_id)
+                                  }
+                                  className='h-8 w-8 p-0 hover:bg-indigo-50 hover:text-indigo-600 dark:hover:bg-indigo-900/20 dark:hover:text-indigo-400'
                                 >
-                                  <IconEye className="mr-1 h-4 w-4" />
-                                  View
+                                  <Eye className='h-4 w-4' />
+                                  <span className='sr-only'>View</span>
                                 </Button>
                                 <Button
-                                  variant="outline"
-                                  size="sm"
+                                  variant='ghost'
+                                  size='sm'
                                   onClick={() => handleDeleteClick(rubric)}
-                                  className="text-destructive hover:text-destructive"
+                                  className='h-8 w-8 p-0 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400'
                                 >
-                                  <IconTrash className="mr-1 h-4 w-4" />
-                                  Delete
+                                  <Trash className='h-4 w-4' />
+                                  <span className='sr-only'>Delete</span>
                                 </Button>
                               </div>
                             </TableCell>
@@ -202,40 +248,41 @@ export default function RubricsPage() {
                     </Table>
                   </div>
 
-                  {/* Mobile View: Cards */}
-                  <div className="space-y-4 md:hidden">
+                  <div className='space-y-4 md:hidden'>
                     {rubrics.map((rubric) => (
                       <motion.div
                         key={rubric.rubric_id}
                         variants={itemVariants}
-                        className="rounded-lg border bg-card p-4 shadow-sm"
+                        className='border-border/50 bg-card rounded-xl border p-4 shadow-sm'
                       >
-                        <div className="mb-2 flex items-start justify-between">
+                        <div className='mb-3 flex items-start justify-between'>
                           <div>
-                            <h4 className="font-medium line-clamp-2">{rubric.rubric_desc}</h4>
-                            <div className="mt-1 flex items-center text-xs text-muted-foreground">
-                              <IconCalendar className="mr-1 h-3 w-3" />
+                            <h4 className='text-foreground line-clamp-2 font-medium'>
+                              {rubric.rubric_desc}
+                            </h4>
+                            <div className='text-muted-foreground mt-1 flex items-center text-xs'>
+                              <Calendar className='mr-1 h-3 w-3' />
                               {formatDate(rubric.rubric_create_time)}
                             </div>
                           </div>
                         </div>
-                        <div className="mt-4 flex gap-2">
+                        <div className='flex gap-2'>
                           <Button
-                            variant="outline"
-                            size="sm"
-                            className="flex-1"
+                            variant='outline'
+                            size='sm'
+                            className='flex-1 border-indigo-200 text-indigo-700 hover:bg-indigo-50 dark:border-indigo-800 dark:text-indigo-400 dark:hover:bg-indigo-900/20'
                             onClick={() => handleViewRubric(rubric.rubric_id)}
                           >
-                            <IconEye className="mr-1 h-4 w-4" />
+                            <Eye className='mr-1 h-4 w-4' />
                             View
                           </Button>
                           <Button
-                            variant="outline"
-                            size="sm"
-                            className="flex-1 text-destructive hover:text-destructive"
+                            variant='outline'
+                            size='sm'
+                            className='flex-1 border-red-200 text-red-700 hover:bg-red-50 dark:border-red-800 dark:text-red-400 dark:hover:bg-red-900/20'
                             onClick={() => handleDeleteClick(rubric)}
                           >
-                            <IconTrash className="mr-1 h-4 w-4" />
+                            <Trash className='mr-1 h-4 w-4' />
                             Delete
                           </Button>
                         </div>
@@ -252,13 +299,13 @@ export default function RubricsPage() {
       <AlertDialog open={deleteDialogOpen} onOpenChange={setDeleteDialogOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2">
-              <IconAlertCircle className="h-5 w-5 text-destructive" />
+            <AlertDialogTitle className='text-destructive flex items-center gap-2'>
+              <AlertCircle className='h-5 w-5' />
               Delete Rubric
             </AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete &quot;{rubricToDelete?.rubric_desc}&quot;?
-              This action cannot be undone.
+              Are you sure you want to delete &quot;
+              {rubricToDelete?.rubric_desc}&quot;? This action cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -266,11 +313,11 @@ export default function RubricsPage() {
             <AlertDialogAction
               onClick={handleDeleteConfirm}
               disabled={isDeleting}
-              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+              className='bg-destructive text-destructive-foreground hover:bg-destructive/90'
             >
               {isDeleting ? (
                 <>
-                  <IconLoader2 className="mr-2 h-4 w-4 animate-spin" />
+                  <Loader2 className='mr-2 h-4 w-4 animate-spin' />
                   Deleting...
                 </>
               ) : (

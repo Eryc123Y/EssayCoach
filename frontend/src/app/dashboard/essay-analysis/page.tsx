@@ -6,8 +6,14 @@ import { toast } from 'sonner';
 import PageContainer from '@/components/layout/page-container';
 import { EssaySubmissionForm } from '@/features/essay-analysis/components/essay-submission-form';
 import { AnalysisProgress } from '@/features/essay-analysis/components/analysis-progress';
-import { FeedbackDashboard, ScoreData } from '@/features/essay-analysis/components/feedback-dashboard';
-import { InsightsList, Insight } from '@/features/essay-analysis/components/insights-list';
+import {
+  FeedbackDashboard,
+  ScoreData
+} from '@/features/essay-analysis/components/feedback-dashboard';
+import {
+  InsightsList,
+  Insight
+} from '@/features/essay-analysis/components/insights-list';
 import { RevisionChat } from '@/features/essay-analysis/components/revision-chat';
 import { Button } from '@/components/ui/button';
 import { ChevronLeft } from 'lucide-react';
@@ -29,8 +35,10 @@ export default function AIAnalysisPage() {
     question: string;
     content: string;
   } | null>(null);
-  const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(null);
-  
+  const [analysisResult, setAnalysisResult] = useState<AnalysisResult | null>(
+    null
+  );
+
   const { user } = useAuth();
 
   const handleSubmit = async (data: {
@@ -59,7 +67,6 @@ export default function AIAnalysisPage() {
       const outputs = response.data?.outputs;
 
       if (runStatus === 'succeeded' && outputs) {
-        
         // Transform scores
         let scores: ScoreData[] = [];
         let insights: Insight[] = [];
@@ -67,82 +74,109 @@ export default function AIAnalysisPage() {
 
         // Case 1: Structured JSON output (Ideal)
         if (outputs.structure_analysis) {
-            scores = [
-              {
-                category: 'Structure',
-                score: outputs.structure_analysis?.score || 0,
-                fullMark: 100,
-                description: outputs.structure_analysis?.comments
-              },
-              {
-                category: 'Content',
-                score: outputs.content_analysis?.score || 0,
-                fullMark: 100,
-                description: outputs.content_analysis?.comments
-              },
-              {
-                category: 'Style',
-                score: outputs.style_analysis?.score || 0,
-                fullMark: 100,
-                description: outputs.style_analysis?.comments
-              }
-            ];
-            overallScore = outputs.overall_score || 0;
-            
-            // Transform grammar notes to insights
-            insights = (outputs.grammar_notes || []).map((note: any, index: number) => ({
+          scores = [
+            {
+              category: 'Structure',
+              score: outputs.structure_analysis?.score || 0,
+              fullMark: 100,
+              description: outputs.structure_analysis?.comments
+            },
+            {
+              category: 'Content',
+              score: outputs.content_analysis?.score || 0,
+              fullMark: 100,
+              description: outputs.content_analysis?.comments
+            },
+            {
+              category: 'Style',
+              score: outputs.style_analysis?.score || 0,
+              fullMark: 100,
+              description: outputs.style_analysis?.comments
+            }
+          ];
+          overallScore = outputs.overall_score || 0;
+
+          // Transform grammar notes to insights
+          insights = (outputs.grammar_notes || []).map(
+            (note: any, index: number) => ({
               id: `grammar-${index}`,
-              type: 'critical', 
+              type: 'critical',
               category: 'Grammar',
               title: note.type || 'Correction',
               description: `${note.explanation} (Original: "${note.original}" -> Suggestion: "${note.suggestion}")`,
               location: undefined
-            }));
-
-        } 
+            })
+          );
+        }
         // Case 2: Markdown Text output (Fallback for current Dify App)
         else if (outputs.text) {
-            // Attempt to parse Markdown table for scores
-            // Look for | Criterion | Score |
-            const text = outputs.text;
-            
-            // Helper to extract score from "X/Y" format
-            const extractScore = (regex: RegExp): number => {
-                const match = text.match(regex);
-                if (match && match[1]) {
-                    const [num, den] = match[1].split('/').map(Number);
-                    return den ? Math.round((num / den) * 100) : 0;
-                }
-                return 0;
-            };
+          // Attempt to parse Markdown table for scores
+          // Look for | Criterion | Score |
+          const text = outputs.text;
 
-            const structureScore = extractScore(/\| Organization & Flow \| (\d+\/\d+) \|/);
-            const contentScore = (extractScore(/\| Topic Focus \| (\d+\/\d+) \|/) + extractScore(/\| Evidence & Support \| (\d+\/\d+) \|/)) / 2;
-            const styleScore = extractScore(/\| Language & Mechanics \| (\d+\/\d+) \|/);
-            
-            // Extract Total Score
-            const totalMatch = text.match(/\|\s*\*\*TOTAL\*\*\s*\|\s*\*\*(\d+\/\d+)\*\*\s*\|/);
-            if (totalMatch) {
-                const [num, den] = totalMatch[1].split('/').map(Number);
-                overallScore = den ? Math.round((num / den) * 100) : 0;
+          // Helper to extract score from "X/Y" format
+          const extractScore = (regex: RegExp): number => {
+            const match = text.match(regex);
+            if (match && match[1]) {
+              const [num, den] = match[1].split('/').map(Number);
+              return den ? Math.round((num / den) * 100) : 0;
             }
+            return 0;
+          };
 
-            scores = [
-                { category: 'Structure', score: structureScore, fullMark: 100, description: "Derived from Organization & Flow" },
-                { category: 'Content', score: contentScore, fullMark: 100, description: "Derived from Topic Focus & Evidence" },
-                { category: 'Style', score: styleScore, fullMark: 100, description: "Derived from Language & Mechanics" }
-            ];
+          const structureScore = extractScore(
+            /\| Organization & Flow \| (\d+\/\d+) \|/
+          );
+          const contentScore =
+            (extractScore(/\| Topic Focus \| (\d+\/\d+) \|/) +
+              extractScore(/\| Evidence & Support \| (\d+\/\d+) \|/)) /
+            2;
+          const styleScore = extractScore(
+            /\| Language & Mechanics \| (\d+\/\d+) \|/
+          );
 
-            // Create a generic insight pointing to the full report
-            insights = [{
-                id: 'full-report',
-                type: 'info',
-                category: 'General',
-                title: 'Full Assessment',
-                description: 'See the detailed Markdown report for full feedback.',
-            }];
-            
-            // Also store the raw text somewhere if possible, but for now we adapt to the UI
+          // Extract Total Score
+          const totalMatch = text.match(
+            /\|\s*\*\*TOTAL\*\*\s*\|\s*\*\*(\d+\/\d+)\*\*\s*\|/
+          );
+          if (totalMatch) {
+            const [num, den] = totalMatch[1].split('/').map(Number);
+            overallScore = den ? Math.round((num / den) * 100) : 0;
+          }
+
+          scores = [
+            {
+              category: 'Structure',
+              score: structureScore,
+              fullMark: 100,
+              description: 'Derived from Organization & Flow'
+            },
+            {
+              category: 'Content',
+              score: contentScore,
+              fullMark: 100,
+              description: 'Derived from Topic Focus & Evidence'
+            },
+            {
+              category: 'Style',
+              score: styleScore,
+              fullMark: 100,
+              description: 'Derived from Language & Mechanics'
+            }
+          ];
+
+          // Create a generic insight pointing to the full report
+          insights = [
+            {
+              id: 'full-report',
+              type: 'info',
+              category: 'General',
+              title: 'Full Assessment',
+              description: 'See the detailed Markdown report for full feedback.'
+            }
+          ];
+
+          // Also store the raw text somewhere if possible, but for now we adapt to the UI
         }
 
         setAnalysisResult({
@@ -156,7 +190,11 @@ export default function AIAnalysisPage() {
       }
     } catch (error) {
       console.error('Analysis failed:', error);
-      toast.error(error instanceof Error ? error.message : 'Failed to analyze essay. Please try again.');
+      toast.error(
+        error instanceof Error
+          ? error.message
+          : 'Failed to analyze essay. Please try again.'
+      );
       setState('input'); // Go back to input on error
       return; // Stop here
     } finally {
@@ -213,9 +251,9 @@ export default function AIAnalysisPage() {
               exit={{ opacity: 0 }}
               className='flex h-full items-center justify-center'
             >
-              <AnalysisProgress 
-                isLoading={isLoading} 
-                onComplete={handleAnalysisComplete} 
+              <AnalysisProgress
+                isLoading={isLoading}
+                onComplete={handleAnalysisComplete}
               />
             </motion.div>
           )}
@@ -246,9 +284,9 @@ export default function AIAnalysisPage() {
               <div className='grid h-[800px] grid-cols-1 gap-6 lg:grid-cols-12'>
                 {/* Left Column: Visuals & Feedback (7 cols) */}
                 <div className='flex h-full flex-col space-y-6 overflow-y-auto lg:col-span-7'>
-                  <FeedbackDashboard 
-                    scores={analysisResult.scores} 
-                    overallScore={analysisResult.overallScore} 
+                  <FeedbackDashboard
+                    scores={analysisResult.scores}
+                    overallScore={analysisResult.overallScore}
                   />
                   <div className='min-h-0 flex-1'>
                     <InsightsList insights={analysisResult.insights} />

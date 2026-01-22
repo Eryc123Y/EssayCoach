@@ -12,7 +12,7 @@ const baseConfig: NextConfig = {
         port: ''
       }
     ]
-  },
+  }
 };
 
 let configWithPlugins = baseConfig;

@@ -31,7 +31,7 @@ export async function request<T = any>(config: RequestConfig): Promise<T> {
     credentials: 'include',
     headers: {
       ...(!isFormData && { 'Content-Type': 'application/json' }),
-      ...headers,
+      ...headers
     },
     body: isFormData ? data : data ? JSON.stringify(data) : undefined
   });
@@ -39,7 +39,7 @@ export async function request<T = any>(config: RequestConfig): Promise<T> {
   if (!response.ok) {
     const errorBody = await response.json().catch(() => ({}));
     throw new Error(
-      errorBody.error || 
+      errorBody.error ||
         errorBody.message ||
         errorBody.detail ||
         `Request to ${fullUrl} failed with status ${response.status}`

@@ -8,12 +8,28 @@ install:
 
 # Start all services (backend, frontend, and db)
 dev: db
-	@echo "Starting all development services..."
+	@echo ""
+	@echo "╔════════════════════════════════════════════════════════════════╗"
+	@echo "║                   🚀 EssayCoach Dev Server                     ║"
+	@echo "╠════════════════════════════════════════════════════════════════╣"
+	@echo "║  🌐 Frontend:    http://127.0.0.1:5100                        ║"
+	@echo "║  🔧 Backend:     http://127.0.0.1:8000                        ║"
+	@echo "║  📚 API Docs:    http://127.0.0.1:8000/api/docs/              ║"
+	@echo "╠════════════════════════════════════════════════════════════════╣"
+	@echo "║  👤 Admin Login: admin@example.com / admin                    ║"
+	@echo "║  👨‍🎓 Test Users:  student1@example.com / student1               ║"
+	@echo "║                 student2@example.com / student2               ║"
+	@echo "║                 student3@example.com / student3               ║"
+	@echo "╠════════════════════════════════════════════════════════════════╣"
+	@echo "║  💡 Tip: Press Ctrl+C to stop all services                    ║"
+	@echo "╚════════════════════════════════════════════════════════════════╝"
+	@echo ""
 	@make -j2 dev-backend dev-frontend
 
 # Start backend only
 dev-backend:
-	@echo "Starting Django backend on port 8000..."
+	@echo "Starting Django backend on http://127.0.0.1:8000..."
+	@echo "📚 API Docs available at: http://127.0.0.1:8000/api/schema/"
 	@cd backend && uv run python manage.py runserver 127.0.0.1:8000
 
 # Start frontend only
@@ -55,6 +71,10 @@ shell:
 seed-db:
 	@echo "Seeding database with initial data..."
 	@cd backend && uv run python manage.py seed_db
+	@echo ""
+	@echo "✅ Database seeded successfully!"
+	@echo "👤 Admin login: admin@example.com / admin"
+	@echo "👨‍🎓 Student logins: student1@example.com / student1, student2@example.com / student2, student3@example.com / student3"
 
 # Testing
 test:

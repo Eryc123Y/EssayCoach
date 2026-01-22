@@ -30,7 +30,10 @@ interface FeedbackDashboardProps {
   overallScore: number;
 }
 
-export function FeedbackDashboard({ scores, overallScore }: FeedbackDashboardProps) {
+export function FeedbackDashboard({
+  scores,
+  overallScore
+}: FeedbackDashboardProps) {
   return (
     <div className='space-y-6'>
       <div className='grid grid-cols-1 gap-6 md:grid-cols-3'>
@@ -87,7 +90,11 @@ export function FeedbackDashboard({ scores, overallScore }: FeedbackDashboardPro
                   variant='outline'
                   className='bg-primary/5 border-primary/20 text-primary'
                 >
-                  {overallScore >= 90 ? 'Excellent' : overallScore >= 70 ? 'Good' : 'Needs Work'}
+                  {overallScore >= 90
+                    ? 'Excellent'
+                    : overallScore >= 70
+                      ? 'Good'
+                      : 'Needs Work'}
                 </Badge>
                 {overallScore >= 50 && (
                   <Badge
@@ -118,12 +125,7 @@ export function FeedbackDashboard({ scores, overallScore }: FeedbackDashboardPro
             </CardHeader>
             <CardContent className='h-[300px] w-full'>
               <ResponsiveContainer width='100%' height='100%'>
-                <RadarChart
-                  cx='50%'
-                  cy='50%'
-                  outerRadius='80%'
-                  data={scores}
-                >
+                <RadarChart cx='50%' cy='50%' outerRadius='80%' data={scores}>
                   <PolarGrid
                     stroke='hsl(var(--muted-foreground))'
                     strokeOpacity={0.2}
@@ -194,13 +196,14 @@ export function FeedbackDashboard({ scores, overallScore }: FeedbackDashboardPro
                     />
                   </div>
                   <p className='text-muted-foreground leading-relaxed'>
-                    {item.description || `The ${item.category.toLowerCase()} of your essay demonstrates performance consistent with the score.`}
+                    {item.description ||
+                      `The ${item.category.toLowerCase()} of your essay demonstrates performance consistent with the score.`}
                   </p>
                 </TabsContent>
               ))}
             </Tabs>
           ) : (
-            <div className="text-center text-muted-foreground p-8">
+            <div className='text-muted-foreground p-8 text-center'>
               No detailed metrics available.
             </div>
           )}

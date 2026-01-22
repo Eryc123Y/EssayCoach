@@ -2,10 +2,13 @@ import { NextRequest, NextResponse } from 'next/server';
 
 const DJANGO_API_URL = 'http://127.0.0.1:8000';
 
-async function proxy(req: NextRequest, { params }: { params: Promise<{ path: string[] }> }) {
+async function proxy(
+  req: NextRequest,
+  { params }: { params: Promise<{ path: string[] }> }
+) {
   const { path } = await params;
   const pathString = path.join('/');
-  
+
   // Construct the target URL
   const targetUrl = `${DJANGO_API_URL}/api/v1/${pathString}/?${req.nextUrl.searchParams.toString()}`;
 
@@ -15,7 +18,7 @@ async function proxy(req: NextRequest, { params }: { params: Promise<{ path: str
   // Prepare headers
   const headers = new Headers(req.headers);
   headers.set('Host', '127.0.0.1:8000'); // Ensure Host header matches target
-  
+
   // Inject Authorization header if token exists
   if (token) {
     headers.set('Authorization', `Token ${token}`);
@@ -33,14 +36,14 @@ async function proxy(req: NextRequest, { params }: { params: Promise<{ path: str
       headers: headers,
       body: body,
       // distinct: follow redirects automatically to avoid browser loops
-      redirect: 'follow', 
+      redirect: 'follow'
     });
 
     console.log(`[Proxy] Received response status: ${response.status}`);
 
     // Create a new response to return to the client
     const responseHeaders = new Headers(response.headers);
-    
+
     // Clean up headers that might cause issues
     responseHeaders.delete('content-encoding');
     responseHeaders.delete('content-length');
@@ -48,12 +51,14 @@ async function proxy(req: NextRequest, { params }: { params: Promise<{ path: str
     return new NextResponse(response.body, {
       status: response.status,
       statusText: response.statusText,
-      headers: responseHeaders,
+      headers: responseHeaders
     });
   } catch (error) {
     console.error(`[Proxy] FATAL ERROR [${req.method} ${pathString}]:`, error);
     if (error instanceof TypeError && error.message === 'fetch failed') {
-        console.error('[Proxy] This usually means Django is not running or not accessible at http://127.0.0.1:8000');
+      console.error(
+        '[Proxy] This usually means Django is not running or not accessible at http://127.0.0.1:8000'
+      );
     }
     console.error(`Proxy Error [${req.method} ${pathString}]:`, error);
     return NextResponse.json(

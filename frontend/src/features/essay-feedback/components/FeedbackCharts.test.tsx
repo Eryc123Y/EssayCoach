@@ -13,28 +13,62 @@ vi.mock('next-themes', () => ({
 
 // Mock Recharts components - they don't render properly in jsdom
 vi.mock('recharts', () => ({
-  ResponsiveContainer: ({ children }: { children: React.ReactNode }) => <div data-testid="responsive-container">{children}</div>,
-  RadarChart: ({ children, data }: { children: React.ReactNode; data?: Array<{ subject: string }> }) => (
-    <div data-testid="radar-chart" data-subjects={data?.map(d => d.subject).join(',')}>
+  ResponsiveContainer: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid='responsive-container'>{children}</div>
+  ),
+  RadarChart: ({
+    children,
+    data
+  }: {
+    children: React.ReactNode;
+    data?: Array<{ subject: string }>;
+  }) => (
+    <div
+      data-testid='radar-chart'
+      data-subjects={data?.map((d) => d.subject).join(',')}
+    >
       {children}
-      {data?.map(d => <span key={d.subject} data-testid="chart-subject">{d.subject}</span>)}
+      {data?.map((d) => (
+        <span key={d.subject} data-testid='chart-subject'>
+          {d.subject}
+        </span>
+      ))}
     </div>
   ),
-  Radar: () => <div data-testid="radar" />,
-  PolarGrid: () => <div data-testid="polar-grid" />,
-  PolarAngleAxis: () => <div data-testid="polar-angle-axis" />,
-  PolarRadiusAxis: () => <div data-testid="polar-radius-axis" />,
+  Radar: () => <div data-testid='radar' />,
+  PolarGrid: () => <div data-testid='polar-grid' />,
+  PolarAngleAxis: () => <div data-testid='polar-angle-axis' />,
+  PolarRadiusAxis: () => <div data-testid='polar-radius-axis' />
 }));
 
 describe('FeedbackCharts', () => {
-  const createMockOutputs = (overrides = {}): NonNullable<DifyWorkflowRunResponse['data']['outputs']> => ({
+  const createMockOutputs = (
+    overrides = {}
+  ): NonNullable<DifyWorkflowRunResponse['data']['outputs']> => ({
     overall_score: 85,
     feedback_summary: 'Good essay',
-    structure_analysis: { score: 80, comments: 'Good structure', suggestions: ['Add transitions'] },
-    content_analysis: { score: 85, comments: 'Strong content', suggestions: ['More examples'] },
-    style_analysis: { score: 90, comments: 'Clear style', suggestions: ['Vary sentences'] },
+    structure_analysis: {
+      score: 80,
+      comments: 'Good structure',
+      suggestions: ['Add transitions']
+    },
+    content_analysis: {
+      score: 85,
+      comments: 'Strong content',
+      suggestions: ['More examples']
+    },
+    style_analysis: {
+      score: 90,
+      comments: 'Clear style',
+      suggestions: ['Vary sentences']
+    },
     grammar_notes: [
-      { type: 'spelling', original: 'teh', suggestion: 'the', explanation: 'Common typo' }
+      {
+        type: 'spelling',
+        original: 'teh',
+        suggestion: 'the',
+        explanation: 'Common typo'
+      }
     ],
     ...overrides
   });
@@ -49,7 +83,7 @@ describe('FeedbackCharts', () => {
       // No grammar notes = 100 score
       const outputs = createMockOutputs({ grammar_notes: [] });
       const { container } = render(<FeedbackCharts outputs={outputs} />);
-      
+
       // Should render without error
       expect(container).toBeInTheDocument();
     });
@@ -58,26 +92,43 @@ describe('FeedbackCharts', () => {
       // 3 notes = 100 - 15 = 85
       const outputs = createMockOutputs({
         grammar_notes: [
-          { type: 'spelling', original: 'teh', suggestion: 'the', explanation: 'Typo' },
-          { type: 'grammar', original: 'is was', suggestion: 'was', explanation: 'Agreement' },
-          { type: 'punctuation', original: 'end.', suggestion: 'end!', explanation: 'Enthusiasm' }
+          {
+            type: 'spelling',
+            original: 'teh',
+            suggestion: 'the',
+            explanation: 'Typo'
+          },
+          {
+            type: 'grammar',
+            original: 'is was',
+            suggestion: 'was',
+            explanation: 'Agreement'
+          },
+          {
+            type: 'punctuation',
+            original: 'end.',
+            suggestion: 'end!',
+            explanation: 'Enthusiasm'
+          }
         ]
       });
-      
+
       const { container } = render(<FeedbackCharts outputs={outputs} />);
       expect(container).toBeInTheDocument();
     });
 
     it('should handle undefined grammar_notes gracefully', () => {
       const outputs = createMockOutputs({ grammar_notes: undefined });
-      
+
       const { container } = render(<FeedbackCharts outputs={outputs} />);
       expect(container).toBeInTheDocument();
     });
 
     it('should handle null grammar_notes gracefully', () => {
-      const outputs = createMockOutputs({ grammar_notes: null as unknown as undefined });
-      
+      const outputs = createMockOutputs({
+        grammar_notes: null as unknown as undefined
+      });
+
       const { container } = render(<FeedbackCharts outputs={outputs} />);
       expect(container).toBeInTheDocument();
     });
@@ -88,7 +139,7 @@ describe('FeedbackCharts', () => {
       const outputs = createMockOutputs({
         structure_analysis: { score: undefined, comments: '', suggestions: [] }
       });
-      
+
       const { container } = render(<FeedbackCharts outputs={outputs} />);
       expect(container).toBeInTheDocument();
     });
@@ -97,7 +148,7 @@ describe('FeedbackCharts', () => {
       const outputs = createMockOutputs({
         content_analysis: { score: undefined, comments: '', suggestions: [] }
       });
-      
+
       const { container } = render(<FeedbackCharts outputs={outputs} />);
       expect(container).toBeInTheDocument();
     });
@@ -106,7 +157,7 @@ describe('FeedbackCharts', () => {
       const outputs = createMockOutputs({
         style_analysis: { score: undefined, comments: '', suggestions: [] }
       });
-      
+
       const { container } = render(<FeedbackCharts outputs={outputs} />);
       expect(container).toBeInTheDocument();
     });
@@ -117,7 +168,7 @@ describe('FeedbackCharts', () => {
         content_analysis: { score: undefined, comments: '', suggestions: [] },
         style_analysis: { score: undefined, comments: '', suggestions: [] }
       });
-      
+
       const { container } = render(<FeedbackCharts outputs={outputs} />);
       expect(container).toBeInTheDocument();
     });
@@ -127,7 +178,7 @@ describe('FeedbackCharts', () => {
     it('should use light theme by default', () => {
       const outputs = createMockOutputs();
       const { container } = render(<FeedbackCharts outputs={outputs} />);
-      
+
       expect(container).toBeInTheDocument();
     });
 
@@ -135,7 +186,7 @@ describe('FeedbackCharts', () => {
       mockTheme = 'dark';
       const outputs = createMockOutputs();
       const { container } = render(<FeedbackCharts outputs={outputs} />);
-      
+
       expect(container).toBeInTheDocument();
     });
   });
@@ -144,14 +195,14 @@ describe('FeedbackCharts', () => {
     it('should render with valid outputs without crashing', () => {
       const outputs = createMockOutputs();
       const { container } = render(<FeedbackCharts outputs={outputs} />);
-      
+
       expect(container).toBeInTheDocument();
     });
 
     it('should render chart container structure', () => {
       const outputs = createMockOutputs();
       const { container } = render(<FeedbackCharts outputs={outputs} />);
-      
+
       // Check that the component renders a card structure
       expect(container.querySelector('[class*="card"]')).toBeInTheDocument();
     });
@@ -159,15 +210,18 @@ describe('FeedbackCharts', () => {
     it('should render performance overview title', () => {
       const outputs = createMockOutputs();
       const { container } = render(<FeedbackCharts outputs={outputs} />);
-      
+
       // The component should have a header with title
-      expect(container.querySelector('h3') || container.querySelector('[class*="header"]')).toBeInTheDocument();
+      expect(
+        container.querySelector('h3') ||
+          container.querySelector('[class*="header"]')
+      ).toBeInTheDocument();
     });
 
     it('should render chart description', () => {
       const outputs = createMockOutputs();
       const { container } = render(<FeedbackCharts outputs={outputs} />);
-      
+
       // Should have some descriptive text
       expect(container.textContent).toContain('Performance');
     });
@@ -175,7 +229,7 @@ describe('FeedbackCharts', () => {
     it('should render with proper styling classes', () => {
       const outputs = createMockOutputs();
       const { container } = render(<FeedbackCharts outputs={outputs} />);
-      
+
       // Should have backdrop-blur and similar styling classes from the component
       expect(container.innerHTML).toMatch(/backdrop-blur|shadow|container/i);
     });
@@ -188,7 +242,7 @@ describe('FeedbackCharts', () => {
         content_analysis: { score: 88, comments: '', suggestions: [] },
         style_analysis: { score: 92, comments: '', suggestions: [] }
       });
-      
+
       const { container } = render(<FeedbackCharts outputs={outputs} />);
       expect(container).toBeInTheDocument();
     });
@@ -196,7 +250,7 @@ describe('FeedbackCharts', () => {
     it('should include all subjects in chart data', () => {
       const outputs = createMockOutputs();
       const { container } = render(<FeedbackCharts outputs={outputs} />);
-      
+
       // Should render content that includes references to the four metrics
       expect(container.textContent).toMatch(/Structure|Content|Style|Grammar/i);
     });
@@ -206,22 +260,28 @@ describe('FeedbackCharts', () => {
     it('should render card element', () => {
       const outputs = createMockOutputs();
       const { container } = render(<FeedbackCharts outputs={outputs} />);
-      
+
       expect(container.firstChild).toBeInTheDocument();
     });
 
     it('should render card header section', () => {
       const outputs = createMockOutputs();
       const { container } = render(<FeedbackCharts outputs={outputs} />);
-      
-      expect(container.querySelector('[class*="header"]') || container.querySelector('h3')).toBeInTheDocument();
+
+      expect(
+        container.querySelector('[class*="header"]') ||
+          container.querySelector('h3')
+      ).toBeInTheDocument();
     });
 
     it('should render card content with chart', () => {
       const outputs = createMockOutputs();
       const { container } = render(<FeedbackCharts outputs={outputs} />);
-      
-      expect(container.querySelector('[class*="content"]') || container.querySelector('div')).toBeInTheDocument();
+
+      expect(
+        container.querySelector('[class*="content"]') ||
+          container.querySelector('div')
+      ).toBeInTheDocument();
     });
   });
 });

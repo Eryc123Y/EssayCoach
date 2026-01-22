@@ -14,6 +14,7 @@ Next.js 15 + React 19 + TypeScript application serving as the user interface for
 ### Installation
 
 1. **Install Dependencies**:
+
    ```bash
    pnpm install
    ```
@@ -27,12 +28,14 @@ Next.js 15 + React 19 + TypeScript application serving as the user interface for
 ### Running the Development Server
 
 **Option 1: Via Makefile (Recommended)**
+
 ```bash
 # From project root
 make dev-frontend
 ```
 
 **Option 2: Direct Execution**
+
 ```bash
 # From frontend directory
 pnpm dev
@@ -73,24 +76,25 @@ frontend/
 
 ## 🛠 Tech Stack
 
-| Component | Technology | Version |
-|-----------|------------|---------|
-| **Framework** | Next.js | 15.3.2 (App Router) |
-| **UI Library** | React | 19.x |
-| **Language** | TypeScript | 5.7 |
-| **Styling** | Tailwind CSS | v4 |
-| **UI Components** | shadcn/ui | Latest |
-| **Icons** | lucide-react | Latest |
-| **State Management** | zustand | Latest |
-| **Forms** | React Hook Form | Latest |
-| **Charts** | Recharts | Latest |
-| **Animations** | Framer Motion | Latest |
-| **Notifications** | Sonner | Latest |
-| **Package Manager** | pnpm | 10.28.0 |
+| Component            | Technology      | Version             |
+| -------------------- | --------------- | ------------------- |
+| **Framework**        | Next.js         | 15.3.2 (App Router) |
+| **UI Library**       | React           | 19.x                |
+| **Language**         | TypeScript      | 5.7                 |
+| **Styling**          | Tailwind CSS    | v4                  |
+| **UI Components**    | shadcn/ui       | Latest              |
+| **Icons**            | lucide-react    | Latest              |
+| **State Management** | zustand         | Latest              |
+| **Forms**            | React Hook Form | Latest              |
+| **Charts**           | Recharts        | Latest              |
+| **Animations**       | Framer Motion   | Latest              |
+| **Notifications**    | Sonner          | Latest              |
+| **Package Manager**  | pnpm            | 10.28.0             |
 
 ## 🔑 Key Features
 
 ### Authentication
+
 - **Hybrid Token Authentication**: HttpOnly cookies + Token-based backend auth
 - **API Route Proxy**: Secure token forwarding to Django backend
 - **Protected Routes**: Middleware for authenticated-only pages
@@ -98,6 +102,7 @@ frontend/
 See: [Authentication Architecture](../docs/architecture/authentication.md)
 
 ### AI Essay Analysis
+
 - **Real-time Feedback**: Instant AI grading and writing advice
 - **Visual Analytics**: Radar charts for multidimensional scoring
 - **Interactive Revision**: Chat-based essay revision assistance
@@ -106,6 +111,7 @@ See: [Authentication Architecture](../docs/architecture/authentication.md)
 **Location**: `src/app/dashboard/essay-analysis/page.tsx`
 
 ### Dashboard
+
 - **User Profile**: Manage account settings
 - **Essay History**: View past submissions and revisions
 - **Analytics**: Track progress over time
@@ -113,6 +119,7 @@ See: [Authentication Architecture](../docs/architecture/authentication.md)
 ## 🔧 Development Commands
 
 ### Code Quality
+
 ```bash
 # Linting
 pnpm lint              # Check for issues
@@ -126,12 +133,14 @@ pnpm build             # Build checks types
 ```
 
 ### Testing
+
 ```bash
 # Run tests
 pnpm test
 ```
 
 ### Building
+
 ```bash
 # Production build
 pnpm build
@@ -147,15 +156,16 @@ pnpm preview
 **File**: `next.config.ts`
 
 **Key Settings**:
+
 ```typescript
 const nextConfig = {
   // Output export for easier deployment
-  output: 'export',
-  
+  output: 'export'
+
   // No rewrites - use API Route Handlers instead
   // This allows custom header injection (Auth tokens)
   // See: docs/architecture/authentication.md
-}
+};
 ```
 
 ### TypeScript Config
@@ -163,6 +173,7 @@ const nextConfig = {
 **File**: `tsconfig.json`
 
 **Key Settings**:
+
 - Strict mode enabled
 - Path aliases configured (`@/` for `src/`)
 - Next.js types included
@@ -172,6 +183,7 @@ const nextConfig = {
 **File**: `tailwind.config.ts`
 
 **Key Settings**:
+
 - Dark mode support
 - Custom color theme
 - shadcn/ui integration
@@ -181,6 +193,7 @@ const nextConfig = {
 ### Issue: "next dev" hangs on 'Compiling /'
 
 **Symptoms**:
+
 - Terminal freezes at "Compiling /..."
 - No errors displayed
 - Process must be killed with Ctrl+C
@@ -188,6 +201,7 @@ const nextConfig = {
 **Root Cause**: Duplicate `node_modules` directory
 
 **Solution**:
+
 ```bash
 # From frontend directory
 rm -rf node_modules node_modules2
@@ -196,18 +210,21 @@ pnpm dev
 ```
 
 **Prevention**:
+
 - Ensure no `node_modules2` or similar duplicate directories exist
 - Use `ls -la | grep node_modules` to check for duplicates
 
 ### Issue: "Failed to fetch" 401 Unauthorized
 
 **Symptoms**:
+
 - API requests return 401 status
 - Browser console shows authentication errors
 
 **Root Cause**: Missing or invalid `access_token` cookie
 
 **Solution**:
+
 1. Check browser DevTools Application → Cookies
 2. Verify `access_token` exists and is httpOnly
 3. Try logging out and back in
@@ -216,10 +233,12 @@ pnpm dev
 ### Issue: "EADDRINUSE" Port already in use
 
 **Symptoms**:
+
 - Error: "Port 5100 is already in use"
 - Development server fails to start
 
 **Solution**:
+
 ```bash
 # Find process using port 5100
 lsof -i :5100
@@ -234,10 +253,12 @@ PORT=3001 pnpm dev
 ### Issue: Module not found errors
 
 **Symptoms**:
+
 - "Module not found: Can't resolve 'package-name'"
 - Import errors in TypeScript
 
 **Solution**:
+
 ```bash
 # Reinstall dependencies
 rm -rf node_modules
@@ -247,6 +268,7 @@ pnpm install
 ### Issue: CORS policy errors
 
 **Symptoms**:
+
 - "Access to fetch at '...' has been blocked by CORS policy"
 - Network tab shows CORS errors
 
@@ -254,6 +276,7 @@ pnpm install
 
 **Solution**:
 Ensure backend settings include:
+
 ```python
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:5100",
@@ -264,6 +287,7 @@ CORS_ALLOWED_ORIGINS = [
 ### Issue: "Failed to fetch" (Configuration Conflict)
 
 **Symptoms**:
+
 - API calls fail immediately with `TypeError: Failed to fetch`
 - Browser console shows network errors before request completes
 - Authentication requests fail silently
@@ -271,6 +295,7 @@ CORS_ALLOWED_ORIGINS = [
 **Root Cause**: Sentry `tunnelRoute` in `next.config.ts` conflicting with Next.js API Routes
 
 **Solution**:
+
 ```bash
 # Check next.config.ts for Sentry configuration
 # Disable tunnelRoute if it conflicts with API paths
@@ -287,6 +312,7 @@ const nextConfig = {
 ### Issue: "net::ERR_TOO_MANY_REDIRECTS" (Proxy Loop)
 
 **Symptoms**:
+
 - Browser console shows infinite redirect loop on API calls
 - Requests to `/api/v1/*` endpoints fail with "Too Many Redirects"
 - Network tab shows repeated 301/307 status codes
@@ -295,11 +321,12 @@ const nextConfig = {
 
 **Solution**:
 Update API Route handler to use `redirect: 'follow'`:
+
 ```typescript
 // src/app/api/v1/[...path]/route.ts
 const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}${path}`, {
   headers: {
-    'Authorization': `Token ${token}`,
+    Authorization: `Token ${token}`,
     ...nextHeaders(req)
   },
   redirect: 'follow' // Critical: Handle redirects server-side
@@ -309,6 +336,7 @@ const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}${path}`, {
 ### Issue: "ECONNREFUSED" (IPv6/IPv4 Resolution)
 
 **Symptoms**:
+
 - Connection refused on `localhost`
 - Frontend cannot connect to backend
 - Works with `127.0.0.1` but not `localhost`
@@ -317,6 +345,7 @@ const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}${path}`, {
 
 **Solution**:
 Force IPv4 binding in `package.json`:
+
 ```json
 {
   "scripts": {
@@ -326,6 +355,7 @@ Force IPv4 binding in `package.json`:
 ```
 
 **Alternative**: Use IPv4 in environment variables:
+
 ```bash
 # frontend/.env.local
 NEXT_PUBLIC_API_URL=http://127.0.0.1:8000
@@ -334,11 +364,13 @@ NEXT_PUBLIC_API_URL=http://127.0.0.1:8000
 ### Issue: SyntaxError when calling .json() on 204 No Content
 
 **Symptoms**:
+
 - `SyntaxError: Unexpected end of JSON input`
 - Occurs after successful DELETE or status updates that return 204
 
 **Solution**:
 Check response status before parsing:
+
 ```typescript
 const response = await fetch(...);
 if (response.status === 204) {
@@ -350,6 +382,7 @@ return response.json();
 ### Issue: Dashboard scrolling blocked or content cut off
 
 **Symptoms**:
+
 - Sidebar scrolls but main content is fixed
 - Bottom of the page is inaccessible
 
@@ -357,20 +390,24 @@ return response.json();
 
 **Solution**:
 Ensure the dashboard container has:
+
 ```tsx
-<div className="flex-1 overflow-y-auto max-h-[calc(100vh-theme(spacing.16))]">
+<div className='max-h-[calc(100vh-theme(spacing.16))] flex-1 overflow-y-auto'>
   {children}
 </div>
 ```
+
 This allows the content area to scroll independently within the viewport height.
 
 ### Issue: Build fails with TypeScript errors
 
 **Symptoms**:
+
 - Type errors in console
 - Build process exits with errors
 
 **Solution**:
+
 ```bash
 # Check TypeScript errors
 pnpm build --dry-run
@@ -384,6 +421,7 @@ pnpm lint:fix
 ### Required
 
 **Frontend** (.env.local):
+
 ```bash
 # Django backend API URL
 NEXT_PUBLIC_API_URL=http://127.0.0.1:8000
@@ -408,12 +446,15 @@ NEXT_PUBLIC_ENABLE_ANALYTICS=true
 **Pattern**: All API calls go through typed service functions
 
 **Example**:
+
 ```typescript
 // src/service/api/auth.ts
-export async function loginUser(credentials: LoginRequest): Promise<AuthResponse> {
+export async function loginUser(
+  credentials: LoginRequest
+): Promise<AuthResponse> {
   const response = await fetch('/api/v1/auth/login/', {
     method: 'POST',
-    body: JSON.stringify(credentials),
+    body: JSON.stringify(credentials)
   });
   return response.json();
 }
@@ -432,8 +473,9 @@ export async function loginUser(credentials: LoginRequest): Promise<AuthResponse
 ### Using Tailwind CSS
 
 **Prefer utility classes**:
+
 ```tsx
-<div className="flex items-center justify-between p-4 bg-white rounded-lg shadow-md">
+<div className='flex items-center justify-between rounded-lg bg-white p-4 shadow-md'>
   {/* content */}
 </div>
 ```
@@ -441,6 +483,7 @@ export async function loginUser(credentials: LoginRequest): Promise<AuthResponse
 ### Using shadcn/ui Components
 
 **Import pattern**:
+
 ```tsx
 import { Button } fromCard '@/components/ui/button'
 import { Card } from '@/components/ui/card'
@@ -458,6 +501,7 @@ import { Card } from '@/components/ui/card'
 ### Merging Classes
 
 **Use `cn()` utility**:
+
 ```tsx
 import { cn } from '@/lib/utils'
 

@@ -8,7 +8,36 @@ export const navItems: NavItem[] = [
     icon: 'dashboard',
     isActive: false,
     shortcut: ['d', 'd'],
-    items: [] // Empty array as there are no child items for Dashboard
+    items: []
+  },
+  {
+    title: 'My Classes',
+    url: '/dashboard/classes',
+    icon: 'laptop',
+    isActive: false,
+    shortcut: ['c', 'c'],
+    items: [
+      {
+        title: 'AP English',
+        url: '/dashboard/classes/ap-english',
+        icon: 'book',
+        shortcut: ['e', '1']
+      },
+      {
+        title: 'History 101',
+        url: '/dashboard/classes/history-101',
+        icon: 'clock',
+        shortcut: ['h', '1']
+      }
+    ]
+  },
+  {
+    title: 'Assignments',
+    url: '/dashboard/assignments',
+    icon: 'clipboard',
+    shortcut: ['a', 'a'],
+    isActive: false,
+    items: []
   },
   {
     title: 'Essay Analysis',
@@ -27,8 +56,16 @@ export const navItems: NavItem[] = [
     items: []
   },
   {
+    title: 'Library',
+    url: '/dashboard/library',
+    icon: 'library',
+    shortcut: ['l', 'b'],
+    isActive: false,
+    items: []
+  },
+  {
     title: 'Account',
-    url: '#', // Placeholder as there is no direct link for the parent
+    url: '#',
     icon: 'billing',
     isActive: true,
 
@@ -40,8 +77,14 @@ export const navItems: NavItem[] = [
         shortcut: ['m', 'm']
       },
       {
-        title: 'Login',
-        shortcut: ['l', 'l'],
+        title: 'Settings',
+        url: '/dashboard/settings',
+        icon: 'settings',
+        shortcut: ['s', 's']
+      },
+      {
+        title: 'Log out',
+        shortcut: ['l', 'o'],
         url: '/',
         icon: 'login'
       }
@@ -49,54 +92,72 @@ export const navItems: NavItem[] = [
   }
 ];
 
-export interface SaleUser {
+export interface RecentSubmission {
   id: number;
   name: string;
   email: string;
-  amount: string;
+  assignment: string;
+  score: string;
   image: string;
   initials: string;
+  status: 'Graded' | 'Pending' | 'Late';
+  aiStatus: 'Feedback Ready' | 'Processing' | 'Draft' | 'N/A';
 }
 
-export const recentSalesData: SaleUser[] = [
+export const recentSubmissionsData: RecentSubmission[] = [
   {
     id: 1,
-    name: 'Olivia Martin',
-    email: 'olivia.martin@email.com',
-    amount: '+$1,999.00',
-    image: 'https://api.slingacademy.com/public/sample-users/1.png',
-    initials: 'OM'
+    name: 'Alex Johnson',
+    email: 'alex.j@school.edu',
+    assignment: 'Narrative Essay',
+    score: '92/100',
+    image: 'https://api.dicebear.com/9.x/notionists/svg?seed=Alex',
+    initials: 'AJ',
+    status: 'Graded',
+    aiStatus: 'Feedback Ready'
   },
   {
     id: 2,
-    name: 'Jackson Lee',
-    email: 'jackson.lee@email.com',
-    amount: '+$39.00',
-    image: 'https://api.slingacademy.com/public/sample-users/2.png',
-    initials: 'JL'
+    name: 'Sarah Chen',
+    email: 'sarah.c@school.edu',
+    assignment: 'Critical Review',
+    score: 'Pending',
+    image: 'https://api.dicebear.com/9.x/notionists/svg?seed=Sarah',
+    initials: 'SC',
+    status: 'Pending',
+    aiStatus: 'Processing'
   },
   {
     id: 3,
-    name: 'Isabella Nguyen',
-    email: 'isabella.nguyen@email.com',
-    amount: '+$299.00',
-    image: 'https://api.slingacademy.com/public/sample-users/3.png',
-    initials: 'IN'
+    name: 'Michael Torres',
+    email: 'm.torres@school.edu',
+    assignment: 'Research Proposal',
+    score: '88/100',
+    image: 'https://api.dicebear.com/9.x/notionists/svg?seed=Michael',
+    initials: 'MT',
+    status: 'Graded',
+    aiStatus: 'Feedback Ready'
   },
   {
     id: 4,
-    name: 'William Kim',
-    email: 'will@email.com',
-    amount: '+$99.00',
-    image: 'https://api.slingacademy.com/public/sample-users/4.png',
-    initials: 'WK'
+    name: 'Emily Watson',
+    email: 'emily.w@school.edu',
+    assignment: 'Persuasive Essay',
+    score: '95/100',
+    image: 'https://api.dicebear.com/9.x/notionists/svg?seed=Emily',
+    initials: 'EW',
+    status: 'Graded',
+    aiStatus: 'Feedback Ready'
   },
   {
     id: 5,
-    name: 'Sofia Davis',
-    email: 'sofia.davis@email.com',
-    amount: '+$39.00',
-    image: 'https://api.slingacademy.com/public/sample-users/5.png',
-    initials: 'SD'
+    name: 'David Kim',
+    email: 'david.k@school.edu',
+    assignment: 'Hamlet Analysis',
+    score: 'Pending',
+    image: 'https://api.dicebear.com/9.x/notionists/svg?seed=David',
+    initials: 'DK',
+    status: 'Late',
+    aiStatus: 'Draft'
   }
 ];

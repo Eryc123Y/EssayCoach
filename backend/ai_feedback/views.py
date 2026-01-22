@@ -78,14 +78,14 @@ class WorkflowRunView(APIView):
             user_id = serializer.validated_data["user_id"]
             print(f"DEBUG: User ID: {user_id}")
 
-            rubric_id = client.get_rubric_upload_id(user_id)
-            print(f"DEBUG: Rubric Upload ID: {rubric_id}")
+            rubric_id = serializer.validated_data.get("rubric_id")
+            print(f"DEBUG: Rubric ID from request: {rubric_id}")
 
             inputs = {
                 "essay_question": serializer.validated_data["essay_question"],
                 "essay_content": serializer.validated_data["essay_content"],
                 "language": serializer.validated_data.get("language", "English"),
-                "essay_rubric": client.build_rubric_file_input(rubric_id),
+                "essay_rubric": client.get_or_create_rubric_upload(rubric_id, user_id),
             }
 
             result = client.run_workflow(
@@ -102,9 +102,7 @@ class WorkflowRunView(APIView):
             import traceback
 
             traceback.print_exc()
-            return Response(
-                {"error": str(exc)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
-            )
+            return Response({"error": str(exc)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
         payload = {
             "workflow_run_id": result.get("workflow_run_id"),

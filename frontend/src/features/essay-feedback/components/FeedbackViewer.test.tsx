@@ -16,43 +16,102 @@ vi.mock('./RevisionChat', () => ({
 
 // Mock UI components
 vi.mock('@/components/ui/card', () => ({
-  Card: ({ children, className }: { children: React.ReactNode; className?: string }) => (
-    <div data-testid='card' className={className}>{children}</div>
+  Card: ({
+    children,
+    className
+  }: {
+    children: React.ReactNode;
+    className?: string;
+  }) => (
+    <div data-testid='card' className={className}>
+      {children}
+    </div>
   ),
-  CardContent: ({ children }: { children: React.ReactNode }) => <div data-testid='card-content'>{children}</div>,
-  CardHeader: ({ children }: { children: React.ReactNode }) => <div data-testid='card-header'>{children}</div>,
-  CardTitle: ({ children }: { children: React.ReactNode }) => <h3 data-testid='card-title'>{children}</h3>,
-  CardDescription: ({ children }: { children: React.ReactNode }) => <p data-testid='card-description'>{children}</p>
+  CardContent: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid='card-content'>{children}</div>
+  ),
+  CardHeader: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid='card-header'>{children}</div>
+  ),
+  CardTitle: ({ children }: { children: React.ReactNode }) => (
+    <h3 data-testid='card-title'>{children}</h3>
+  ),
+  CardDescription: ({ children }: { children: React.ReactNode }) => (
+    <p data-testid='card-description'>{children}</p>
+  )
 }));
 
 vi.mock('@/components/ui/progress', () => ({
-  Progress: ({ value }: { value: number }) => <div data-testid='progress' data-value={value}>Progress: {value}%</div>
+  Progress: ({ value }: { value: number }) => (
+    <div data-testid='progress' data-value={value}>
+      Progress: {value}%
+    </div>
+  )
 }));
 
 vi.mock('@/components/ui/badge', () => ({
-  Badge: ({ children }: { children: React.ReactNode }) => <span data-testid='badge'>{children}</span>
+  Badge: ({ children }: { children: React.ReactNode }) => (
+    <span data-testid='badge'>{children}</span>
+  )
 }));
 
 vi.mock('@/components/ui/alert', () => ({
-  Alert: ({ children, variant }: { children: React.ReactNode; variant?: string }) => (
-    <div data-testid='alert' data-variant={variant}>{children}</div>
+  Alert: ({
+    children,
+    variant
+  }: {
+    children: React.ReactNode;
+    variant?: string;
+  }) => (
+    <div data-testid='alert' data-variant={variant}>
+      {children}
+    </div>
   ),
-  AlertDescription: ({ children }: { children: React.ReactNode }) => <div data-testid='alert-description'>{children}</div>
+  AlertDescription: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid='alert-description'>{children}</div>
+  )
 }));
 
 vi.mock('@/components/ui/tabs', () => ({
-  Tabs: ({ children }: { children: React.ReactNode }) => <div data-testid='tabs'>{children}</div>,
-  TabsList: ({ children }: { children: React.ReactNode }) => <div data-testid='tabs-list'>{children}</div>,
-  TabsTrigger: ({ children, value }: { children: React.ReactNode; value: string }) => (
-    <button data-testid='tabs-trigger' data-value={value}>{children}</button>
+  Tabs: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid='tabs'>{children}</div>
   ),
-  TabsContent: ({ children, value }: { children: React.ReactNode; value: string }) => (
-    <div data-testid='tabs-content' data-value={value}>{children}</div>
+  TabsList: ({ children }: { children: React.ReactNode }) => (
+    <div data-testid='tabs-list'>{children}</div>
+  ),
+  TabsTrigger: ({
+    children,
+    value
+  }: {
+    children: React.ReactNode;
+    value: string;
+  }) => (
+    <button data-testid='tabs-trigger' data-value={value}>
+      {children}
+    </button>
+  ),
+  TabsContent: ({
+    children,
+    value
+  }: {
+    children: React.ReactNode;
+    value: string;
+  }) => (
+    <div data-testid='tabs-content' data-value={value}>
+      {children}
+    </div>
   )
 }));
 
 vi.mock('@/components/ui/button', () => ({
-  Button: ({ children, onClick, disabled, variant, size, className }: {
+  Button: ({
+    children,
+    onClick,
+    disabled,
+    variant,
+    size,
+    className
+  }: {
     children: React.ReactNode;
     onClick?: () => void;
     disabled?: boolean;
@@ -60,7 +119,14 @@ vi.mock('@/components/ui/button', () => ({
     size?: string;
     className?: string;
   }) => (
-    <button data-testid='button' onClick={onClick} disabled={disabled} data-variant={variant} data-size={size} className={className}>
+    <button
+      data-testid='button'
+      onClick={onClick}
+      disabled={disabled}
+      data-variant={variant}
+      data-size={size}
+      className={className}
+    >
       {children}
     </button>
   )
@@ -78,11 +144,28 @@ describe('FeedbackViewer', () => {
   const createMockOutputs = (overrides = {}) => ({
     overall_score: 85,
     feedback_summary: 'This is a well-structured essay with good content.',
-    structure_analysis: { score: 80, comments: 'Good structure', suggestions: ['Add more transitions'] },
-    content_analysis: { score: 85, comments: 'Strong arguments', suggestions: ['Add more examples'] },
-    style_analysis: { score: 90, comments: 'Clear writing', suggestions: ['Vary sentence length'] },
+    structure_analysis: {
+      score: 80,
+      comments: 'Good structure',
+      suggestions: ['Add more transitions']
+    },
+    content_analysis: {
+      score: 85,
+      comments: 'Strong arguments',
+      suggestions: ['Add more examples']
+    },
+    style_analysis: {
+      score: 90,
+      comments: 'Clear writing',
+      suggestions: ['Vary sentence length']
+    },
     grammar_notes: [
-      { type: 'spelling', original: 'teh', suggestion: 'the', explanation: 'Common typo' }
+      {
+        type: 'spelling',
+        original: 'teh',
+        suggestion: 'the',
+        explanation: 'Common typo'
+      }
     ],
     ...overrides
   });
@@ -102,16 +185,29 @@ describe('FeedbackViewer', () => {
 
   describe('Error State Rendering', () => {
     it('should display error message when error prop is provided', () => {
-      render(<FeedbackViewer {...defaultProps} error='Network connection failed' />);
+      render(
+        <FeedbackViewer {...defaultProps} error='Network connection failed' />
+      );
 
       expect(screen.getByTestId('alert')).toBeInTheDocument();
-      expect(screen.getByTestId('alert')).toHaveAttribute('data-variant', 'destructive');
-      expect(screen.getByText(/Error analyzing essay: Network connection failed/i)).toBeInTheDocument();
+      expect(screen.getByTestId('alert')).toHaveAttribute(
+        'data-variant',
+        'destructive'
+      );
+      expect(
+        screen.getByText(/Error analyzing essay: Network connection failed/i)
+      ).toBeInTheDocument();
     });
 
     it('should show retry button when error occurs and onRetry is provided', () => {
       const handleRetry = vi.fn();
-      render(<FeedbackViewer {...defaultProps} error='Something went wrong' onRetry={handleRetry} />);
+      render(
+        <FeedbackViewer
+          {...defaultProps}
+          error='Something went wrong'
+          onRetry={handleRetry}
+        />
+      );
 
       const retryButton = screen.getByText(/Retry/i);
       expect(retryButton).toBeInTheDocument();
@@ -129,43 +225,69 @@ describe('FeedbackViewer', () => {
     it('should display helpful message when error occurs', () => {
       render(<FeedbackViewer {...defaultProps} error='Processing failed' />);
 
-      expect(screen.getByText(/Please try submitting your essay again/i)).toBeInTheDocument();
+      expect(
+        screen.getByText(/Please try submitting your essay again/i)
+      ).toBeInTheDocument();
     });
   });
 
   describe('Loading State Rendering', () => {
     it('should display loading state when isRunning is true', () => {
-      render(<FeedbackViewer {...defaultProps} isRunning={true} progress={25} />);
+      render(
+        <FeedbackViewer {...defaultProps} isRunning={true} progress={25} />
+      );
 
       // Should show analyzing text
-      const analyzingTexts = screen.getAllByText((content) => content.includes('Analyzing'));
+      const analyzingTexts = screen.getAllByText((content) =>
+        content.includes('Analyzing')
+      );
       expect(analyzingTexts.length).toBeGreaterThan(0);
     });
 
     it('should update analysis step based on progress percentage', () => {
-      const { rerender } = render(<FeedbackViewer {...defaultProps} isRunning={true} progress={20} />);
-      expect(screen.getByText(/Analyzing essay structure.../i)).toBeInTheDocument();
+      const { rerender } = render(
+        <FeedbackViewer {...defaultProps} isRunning={true} progress={20} />
+      );
+      expect(
+        screen.getByText(/Analyzing essay structure.../i)
+      ).toBeInTheDocument();
 
-      rerender(<FeedbackViewer {...defaultProps} isRunning={true} progress={45} />);
-      expect(screen.getByText(/Checking grammar and style.../i)).toBeInTheDocument();
+      rerender(
+        <FeedbackViewer {...defaultProps} isRunning={true} progress={45} />
+      );
+      expect(
+        screen.getByText(/Checking grammar and style.../i)
+      ).toBeInTheDocument();
 
-      rerender(<FeedbackViewer {...defaultProps} isRunning={true} progress={75} />);
-      expect(screen.getByText(/Generating detailed feedback.../i)).toBeInTheDocument();
+      rerender(
+        <FeedbackViewer {...defaultProps} isRunning={true} progress={75} />
+      );
+      expect(
+        screen.getByText(/Generating detailed feedback.../i)
+      ).toBeInTheDocument();
 
-      rerender(<FeedbackViewer {...defaultProps} isRunning={true} progress={95} />);
+      rerender(
+        <FeedbackViewer {...defaultProps} isRunning={true} progress={95} />
+      );
       expect(screen.getByText(/Finalizing report.../i)).toBeInTheDocument();
     });
 
     it('should display progress percentage', () => {
-      render(<FeedbackViewer {...defaultProps} isRunning={true} progress={42} />);
+      render(
+        <FeedbackViewer {...defaultProps} isRunning={true} progress={42} />
+      );
 
       // Should show progress value
-      const progressTexts = screen.getAllByText((content) => content.includes('42') || content.includes('42%'));
+      const progressTexts = screen.getAllByText(
+        (content) => content.includes('42') || content.includes('42%')
+      );
       expect(progressTexts.length).toBeGreaterThan(0);
     });
 
     it('should show progress bar element', () => {
-      render(<FeedbackViewer {...defaultProps} isRunning={true} progress={67} />);
+      render(
+        <FeedbackViewer {...defaultProps} isRunning={true} progress={67} />
+      );
 
       // Should have a progress element
       const progressElement = screen.getByTestId('progress');
@@ -198,11 +320,15 @@ describe('FeedbackViewer', () => {
     });
 
     it('should display overall score badge', () => {
-      const result = createMockResult({ outputs: createMockOutputs({ overall_score: 92 }) });
+      const result = createMockResult({
+        outputs: createMockOutputs({ overall_score: 92 })
+      });
       render(<FeedbackViewer {...defaultProps} result={result} />);
 
       // Should show the score value
-      expect(screen.getByText((content) => content.includes('92'))).toBeInTheDocument();
+      expect(
+        screen.getByText((content) => content.includes('92'))
+      ).toBeInTheDocument();
       expect(screen.getByText(/\/100/i)).toBeInTheDocument();
     });
 
@@ -231,11 +357,15 @@ describe('FeedbackViewer', () => {
 
     it('should display feedback summary text', () => {
       const result = createMockResult({
-        outputs: createMockOutputs({ feedback_summary: 'Excellent work on this essay.' })
+        outputs: createMockOutputs({
+          feedback_summary: 'Excellent work on this essay.'
+        })
       });
       render(<FeedbackViewer {...defaultProps} result={result} />);
 
-      expect(screen.getByText(/Excellent work on this essay/i)).toBeInTheDocument();
+      expect(
+        screen.getByText(/Excellent work on this essay/i)
+      ).toBeInTheDocument();
     });
 
     it('should display no text feedback message when summary is missing', () => {
@@ -244,7 +374,9 @@ describe('FeedbackViewer', () => {
       });
       render(<FeedbackViewer {...defaultProps} result={result} />);
 
-      expect(screen.getByText(/No text feedback available/i)).toBeInTheDocument();
+      expect(
+        screen.getByText(/No text feedback available/i)
+      ).toBeInTheDocument();
     });
 
     it('should display score breakdown badges', () => {
@@ -260,10 +392,20 @@ describe('FeedbackViewer', () => {
     it('should calculate and display grammar score based on grammar notes', () => {
       // 2 grammar notes = 100 - 2*5 = 90
       const result = createMockResult({
-        outputs: createMockOutputs({ 
+        outputs: createMockOutputs({
           grammar_notes: [
-            { type: 'spelling', original: 'teh', suggestion: 'the', explanation: 'Typo' },
-            { type: 'grammar', original: 'is was', suggestion: 'was', explanation: 'Subject-verb agreement' }
+            {
+              type: 'spelling',
+              original: 'teh',
+              suggestion: 'the',
+              explanation: 'Typo'
+            },
+            {
+              type: 'grammar',
+              original: 'is was',
+              suggestion: 'was',
+              explanation: 'Subject-verb agreement'
+            }
           ]
         })
       });
@@ -276,11 +418,19 @@ describe('FeedbackViewer', () => {
 
     it('should handle missing structure analysis score gracefully', () => {
       const result = createMockResult({
-        outputs: createMockOutputs({ structure_analysis: { score: undefined, comments: '', suggestions: [] } })
+        outputs: createMockOutputs({
+          structure_analysis: {
+            score: undefined,
+            comments: '',
+            suggestions: []
+          }
+        })
       });
-      
+
       // Should not throw and should render other content
-      expect(() => render(<FeedbackViewer {...defaultProps} result={result} />)).not.toThrow();
+      expect(() =>
+        render(<FeedbackViewer {...defaultProps} result={result} />)
+      ).not.toThrow();
     });
 
     it('should display check circle icon when feedback is complete', () => {
@@ -304,13 +454,19 @@ describe('FeedbackViewer', () => {
     it('should not render badge when score is undefined', () => {
       // This test verifies the internal ScoreBadge component handles undefined gracefully
       const result = createMockResult({
-        outputs: createMockOutputs({ 
-          structure_analysis: { score: undefined, comments: 'test', suggestions: [] }
+        outputs: createMockOutputs({
+          structure_analysis: {
+            score: undefined,
+            comments: 'test',
+            suggestions: []
+          }
         })
       });
-      
+
       // Should not throw and should render other content
-      expect(() => render(<FeedbackViewer {...defaultProps} result={result} />)).not.toThrow();
+      expect(() =>
+        render(<FeedbackViewer {...defaultProps} result={result} />)
+      ).not.toThrow();
     });
 
     it('should render all four score categories', () => {

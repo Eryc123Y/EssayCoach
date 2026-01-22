@@ -8,6 +8,8 @@ from typing import Any, Dict, List, Optional
 import requests
 from django.conf import settings
 
+from core.models import MarkingRubric, RubricItem, RubricLevelDesc
+
 
 class DifyClientError(Exception):
     pass
@@ -34,9 +36,7 @@ class DifyClient:
     def _raise_for_status(self, response: requests.Response) -> None:
         if not response.ok:
             payload = response.text
-            raise DifyClientError(
-                f"Dify API returned {response.status_code}: {payload}"
-            )
+            raise DifyClientError(f"Dify API returned {response.status_code}: {payload}")
 
     def upload_file(
         self,
@@ -113,24 +113,15 @@ class DifyClient:
 
     def get_workflow_run(self, workflow_run_id: str) -> Dict[str, Any]:
         url = f"{self.base_url}/workflows/run/{workflow_run_id}"
-        response = requests.get(
-            url, headers={**self.headers, "Content-Type": "application/json"}
-        )
+        response = requests.get(url, headers={**self.headers, "Content-Type": "application/json"})
         self._raise_for_status(response)
         return response.json()
-
-    def get_rubric_upload_id(self, user: str) -> str:
-        rubric_path = Path(settings.BASE_DIR).parent / "rubric.pdf"
-        print(f"DEBUG: Looking for rubric at: {rubric_path}")
-        return self.upload_file(rubric_path, user)
 
     def upload_rubric_content(self, content: str, filename: str, user: str) -> str:
         """Upload rubric content as a temporary file."""
         import tempfile
 
-        with tempfile.NamedTemporaryFile(
-            mode="w+", suffix=".txt", delete=False
-        ) as temp:
+        with tempfile.NamedTemporaryFile(mode="w+", suffix=".txt", delete=False) as temp:
             temp.write(content)
             temp_path = Path(temp.name)
 
@@ -139,3 +130,97 @@ class DifyClient:
         finally:
             if temp_path.exists():
                 temp_path.unlink()
+
+    def build_rubric_from_database(self, rubric: MarkingRubric, user: str) -> Dict[str, Any]:
+        """
+        Build rubric input for Dify from database MarkingRubric model.
+
+        Args:
+            rubric: MarkingRubric model instance with rubric items and levels
+            user: User identifier for Dify upload
+
+        Returns:
+            Dictionary with rubric structure compatible with Dify's document understanding
+        """
+        rubric_items = RubricItem.objects.filter(
+            rubric_id_marking_rubric=rubric.rubric_id
+        ).prefetch_related("level_descriptions")
+
+        dimensions = []
+        for item in rubric_items:
+            levels = []
+            for level in item.level_descriptions.all():
+                levels.append(
+                    {
+                        "name": level.level_desc,
+                        "score_range": f"{level.level_min_score}-{level.level_max_score}",
+                        "min_score": level.level_min_score,
+                        "max_score": level.level_max_score,
+                    }
+                )
+
+            dimensions.append(
+                {
+                    "name": item.rubric_item_name,
+                    "weight": float(item.rubric_item_weight),
+                    "levels": levels,
+                }
+            )
+
+        rubric_text = f"""
+        Rubric: {rubric.rubric_desc}
+
+        Evaluation Criteria:
+
+        """
+        for dim in dimensions:
+            rubric_text += f"\n{dim['name']} ({dim['weight']}%)\n"
+            for level in dim["levels"]:
+                rubric_text += f"  - {level['score_range']} pts: {level['name']}\n"
+
+        # Upload as a temporary text file
+        rubric_filename = f"rubric_{rubric.rubric_id}.txt"
+        import tempfile
+
+        with tempfile.NamedTemporaryFile(
+            mode="w+", suffix=".txt", delete=False, prefix=f"rubric_{rubric.rubric_id}_"
+        ) as temp:
+            temp.write(rubric_text)
+            temp_path = Path(temp.name)
+
+        try:
+            upload_id = self.upload_file(temp_path, user)
+            # Cache upload ID per rubric
+            cache_key = f"{user}:rubric:{rubric.rubric_id}"
+            self._rubric_upload_cache[cache_key] = upload_id
+            return upload_id
+        finally:
+            if temp_path.exists():
+                temp_path.unlink()
+
+    def get_or_create_rubric_upload(self, user: str, rubric_id: int | None) -> str:
+        """
+        Get existing upload ID or create new one from database rubric.
+
+        Args:
+            user: User identifier
+            rubric_id: Database rubric ID (or None to use first/default)
+
+        Returns:
+            Upload ID from Dify
+        """
+        # If no rubric_id provided, find first available rubric for user
+        if rubric_id is None:
+            rubric = (
+                MarkingRubric.objects.filter(user_id_user=user)
+                .order_by("-rubric_create_time")
+                .first()
+            )
+
+            if not rubric:
+                raise DifyClientError("No rubrics found. Please upload a rubric first.")
+
+            rubric_id = rubric.rubric_id
+            print(f"DEBUG: Using first available rubric ID: {rubric_id}")
+
+        return self.build_rubric_from_database(rubric_id, user)

@@ -32,7 +32,8 @@ export default function EssaySubmissionPage() {
       <div className='flex flex-col gap-2'>
         <h1 className='text-3xl font-bold tracking-tight'>Essay Analysis</h1>
         <p className='text-muted-foreground'>
-          Get AI-powered feedback on your essays with detailed analysis and actionable suggestions.
+          Get AI-powered feedback on your essays with detailed analysis and
+          actionable suggestions.
         </p>
       </div>
 
