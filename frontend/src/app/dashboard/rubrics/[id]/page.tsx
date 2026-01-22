@@ -13,7 +13,7 @@ import {
   List,
   Scale,
   ChartBar,
-  InfoCircle,
+  Info,
   ChevronUp,
   ChevronDown
 } from 'lucide-react';
@@ -194,7 +194,7 @@ import {
             onClick={() => setShowInfo(!showInfo)}
             className='text-muted-foreground hover:text-foreground'
           >
-            <InfoCircle className="h-4 w-4 mr-2" />
+            <Info className="h-4 w-4 mr-2" />
             <span className="text-sm font-medium">
               {showInfo ? 'Hide Information' : 'Understanding This Rubric'}
             </span>
