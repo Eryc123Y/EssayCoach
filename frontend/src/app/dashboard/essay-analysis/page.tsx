@@ -179,12 +179,6 @@ export default function AIAnalysisPage() {
   return (
     <PageContainer>
       <div className='relative min-h-[calc(100vh-4rem)] w-full'>
-        {/* Background Decorative Elements */}
-        <div className='pointer-events-none absolute inset-0 -z-10 overflow-hidden'>
-          <div className='bg-primary/5 absolute top-0 left-1/4 h-96 w-96 rounded-full blur-3xl' />
-          <div className='absolute right-1/4 bottom-0 h-96 w-96 rounded-full bg-purple-500/5 blur-3xl' />
-        </div>
-
         {state === 'results' && (
           <div className='mb-6'>
             <Button
@@ -251,7 +245,7 @@ export default function AIAnalysisPage() {
 
               <div className='grid h-[800px] grid-cols-1 gap-6 lg:grid-cols-12'>
                 {/* Left Column: Visuals & Feedback (7 cols) */}
-                <div className='flex h-full flex-col space-y-6 overflow-hidden lg:col-span-7'>
+                <div className='flex h-full flex-col space-y-6 overflow-y-auto lg:col-span-7'>
                   <FeedbackDashboard 
                     scores={analysisResult.scores} 
                     overallScore={analysisResult.overallScore} 
