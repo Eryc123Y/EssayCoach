@@ -188,14 +188,43 @@ export default function AIAnalysisPage() {
         console.error('Unexpected Dify response status:', response);
         throw new Error('Analysis failed to complete successfully.');
       }
-    } catch (error) {
+      } catch (error) {
       console.error('Analysis failed:', error);
-      toast.error(
-        error instanceof Error
-          ? error.message
-          : 'Failed to analyze essay. Please try again.'
+
+      // Check if it's a Dify API error (has "error" field in response)
+      const isDifyError = error && typeof error === 'object' && 'error' in error;
+
+      // Check if it's a backend validation error (missing rubric)
+      const isRubricError = error && typeof error === 'object' && (
+        error.message?.includes('No rubrics found') ||
+        error.message?.includes('Please upload a rubric')
       );
-      setState('input'); // Go back to input on error
+
+      let errorMessage = '';
+
+      if (isDifyError) {
+        // Dify API returned an error
+        errorMessage = error.message || 'Dify workflow failed';
+      } else if (isRubricError) {
+        // Backend validation error - no rubric selected
+        errorMessage = 'No rubric available. Please upload a rubric first before submitting essays.';
+      } else if (error instanceof Error) {
+        // Generic error
+        errorMessage = error.message || 'Failed to analyze essay. Please try again.';
+      } else {
+        errorMessage = 'An unexpected error occurred. Please try again.';
+      }
+
+      toast.error(errorMessage);
+
+      // If rubric error, go back to input state
+      if (isRubricError) {
+        setState('input');
+      } else {
+        // Keep in current state for other errors
+        setState('input');
+      }
+
       return; // Stop here
     } finally {
       setIsLoading(false);
