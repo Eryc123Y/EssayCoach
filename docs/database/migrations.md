@@ -26,20 +26,16 @@ EssayCoach uses Django's built-in migration system with enhanced practices for e
 # Edit models.py in your Django app
 
 # 2. Create migration
-python manage.py makemigrations ai_feedback
+cd backend && uv run python manage.py makemigrations
 
 # 3. Review migration
-python manage.py sqlmigrate ai_feedback 0003_auto_add_feedback_type
+uv run python manage.py sqlmigrate core 0001_initial
 
 # 4. Test locally
-python manage.py migrate
+make migrate
 
 # 5. Run tests
-python manage.py test ai_feedback
-
-# 6. Commit with descriptive message
-git add .
-git commit -m "Add feedback type field for AI categorization"
+make test
 ```
 
 ### Production Deployment

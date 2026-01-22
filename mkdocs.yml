@@ -73,7 +73,7 @@ nav:
     - System Architecture: architecture/system-architecture.md
     - Database Design: architecture/database-design.md
     - API Specification: architecture/api-specification.md
-    - Nix Environment: architecture/nix-environment.md
+    - Dev Environment: architecture/development-environment.md
     - Functional Modules: Functional Module Design.md
     - Navigation Design: Navigation Bars Design.md
   - Database Schema:

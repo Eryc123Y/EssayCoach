@@ -1,0 +1,62 @@
+[project]
+name = "essaycoach-backend"
+version = "0.1.0"
+description = "EssayCoach Django Backend"
+requires-python = ">=3.12"
+dependencies = [
+    "django>=4.2,<5.0",
+    "djangorestframework>=3.14,<4.0",
+    "django-filter>=23.5,<25.0",
+    "psycopg2-binary>=2.9,<3.0",
+    "django-cors-headers>=4.3,<5.0",
+    "drf-spectacular>=0.27,<1.0",
+    "requests>=2.31,<3.0",
+    "pillow>=10.2,<11.0",
+    "pypdf2>=3.0,<4.0",
+    "python-dotenv>=1.0,<2.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "django-stubs>=4.2,<5.0",
+    "types-requests>=2.31,<3.0",
+    "black>=24.1,<25.0",
+    "mypy>=1.8,<2.0",
+    "pytest>=7.4,<8.0",
+    "pytest-django>=4.7,<5.0",
+    "pytest-mock>=3.12,<4.0",
+    "ruff>=0.1,<1.0",
+]
+
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["core", "essay_coach", "ai_feedback", "analytics"]
+
+[tool.uv]
+dev-dependencies = [
+    "django-stubs",
+    "types-requests",
+    "black",
+    "mypy",
+    "pytest",
+    "pytest-django",
+    "pytest-mock",
+    "ruff",
+]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+select = ["E", "F", "I", "N", "W", "UP"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+plugins = ["mypy_django_plugin.main"]
+
+[tool.black]
+line-length = 100
+target-version = ['py312']

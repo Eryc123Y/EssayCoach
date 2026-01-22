@@ -404,11 +404,20 @@ class RubricImportResponseSerializer(serializers.Serializer):
 class RubricItemDetailSerializer(serializers.ModelSerializer):
     """Detailed rubric item with all levels."""
 
-    level_descriptions = RubricLevelDescSerializer(many=True, read_only=True)
+    level_descriptions = serializers.SerializerMethodField()
 
     class Meta:
         model = RubricItem
         fields = "__all__"
+
+    def get_level_descriptions(self, obj):
+        return (
+            RubricLevelDescSerializer(
+                obj.level_descriptions.all(),
+                many=True,
+            ).data
+            or []
+        )
 
 
 class RubricDetailSerializer(serializers.ModelSerializer):

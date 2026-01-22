@@ -8,33 +8,35 @@ EssayCoach is designed as a modern web application with the following architectu
 
 - **Frontend**: Next.js 15 + React 19 + TypeScript + Tailwind CSS with shadcn/ui components
 - **Backend**: Django REST Framework with PostgreSQL database
-- **Development Environment**: Nix flakes for reproducible builds
+- **Development Environment**: uv and Docker Compose for fast, consistent setups
 - **Deployment**: Docker containers with CI/CD pipelines
 
 ## 🚀 Quick Start for Developers
 
 ### Environment Setup
 
-Enter the development environment:
+Install dependencies and start services:
 
 ```bash
-nix develop
+make install
+make dev
 ```
 
 This sets up:
 
-- PostgreSQL database with schema and mock data
-- Django development environment
+- PostgreSQL 17 database in Docker
+- Django development environment with **uv**
 - Frontend development tools (Node.js, pnpm, Next.js)
 - All documentation tools (MkDocs, material theme)
 
 ### Start Documentation Server
 
 ```bash
-mkdocs serve --dev-addr=0.0.0.0:8000
+make docs
 ```
+(or `uv run mkdocs serve`)
 
-Visit <http://localhost:8000> to view the documentation locally.
+Visit <http://127.0.0.1:8000> to view the documentation locally.
 
 ## 📁 Documentation Structure
 
@@ -61,10 +63,10 @@ This documentation is organized for developers and contributors:
 |-----------|------------|---------|
 | Frontend | Next.js + React + TypeScript | Server-rendered React UI |
 | Backend | Django REST Framework | RESTful API server |
-| Database | PostgreSQL | Primary data store |
-| Dev Environment | Nix flakes | Reproducible builds |
+| Database | PostgreSQL 17 | Primary data store |
+| Dev Environment | uv + Docker Compose | Reproducible builds |
 | Documentation | MkDocs Material | Technical documentation |
-| Testing | Pytest + Jest | Comprehensive test suite |
+| Testing | Pytest + Vitest | Comprehensive test suite |
 
 ## 🧠 Dify Agent Workflow APIs
 

@@ -7,6 +7,17 @@ import sys
 
 def main():
     """Run administrative tasks."""
+    # Load environment variables from .env file in project root
+    from pathlib import Path
+
+    try:
+        from dotenv import load_dotenv
+
+        env_path = Path(__file__).resolve().parent.parent / ".env"
+        load_dotenv(env_path)
+    except ImportError:
+        pass
+
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", "essay_coach.settings")
     try:
         from django.core.management import execute_from_command_line

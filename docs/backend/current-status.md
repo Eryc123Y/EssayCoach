@@ -11,7 +11,7 @@ EssayCoach 后端基于 Django 4.2 构建，目前已完成核心业务逻辑、
 | **API 文档** | drf-spectacular (OpenAPI 3.0) | ✅ 已集成 |
 | **身份验证** | Token & Session Auth | ✅ 已实现 |
 | **AI 引擎** | Dify Workflow (Synchronous) | ✅ 已集成 `ai_feedback` 应用 |
-| **开发环境** | Nix + Overmind | ✅ 生产级 reproducible 环境 |
+| **开发环境** | uv + Docker Compose | ✅ 极速且一致的开发环境 |
 
 ## 3. 核心应用与目录结构
 后端代码位于 `backend/` 目录下：

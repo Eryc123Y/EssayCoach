@@ -38,19 +38,15 @@ Our technology selection adheres to "API-first," "front-end/back-end separation,
 *   **Future Message Queue:** **Redis + Celery** - Used for handling time-consuming asynchronous tasks (like AI evaluation) in production deployment. When a user submits an essay, the request is queued, and backend workers process it asynchronously, preventing API timeouts and significantly improving system responsiveness and throughput.
 
 *   **Database Strategy:**
-    Our database strategy involves a two-stage approach for optimal development and scalability:
+    Our database strategy utilizes a robust relational database from the start for consistency and scalability:
 
-    *   **Phase 1: Early Stage & Rapid Development (Using SQLite)**
-        *   During the initial phase, especially for local development and prototyping, using **SQLite** is an excellent choice. It's a zero-configuration, file-based database that offers simplicity and quick setup, allowing developers to focus on core logic immediately.
-        *   **Key Implementation:** It is **crucial** to use an ORM like **SQLAlchemy** from the outset. SQLAlchemy allows our application code to interact with abstract Python objects rather than direct SQL, making the future transition between SQLite and a production database seamless by simply changing the database connection string.
+    *   **Relational Database:** **PostgreSQL 17** - Specifically, **ApsaraDB for RDS (PostgreSQL Edition)** on Alibaba Cloud for production, and **Docker Compose** for local development. This ensures consistency between environments and provides rich features like JSONB and full-text search.
+    *   **Vector Database:** For the RAG core, we utilize a dedicated Vector Database (planned). On Alibaba Cloud, **ApsaraDB for OpenSearch (Vector Search Edition)** or **Elasticsearch** offer managed, high-performance vector search, crucial for efficient semantic similarity retrieval.
+    *   **ORM Layer:** We use **Django ORM** exclusively. This allows our application code to interact with abstract Python objects rather than direct SQL, making the transition between local and production databases seamless by simply changing the database connection string.
 
-    *   **Phase 2: Scaling & Production Deployment (Migrating to Cloud Database)**
-        *   When multi-user concurrency is required, or when deploying to a server for production use, we will migrate to a robust, scalable cloud-hosted database.
-        *   **Relational Database:** **PostgreSQL** - Specifically, **ApsaraDB for RDS (PostgreSQL Edition)** on Alibaba Cloud. This managed service will handle performance, backups, and disaster recovery, allowing us to focus on application development.
-        *   **Vector Database:** For the RAG core, we will use a dedicated Vector Database like Pinecone, ChromaDB, or Weaviate. On Alibaba Cloud, **ApsaraDB for OpenSearch (Vector Search Edition)** or **Elasticsearch (with vector search capabilities)** offer managed, high-performance vector search, crucial for efficient semantic similarity retrieval.
 
 *   **Development Environment & Package Management:**
-    *   **Nix** - A powerful package manager and build system that provides reproducible development environments across different machines and operating systems. Nix ensures consistent dependency management and eliminates "works on my machine" issues, making it ideal for team collaboration and CI/CD pipelines.
+    *   **uv & Docker Compose** - A modern toolset for fast, reproducible development environments. **uv** manages Python dependencies with extreme speed, while **Docker Compose** ensures a consistent PostgreSQL 17 database setup across all developer machines. This eliminates "works on my machine" issues and streamlines team collaboration.
 
 *   **Deployment & Operations (DevOps) - Alibaba Cloud Specifics:**
     Given the website's availability in China, **Alibaba Cloud** will be our primary cloud provider, ensuring compliance, low latency, and optimized performance within the region.

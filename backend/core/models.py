@@ -34,9 +34,7 @@ class Class(models.Model):
         db_table_comment = "A table for class entity"
         verbose_name = "class"
         verbose_name_plural = "classes"
-        constraints = [
-            CheckConstraint(check=Q(class_size__gte=0), name="class_size_ck")
-        ]
+        constraints = [CheckConstraint(check=Q(class_size__gte=0), name="class_size_ck")]
 
 
 class Enrollment(models.Model):
@@ -44,10 +42,8 @@ class Enrollment(models.Model):
         primary_key=True, db_comment="Unique identifier for each enrollment"
     )
     user_id_user = models.ForeignKey("User", models.CASCADE, db_column="user_id_user")
-    class_id_class = models.ForeignKey(
-        "Class", models.RESTRICT, db_column="class_id_class"
-    )
-    unit_id_unit = models.ForeignKey("Unit", models.RESTRICT, db_column="unit_id_unit")
+    class_id_class = models.ForeignKey("Class", models.CASCADE, db_column="class_id_class")
+    unit_id_unit = models.ForeignKey("Unit", models.CASCADE, db_column="unit_id_unit")
     enrollment_time = models.DateTimeField(
         auto_now_add=True,
         db_comment="The time when the student is enrolled in the DBMS",
@@ -70,7 +66,7 @@ class Feedback(models.Model):
     submission_id_submission = models.OneToOneField(
         "Submission", models.CASCADE, db_column="submission_id_submission"
     )
-    user_id_user = models.ForeignKey("User", models.RESTRICT, db_column="user_id_user")
+    user_id_user = models.ForeignKey("User", models.CASCADE, db_column="user_id_user")
 
     class Meta:
         managed = True
@@ -85,11 +81,9 @@ class FeedbackItem(models.Model):
         Feedback, models.CASCADE, db_column="feedback_id_feedback"
     )
     rubric_item_id_rubric_item = models.ForeignKey(
-        "RubricItem", models.RESTRICT, db_column="rubric_item_id_rubric_item"
+        "RubricItem", models.CASCADE, db_column="rubric_item_id_rubric_item"
     )
-    feedback_item_score = models.SmallIntegerField(
-        db_comment="actual score of the item"
-    )
+    feedback_item_score = models.SmallIntegerField(db_comment="actual score of the item")
     feedback_item_comment = models.TextField(
         blank=True, null=True, db_comment="short description to the sub-item grade"
     )
@@ -115,9 +109,7 @@ class FeedbackItem(models.Model):
 
 
 class MarkingRubric(models.Model):
-    rubric_id = models.AutoField(
-        primary_key=True, db_comment="unique identifier for rubrics"
-    )
+    rubric_id = models.AutoField(primary_key=True, db_comment="unique identifier for rubrics")
     user_id_user = models.ForeignKey("User", models.CASCADE, db_column="user_id_user")
     rubric_create_time = models.DateTimeField(
         auto_now_add=True, db_comment="timestamp when the rubirc is created"
@@ -129,21 +121,18 @@ class MarkingRubric(models.Model):
     class Meta:
         managed = True
         db_table = "marking_rubric"
-        db_table_comment = (
-            "entity for a marking rubric. A marking rubric has many items."
-        )
+        db_table_comment = "entity for a marking rubric. A marking rubric has many items."
 
 
 class RubricItem(models.Model):
-    rubric_item_id = models.AutoField(
-        primary_key=True, db_comment="unique identifier for item"
-    )
+    rubric_item_id = models.AutoField(primary_key=True, db_comment="unique identifier for item")
     rubric_id_marking_rubric = models.ForeignKey(
-        MarkingRubric, models.CASCADE, db_column="rubric_id_marking_rubric"
+        MarkingRubric,
+        models.CASCADE,
+        db_column="rubric_id_marking_rubric",
+        related_name="rubric_items",
     )
-    rubric_item_name = models.CharField(
-        max_length=50, db_comment="Title(header) name for the item"
-    )
+    rubric_item_name = models.CharField(max_length=50, db_comment="Title(header) name for the item")
     rubric_item_weight = models.DecimalField(
         max_digits=3,
         decimal_places=1,
@@ -154,9 +143,7 @@ class RubricItem(models.Model):
         managed = True
         db_table = "rubric_item"
         db_table_comment = "An item(dimension) under one rubric"
-        constraints = [
-            CheckConstraint(check=Q(rubric_item_weight__gt=0), name="item_weight_ck")
-        ]
+        constraints = [CheckConstraint(check=Q(rubric_item_weight__gt=0), name="item_weight_ck")]
 
 
 class RubricLevelDesc(models.Model):
@@ -165,7 +152,10 @@ class RubricLevelDesc(models.Model):
         db_comment="unique identifier for each level desc under one rubric",
     )
     rubric_item_id_rubric_item = models.ForeignKey(
-        RubricItem, models.CASCADE, db_column="rubric_item_id_rubric_item"
+        RubricItem,
+        models.CASCADE,
+        db_column="rubric_item_id_rubric_item",
+        related_name="level_descriptions",
     )
     level_min_score = models.SmallIntegerField(db_comment="min for the item")
     level_max_score = models.SmallIntegerField(db_comment="max for the item")
@@ -189,14 +179,10 @@ class Submission(models.Model):
     submission_id = models.AutoField(
         primary_key=True, db_comment="unique identifier for submission"
     )
-    submission_time = models.DateTimeField(
-        auto_now_add=True, db_comment="time/date of submission"
-    )
-    task_id_task = models.ForeignKey("Task", models.RESTRICT, db_column="task_id_task")
+    submission_time = models.DateTimeField(auto_now_add=True, db_comment="time/date of submission")
+    task_id_task = models.ForeignKey("Task", models.CASCADE, db_column="task_id_task")
     user_id_user = models.ForeignKey("User", models.CASCADE, db_column="user_id_user")
-    submission_txt = models.TextField(
-        db_comment="complete content of the essay submission"
-    )
+    submission_txt = models.TextField(db_comment="complete content of the essay submission")
 
     class Meta:
         managed = True
@@ -205,24 +191,22 @@ class Submission(models.Model):
 
 
 class Task(models.Model):
-    task_id = models.AutoField(
-        primary_key=True, db_comment="Unique identifier for task."
-    )
-    unit_id_unit = models.ForeignKey("Unit", models.RESTRICT, db_column="unit_id_unit")
+    task_id = models.AutoField(primary_key=True, db_comment="Unique identifier for task.")
+    unit_id_unit = models.ForeignKey("Unit", models.CASCADE, db_column="unit_id_unit")
     rubric_id_marking_rubric = models.ForeignKey(
         MarkingRubric, models.CASCADE, db_column="rubric_id_marking_rubric"
     )
     task_publish_datetime = models.DateTimeField(
         auto_now_add=True, db_comment="time/date when the task is published"
     )
-    task_due_datetime = models.DateTimeField(
-        db_comment="time/date when the task is due"
-    )
+    task_due_datetime = models.DateTimeField(db_comment="time/date when the task is due")
 
     class Meta:
         managed = True
         db_table = "task"
-        db_table_comment = "Task created by lecturer/admin for students in some classes/units to complete"
+        db_table_comment = (
+            "Task created by lecturer/admin for students in some classes/units to complete"
+        )
         constraints = [
             CheckConstraint(
                 check=Q(task_publish_datetime__lt=models.F("task_due_datetime")),
@@ -232,13 +216,9 @@ class Task(models.Model):
 
 
 class TeachingAssn(models.Model):
-    teaching_assn_id = models.SmallAutoField(
-        primary_key=True, db_comment="unique identifier"
-    )
+    teaching_assn_id = models.SmallAutoField(primary_key=True, db_comment="unique identifier")
     user_id_user = models.ForeignKey("User", models.CASCADE, db_column="user_id_user")
-    class_id_class = models.ForeignKey(
-        "Class", models.RESTRICT, db_column="class_id_class"
-    )
+    class_id_class = models.ForeignKey("Class", models.CASCADE, db_column="class_id_class")
 
     class Meta:
         managed = True
@@ -259,9 +239,7 @@ class Unit(models.Model):
         db_comment="Unique identifier for each unit, same as the unit code",
     )
     unit_name = models.CharField(max_length=50, db_comment="Full name of the unit")
-    unit_desc = models.TextField(
-        blank=True, null=True, db_comment="details of the unit"
-    )
+    unit_desc = models.TextField(blank=True, null=True, db_comment="details of the unit")
 
     class Meta:
         managed = True
@@ -281,9 +259,7 @@ class CoreUserManager(BaseUserManager):
         user.save(using=self._db)
         return user
 
-    def create_superuser(
-        self, user_email: str, password: str, **extra_fields: Any
-    ) -> User:
+    def create_superuser(self, user_email: str, password: str, **extra_fields: Any) -> User:
         extra_fields.setdefault("is_staff", True)
         extra_fields.setdefault("is_superuser", True)
         return self.create_user(user_email, password, **extra_fields)
@@ -291,9 +267,7 @@ class CoreUserManager(BaseUserManager):
 
 class User(AbstractBaseUser, PermissionsMixin):
     user_id: models.AutoField = models.AutoField(primary_key=True, db_column="user_id")
-    user_email: models.EmailField = models.EmailField(
-        unique=True, db_column="user_email"
-    )
+    user_email: models.EmailField = models.EmailField(unique=True, db_column="user_email")
     user_fname: models.CharField = models.CharField(
         max_length=20, blank=True, null=True, db_column="user_fname"
     )
@@ -306,9 +280,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     user_status: models.CharField = models.CharField(
         max_length=15, blank=True, null=True, db_column="user_status"
     )
-    password: models.CharField = models.CharField(
-        max_length=255, db_column="user_credential"
-    )
+    password: models.CharField = models.CharField(max_length=255, db_column="user_credential")
     is_active: models.BooleanField = models.BooleanField(default=True)
     is_staff: models.BooleanField = models.BooleanField(default=False)
     date_joined: models.DateTimeField = models.DateTimeField(auto_now_add=True)
@@ -322,9 +294,7 @@ class User(AbstractBaseUser, PermissionsMixin):
     class Meta:
         db_table = "user"
         managed = True
-        db_table_comment = (
-            "A table for all user entities, including student, teacher, and admins."
-        )
+        db_table_comment = "A table for all user entities, including student, teacher, and admins."
         constraints = [
             CheckConstraint(
                 check=Q(user_role__in=["student", "lecturer", "admin"]),

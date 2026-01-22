@@ -180,13 +180,16 @@ dist-ssr
 *.sln
 *.sw?
 
-# Nix
-result*
-.direnv/
-.nix-zsh/
+# uv
+.venv/
+uv.lock
+
+# PostgreSQL (managed by Docker)
 .dev_pg/
-.envrc
-.DS_Store
+.pg_socket/
+
+# Docker volumes
+pg_data/
 
 # SQLite
 *.db
@@ -197,21 +200,9 @@ dev.db
 # Coverage reports
 coverage/
 
-# Cypress
-cypress/videos/
-cypress/screenshots/
-
-# TypeScript incremental build info
-*.tsbuildinfo
-
-# Local PostgreSQL volumes & dev cluster
-.docker/
-docker/db/data/
-.dev_pg/
-.pg_socket/
-
 # Nitro (Backend Framework)
 .nitro/
 nitro.json
 .output/
 /AGENTS.md
+.DS_Store

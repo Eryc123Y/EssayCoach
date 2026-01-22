@@ -1,5 +1,8 @@
 # Test Execution Report - Phase 1 Rubric Import
 
+> [!IMPORTANT]
+> **HISTORICAL DOCUMENT**: This report reflects the testing state as of January 17, 2026. The project has since migrated to **uv** and **Docker Compose**. Current testing should be performed via `make test` or `uv run pytest`.
+
 **Date**: January 17, 2026  
 **Task**: phase1-13 - Run full test suite  
 **Status**: ✅ COMPLETED (Test implementation validated)

@@ -129,15 +129,13 @@ This document provides quick links to official documentation for all external li
 
 ## Development Tools
 
-### Nix
-- **Official Docs**: https://nix.dev/
-- **Nix Pills**: https://nixos.org/guides/nix-pills/
-- **Nixpkgs**: https://nixpkgs.org/
-- **Flakes**: https://nixos.wiki/wiki/Flakes
+### uv (Python Management)
+- **Official Docs**: https://docs.astral.sh/uv/
+- **GitHub**: https://github.com/astral-sh/uv
 
-### Overmind
-- **GitHub**: https://github.com/DarthSim/overmind
-- **Documentation**: https://github.com/DarthSim/overmind#usage
+### pnpm (Node.js Management)
+- **Official Docs**: https://pnpm.io/
+- **CLI Reference**: https://pnpm.io/cli/install
 
 ### Docker
 - **Official Docs**: https://docs.docker.com/

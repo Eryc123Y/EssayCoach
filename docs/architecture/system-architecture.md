@@ -49,10 +49,10 @@ graph LR
 - **Testing**: Pytest with factory-boy for fixtures
 
 ### Development Environment
-- **Package Management**: Nix flakes for reproducible environments
-- **Database**: Local PostgreSQL with automatic setup
-- **Process Management**: Overmind for concurrent services
-- **Code Quality**: Black, Flake8, MyPy, Prettier
+- **Package Management**: uv (Python) and pnpm (Node.js)
+- **Database**: PostgreSQL 17 managed via Docker Compose
+- **Automation**: Makefile interface for all dev tasks
+- **Code Quality**: Ruff, Black, MyPy, Prettier
 
 ## 📊 Data Flow Architecture
 

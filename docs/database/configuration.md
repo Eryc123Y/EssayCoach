@@ -4,143 +4,77 @@
 
 ### PostgreSQL Configuration
 
-The EssayCoach development environment uses PostgreSQL with simplified authentication for development purposes:
+The EssayCoach development environment uses PostgreSQL 17 managed via **Docker Compose**.
 
 #### Database Connection
 - **Database Name**: `essaycoach`
 - **User**: `postgres` (superuser)
 - **Password**: `postgres`
-- **Host**: `localhost`
+- **Host**: `127.0.0.1`
 - **Port**: `5432`
-- **Connection URL**: `postgresql://postgres:postgres@localhost:5432/essaycoach`
-
-#### Why Use PostgreSQL Superuser?
-
-Using the `postgres` superuser in development provides several benefits:
-
-1. **Simplified Setup**: No need to create separate database users
-2. **Full Permissions**: Complete access for schema modifications and migrations
-3. **Development Efficiency**: Eliminates permission-related issues during development
-4. **Consistent Environment**: All developers use the same database configuration
-
-#### Production Considerations
-
-⚠️ **Important**: The superuser configuration is intended for development only. In production:
-
-- Use dedicated application users with limited privileges
-- Implement proper role-based access control
-- Use strong, randomly generated passwords
-- Configure SSL/TLS for database connections
-- Implement connection pooling and monitoring
+- **Connection URL**: `postgresql://postgres:postgres@127.0.0.1:5432/essaycoach`
 
 ### Database Initialization
 
-The development environment automatically:
+The development environment setup involves:
 
-1. **Starts PostgreSQL**: Using the nix-provided PostgreSQL service
-2. **Creates Database**: Creates the `essaycoach` database if it doesn't exist
-3. **Applies Migrations**: Runs Django migrations to create/update the schema (`python manage.py migrate`)
-4. **Seeds Data**: Populates the database with mock data using the seed command (`python manage.py seed_db`)
+1. **Starting PostgreSQL**: Run `make db` to start the Docker container.
+2. **Applying Migrations**: Run `make migrate` to create/update the schema.
+3. **Seeding Data**: Run `make seed-db` to populate mock data.
 
 ### Manual Database Operations
 
 #### Accessing the Database
 ```bash
-# Connect to PostgreSQL using psql
-nix develop --command psql -d essaycoach
+# Connect to PostgreSQL using project Makefile
+make db-shell
 
-# Or using the full connection string
-psql postgresql://postgres:postgres@localhost:5432/essaycoach
+# Or using standard psql client
+psql -h 127.0.0.1 -U postgres -d essaycoach
 ```
 
 #### Database Maintenance
 ```bash
-# Restart PostgreSQL
-nix develop --command postgres-restart
+# Restart PostgreSQL container
+make db-stop && make db
 
-# Reset database (drops and recreates)
-nix develop --command db-reset
+# Reset database (drops all data and volumes)
+make db-reset
 
 # Check database status
-nix develop --command pg_isready
+make db-status
 ```
 
 ### Environment Variables
 
-The following environment variables are configured for database access:
+The following environment variables are configured for database access in `.env`:
 
 ```bash
 # Database connection
-DATABASE_URL=postgresql://postgres:postgres@localhost:5432/essaycoach
-POSTGRES_HOST=localhost
+POSTGRES_HOST=127.0.0.1
 POSTGRES_PORT=5432
 POSTGRES_DB=essaycoach
 POSTGRES_USER=postgres
 POSTGRES_PASSWORD=postgres
-
-# PostgreSQL data directory
-PGDATA=/path/to/project/.dev_pg
-PGHOST=localhost
 ```
-
-### Migration Strategy
-
-#### Django Migrations
-- **Automatic**: Django handles schema changes via migrations
-- **Safe**: Migrations are applied in controlled manner
-- **Reversible**: All migrations can be rolled back if needed
-- **Database Trigger Management**: Custom migrations (e.g., `0002_triggers.py`) handle database triggers and functions.
-
-#### Manual Schema Changes
-Schema changes should primarily be done through Django models and migrations. Direct SQL modifications are discouraged to maintain consistency between the code and the database.
 
 ### Troubleshooting
 
 #### Common Database Issues
 
 **Connection Refused**
-```bash
-# Check if PostgreSQL is running
-pg_isready -h localhost -p 5432
-
-# Restart PostgreSQL if needed
-nix develop --command postgres-restart
-```
+1. Check if Docker is running.
+2. Run `make db-status` to verify the container is healthy.
+3. Ensure no other service is using port `5432`.
 
 **Permission Denied**
-```bash
-# Ensure you're using the postgres superuser
-psql -U postgres -d essaycoach
-```
+Ensure your `.env` file matches the Docker Compose environment variables. Default user is `postgres`.
 
-**Database Already Exists**
-```bash
-# Drop and recreate database
-dropdb -U postgres essaycoach
-createdb -U postgres essaycoach
-```
+**Resetting Data**
+If the database state becomes inconsistent, use `make db-reset` to start fresh. **Warning**: This deletes all data in the database.
 
 #### Database Logs
-
-PostgreSQL logs are available in the development environment:
-
+View real-time PostgreSQL logs:
 ```bash
-# View PostgreSQL logs
-nix develop --command tail-pg-logs
+make docker-logs-pg
 ```
-
-### Backup and Recovery
-
-#### Development Backups
-```bash
-# Create a backup
-pg_dump -U postgres -d essaycoach > backup.sql
-
-# Restore from backup
-psql -U postgres -d essaycoach < backup.sql
-```
-
-#### Schema Documentation
-- Current schema: `docs/database/schema-overview.md`
-- Migration files: `backend/core/migrations/`
-- Seed data logic: `backend/core/management/commands/seed_db.py`

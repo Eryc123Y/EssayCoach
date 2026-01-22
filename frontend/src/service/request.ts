@@ -46,5 +46,9 @@ export async function request<T = any>(config: RequestConfig): Promise<T> {
     );
   }
 
+  if (response.status === 204) {
+    return {} as T;
+  }
+
   return response.json();
 }

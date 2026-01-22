@@ -6,18 +6,19 @@ Next.js 15 + React 19 + TypeScript application serving as the user interface for
 
 ### Prerequisites
 
-1. **Nix Development Environment** (Required):
-   ```bash
-   # From project root
-   nix develop
-   ```
+- Node.js 22+
+- pnpm 10+
+- [uv](https://github.com/astral-sh/uv) (for running backend via Makefile)
+- Docker and Docker Compose (for PostgreSQL)
 
-2. **Install Dependencies**:
+### Installation
+
+1. **Install Dependencies**:
    ```bash
    pnpm install
    ```
 
-3. **Environment Configuration**:
+2. **Environment Configuration**:
    Create `frontend/.env.local`:
    ```bash
    NEXT_PUBLIC_API_URL=http://127.0.0.1:8000
@@ -25,21 +26,21 @@ Next.js 15 + React 19 + TypeScript application serving as the user interface for
 
 ### Running the Development Server
 
-**Option 1: Via Overmind (Recommended)**
+**Option 1: Via Makefile (Recommended)**
 ```bash
-# From project root (inside nix develop shell)
-dev
+# From project root
+make dev-frontend
 ```
 
 **Option 2: Direct Execution**
 ```bash
-cd frontend
+# From frontend directory
 pnpm dev
 ```
 
-- **Frontend URL**: http://localhost:5100
-- **Backend API**: http://localhost:8000
-- **PostgreSQL**: localhost:5432
+- **Frontend URL**: http://127.0.0.1:5100
+- **Backend API**: http://127.0.0.1:8000 (proxied via `/api/v1/*`)
+- **PostgreSQL**: 127.0.0.1:5432 (via Docker)
 
 ## 🏗 Project Structure
 
@@ -319,7 +320,7 @@ Force IPv4 binding in `package.json`:
 ```json
 {
   "scripts": {
-    "dev": "next dev -H 127.0.0.1"
+    "dev": "next dev -H 127.0.0.1 -p 5100"
   }
 }
 ```
@@ -329,6 +330,39 @@ Force IPv4 binding in `package.json`:
 # frontend/.env.local
 NEXT_PUBLIC_API_URL=http://127.0.0.1:8000
 ```
+
+### Issue: SyntaxError when calling .json() on 204 No Content
+
+**Symptoms**:
+- `SyntaxError: Unexpected end of JSON input`
+- Occurs after successful DELETE or status updates that return 204
+
+**Solution**:
+Check response status before parsing:
+```typescript
+const response = await fetch(...);
+if (response.status === 204) {
+  return null; // Or appropriate success value
+}
+return response.json();
+```
+
+### Issue: Dashboard scrolling blocked or content cut off
+
+**Symptoms**:
+- Sidebar scrolls but main content is fixed
+- Bottom of the page is inaccessible
+
+**Root Cause**: Incorrect height constraints in `src/app/dashboard/layout.tsx`
+
+**Solution**:
+Ensure the dashboard container has:
+```tsx
+<div className="flex-1 overflow-y-auto max-h-[calc(100vh-theme(spacing.16))]">
+  {children}
+</div>
+```
+This allows the content area to scroll independently within the viewport height.
 
 ### Issue: Build fails with TypeScript errors
 

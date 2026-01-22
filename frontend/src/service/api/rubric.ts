@@ -5,9 +5,9 @@ import { request } from '../request';
  */
 
 export interface RubricLevelDesc {
-  level_id: number;
-  min_score: number;
-  max_score: number;
+  level_desc_id: number;
+  level_min_score: number;
+  level_max_score: number;
   level_desc: string;
 }
 
@@ -96,6 +96,12 @@ export function fetchRubricDetail(rubricId: number): Promise<RubricDetail> {
   return request<RubricDetail>({
     url: `/api/v1/core/rubrics/${rubricId}/detail_with_items/`,
     method: 'GET'
+  }).then((data) => {
+    data.rubric_items = data.rubric_items ?? [];
+    data.rubric_items.forEach((item) => {
+      item.level_descriptions = item.level_descriptions ?? [];
+    });
+    return data;
   });
 }
 

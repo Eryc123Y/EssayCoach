@@ -25,66 +25,95 @@ EssayCoach is a future-oriented intelligent education platform designed to lever
 | **Styling** | Tailwind CSS v4 + shadcn/ui |
 | **State Management** | Zustand |
 | **Backend** | Python 3.12 + Django 4.x + DRF |
-| **Database** | PostgreSQL 14+ (Primary), Redis (Cache/Queue) |
+| **Database** | PostgreSQL 17 (Primary), Redis (Cache/Queue) |
 | **AI/ML** | RAG Architecture, LangChain (Planned) |
-| **Dev Environment** | Nix flakes + Overmind |
+| **Dev Environment** | uv + Docker Compose (PostgreSQL 17) + Makefile |
 | **Infrastructure** | Docker + Kubernetes (Alibaba Cloud ACK) |
 
 ### 🔑 Environment Variables
 
 The project requires several environment variables to be set for full functionality.
 
-1. **Backend Secrets**: Create a `.env` file in the **root** directory.
+1. **Backend Secrets**: Create a `.env` file in **root** directory (copied from `.env.example`).
    ```bash
-   DIFY_API_KEY=your_dify_api_key_here
-   ```
-   *Note: This file is automatically loaded by the `dev` scripts.*
+   # Django Settings
+   DEBUG=True
+   SECRET_KEY=your-secret-key-here
+   
+   # Database (Docker Compose)
+   POSTGRES_DB=essaycoach
+   POSTGRES_USER=postgres
+   POSTGRES_PASSWORD=postgres
+   POSTGRES_HOST=127.0.0.1
+   POSTGRES_PORT=5432
 
-2. **Frontend Configuration**: Create a `.env.local` file in the `frontend/` directory.
+   # Dify AI Integration
+   DIFY_API_KEY=your_dify_api_key_here
+   DIFY_BASE_URL=https://api.dify.ai/v1
+   ```
+
+2. **Frontend Configuration**: Create a `.env.local` file in `frontend/` directory.
    ```bash
-   NEXT_PUBLIC_API_URL=http://localhost:8000
+   NEXT_PUBLIC_API_URL=http://127.0.0.1:8000
    ```
 
 ## ⚡ Quick Start
 
-**Zero-config development with Nix:**
+### Prerequisites
 
-This project uses [Nix](https://nixos.org/) to provide a reproducible development environment.
+- Python 3.12+
+- Node.js 22+
+- [uv](https://github.com/astral-sh/uv) (Modern Python package manager)
+- Docker and Docker Compose (for PostgreSQL 17)
+- pnpm
 
-1. **Enter the development shell:**
-   ```bash
-   nix develop
-   # This automatically sets up Python, Node.js, PostgreSQL, and all dependencies.
-   # It also initializes the database and starts the PostgreSQL server.
-   ```
+### Installation & Setup
 
-2. **Start the application:**
-   ```bash
-   dev
-   # This starts both the Django backend and Next.js frontend using Overmind.
-   ```
-
-   - Frontend: http://localhost:3000
-   - Backend API: http://localhost:8000
-   - PostgreSQL: localhost:5432
-
-### Alternative: Manual Start
-
-If you prefer to run services individually (must be inside `nix develop` shell):
-
-**Backend:**
+1. **Install uv**:
 ```bash
-cd backend
-python manage.py migrate
-python manage.py runserver
+pip install uv
 ```
 
-**Frontend:**
+2. **Run the one-step installation**:
 ```bash
-cd frontend
-pnpm install
-pnpm dev
+# Installs Python/Node dependencies and sets up virtual environments
+make install
 ```
+
+3. **Database Setup**:
+```bash
+make db        # Start PostgreSQL 17 in Docker
+make migrate   # Run Django migrations
+make seed-db   # Create admin user and initial test students
+```
+
+4. **Launch Development Environment**:
+```bash
+# Starts both Backend (8000) and Frontend (5100)
+make dev
+```
+
+### URLs
+
+- **Frontend**: http://127.0.0.1:5100
+- **Backend API**: http://127.0.0.1:8000
+- **Admin Dashboard**: http://127.0.0.1:8000/admin/
+
+
+### Common Commands
+
+| Command        | Description                      |
+| -------------- | ---------------------------------- |
+| `make install`  | Install all dependencies           |
+| `make dev`      | Start backend and frontend          |
+| `make dev-backend` | Start Django backend only          |
+| `make dev-frontend` | Start Next.js frontend only        |
+| `make db`       | Start PostgreSQL (Docker)         |
+| `make migrate`   | Run Django migrations              |
+| `make seed-db`   | Seed database with initial data   |
+| `make test`     | Run all tests                     |
+| `make lint`     | Run linters                      |
+| `make format`   | Format code                       |
 
 ## 📂 Project Structure
 
@@ -100,43 +129,43 @@ EssayCoach/
 │   └── ...
 ├── docker/             # Docker configurations
 ├── docs/               # Comprehensive documentation
-├── scripts/            # Development scripts & Nix hooks
-├── flake.nix           # Nix environment definition
-└── docker-compose.yml  # Docker Compose for containerized deployment
+├── scripts/            # Development scripts
+├── Makefile            # Project commands
+└── docker-compose.yml  # Docker Compose for local development
 ```
 
 ## 🏗 Architecture
 
 EssayCoach follows a **distributed microservices-ready architecture**:
 
-- **Frontend**: A Next.js application served via CDN/Node.js, communicating with the backend via RESTful APIs.
+- **Frontend**: A Next.js application served via CDN/Node.js, communicating with backend via RESTful APIs.
 - **Backend**: A Django-based core service handling business logic, data persistence, and API orchestration.
 - **AI Engine**: Asynchronous workers (planned: Celery + Redis) processing essay analysis tasks using LLMs and Vector Search.
-- **Data Layer**: PostgreSQL for relational data and Vector Database (e.g., OpenSearch) for RAG operations.
+- **Database**: PostgreSQL for relational data (local dev: Docker Compose, production: Cloud).
 
 For more details, see [System Architecture](docs/architecture/system-architecture.md).
 
 ## 🧪 Testing
 
-- **Frontend:**
-  ```bash
-  cd frontend
-  pnpm test
-  ```
-- **Backend:**
-  ```bash
-  cd backend
-  pytest
-  ```
+```bash
+# Run all tests
+make test
+
+# Backend only
+cd backend && uv run pytest
+
+# Frontend only
+cd frontend && pnpm test
+```
 
 ## 🤝 Contributing
 
-1. Fork the repository
+1. Fork repository
 2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
 3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
+4. Push to branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
 
 ## 📄 License
 
-Distributed under the MIT License. See `LICENSE` for more information.
+Distributed under MIT License. See `LICENSE` for more information.
