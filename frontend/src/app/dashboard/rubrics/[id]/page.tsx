@@ -192,13 +192,26 @@ import {
             variant='outline'
             size='sm'
             onClick={() => setShowInfo(!showInfo)}
-            className='text-muted-foreground hover:text-foreground'
+            className={cn(
+              'text-muted-foreground hover:text-foreground transition-all duration-200',
+              showInfo && 'bg-indigo-50 border-indigo-200 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400'
+            )}
           >
-            <Info className="h-4 w-4 mr-2" />
+            <motion.div
+              animate={{ rotate: showInfo ? 180 : 0 }}
+              transition={{ duration: 0.2, ease: "easeInOut" }}
+            >
+              <Info className="h-4 w-4 mr-2" />
+            </motion.div>
             <span className="text-sm font-medium">
               {showInfo ? 'Hide Information' : 'Understanding This Rubric'}
             </span>
-            {showInfo ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+            <motion.div
+              animate={{ rotate: showInfo ? 180 : 0 }}
+              transition={{ duration: 0.2, ease: "easeInOut" }}
+            >
+              {showInfo ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+            </motion.div>
           </Button>
         </div>
         
