@@ -85,7 +85,7 @@ class WorkflowRunView(APIView):
                 "essay_question": serializer.validated_data["essay_question"],
                 "essay_content": serializer.validated_data["essay_content"],
                 "language": serializer.validated_data.get("language", "English"),
-                "essay_rubric": client.get_or_create_rubric_upload(rubric_id, user_id),
+                "essay_rubric": client.get_or_create_rubric_upload(user_id, rubric_id),
             }
 
             result = client.run_workflow(

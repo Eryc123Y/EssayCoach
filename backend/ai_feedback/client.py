@@ -141,10 +141,20 @@ class DifyClient:
 
         Returns:
             Dictionary with rubric structure compatible with Dify's document understanding
+
+        Raises:
+            DifyClientError: If rubric data cannot be retrieved or built
         """
+        # Build rubric structure from database
         rubric_items = RubricItem.objects.filter(
             rubric_id_marking_rubric=rubric.rubric_id
         ).prefetch_related("level_descriptions")
+
+        if not rubric_items.exists():
+            raise DifyClientError(
+                f"No rubric items found for rubric ID {rubric.rubric_id}. "
+                "This rubric may be empty or corrupted."
+            )
 
         dimensions = []
         for item in rubric_items:
@@ -168,18 +178,17 @@ class DifyClient:
             )
 
         rubric_text = f"""
-        Rubric: {rubric.rubric_desc}
+Rubric: {rubric.rubric_desc}
 
-        Evaluation Criteria:
+Evaluation Criteria:
+"""
 
-        """
         for dim in dimensions:
             rubric_text += f"\n{dim['name']} ({dim['weight']}%)\n"
             for level in dim["levels"]:
                 rubric_text += f"  - {level['score_range']} pts: {level['name']}\n"
 
         # Upload as a temporary text file
-        rubric_filename = f"rubric_{rubric.rubric_id}.txt"
         import tempfile
 
         with tempfile.NamedTemporaryFile(
@@ -190,15 +199,22 @@ class DifyClient:
 
         try:
             upload_id = self.upload_file(temp_path, user)
-            # Cache upload ID per rubric
-            cache_key = f"{user}:rubric:{rubric.rubric_id}"
-            self._rubric_upload_cache[cache_key] = upload_id
-            return upload_id
+            print(f"DEBUG: Rubric uploaded with ID: {upload_id}")
+
+            # Return the Dify file input structure
+            return {
+                "transfer_method": "local_file",
+                "upload_file_id": upload_id,
+                "type": "document",
+            }
+        except Exception as e:
+            print(f"ERROR: Failed to upload rubric: {e}")
+            raise DifyClientError(f"Failed to build rubric from database: {e}")
         finally:
             if temp_path.exists():
                 temp_path.unlink()
 
-    def get_or_create_rubric_upload(self, user: str, rubric_id: int | None) -> str:
+    def get_or_create_rubric_upload(self, user: str, rubric_id: int | None) -> Dict[str, Any]:
         """
         Get existing upload ID or create new one from database rubric.
 
@@ -207,7 +223,10 @@ class DifyClient:
             rubric_id: Database rubric ID (or None to use first/default)
 
         Returns:
-            Upload ID from Dify
+            Dictionary with rubric structure for Dify input
+
+        Raises:
+            DifyClientError: If no rubrics exist in database with detailed guidance
         """
         # If no rubric_id provided, find first available rubric for user
         if rubric_id is None:
@@ -218,9 +237,25 @@ class DifyClient:
             )
 
             if not rubric:
-                raise DifyClientError("No rubrics found. Please upload a rubric first.")
+                raise DifyClientError(
+                    "No rubrics found in your library. "
+                    "Please upload a rubric first before submitting essays for analysis. "
+                    "Go to Rubric Library → Upload Rubric → Return to submit essay."
+                )
 
-            rubric_id = rubric.rubric_id
-            print(f"DEBUG: Using first available rubric ID: {rubric_id}")
+            print(f"DEBUG: Using first available rubric ID: {rubric.rubric_id}")
+            # Pass the MarkingRubric object, not the ID
+            return self.build_rubric_from_database(rubric, user)
 
-        return self.build_rubric_from_database(rubric_id, user)
+        # If rubric_id is provided, get the rubric object first
+        try:
+            rubric = MarkingRubric.objects.get(rubric_id=rubric_id)
+        except MarkingRubric.DoesNotExist:
+            raise DifyClientError(
+                f"Rubric with ID {rubric_id} not found in your library. "
+                "Please select a valid rubric from the dropdown."
+            )
+
+        print(f"DEBUG: Using provided rubric ID: {rubric_id}")
+        # Pass the MarkingRubric object, not the ID
+        return self.build_rubric_from_database(rubric, user)
