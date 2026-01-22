@@ -194,7 +194,7 @@ import {
             onClick={() => setShowInfo(!showInfo)}
             className='text-muted-foreground hover:text-foreground'
           >
-            <InfoCicle className="h-4 w-4 mr-2" />
+            <InfoCircle className="h-4 w-4 mr-2" />
             <span className="text-sm font-medium">
               {showInfo ? 'Hide Information' : 'Understanding This Rubric'}
             </span>
