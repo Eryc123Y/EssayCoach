@@ -1,14 +1,15 @@
 import os
 import sys
-import django
 from pathlib import Path
+
+import django
 
 # Setup Django environment
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "essay_coach.settings")
 django.setup()
 
-from ai_feedback.client import DifyClient
+from ai_feedback.client import DifyClient  # noqa: E402
 
 
 def test_dify():

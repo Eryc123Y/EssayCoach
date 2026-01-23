@@ -1,13 +1,14 @@
 """Tests for RubricManager."""
 
 from decimal import Decimal
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 import pytest
-from ai_feedback.rubric_parser import RubricParseError, SiliconFlowRubricParser
+from django.core.files.uploadedfile import SimpleUploadedFile
+
+from ai_feedback.rubric_parser import SiliconFlowRubricParser
 from core.models import MarkingRubric, RubricItem, RubricLevelDesc, User
 from core.rubric_manager import RubricImportError, RubricManager
-from django.core.files.uploadedfile import SimpleUploadedFile
 
 
 @pytest.fixture

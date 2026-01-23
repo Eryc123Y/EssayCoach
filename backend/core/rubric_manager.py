@@ -234,7 +234,8 @@ class RubricManager:
                             f"{level['score_min']}-{level['score_max']}"
                         )
                     logger.info(
-                        f"Allowed special score range {level['score_min']}-{level['score_max']} for level: '{level.get('name')}'"
+                        f"Allowed special score range {level['score_min']}-"
+                        f"{level['score_max']} for level: '{level.get('name')}'"
                     )
 
         if not (Decimal("99") <= total_weight <= Decimal("101")):
@@ -327,7 +328,7 @@ class RubricManager:
             # Since we need ordering, doing it in Python is efficient for small sets like rubric levels
             levels = sorted(
                 item.rubricleveldesc_set.all(),
-                key=lambda l: l.level_max_score,
+                key=lambda level: level.level_max_score,
                 reverse=True,
             )
 

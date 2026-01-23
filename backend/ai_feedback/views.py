@@ -1,9 +1,8 @@
 from __future__ import annotations
 
-from django.conf import settings
 from drf_spectacular.utils import OpenApiExample, OpenApiResponse, extend_schema
 from rest_framework import status
-from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
@@ -29,8 +28,9 @@ class WorkflowRunView(APIView):
         summary="Run the Essay Agent Dify workflow",
         description=(
             "Triggers the Essay Agent workflow using Dify. Provide `essay_question` and "
-            "`essay_content`; the API automatically sends `rubric.pdf` as the `essay_rubric` "
-            "file input. Optional `language` and `response_mode` (blocking or streaming) are supported."
+            "`essay_content`; the API automatically sends `rubric.pdf` as the "
+            "`essay_rubric` file input. Optional `language` and `response_mode` "
+            "(blocking or streaming) are supported."
         ),
         request=DifyWorkflowRunSerializer,
         responses={
@@ -72,7 +72,8 @@ class WorkflowRunView(APIView):
         try:
             client = DifyClient()
             print(
-                f"DEBUG: DifyClient initialized. Key starts with: {client.api_key[:5] if client.api_key else 'None'}"
+                f"DEBUG: DifyClient initialized. Key starts with: "
+                f"{client.api_key[:5] if client.api_key else 'None'}"
             )
 
             user_id = serializer.validated_data["user_id"]

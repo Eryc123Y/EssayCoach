@@ -23,11 +23,10 @@ import django
 
 django.setup()
 
-from decimal import Decimal
-from ai_feedback.rubric_parser import SiliconFlowRubricParser, RubricParseError
-from core.rubric_manager import RubricManager, RubricImportError
-from core.models import User
-from django.core.files.uploadedfile import SimpleUploadedFile
+from django.core.files.uploadedfile import SimpleUploadedFile  # noqa: E402
+
+from ai_feedback.rubric_parser import SiliconFlowRubricParser  # noqa: E402
+from core.rubric_manager import RubricImportError, RubricManager  # noqa: E402
 
 
 def test_pdf_extraction():
@@ -208,7 +207,7 @@ def test_rubric_detection():
     if not is_rubric and "essay" in reason.lower():
         print(f"✅ PASS: Non-rubric detected: {reason}")
     else:
-        print(f"❌ FAIL: Non-rubric detection failed")
+        print("❌ FAIL: Non-rubric detection failed")
         return False
 
     return True
@@ -241,7 +240,10 @@ def test_imports():
     print("=" * 60)
 
     try:
-        from ai_feedback.rubric_parser import SiliconFlowRubricParser, RubricParseError
+        from ai_feedback.rubric_parser import (  # noqa: F401
+            RubricParseError,
+            SiliconFlowRubricParser,
+        )
 
         print("✅ PASS: ai_feedback.rubric_parser imported")
     except ImportError as e:
@@ -249,7 +251,10 @@ def test_imports():
         return False
 
     try:
-        from core.rubric_manager import RubricManager, RubricImportError
+        from core.rubric_manager import (  # noqa: F401
+            RubricImportError,
+            RubricManager,
+        )
 
         print("✅ PASS: core.rubric_manager imported")
     except ImportError as e:
@@ -257,10 +262,9 @@ def test_imports():
         return False
 
     try:
-        from core.serializers import (
-            RubricUploadSerializer,
-            RubricImportResponseSerializer,
+        from core.serializers import (  # noqa: F401
             RubricDetailSerializer,
+            RubricImportResponseSerializer,
         )
 
         print("✅ PASS: core.serializers (new serializers) imported")
@@ -269,7 +273,8 @@ def test_imports():
         return False
 
     try:
-        from core.views import RubricViewSet
+        # Import check only - not used in this test
+        from core.views import RubricViewSet  # noqa: F401
 
         print("✅ PASS: core.views.RubricViewSet imported")
     except ImportError as e:

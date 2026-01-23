@@ -3,11 +3,11 @@ Simple DNS bypass for SiliconFlow API using raw sockets.
 This bypasses broken DNS resolution by connecting directly to the known IP address.
 """
 
-import socket
-import ssl
 import json
 import os
-from typing import Optional, Dict, Any
+import socket
+import ssl
+from typing import Any
 
 # Known IP addresses for APIs with DNS resolution issues
 KNOWN_HOSTS = {
@@ -21,10 +21,10 @@ def make_http_request(
     ip_address: str,
     port: int = 443,
     method: str = "GET",
-    headers: Optional[Dict[str, str]] = None,
-    body: Optional[str] = None,
+    headers: dict[str, str] | None = None,
+    body: str | None = None,
     timeout: float = 30.0,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Make an HTTP request using raw socket connection.
 
@@ -76,7 +76,7 @@ def make_http_request(
             if not chunk:
                 break
             response_data += chunk
-        except socket.timeout:
+        except TimeoutError:
             break
 
     # Close connection
@@ -119,9 +119,9 @@ def siliconflow_request(
     endpoint: str,
     api_key: str,
     method: str = "GET",
-    body: Optional[Dict[str, Any]] = None,
+    body: dict[str, Any] | None = None,
     timeout: float = 30.0,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     """
     Make a request to the SiliconFlow API.
 

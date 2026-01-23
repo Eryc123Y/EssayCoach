@@ -111,7 +111,11 @@ REST_FRAMEWORK = {
 # drf-spectacular settings for OpenAPI 3.0 documentation
 SPECTACULAR_SETTINGS = {
     "TITLE": "EssayCoach API",
-    "DESCRIPTION": "Comprehensive REST API documentation for EssayCoach - An intelligent essay feedback platform that leverages AI to provide students with instant, in-depth, multi-dimensional essay feedback.",
+    "DESCRIPTION": (
+        "Comprehensive REST API documentation for EssayCoach - An intelligent "
+        "essay feedback platform that leverages AI to provide students with "
+        "instant, in-depth, multi-dimensional essay feedback."
+    ),
     "VERSION": "1.0.0",
     "SERVE_INCLUDE_SCHEMA": False,
     "COMPONENT_SPLIT_REQUEST": True,
@@ -129,11 +133,17 @@ SPECTACULAR_SETTINGS = {
         {"name": "Users", "description": "User management endpoints"},
         {
             "name": "Courses",
-            "description": "Course structure management (Units, Classes, Enrollments, Teaching Assignments)",
+            "description": (
+                "Course structure management (Units, Classes, Enrollments, "
+                "Teaching Assignments)"
+            ),
         },
         {
             "name": "Rubrics",
-            "description": "Rubric configuration and management (Marking Rubrics, Rubric Items, Rubric Level Descriptions)",
+            "description": (
+                "Rubric configuration and management (Marking Rubrics, "
+                "Rubric Items, Rubric Level Descriptions)"
+            ),
         },
         {"name": "Tasks", "description": "Assignment and task management"},
         {"name": "Submissions", "description": "Student submission management"},

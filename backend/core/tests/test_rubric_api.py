@@ -3,11 +3,12 @@
 from unittest.mock import MagicMock, patch
 
 import pytest
-from core.models import MarkingRubric, RubricItem, RubricLevelDesc, User
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APIClient
+
+from core.models import MarkingRubric, RubricItem, RubricLevelDesc, User
 
 
 @pytest.fixture

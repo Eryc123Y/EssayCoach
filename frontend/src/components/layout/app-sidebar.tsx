@@ -31,7 +31,6 @@ import {
 } from '@/components/ui/sidebar';
 import { UserAvatarProfile } from '@/components/user-avatar-profile';
 import { navItems } from '@/constants/data';
-import { useMediaQuery } from '@/hooks/use-media-query';
 import { useAuth } from '@/components/layout/simple-auth-context';
 import {
   IconBell,

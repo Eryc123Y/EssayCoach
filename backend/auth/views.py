@@ -2,27 +2,26 @@
 API views for authentication endpoints.
 """
 
-from typing import Dict, Any, List, Union, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from django.contrib.auth import get_user_model
-from drf_spectacular.utils import extend_schema, OpenApiExample, OpenApiResponse
+from drf_spectacular.utils import OpenApiExample, OpenApiResponse, extend_schema
 from rest_framework import status
 from rest_framework.authtoken.models import Token
-from rest_framework.decorators import api_view, permission_classes
 from rest_framework.permissions import AllowAny, IsAuthenticated
 from rest_framework.request import Request
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
 from .serializers import (
-    UserRegistrationSerializer,
-    UserLoginSerializer,
-    PasswordResetSerializer,
     PasswordChangeSerializer,
+    PasswordResetSerializer,
+    UserLoginSerializer,
     UserProfileSerializer,
+    UserRegistrationSerializer,
     UserUpdateSerializer,
 )
-from .utils import format_success_response, format_error_response, get_or_create_token
+from .utils import format_error_response, format_success_response, get_or_create_token
 
 # Use TYPE_CHECKING to provide type hints while maintaining runtime flexibility.
 if TYPE_CHECKING:
@@ -42,7 +41,10 @@ class RegisterView(APIView):
     @extend_schema(
         tags=["Authentication"],
         summary="Register a new user",
-        description="Create a new user account and receive an authentication token. The user will be assigned the 'student' role by default if not specified.",
+        description=(
+            "Create a new user account and receive an authentication token. "
+            "The user will be assigned the 'student' role by default if not specified."
+        ),
         request=UserRegistrationSerializer,
         responses={
             201: OpenApiResponse(
@@ -85,16 +87,16 @@ class RegisterView(APIView):
             token: Token = get_or_create_token(user)
 
             # Serialize user data
-            user_data: Dict[str, Any] = UserProfileSerializer(user).data
+            user_data: dict[str, Any] = UserProfileSerializer(user).data
 
-            response_data: Dict[str, Any] = format_success_response(
+            response_data: dict[str, Any] = format_success_response(
                 data={"token": token.key, "user": user_data},
                 message="User registered successfully",
             )
             return Response(response_data, status=status.HTTP_201_CREATED)
 
         # Handle validation errors
-        errors: Dict[str, Any] = serializer.errors
+        errors: dict[str, Any] = serializer.errors
 
         # Check for email uniqueness error
         if "email" in errors:
@@ -138,7 +140,10 @@ class LoginView(APIView):
     @extend_schema(
         tags=["Authentication"],
         summary="User login",
-        description="Authenticate a user with email and password. Returns an authentication token and user profile information.",
+        description=(
+            "Authenticate a user with email and password. Returns an authentication "
+            "token and user profile information."
+        ),
         request=UserLoginSerializer,
         responses={
             200: OpenApiResponse(
@@ -181,15 +186,15 @@ class LoginView(APIView):
             token: Token = get_or_create_token(user)
 
             # Serialize user data
-            user_data: Dict[str, Any] = UserProfileSerializer(user).data
+            user_data: dict[str, Any] = UserProfileSerializer(user).data
 
-            response_data: Dict[str, Any] = format_success_response(
+            response_data: dict[str, Any] = format_success_response(
                 data={"token": token.key, "user": user_data}
             )
             return Response(response_data, status=status.HTTP_200_OK)
 
         # Handle validation errors
-        errors: Dict[str, Any] = serializer.errors
+        errors: dict[str, Any] = serializer.errors
 
         if "non_field_errors" in errors:
             error_list = errors["non_field_errors"]

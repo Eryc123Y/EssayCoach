@@ -7,7 +7,5 @@ export const metadata: Metadata = {
 };
 
 export default async function Page() {
-  const stars = 3000;
-
-  return <SignInViewPage stars={stars} />;
+  return <SignInViewPage />;
 }

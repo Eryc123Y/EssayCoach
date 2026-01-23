@@ -5,9 +5,9 @@ This adapter resolves api.siliconflow.ai to a known working IP address with prop
 
 import socket
 import ssl
+
 import requests
 from requests.adapters import HTTPAdapter
-from urllib3.connectionpool import HTTPSConnectionPool
 from urllib3.poolmanager import PoolManager
 
 # Known IP addresses for APIs with DNS resolution issues
@@ -43,8 +43,8 @@ class SNIBypassPoolManager(PoolManager):
 
     def _make_custom_connection(self, hostname, ip, port, scheme):
         """Create a connection with proper SNI."""
-        from urllib3.util.timeout import Timeout
         from urllib3.util.retry import Retry
+        from urllib3.util.timeout import Timeout
 
         # Create SSL context with proper SNI
         ssl_context = ssl.create_default_context()
@@ -144,6 +144,7 @@ def make_request_with_dns_bypass(url, **kwargs):
 # For testing
 if __name__ == "__main__":
     import os
+
     from dotenv import load_dotenv
 
     load_dotenv("/Users/eric/Documents/GitHub/EssayCoach/.env")

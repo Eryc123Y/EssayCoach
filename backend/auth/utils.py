@@ -1,7 +1,7 @@
 """
 Utility functions for authentication app.
 """
-from typing import Dict, Any, Optional, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from django.contrib.auth import get_user_model
 from rest_framework.authtoken.models import Token
@@ -20,20 +20,20 @@ else:
 
 
 def format_success_response(
-    data: Dict[str, Any], 
-    message: Optional[str] = None
-) -> Dict[str, Any]:
+    data: dict[str, Any],
+    message: str | None = None
+) -> dict[str, Any]:
     """
     Format a successful API response.
-    
+
     Args:
         data: Response data dictionary
         message: Optional success message
-    
+
     Returns:
         dict: Formatted response
     """
-    response: Dict[str, Any] = {
+    response: dict[str, Any] = {
         "success": True,
         "data": data
     }
@@ -45,28 +45,28 @@ def format_success_response(
 def format_error_response(
     code: str,
     message: str,
-    details: Optional[Dict[str, Any]] = None,
+    details: dict[str, Any] | None = None,
     status_code: int = 400
 ) -> Response:
     """
     Format an error API response.
-    
+
     Args:
         code: Error code string
         message: Error message
         details: Optional error details dictionary
         status_code: HTTP status code
-    
+
     Returns:
         Response: DRF Response object with error format
     """
-    error: Dict[str, Any] = {
+    error: dict[str, Any] = {
         "code": code,
         "message": message
     }
     if details:
         error["details"] = details
-    
+
     return Response(
         {
             "success": False,
@@ -79,10 +79,10 @@ def format_error_response(
 def get_or_create_token(user: User) -> Token:
     """
     Get or create a token for a user.
-    
+
     Args:
         user: User instance
-    
+
     Returns:
         Token: Token object
     """

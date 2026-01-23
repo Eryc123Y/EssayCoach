@@ -1,8 +1,11 @@
 import os
+
 import django
+
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "essay_coach.settings")
 django.setup()
-from core.models import MarkingRubric, RubricItem
+from core.models import MarkingRubric  # noqa: E402
+
 rubric = MarkingRubric.objects.get(rubric_id=5)
 print(f"Rubric: {rubric.rubric_desc}")
 try:

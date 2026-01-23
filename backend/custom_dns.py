@@ -4,9 +4,7 @@ This module provides DNS resolution using dnspython (when available)
 or falls back to a predefined mapping of known API hostnames to IP addresses.
 """
 
-import os
 import socket
-from typing import Optional, List, Tuple
 
 # Predefined IP mappings for APIs that have DNS resolution issues
 # These are fetched from reliable DNS sources (Google DNS, Cloudflare DNS)
@@ -16,9 +14,9 @@ KNOWN_HOSTS = {
 
 # Try to import dnspython for proper DNS resolution
 try:
-    import dns.resolver
-    import dns.query
     import dns.message
+    import dns.query
+    import dns.resolver
 
     DNSPYTHON_AVAILABLE = True
 except ImportError:
@@ -29,7 +27,7 @@ class CustomDNSResolver:
     """Custom DNS resolver that bypasses broken system DNS."""
 
     @staticmethod
-    def resolve(hostname: str, port: int = 443) -> Optional[str]:
+    def resolve(hostname: str, port: int = 443) -> str | None:
         """
         Resolve a hostname to an IP address.
 
@@ -77,7 +75,7 @@ class CustomDNSResolver:
         type_: int = socket.SOCK_STREAM,
         proto: int = 0,
         flags: int = 0,
-    ) -> List[Tuple]:
+    ) -> list[tuple]:
         """
         Custom getaddrinfo implementation that bypasses broken system DNS.
 

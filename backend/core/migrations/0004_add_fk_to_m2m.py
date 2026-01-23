@@ -1,13 +1,12 @@
 from django.db import migrations
 
-
 ADD_FKS_SQL = r'''
 DO $$
 BEGIN
     -- Only proceed if tables exist
     IF EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'core_user_groups') AND
        EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'auth_group') THEN
-        
+
         IF NOT EXISTS (
             SELECT 1 FROM pg_constraint WHERE conname = 'core_user_groups_group_fk'
         ) THEN

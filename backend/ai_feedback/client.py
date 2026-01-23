@@ -3,12 +3,11 @@ from __future__ import annotations
 import json
 import os
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 import requests
-from django.conf import settings
 
-from core.models import MarkingRubric, RubricItem, RubricLevelDesc
+from core.models import MarkingRubric, RubricItem
 
 
 class DifyClientError(Exception):
@@ -25,10 +24,10 @@ class DifyClient:
             raise DifyClientError("DIFY_API_KEY must be set in the environment")
 
         self.base_url = os.environ.get("DIFY_BASE_URL", "https://api.dify.ai/v1")
-        self._rubric_upload_cache: Dict[str, str] = {}
+        self._rubric_upload_cache: dict[str, str] = {}
 
     @property
-    def headers(self) -> Dict[str, str]:
+    def headers(self) -> dict[str, str]:
         return {
             "Authorization": f"Bearer {self.api_key}",
         }
@@ -76,7 +75,7 @@ class DifyClient:
         self._rubric_upload_cache[cache_key] = upload_id
         return upload_id
 
-    def build_rubric_file_input(self, upload_file_id: str) -> Dict[str, Any]:
+    def build_rubric_file_input(self, upload_file_id: str) -> dict[str, Any]:
         return {
             "transfer_method": "local_file",
             "upload_file_id": upload_file_id,
@@ -85,15 +84,15 @@ class DifyClient:
 
     def run_workflow(
         self,
-        inputs: Dict[str, Any],
+        inputs: dict[str, Any],
         user: str,
         response_mode: str = "blocking",
-        trace_id: Optional[str] = None,
-    ) -> Dict[str, Any]:
+        trace_id: str | None = None,
+    ) -> dict[str, Any]:
         if response_mode not in {"blocking", "streaming"}:
             raise DifyClientError("response_mode must be 'blocking' or 'streaming'")
 
-        payload: Dict[str, Any] = {
+        payload: dict[str, Any] = {
             "inputs": inputs,
             "response_mode": response_mode,
             "user": user,
@@ -111,7 +110,7 @@ class DifyClient:
         self._raise_for_status(response)
         return response.json()
 
-    def get_workflow_run(self, workflow_run_id: str) -> Dict[str, Any]:
+    def get_workflow_run(self, workflow_run_id: str) -> dict[str, Any]:
         url = f"{self.base_url}/workflows/run/{workflow_run_id}"
         response = requests.get(url, headers={**self.headers, "Content-Type": "application/json"})
         self._raise_for_status(response)
@@ -131,7 +130,7 @@ class DifyClient:
             if temp_path.exists():
                 temp_path.unlink()
 
-    def build_rubric_from_database(self, rubric: MarkingRubric, user: str) -> Dict[str, Any]:
+    def build_rubric_from_database(self, rubric: MarkingRubric, user: str) -> dict[str, Any]:
         """
         Build rubric input for Dify from database MarkingRubric model.
 
@@ -214,7 +213,7 @@ Evaluation Criteria:
             if temp_path.exists():
                 temp_path.unlink()
 
-    def get_or_create_rubric_upload(self, user: str, rubric_id: int | None) -> Dict[str, Any]:
+    def get_or_create_rubric_upload(self, user: str, rubric_id: int | None) -> dict[str, Any]:
         """
         Get existing upload ID or create new one from database rubric.
 

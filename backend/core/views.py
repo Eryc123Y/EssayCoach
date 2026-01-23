@@ -1,9 +1,9 @@
-from drf_spectacular.utils import extend_schema, OpenApiParameter
-from rest_framework import viewsets, status
-from rest_framework.decorators import action
-from rest_framework.response import Response
-from rest_framework.permissions import IsAuthenticated
 from django.conf import settings
+from drf_spectacular.utils import extend_schema
+from rest_framework import status, viewsets
+from rest_framework.decorators import action
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
 
 from .models import (
     Class,
@@ -22,19 +22,19 @@ from .models import (
 from .serializers import (
     ClassSerializer,
     EnrollmentSerializer,
-    FeedbackSerializer,
     FeedbackItemSerializer,
+    FeedbackSerializer,
     MarkingRubricSerializer,
+    RubricDetailSerializer,
+    RubricImportResponseSerializer,
     RubricItemSerializer,
     RubricLevelDescSerializer,
+    RubricUploadSerializer,
     SubmissionSerializer,
     TaskSerializer,
     TeachingAssnSerializer,
     UnitSerializer,
     UserSerializer,
-    RubricUploadSerializer,
-    RubricImportResponseSerializer,
-    RubricDetailSerializer,
 )
 
 
@@ -121,7 +121,10 @@ class EnrollmentViewSet(viewsets.ModelViewSet):
 @extend_schema(
     tags=["Rubrics"],
     summary="Marking rubric management",
-    description="CRUD operations for marking rubrics. Rubrics define the criteria and structure for evaluating submissions.",
+    description=(
+        "CRUD operations for marking rubrics. Rubrics define the criteria and "
+        "structure for evaluating submissions."
+    ),
 )
 class MarkingRubricViewSet(viewsets.ModelViewSet):
     """
@@ -159,7 +162,10 @@ class RubricItemViewSet(viewsets.ModelViewSet):
 @extend_schema(
     tags=["Rubrics"],
     summary="Rubric level description management",
-    description="CRUD operations for rubric level descriptions. These define score ranges and their meanings for each rubric item.",
+    description=(
+        "CRUD operations for rubric level descriptions. These define score ranges "
+        "and their meanings for each rubric item."
+    ),
 )
 class RubricLevelDescViewSet(viewsets.ModelViewSet):
     """
@@ -198,7 +204,10 @@ class TaskViewSet(viewsets.ModelViewSet):
 @extend_schema(
     tags=["Submissions"],
     summary="Submission management",
-    description="CRUD operations for essay submissions. Students submit their work for tasks, which can then receive feedback.",
+    description=(
+        "CRUD operations for essay submissions. Students submit their work for "
+        "tasks, which can then receive feedback."
+    ),
 )
 class SubmissionViewSet(viewsets.ModelViewSet):
     """
@@ -238,7 +247,10 @@ class FeedbackViewSet(viewsets.ModelViewSet):
 @extend_schema(
     tags=["Feedback"],
     summary="Feedback item management",
-    description="CRUD operations for feedback items. Feedback items are individual scores and comments for each rubric criterion.",
+    description=(
+        "CRUD operations for feedback items. Feedback items are individual scores "
+        "and comments for each rubric criterion."
+    ),
 )
 class FeedbackItemViewSet(viewsets.ModelViewSet):
     """
@@ -297,8 +309,8 @@ class RubricViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=["post"])
     def import_from_pdf_with_ai(self, request):
         """Upload PDF → AI parse → Validate → Save to DB."""
-        from ai_feedback.rubric_parser import SiliconFlowRubricParser, RubricParseError
-        from core.rubric_manager import RubricManager, RubricImportError
+        from ai_feedback.rubric_parser import RubricParseError, SiliconFlowRubricParser
+        from core.rubric_manager import RubricImportError, RubricManager
 
         serializer = RubricUploadSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)

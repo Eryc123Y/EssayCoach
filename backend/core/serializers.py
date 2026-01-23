@@ -1,5 +1,6 @@
-from drf_spectacular.utils import extend_schema_serializer, OpenApiExample
+from drf_spectacular.utils import OpenApiExample, extend_schema_serializer
 from rest_framework import serializers
+
 from .models import (
     Class,
     Enrollment,

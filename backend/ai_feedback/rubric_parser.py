@@ -177,7 +177,9 @@ class SiliconFlowRubricParser:
             {"text_length": len(text)},
         )
         # endregion
-        system_prompt = """You are a rubric analysis expert. Analyze the following PDF text and determine if it's a marking rubric.
+        system_prompt = (
+            """You are a rubric analysis expert. Analyze the following PDF text """
+            """and determine if it's a marking rubric.
 
 If it IS a rubric, extract its structure in this EXACT JSON format:
 {
@@ -215,6 +217,7 @@ CRITICAL RULES:
 5. Score ranges must be non-overlapping and contiguous
 6. IMPORTANT: score_min must be STRICTLY LESS THAN score_max (e.g., 36-40 is valid, 0-0 is INVALID)
 7. If document structure is unclear, set is_rubric=false"""
+        )
 
         payload = {
             "model": self.model,
@@ -335,8 +338,9 @@ CRITICAL RULES:
                 # CRITICAL FIX: Ensure HTTPS_PROXY uses http:// protocol, not https://
                 # When using HTTP proxy for HTTPS connections, the entry protocol (client->proxy)
                 # must be HTTP, not HTTPS. The proxy handles the CONNECT method for HTTPS tunneling.
-                # If HTTPS_PROXY is set to https://, requests will try to establish TLS with the proxy,
-                # which most proxies (including Clash) don't support, causing SSLEOFError.
+                # If HTTPS_PROXY is set to https://, requests will try to establish TLS
+                # with the proxy, which most proxies (including Clash) don't support,
+                # causing SSLEOFError.
                 response = session.post(
                     self.api_url, headers=headers, json=payload, timeout=180
                 )

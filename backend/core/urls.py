@@ -1,19 +1,20 @@
-from django.urls import path, include
+from django.urls import include, path
 from rest_framework.routers import DefaultRouter
+
 from .views import (
-    UserViewSet,
-    UnitViewSet,
     ClassViewSet,
     EnrollmentViewSet,
+    FeedbackItemViewSet,
+    FeedbackViewSet,
     MarkingRubricViewSet,
     RubricItemViewSet,
     RubricLevelDescViewSet,
-    TaskViewSet,
-    SubmissionViewSet,
-    FeedbackViewSet,
-    FeedbackItemViewSet,
-    TeachingAssnViewSet,
     RubricViewSet,
+    SubmissionViewSet,
+    TaskViewSet,
+    TeachingAssnViewSet,
+    UnitViewSet,
+    UserViewSet,
 )
 
 router = DefaultRouter()

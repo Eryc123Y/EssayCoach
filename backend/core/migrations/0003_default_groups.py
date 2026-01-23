@@ -1,5 +1,4 @@
-from django.db import migrations
-from django.db import transaction
+from django.db import migrations, transaction
 
 
 def create_default_groups_and_map_roles(apps, schema_editor):

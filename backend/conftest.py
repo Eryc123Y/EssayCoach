@@ -3,8 +3,6 @@ Root pytest configuration for Django tests.
 """
 
 import os
-import pytest
-from unittest.mock import patch
 
 # Set this BEFORE importing django or settings
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "essay_coach.settings")

@@ -7,7 +7,6 @@ Run: python test_e2e_simple.py
 
 import sys
 from pathlib import Path
-from decimal import Decimal
 
 print("=" * 60)
 print("SIMPLE E2E VALIDATION TEST")
@@ -45,7 +44,7 @@ print("-" * 60)
 
 env_path = Path(__file__).parent.parent / ".env"
 if env_path.exists():
-    with open(env_path, "r") as f:
+    with open(env_path) as f:
         env_content = f.read()
 
     if "SILICONFLOW_API_KEY" in env_content:
@@ -69,7 +68,7 @@ print("-" * 60)
 
 settings_path = Path(__file__).parent / "essay_coach" / "settings.py"
 if settings_path.exists():
-    with open(settings_path, "r") as f:
+    with open(settings_path) as f:
         settings_content = f.read()
 
     checks = [
@@ -92,7 +91,7 @@ print("-" * 60)
 
 serializers_path = Path(__file__).parent / "core" / "serializers.py"
 if serializers_path.exists():
-    with open(serializers_path, "r") as f:
+    with open(serializers_path) as f:
         serializers_content = f.read()
 
     required_serializers = [
@@ -116,7 +115,7 @@ print("-" * 60)
 
 views_path = Path(__file__).parent / "core" / "views.py"
 if views_path.exists():
-    with open(views_path, "r") as f:
+    with open(views_path) as f:
         views_content = f.read()
 
     checks = [
@@ -139,7 +138,7 @@ print("-" * 60)
 
 urls_path = Path(__file__).parent / "core" / "urls.py"
 if urls_path.exists():
-    with open(urls_path, "r") as f:
+    with open(urls_path) as f:
         urls_content = f.read()
 
     if "RubricViewSet" in urls_content:

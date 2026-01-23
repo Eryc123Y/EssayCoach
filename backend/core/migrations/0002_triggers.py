@@ -1,5 +1,6 @@
 from django.db import migrations
 
+
 class Migration(migrations.Migration):
 
     dependencies = [
@@ -12,12 +13,12 @@ class Migration(migrations.Migration):
             CREATE OR REPLACE FUNCTION public.increase_class_size ()
                 RETURNS trigger
                 LANGUAGE plpgsql
-                VOLATILE 
+                VOLATILE
                 CALLED ON NULL INPUT
                 SECURITY INVOKER
                 PARALLEL UNSAFE
                 COST 1
-                AS 
+                AS
             $function$
             BEGIN
               UPDATE class
@@ -35,7 +36,7 @@ class Migration(migrations.Migration):
                 SECURITY INVOKER
                 PARALLEL UNSAFE
                 COST 1
-                AS 
+                AS
             $function$
             BEGIN
               UPDATE class
@@ -46,7 +47,7 @@ class Migration(migrations.Migration):
             $function$;
 
             CREATE OR REPLACE TRIGGER trg_increment_class_size
-                AFTER INSERT 
+                AFTER INSERT
                 ON public.enrollment
                 FOR EACH ROW
                 EXECUTE PROCEDURE public.increase_class_size();

@@ -4,8 +4,9 @@ import json
 from unittest.mock import MagicMock, patch
 
 import pytest
-from ai_feedback.rubric_parser import RubricParseError, SiliconFlowRubricParser
 from django.core.files.uploadedfile import SimpleUploadedFile
+
+from ai_feedback.rubric_parser import RubricParseError, SiliconFlowRubricParser
 
 
 @pytest.fixture

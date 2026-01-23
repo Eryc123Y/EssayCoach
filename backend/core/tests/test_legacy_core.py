@@ -3,25 +3,24 @@ Unit tests for the core app models, serializers, and API endpoints.
 Tests cover CRUD operations for all core models.
 """
 from datetime import timedelta
-from django.test import TestCase
-from django.utils import timezone
-from rest_framework.test import APITestCase, APIClient
-from rest_framework import status
 from decimal import Decimal
 
+from django.test import TestCase
+from django.utils import timezone
+
 from .models import (
-    User,
-    Unit,
     Class,
     Enrollment,
+    Feedback,
+    FeedbackItem,
     MarkingRubric,
     RubricItem,
     RubricLevelDesc,
-    Task,
     Submission,
-    Feedback,
-    FeedbackItem,
+    Task,
     TeachingAssn,
+    Unit,
+    User,
 )
 
 

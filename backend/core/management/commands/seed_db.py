@@ -1,6 +1,5 @@
-from django.core.management.base import BaseCommand
 from django.contrib.auth.hashers import make_password
-from django.db import connection
+from django.core.management.base import BaseCommand
 
 
 class Command(BaseCommand):
@@ -38,7 +37,7 @@ class Command(BaseCommand):
             except User.DoesNotExist:
                 user = User.objects.create(
                     user_email=email,
-                    user_fname=f"Student",
+                    user_fname="Student",
                     user_lname=f"{i}",
                     user_role="student",
                     user_status="active",
@@ -93,7 +92,7 @@ class Command(BaseCommand):
 
         # Summary
         print("\nSeed completed successfully!")
-        print(f"Summary:")
+        print("Summary:")
         print(f"  - Users: {User.objects.count()}")
         print(f"  - Units: {Unit.objects.count()}")
         print(f"  - Classes: {Class.objects.count()}")

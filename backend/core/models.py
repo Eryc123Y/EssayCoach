@@ -7,16 +7,15 @@
 # Feel free to rename the models, but don't rename db_table values or field names.
 from __future__ import annotations
 
-from typing import Any, TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 from django.contrib.auth.base_user import AbstractBaseUser, BaseUserManager
 from django.contrib.auth.models import PermissionsMixin
 from django.db import models
 from django.db.models import CheckConstraint, Q, UniqueConstraint
 
-
 if TYPE_CHECKING:
-    from django.db.models import Model
+    pass
 
 
 class Class(models.Model):
@@ -58,7 +57,10 @@ class Enrollment(models.Model):
                 name="user_id_class_id_unit_id_uq",
             )
         ]
-        db_table_comment = "The enrollment of student to a specific class. A student can only have one enrollment to one class of one unit anytime."
+        db_table_comment = (
+            "The enrollment of student to a specific class. A student can only have "
+            "one enrollment to one class of one unit anytime."
+        )
 
 
 class Feedback(models.Model):
