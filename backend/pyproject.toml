@@ -28,12 +28,15 @@ dev = [
     "ruff>=0.1,<1.0",
 ]
 
+[project.scripts]
+essaycoach = "essay_coach.__main__:main"
+
 [build-system]
 requires = ["setuptools", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools]
-packages = ["core", "essay_coach", "ai_feedback", "analytics"]
+packages = ["essay_coach", "core", "ai_feedback", "auth", "analytics"]
 
 [tool.uv]
 dev-dependencies = [

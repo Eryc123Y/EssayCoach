@@ -48,6 +48,7 @@ This documentation is organized for developers and contributors:
 - **Backend Deep Dive**: Django models, serializers, views, and async processing
 - **Frontend Architecture**: Next.js component structure and state management
 - **Agentic Workflow**: Plans for agentic design, orchestration, and technique stacks
+- **Project Planning**: Roadmaps, architecture tasks, and development plans
 - **Development Guide**: Setup instructions and contribution guidelines
 
 ## 🔄 Development Workflow
@@ -82,3 +83,5 @@ This documentation is organized for developers and contributors:
 - [Database Design](database/schema-overview.md)
 - [Database Configuration](database/configuration.md)
 - [Agentic Workflow](agentic-workflow/agentic-design.md)
+- [Project Roadmap](planning/roadmap.md)
+- [Architecture TODO](planning/architecture-todo.md)

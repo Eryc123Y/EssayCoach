@@ -10,6 +10,28 @@ export PGPORT=5432
 export PGDATABASE=essaycoach
 export PGUSER=postgres
 
+show_help() {
+    cat << EOF
+PostgreSQL Manager for EssayCoach
+
+Usage: $0 <command>
+
+Commands:
+    start     Start PostgreSQL container
+    stop      Stop PostgreSQL container
+    status    Show PostgreSQL status
+    shell     Connect to PostgreSQL shell
+    reset     Reset database (removes all data)
+    logs      Show PostgreSQL logs
+
+Examples:
+    $0 start      # Start PostgreSQL
+    $0 status     # Check status
+    $0 shell      # Connect to psql shell
+    $0 reset      # Reset database
+EOF
+}
+
 start_pg() {
     echo "[pg] Checking for existing processes on port $PGPORT..."
     if lsof -ti:$PGPORT >/dev/null 2>&1; then
@@ -21,10 +43,9 @@ start_pg() {
     if [ ! -d "$PGDATA" ]; then
         echo "[pg] Initializing PostgreSQL data directory..."
         mkdir -p "$PGDATA"
-        # Note: Data will be initialized by Docker on first run
     fi
 
-    if ! docker compose -f docker-compose.yml ps postgres | grep -q "Up"; then
+    if ! docker compose -f docker-compose.yml ps postgres 2>/dev/null | grep -q "Up"; then
         echo "[pg] Starting PostgreSQL..."
         if ! docker compose -f docker-compose.yml up -d postgres; then
             echo "[pg] ERROR: Failed to start PostgreSQL"
@@ -58,7 +79,7 @@ start_pg() {
 }
 
 stop_pg() {
-    if docker compose -f docker-compose.yml ps postgres | grep -q "Up"; then
+    if docker compose -f docker-compose.yml ps postgres 2>/dev/null | grep -q "Up"; then
         echo "[pg] Stopping PostgreSQL..."
         docker compose -f docker-compose.yml down
         echo "[pg] PostgreSQL stopped"
@@ -68,7 +89,7 @@ stop_pg() {
 }
 
 status_pg() {
-    if docker compose -f docker-compose.yml ps postgres | grep -q "Up"; then
+    if docker compose -f docker-compose.yml ps postgres 2>/dev/null | grep -q "Up"; then
         echo "[pg] PostgreSQL is running on port $PGPORT"
         docker compose -f docker-compose.yml ps postgres
     else
@@ -77,7 +98,7 @@ status_pg() {
 }
 
 connect_pg() {
-    if ! docker compose -f docker-compose.yml ps postgres | grep -q "Up"; then
+    if ! docker compose -f docker-compose.yml ps postgres 2>/dev/null | grep -q "Up"; then
         echo "[pg] ERROR: PostgreSQL is not running"
         exit 1
     fi
@@ -92,11 +113,17 @@ reset_pg() {
     start_pg
 }
 
+logs_pg() {
+    docker compose -f docker-compose.yml logs -f postgres
+}
+
 case "${1:-start}" in
     start)   start_pg ;;
     stop)    stop_pg ;;
-    status)   status_pg ;;
-    connect)  connect_pg ;;
-    reset)    reset_pg ;;
-    *)        echo "Usage: $0 {start|stop|status|connect|reset}" ;;
+    status)  status_pg ;;
+    shell)   connect_pg ;;
+    reset)   reset_pg ;;
+    logs)    logs_pg ;;
+    help|--help|-h) show_help ;;
+    *)       echo "Unknown command: $1" && show_help && exit 1 ;;
 esac

@@ -2,8 +2,9 @@
 
 # Install all dependencies
 install:
-	@echo "Installing dependencies..."
-	@cd backend && uv venv --no-project && uv pip install -e .
+	@echo "Installing Python dependencies (in root .venv)..."
+	@uv venv .venv && uv pip install -e backend/
+	@echo "Installing Node dependencies..."
 	@cd frontend && pnpm install
 
 # Start all services (backend, frontend, and db)
@@ -30,47 +31,47 @@ dev: db
 dev-backend:
 	@echo "Starting Django backend on http://127.0.0.1:8000..."
 	@echo "📚 API Docs available at: http://127.0.0.1:8000/api/schema/"
-	@cd backend && uv run python manage.py runserver 127.0.0.1:8000
+	@./.venv/bin/python backend/manage.py runserver 127.0.0.1:8000
 
 # Start frontend only
 dev-frontend:
 	@echo "Starting Next.js frontend on port 5100..."
 	@cd frontend && pnpm dev
 
- # Database management (Docker Compose)
+# Database management (Docker Compose)
 db:
 	@echo "Starting PostgreSQL (Docker Compose)..."
 	@docker compose up -d postgres
 
- db-stop:
+db-stop:
 	@echo "Stopping PostgreSQL..."
 	@docker compose stop postgres
 
- db-status:
+db-status:
 	@docker compose ps postgres
 
- db-shell:
+db-shell:
 	@docker compose exec postgres psql -U postgres -d essaycoach
 
- db-reset:
+db-reset:
 	@docker compose down -v && docker compose up -d postgres
 
 # Django management
 migrate:
 	@echo "Running Django migrations..."
-	@cd backend && uv run python manage.py migrate
+	@./.venv/bin/python backend/manage.py migrate
 
 createsuperuser:
 	@echo "Creating Django superuser..."
-	@cd backend && uv run python manage.py createsuperuser
+	@./.venv/bin/python backend/manage.py createsuperuser
 
 shell:
 	@echo "Opening Django shell..."
-	@cd backend && uv run python manage.py shell
+	@./.venv/bin/python backend/manage.py shell
 
 seed-db:
 	@echo "Seeding database with initial data..."
-	@cd backend && uv run python manage.py seed_db
+	@./.venv/bin/python backend/manage.py seed_db
 	@echo ""
 	@echo "✅ Database seeded successfully!"
 	@echo "👤 Admin login: admin@example.com / admin"
@@ -78,29 +79,37 @@ seed-db:
 
 # Testing
 test:
-	@echo "Running all tests..."
-	@cd backend && uv run pytest
+	@echo "Running Python tests..."
+	@./.venv/bin/pytest backend/
+	@echo ""
+	@echo "Running Node tests..."
 	@cd frontend && pnpm test
 
 # Code quality
 lint:
-	@echo "Running linters..."
-	@cd backend && uv run ruff check .
+	@echo "Running Python linter..."
+	@./.venv/bin/ruff check backend/
+	@echo ""
+	@echo "Running Node linter..."
 	@cd frontend && pnpm lint
 
 lint-fix:
-	@echo "Auto-fixing lint issues..."
-	@cd backend && uv run ruff check --fix .
+	@echo "Auto-fixing Python lint issues..."
+	@./.venv/bin/ruff check --fix backend/
+	@echo ""
+	@echo "Auto-fixing Node lint issues..."
 	@cd frontend && pnpm lint:fix
 
 format:
-	@echo "Formatting code..."
-	@cd backend && uv run black .
+	@echo "Formatting Python code..."
+	@./.venv/bin/black backend/
+	@echo ""
+	@echo "Formatting Node code..."
 	@cd frontend && pnpm format
 
 typecheck:
-	@echo "Running type checking..."
-	@cd backend && uv run mypy .
+	@echo "Running Python type checking..."
+	@./.venv/bin/mypy backend/
 
 # Build
 build:
@@ -109,8 +118,9 @@ build:
 
 # Cleanup
 clean:
-	@echo "Cleaning up..."
-	@cd backend && rm -rf .venv __pycache__ .pytest_cache .ruff_cache .mypy_cache
+	@echo "Cleaning up Python cache..."
+	@rm -rf .venv __pycache__ .pytest_cache .ruff_cache .mypy_cache
+	@echo "Cleaning up Node cache..."
 	@cd frontend && rm -rf node_modules .next
 
 # Docker management (for PostgreSQL)
@@ -129,3 +139,8 @@ docker-logs:
 docker-logs-pg:
 	@echo "Showing PostgreSQL logs..."
 	@docker compose logs -f postgres
+
+# Documentation
+docs:
+	@echo "Starting documentation server..."
+	./.venv/bin/mkdocs serve

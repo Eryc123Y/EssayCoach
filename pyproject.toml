@@ -1,0 +1,21 @@
+# EssayCoach Project Configuration
+#
+# This file provides project-level configuration for tools like ruff, mypy, and black.
+# All Python dependencies are managed in backend/pyproject.toml
+#
+# For development:
+#   make install        # Install all dependencies
+#   cd backend && uv pip install -e .  # Install backend dependencies
+
+[tool.ruff]
+target-version = "py312"
+line-length = 100
+select = ["E", "F", "I", "N", "W", "UP"]
+
+[tool.mypy]
+python_version = "3.12"
+strict = true
+
+[tool.black]
+line-length = 100
+target-version = ['py312']

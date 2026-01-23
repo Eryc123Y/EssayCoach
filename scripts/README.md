@@ -1,79 +1,77 @@
-# Docker Setup
+# Scripts Usage Guide
 
-## Local Development
+This directory contains scripts for managing EssayCoach development environment.
 
-### Prerequisites
-- Docker
-- Docker Compose
+## Directory Structure
 
-### Start PostgreSQL
-
-From project root:
-```bash
-make db
+```
+scripts/
+├── db/
+│   └── postgres-manager.sh   # PostgreSQL management (Docker Compose)
+├── dev/
+│   ├── start-all.sh          # Start all services
+│   ├── start-backend.sh      # Start backend only
+│   └── start-frontend.sh     # Start frontend only
+└── README.md                 # This file
 ```
 
-Or directly:
-```bash
-docker compose up -d postgres
-```
+## Database Management (`scripts/db/`)
 
-### Check Status
+Use the PostgreSQL manager to control the database:
 
 ```bash
-make db-status
+# Start database
+./scripts/db/postgres-manager.sh start
+
+# Stop database
+./scripts/db/postgres-manager.sh stop
+
+# Check status
+./scripts/db/postgres-manager.sh status
+
+# Access shell
+./scripts/db/postgres-manager.sh shell
+
+# Reset database (removes all data)
+./scripts/db/postgres-manager.sh reset
+
+# View logs
+./scripts/db/postgres-manager.sh logs
 ```
 
-Or:
-```bash
-docker compose ps
-```
-
-### Access Database Shell
-
-```bash
-make db-shell
-```
-
-Or:
-```bash
-docker compose exec postgres psql -U postgres -d essaycoach
-```
-
-### Reset Database
-
-```bash
-make db-reset
-```
-
-Or:
-```bash
-docker compose down -v
-docker compose up -d postgres
-```
-
-### View Logs
+## Development Services (`scripts/dev/`)
 
 ```bash
-make docker-logs-pg
+# Start all services (database, backend, frontend)
+./scripts/dev/start-all.sh
+
+# Start backend only
+./scripts/dev/start-backend.sh
+
+# Start frontend only
+./scripts/dev/start-frontend.sh
 ```
 
-Or:
+## Alternative: Use Makefile
+
+The Makefile provides convenient shortcuts for common commands:
+
 ```bash
-docker compose logs -f postgres
+make db              # Start database
+make db-stop         # Stop database
+make db-status       # Check database status
+make db-shell        # Access database shell
+make db-reset        # Reset database
+
+make dev-backend     # Start backend only
+make dev-frontend    # Start frontend only
+make dev             # Start all services (database + backend + frontend)
+
+make install         # Install dependencies
+make test            # Run tests
+make lint            # Run linters
 ```
 
-### Configuration
+## Environment Variables
 
-PostgreSQL settings in `docker-compose.yml`:
-- Image: postgres:17
-- Port: 5432
-- Database: essaycoach
-- User: postgres
-- Password: postgres
-
-Data is persisted in Docker volume `pg_data`.
-
-### Production Note
-
-In production, this project will use cloud PostgreSQL. This Docker configuration is for local development only.
+See [docs/development/configuration.md](../docs/development/configuration.md) for environment variable configuration.
