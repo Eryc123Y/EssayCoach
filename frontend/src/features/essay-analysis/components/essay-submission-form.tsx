@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { motion } from 'framer-motion';
+import { motion } from 'motion/react';
 import { Sparkles, ArrowRight, Loader2, BookOpen } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -179,21 +179,20 @@ export function EssaySubmissionForm({
             </CardContent>
 
             <CardFooter className='flex justify-end border-t border-slate-100 bg-slate-50/50 px-8 py-6 dark:border-slate-800 dark:bg-slate-900/50'>
+
               <Button
                 type='submit'
                 size='lg'
                 disabled={!question || !content || isSubmitting}
                 className={cn(
-                  'group/btn relative h-14 transform overflow-hidden px-8 text-lg font-bold tracking-wide transition-all duration-500 ease-out hover:scale-[1.03]',
-                  'bg-gradient-to-r from-indigo-600 via-violet-600 to-fuchsia-600 text-white',
-                  'shadow-lg shadow-indigo-500/25 hover:shadow-indigo-500/40',
-                  'rounded-xl border-0',
+                  'group/btn relative h-14 px-8 text-lg font-semibold tracking-wide transition-all duration-300',
+                  'rounded-xl border border-slate-200 bg-slate-900 text-white shadow-sm hover:bg-slate-800',
+                  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400/40',
+                  'dark:border-slate-700 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-white',
                   (!question || !content || isSubmitting) &&
-                    'cursor-not-allowed opacity-50 grayscale hover:scale-100'
+                    'cursor-not-allowed border-slate-200 bg-slate-200 text-slate-500 shadow-none dark:border-slate-800 dark:bg-slate-800 dark:text-slate-400'
                 )}
               >
-                <div className='absolute inset-0 translate-y-full bg-white/20 transition-transform duration-300 group-hover/btn:translate-y-0' />
-
                 {isSubmitting ? (
                   <>
                     <Loader2 className='mr-2 h-5 w-5 animate-spin' />
@@ -201,7 +200,7 @@ export function EssaySubmissionForm({
                   </>
                 ) : (
                   <>
-                    <Sparkles className='mr-2 h-5 w-5 animate-pulse' />
+                    <Sparkles className='mr-2 h-5 w-5' />
                     Start AI Analysis
                     <ArrowRight className='ml-2 h-5 w-5 transition-transform group-hover/btn:translate-x-1' />
                   </>

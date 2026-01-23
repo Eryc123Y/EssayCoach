@@ -8,6 +8,7 @@ import React, {
 } from 'react';
 
 type SimpleUser = {
+  id: string;
   email: string;
   firstName: string;
   lastName: string;
@@ -38,10 +39,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const email = readCookie('user_email');
     const firstName = readCookie('user_first_name');
     const lastName = readCookie('user_last_name');
+    const userId = readCookie('user_id');
     const isLoggedIn = Boolean(readCookie('access_token'));
 
     if (isLoggedIn && email) {
-      setUser({ email, firstName, lastName });
+      setUser({ id: userId || '1', email, firstName, lastName });
     } else {
       setUser(null);
     }

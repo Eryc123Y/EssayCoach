@@ -15,7 +15,7 @@ import { cn } from '@/lib/utils';
 
 export interface Insight {
   id: string;
-  type: 'critical' | 'suggestion' | 'strength';
+  type: 'critical' | 'suggestion' | 'strength' | 'info';
   category: string;
   title: string;
   description: string;
@@ -35,6 +35,8 @@ export function InsightsList({ insights }: InsightsListProps) {
         return <Lightbulb className='h-5 w-5 text-amber-500' />;
       case 'strength':
         return <CheckCircle2 className='h-5 w-5 text-green-500' />;
+      case 'info':
+        return <ArrowRight className='h-5 w-5 text-blue-500' />;
     }
   };
 
@@ -46,6 +48,8 @@ export function InsightsList({ insights }: InsightsListProps) {
         return 'border-l-amber-500';
       case 'strength':
         return 'border-l-green-500';
+      case 'info':
+        return 'border-l-blue-500';
     }
   };
 

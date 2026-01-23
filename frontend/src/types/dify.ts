@@ -31,6 +31,7 @@ export interface DifyWorkflowRunResponse {
         suggestion: string;
         explanation: string;
       }>;
+      text?: string; // Fallback for markdown text output
     };
   };
   inputs?: DifyWorkflowRunRequest;

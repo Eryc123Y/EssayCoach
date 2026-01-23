@@ -74,7 +74,6 @@ export default function AppSidebar() {
           tenants={classes}
           defaultTenant={activeClass}
           onTenantSwitch={() => {}}
-          label='Active Class'
         />
       </SidebarHeader>
       <SidebarContent className='overflow-x-hidden'>

@@ -26,7 +26,7 @@ export const navItems: NavItem[] = [
       {
         title: 'History 101',
         url: '/dashboard/classes/history-101',
-        icon: 'clock',
+        icon: 'history',
         shortcut: ['h', '1']
       }
     ]

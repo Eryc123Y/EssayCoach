@@ -30,8 +30,8 @@ export default async function RootLayout({
   children: React.ReactNode;
 }) {
   // const cookieStore = await cookies();
-  const activeThemeValue = undefined;
-  const isScaled = activeThemeValue?.endsWith('-scaled');
+  const activeThemeValue: string | undefined = undefined;
+  const isScaled = false; // activeThemeValue is undefined, so scaled theme is not active
 
   return (
     <html lang='en' suppressHydrationWarning>
@@ -65,7 +65,7 @@ export default async function RootLayout({
             disableTransitionOnChange
             enableColorScheme
           >
-            <Providers activeThemeValue={activeThemeValue as string}>
+            <Providers activeThemeValue={activeThemeValue as unknown as string}>
               <Toaster />
               {children}
             </Providers>

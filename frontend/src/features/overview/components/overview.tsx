@@ -15,7 +15,7 @@ import { PieGraph } from './pie-graph';
 import { RecentSubmissions } from './recent-submissions';
 import {
   IconTrendingUp,
-  IconBookOpen,
+  IconBook,
   IconPlus,
   IconFileAnalytics,
   IconSchool
@@ -47,7 +47,7 @@ export default function OverViewPage() {
                 variant='outline'
                 className='text-foreground gap-2 border-slate-200 hover:bg-slate-100 dark:border-slate-800 dark:hover:bg-slate-800'
               >
-                <IconBookOpen className='size-4' />
+                <IconBook className='size-4' />
                 View Rubrics
               </Button>
               <Button className='gap-2 bg-gradient-to-r from-indigo-600 to-violet-600 shadow-md transition-all hover:from-indigo-700 hover:to-violet-700 hover:shadow-lg'>
@@ -144,7 +144,7 @@ export default function OverViewPage() {
               >
                 <CardHeader className='pb-2'>
                   <CardDescription className='flex items-center gap-2 font-medium text-fuchsia-600/80 dark:text-fuchsia-400/80'>
-                    <IconBookOpen className='size-4' /> Feedback Readiness
+                    <IconBook className='size-4' /> Feedback Readiness
                   </CardDescription>
                   <CardTitle className='text-3xl font-bold text-fuchsia-950 tabular-nums dark:text-fuchsia-100'>
                     95%

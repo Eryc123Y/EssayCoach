@@ -1,6 +1,7 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
 import { AnimatePresence, motion } from 'motion/react';
 import { toast } from 'sonner';
 import PageContainer from '@/components/layout/page-container';
@@ -40,6 +41,73 @@ export default function AIAnalysisPage() {
   );
 
   const { user } = useAuth();
+  const searchParams = useSearchParams();
+
+  // Check for view=results URL parameter to show demo results
+  useEffect(() => {
+    if (searchParams.get('view') === 'results') {
+      const mockScores: ScoreData[] = [
+        {
+          category: 'Structure',
+          score: 75,
+          fullMark: 100,
+          description: 'Your essay has a clear introduction, well-developed body paragraphs, and a concise conclusion. The logical flow between paragraphs could be improved with better transitions.'
+        },
+        {
+          category: 'Content',
+          score: 82,
+          fullMark: 100,
+          description: 'Strong argument development with relevant examples. Some claims would benefit from additional evidence and citations to support your points.'
+        },
+        {
+          category: 'Style',
+          score: 68,
+          fullMark: 100,
+          description: 'Good vocabulary usage but occasional wordiness. Consider varying sentence structure and reducing repetitive phrases for more engaging writing.'
+        }
+      ];
+
+      const mockInsights: Insight[] = [
+        {
+          id: 'insight-1',
+          type: 'critical',
+          category: 'Structure',
+          title: 'Missing Transition Words',
+          description: 'The connection between paragraph 2 and paragraph 3 is abrupt. Consider adding transitional phrases like "Furthermore" or "In addition to this".',
+          location: 'Paragraph 3'
+        },
+        {
+          id: 'insight-2',
+          type: 'suggestion',
+          category: 'Content',
+          title: 'Add More Evidence',
+          description: 'Your claim about economic impact would be stronger with specific statistics or a real-world example.',
+          location: 'Paragraph 2'
+        },
+        {
+          id: 'insight-3',
+          type: 'strength',
+          category: 'Style',
+          title: 'Strong Thesis Statement',
+          description: 'Your thesis is clear, specific, and effectively outlines the main arguments that follow.',
+          location: 'Introduction'
+        }
+      ];
+
+      setEssayData({
+        question: 'The Impact of Technology on Modern Education',
+        content: 'This is a sample essay content used for demonstration purposes.'
+      });
+
+      setAnalysisResult({
+        overallScore: 75,
+        scores: mockScores,
+        insights: mockInsights
+      });
+
+      setState('results');
+    }
+  }, [searchParams]);
 
   const handleSubmit = async (data: {
     question: string;
@@ -62,8 +130,8 @@ export default function AIAnalysisPage() {
       });
 
       // Parse the response
-      // Backend returns: { data: { status: 'succeeded', outputs: { ... } }, ... }
-      const runStatus = response.data?.status;
+      // Backend returns: { workflow_run_id, status, data: { id, outputs }, ... }
+      const runStatus = response.status;
       const outputs = response.data?.outputs;
 
       if (runStatus === 'succeeded' && outputs) {
@@ -191,20 +259,22 @@ export default function AIAnalysisPage() {
       } catch (error) {
       console.error('Analysis failed:', error);
 
+      // Type error for proper message access
+      const err = error as { message?: string; error?: unknown };
+
       // Check if it's a Dify API error (has "error" field in response)
       const isDifyError = error && typeof error === 'object' && 'error' in error;
 
       // Check if it's a backend validation error (missing rubric)
-      const isRubricError = error && typeof error === 'object' && (
-        error.message?.includes('No rubrics found') ||
-        error.message?.includes('Please upload a rubric')
-      );
+      const isRubricError =
+        err.message?.includes('No rubrics found') ||
+        err.message?.includes('Please upload a rubric');
 
       let errorMessage = '';
 
       if (isDifyError) {
         // Dify API returned an error
-        errorMessage = error.message || 'Dify workflow failed';
+        errorMessage = err.message || 'Dify workflow failed';
       } else if (isRubricError) {
         // Backend validation error - no rubric selected
         errorMessage = 'No rubric available. Please upload a rubric first before submitting essays.';
