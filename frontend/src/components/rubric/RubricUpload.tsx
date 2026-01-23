@@ -324,10 +324,16 @@ export function RubricUpload({ onSuccess }: RubricUploadProps) {
             </AnimatePresence>
           </div>
 
-          <Button
+           <Button
             type='submit'
             disabled={!file || isUploading}
-            className='h-11 w-full border-0 bg-gradient-to-r from-indigo-600 via-violet-600 to-fuchsia-600 font-medium text-white shadow-lg shadow-indigo-500/20 transition-all duration-300 hover:from-indigo-700 hover:via-violet-700 hover:to-fuchsia-700'
+            className={cn(
+              'h-11 w-full border border-slate-200 bg-slate-900 font-medium text-white shadow-sm transition-all duration-300 hover:bg-slate-800',
+              'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400/40',
+              'dark:border-slate-700 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-white',
+              (!file || isUploading) &&
+                'border-slate-200 bg-slate-200 text-slate-500 shadow-none dark:border-slate-800 dark:bg-slate-800 dark:text-slate-400'
+            )}
           >
             {isUploading ? (
               <>
