@@ -34,6 +34,7 @@ from .serializers import (
     TaskSerializer,
     TeachingAssnSerializer,
     UnitSerializer,
+    UserClassSerializer,
     UserSerializer,
 )
 
@@ -122,8 +123,7 @@ class EnrollmentViewSet(viewsets.ModelViewSet):
     tags=["Rubrics"],
     summary="Marking rubric management",
     description=(
-        "CRUD operations for marking rubrics. Rubrics define the criteria and "
-        "structure for evaluating submissions."
+        "CRUD operations for marking rubrics. Rubrics define the criteria and structure for evaluating submissions."
     ),
 )
 class MarkingRubricViewSet(viewsets.ModelViewSet):
@@ -205,8 +205,7 @@ class TaskViewSet(viewsets.ModelViewSet):
     tags=["Submissions"],
     summary="Submission management",
     description=(
-        "CRUD operations for essay submissions. Students submit their work for "
-        "tasks, which can then receive feedback."
+        "CRUD operations for essay submissions. Students submit their work for tasks, which can then receive feedback."
     ),
 )
 class SubmissionViewSet(viewsets.ModelViewSet):
@@ -337,9 +336,7 @@ class RubricViewSet(viewsets.ModelViewSet):
             return Response(result, status=status.HTTP_201_CREATED)
 
         except (RubricParseError, RubricImportError, ValueError) as e:
-            return Response(
-                {"success": False, "error": str(e)}, status=status.HTTP_400_BAD_REQUEST
-            )
+            return Response({"success": False, "error": str(e)}, status=status.HTTP_400_BAD_REQUEST)
 
     @extend_schema(
         responses={200: RubricDetailSerializer},
@@ -351,3 +348,39 @@ class RubricViewSet(viewsets.ModelViewSet):
         rubric = self.get_object()
         serializer = RubricDetailSerializer(rubric)
         return Response(serializer.data)
+
+
+@extend_schema(
+    tags=["Classes"],
+    summary="User accessible classes",
+    description="Get list of classes accessible by the current user based on their role.",
+)
+class UserClassesViewSet(viewsets.ReadOnlyModelViewSet):
+    """ViewSet for retrieving classes accessible by the current user.
+
+    - Students: Returns classes they are enrolled in
+    - Lecturers: Returns classes they are assigned to teach
+    - Admins: Returns all classes
+    """
+
+    serializer_class = UserClassSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        from .models import Class, Enrollment, TeachingAssn
+
+        user = self.request.user
+        user_role = getattr(user, "user_role", None) or "student"
+
+        # Admin sees all classes
+        if user_role == "admin":
+            return Class.objects.all().select_related("unit_id_unit")
+
+        # Lecturers see classes they teach
+        if user_role == "lecturer":
+            class_ids = TeachingAssn.objects.filter(user_id_user=user).values_list("class_id_class_id", flat=True)
+            return Class.objects.filter(class_id__in=class_ids).select_related("unit_id_unit")
+
+        # Students see classes they are enrolled in (default)
+        class_ids = Enrollment.objects.filter(user_id_user=user).values_list("class_id_class_id", flat=True)
+        return Class.objects.filter(class_id__in=class_ids).select_related("unit_id_unit")

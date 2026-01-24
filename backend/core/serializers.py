@@ -429,3 +429,15 @@ class RubricDetailSerializer(serializers.ModelSerializer):
     class Meta:
         model = MarkingRubric
         fields = ["rubric_id", "rubric_desc", "rubric_create_time", "rubric_items"]
+
+
+class UserClassSerializer(serializers.ModelSerializer):
+    """Serializer for class with unit info, for user class switching."""
+
+    unit_name = serializers.CharField(source="unit_id_unit.unit_name", read_only=True)
+    unit_code = serializers.CharField(source="unit_id_unit.unit_id", read_only=True)
+    class_size = serializers.IntegerField(read_only=True)
+
+    class Meta:
+        model = Class
+        fields = ["class_id", "unit_name", "unit_code", "class_size"]

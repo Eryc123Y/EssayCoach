@@ -1,95 +1,79 @@
 import { NavItem } from '@/types';
 
-//Info: The following data is used for the sidebar navigation and Cmd K bar.
+// Navigation items with role-based access control
+// roles: which user roles can see this item
+// If roles is undefined, the item is visible to all
 export const navItems: NavItem[] = [
+  // Dashboard - visible to all
   {
     title: 'Dashboard',
     url: '/dashboard/overview',
     icon: 'dashboard',
     isActive: false,
     shortcut: ['d', 'd'],
-    items: []
+    items: [],
+    roles: ['student', 'lecturer', 'admin'],
   },
-  {
-    title: 'My Classes',
-    url: '/dashboard/classes',
-    icon: 'laptop',
-    isActive: false,
-    shortcut: ['c', 'c'],
-    items: [
-      {
-        title: 'AP English',
-        url: '/dashboard/classes/ap-english',
-        icon: 'book',
-        shortcut: ['e', '1']
-      },
-      {
-        title: 'History 101',
-        url: '/dashboard/classes/history-101',
-        icon: 'history',
-        shortcut: ['h', '1']
-      }
-    ]
-  },
+  // Assignments - visible to all
   {
     title: 'Assignments',
     url: '/dashboard/assignments',
     icon: 'clipboard',
     shortcut: ['a', 'a'],
     isActive: false,
-    items: []
+    items: [],
+    roles: ['student', 'lecturer', 'admin'],
   },
+  // Essay Analysis - visible to all
   {
     title: 'Essay Analysis',
     url: '/dashboard/essay-analysis',
     icon: 'post',
     shortcut: ['e', 'e'],
     isActive: false,
-    items: []
+    items: [],
+    roles: ['student', 'lecturer', 'admin'],
   },
+  // Rubrics - only lecturer and admin
   {
     title: 'Rubrics',
     url: '/dashboard/rubrics',
     icon: 'clipboard',
     shortcut: ['r', 'r'],
     isActive: false,
-    items: []
+    items: [],
+    roles: ['lecturer', 'admin'],
   },
+  // Library - only lecturer and admin
   {
     title: 'Library',
     url: '/dashboard/library',
     icon: 'library',
     shortcut: ['l', 'b'],
     isActive: false,
-    items: []
+    items: [],
+    roles: ['lecturer', 'admin'],
   },
+  // Analytics - only admin
   {
-    title: 'Account',
-    url: '#',
-    icon: 'billing',
-    isActive: true,
-
-    items: [
-      {
-        title: 'Profile',
-        url: '/dashboard/profile',
-        icon: 'userPen',
-        shortcut: ['m', 'm']
-      },
-      {
-        title: 'Settings',
-        url: '/dashboard/settings',
-        icon: 'settings',
-        shortcut: ['s', 's']
-      },
-      {
-        title: 'Log out',
-        shortcut: ['l', 'o'],
-        url: '/',
-        icon: 'login'
-      }
-    ]
-  }
+    title: 'Analytics',
+    url: '/dashboard/analytics',
+    icon: 'chart',
+    shortcut: ['g', 'g'],
+    isActive: false,
+    items: [],
+    roles: ['admin'],
+  },
+  // User Management - only admin
+  {
+    title: 'User Management',
+    url: '/dashboard/users',
+    icon: 'users',
+    shortcut: ['u', 'u'],
+    isActive: false,
+    items: [],
+    roles: ['admin'],
+  },
 ];
 
 export interface RecentSubmission {

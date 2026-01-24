@@ -37,7 +37,6 @@ import {
   IconChevronRight,
   IconChevronsDown,
   IconLogout,
-  IconSchool,
   IconSettings,
   IconUserCircle
 } from '@tabler/icons-react';
@@ -47,39 +46,34 @@ import * as React from 'react';
 import { Icons } from '../icons';
 import { OrgSwitcher } from '../org-switcher';
 
-export const school = {
-  name: 'Westwood High School',
-  logo: IconSchool,
-  semester: 'Spring 2026'
-};
-
-const classes = [
-  { id: '1', name: 'AP English' },
-  { id: '2', name: 'History 101' },
-  { id: '3', name: 'Creative Writing' }
-];
-
 export default function AppSidebar() {
   const pathname = usePathname();
-  const { user, logout } = useAuth();
+  const { user, classes, currentClass, setCurrentClass, logout } = useAuth();
   const router = useRouter();
 
-  const activeClass = classes[0];
+  // Filter nav items based on user role
+  const filteredNavItems = React.useMemo(() => {
+    if (!user) return [];
+    return navItems.filter(item => {
+      if (!item.roles) return true;  // No role restriction, visible to all
+      return item.roles.includes(user.role);
+    });
+  }, [user]);
 
   return (
     <Sidebar collapsible='icon'>
       <SidebarHeader>
         <OrgSwitcher
-          tenants={classes}
-          defaultTenant={activeClass}
-          onTenantSwitch={() => {}}
+          classes={classes}
+          currentClass={currentClass}
+          onClassChange={(classId) => setCurrentClass(classId)}
         />
       </SidebarHeader>
       <SidebarContent className='overflow-x-hidden'>
         <SidebarGroup>
-          <SidebarGroupLabel>Learning</SidebarGroupLabel>
+          <SidebarGroupLabel>Menu</SidebarGroupLabel>
           <SidebarMenu>
-            {navItems.map((item) => {
+            {filteredNavItems.map((item) => {
               const Icon = item.icon ? Icons[item.icon] : Icons.logo;
               return item?.items && item?.items?.length > 0 ? (
                 <Collapsible
@@ -159,7 +153,7 @@ export default function AppSidebar() {
                 </SidebarMenuButton>
               </DropdownMenuTrigger>
               <DropdownMenuContent
-                className='w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg'
+                className='w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg'
                 side='bottom'
                 align='end'
                 sideOffset={4}

@@ -15,34 +15,34 @@ import {
   SidebarMenuItem
 } from '@/components/ui/sidebar';
 
-interface Tenant {
-  id: string;
-  name: string;
+interface ClassInfo {
+  classId: number;
+  unitName: string;
+  unitCode: string;
+  classSize: number;
+}
+
+interface OrgSwitcherProps {
+  classes: ClassInfo[];
+  currentClass: ClassInfo | null;
+  onClassChange: (classId: number) => void;
 }
 
 export function OrgSwitcher({
-  tenants,
-  defaultTenant,
-  onTenantSwitch
-}: {
-  tenants: Tenant[];
-  defaultTenant: Tenant;
-  onTenantSwitch?: (tenantId: string) => void;
-}) {
-  const [selectedTenant, setSelectedTenant] = React.useState<
-    Tenant | undefined
-  >(defaultTenant || (tenants.length > 0 ? tenants[0] : undefined));
+  classes,
+  currentClass,
+  onClassChange
+}: OrgSwitcherProps) {
+  const selectedClass = currentClass || (classes.length > 0 ? classes[0] : null);
 
-  const handleTenantSwitch = (tenant: Tenant) => {
-    setSelectedTenant(tenant);
-    if (onTenantSwitch) {
-      onTenantSwitch(tenant.id);
-    }
+  const handleClassChange = (cls: ClassInfo) => {
+    onClassChange(cls.classId);
   };
 
-  if (!selectedTenant) {
+  if (!selectedClass) {
     return null;
   }
+
   return (
     <SidebarMenu>
       <SidebarMenuItem>
@@ -56,23 +56,23 @@ export function OrgSwitcher({
                 <GalleryVerticalEnd className='size-4' />
               </div>
               <div className='flex flex-col gap-0.5 leading-none'>
-                <span className='font-semibold'>Next Starter</span>
-                <span className=''>{selectedTenant.name}</span>
+                <span className='font-semibold'>{selectedClass.unitName}</span>
+                <span className=''>{selectedClass.unitCode}</span>
               </div>
-              <ChevronsUpDown className='ml-auto' />
+              {classes.length > 1 && <ChevronsUpDown className='ml-auto' />}
             </SidebarMenuButton>
           </DropdownMenuTrigger>
           <DropdownMenuContent
             className='w-[--radix-dropdown-menu-trigger-width]'
             align='start'
           >
-            {tenants.map((tenant) => (
+            {classes.map((cls) => (
               <DropdownMenuItem
-                key={tenant.id}
-                onSelect={() => handleTenantSwitch(tenant)}
+                key={cls.classId}
+                onSelect={() => handleClassChange(cls)}
               >
-                {tenant.name}{' '}
-                {tenant.id === selectedTenant.id && (
+                {cls.unitName}
+                {cls.classId === selectedClass.classId && (
                   <Check className='ml-auto' />
                 )}
               </DropdownMenuItem>

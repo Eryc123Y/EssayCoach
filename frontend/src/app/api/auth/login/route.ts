@@ -56,13 +56,25 @@ export async function POST(req: NextRequest) {
       path: '/',
       maxAge: 60 * 60 * 24
     });
-    res.cookies.set('user_first_name', user.first_name, {
+    res.cookies.set('user_first_name', user.first_name || '', {
       httpOnly: false,
       sameSite: 'lax',
       path: '/',
       maxAge: 60 * 60 * 24
     });
-    res.cookies.set('user_last_name', user.last_name, {
+    res.cookies.set('user_last_name', user.last_name || '', {
+      httpOnly: false,
+      sameSite: 'lax',
+      path: '/',
+      maxAge: 60 * 60 * 24
+    });
+    res.cookies.set('user_role', user.user_role || 'student', {
+      httpOnly: false,
+      sameSite: 'lax',
+      path: '/',
+      maxAge: 60 * 60 * 24
+    });
+    res.cookies.set('user_id', String(user.user_id || user.id || ''), {
       httpOnly: false,
       sameSite: 'lax',
       path: '/',
@@ -71,7 +83,6 @@ export async function POST(req: NextRequest) {
 
     return res;
   } catch (error) {
-    console.error('Login error:', error);
     return NextResponse.json(
       { message: 'Internal server error' },
       { status: 500 }
