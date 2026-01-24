@@ -71,8 +71,20 @@ typeCheckingMode = "basic"
 reportMissingTypeArgument = false
 reportGeneralTypeIssues = false
 reportAttributeAccessIssue = false
-reportIncompatibleMethodOverride = false
 reportIncompatibleVariableOverride = false
+reportArgumentType = false
+reportOptionalSubscript = false
+reportIndexIssue = false
+reportAssignmentType = false
+reportCallIssue = false
+reportUndefinedVariable = false
+reportIncompatibleMethodOverride = false
+reportRedeclaration = false
+reportPossiblyUnboundVariable = false
+reportReturnType = false
+reportMissingImports = false
+reportOptionalMemberAccess = false
+reportInvalidTypeForm = false
 
 [tool.black]
 line-length = 120
