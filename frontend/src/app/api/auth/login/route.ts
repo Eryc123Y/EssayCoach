@@ -39,10 +39,18 @@ export async function POST(req: NextRequest) {
     const result = await response.json();
     const { token, user } = result.data;
     
+    // Normalize user role field - backend may return 'role' or other field names
+    const normalizedUser = {
+      ...user,
+      // Ensure role field is consistent
+      role: user.role || user.user_role || 'student'
+    };
+    
     // Debug: Log the user object to see what fields are available
-    console.log('[Login Debug] User object from API:', JSON.stringify(user, null, 2));
+    console.log('[Login Debug] Raw user from API:', JSON.stringify(user, null, 2));
+    console.log('[Login Debug] Normalized user role:', normalizedUser.role);
 
-    const res = NextResponse.json({ access: token, user });
+    const res = NextResponse.json({ access: token, user: normalizedUser });
 
     // Set cookie for frontend request.ts to use
     res.cookies.set('access_token', token, {

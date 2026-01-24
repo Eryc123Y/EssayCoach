@@ -66,7 +66,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const isLoggedIn = hasAccessToken || hasUserCookies;
 
       if (isLoggedIn && email) {
-        setUser({ id: userId || '1', email, firstName, lastName, role: userRole });
+        // Normalize user role - handle both 'role' and 'user_role' field names
+        const role = (userRole || 'student') as UserRole;
+        console.log('[Auth Debug] User role from cookie:', role);
+        setUser({ id: userId || '1', email, firstName, lastName, role });
       } else {
         setUser(null);
       }
