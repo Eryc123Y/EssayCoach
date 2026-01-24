@@ -20,9 +20,11 @@ jobs:
         enable-cache: true
     
     - name: Install dependencies
+      working-directory: ./backend
       run: |
         uv sync
         uv sync --no-dev
     
     - name: Run pyright type checking
+      working-directory: ./backend
       run: uv run pyright .
