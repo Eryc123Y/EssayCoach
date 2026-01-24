@@ -38,7 +38,7 @@ export const navItems: NavItem[] = [
   {
     title: 'Rubrics',
     url: '/dashboard/rubrics',
-    icon: 'clipboard',
+    icon: 'book',  // Using 'book' icon for rubrics (different from 'clipboard' used by Assignments)
     shortcut: ['r', 'r'],
     isActive: false,
     items: [],
