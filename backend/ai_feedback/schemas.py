@@ -128,7 +128,7 @@ class WorkflowRunRequest(DRFBaseModel):
     essay_content: str = Field(..., min_length=1, max_length=20000)
     language: str = Field(default="English", max_length=48)
     response_mode: str = Field(default="blocking")
-    user_id: str | None = Field(default=None, max_length=128)
+    user_id: str = Field(default="essaycoach-service", max_length=128)
     rubric_id: int | None = Field(default=None)
 
     @field_validator("response_mode")

@@ -206,35 +206,33 @@ describe('FeedbackViewer', () => {
     ...overrides,
   });
 
+  const createLegacyOutputs = (overrides = {}) => ({
+    overall_score: 85,
+    feedback_summary: 'Great essay overall',
+    structure_analysis: {
+      score: 8,
+      comments: 'Well organized essay',
+      suggestions: ['Add more transitions'],
+    },
+    content_analysis: {
+      score: 9,
+      comments: 'Strong arguments',
+      suggestions: ['Add more examples'],
+    },
+    style_analysis: {
+      score: 8,
+      comments: 'Clear writing style',
+      suggestions: ['Vary sentence structure'],
+    },
+    grammar_notes: [],
+    ...overrides,
+  });
+
   const createMockResult = (overrides = {}): WorkflowStatusResponse => ({
     workflow_run_id: 'test-run-123',
     task_id: 'test-task-456',
     status: 'succeeded',
-    outputs: {
-      overall_score: 85,
-      percentage_score: 85,
-      total_possible: 100,
-      feedback_items: [
-        {
-          criterion_name: 'Structure',
-          score: 8,
-          max_score: 10,
-          feedback: 'Well organized essay',
-          suggestions: ['Add more transitions'],
-        },
-        {
-          criterion_name: 'Content',
-          score: 9,
-          max_score: 10,
-          feedback: 'Strong arguments',
-          suggestions: ['Add more examples'],
-        },
-      ],
-      overall_feedback: 'Great essay overall',
-      strengths: ['Clear thesis', 'Good structure'],
-      suggestions: ['Add more citations'],
-      analysis_metadata: {},
-    },
+    outputs: createLegacyOutputs(),
     error_message: null,
     elapsed_time_seconds: 12.5,
     token_usage: { total: 1500, prompt: 800, completion: 700 },
@@ -383,7 +381,7 @@ describe('FeedbackViewer', () => {
 
     it('should display overall score badge', () => {
       const result = createMockResult({
-        outputs: createMockOutputs({ overall_score: 92 })
+        outputs: createLegacyOutputs({ overall_score: 92 })
       });
       render(<FeedbackViewer {...defaultProps} result={result} />);
 
@@ -396,7 +394,7 @@ describe('FeedbackViewer', () => {
 
     it('should not display score section when overall_score is undefined', () => {
       const result = createMockResult({
-        outputs: createMockOutputs({ overall_score: undefined })
+        outputs: createLegacyOutputs({ overall_score: undefined })
       });
       render(<FeedbackViewer {...defaultProps} result={result} />);
 
@@ -419,7 +417,7 @@ describe('FeedbackViewer', () => {
 
     it('should display feedback summary text', () => {
       const result = createMockResult({
-        outputs: createMockOutputs({
+        outputs: createLegacyOutputs({
           feedback_summary: 'Excellent work on this essay.'
         })
       });
@@ -432,7 +430,7 @@ describe('FeedbackViewer', () => {
 
     it('should display no text feedback message when summary is missing', () => {
       const result = createMockResult({
-        outputs: createMockOutputs({ feedback_summary: undefined })
+        outputs: createLegacyOutputs({ feedback_summary: undefined })
       });
       render(<FeedbackViewer {...defaultProps} result={result} />);
 
@@ -452,9 +450,8 @@ describe('FeedbackViewer', () => {
     });
 
     it('should calculate and display grammar score based on grammar notes', () => {
-      // 2 grammar notes = 100 - 2*5 = 90
       const result = createMockResult({
-        outputs: createMockOutputs({
+        outputs: createLegacyOutputs({
           grammar_notes: [
             {
               type: 'spelling',
@@ -480,7 +477,7 @@ describe('FeedbackViewer', () => {
 
     it('should handle missing structure analysis score gracefully', () => {
       const result = createMockResult({
-        outputs: createMockOutputs({
+        outputs: createLegacyOutputs({
           structure_analysis: {
             score: undefined,
             comments: '',
@@ -514,9 +511,8 @@ describe('FeedbackViewer', () => {
     });
 
     it('should not render badge when score is undefined', () => {
-      // This test verifies the internal ScoreBadge component handles undefined gracefully
       const result = createMockResult({
-        outputs: createMockOutputs({
+        outputs: createLegacyOutputs({
           structure_analysis: {
             score: undefined,
             comments: 'test',

@@ -92,14 +92,13 @@ class WorkflowRunView(APIView):
         try:
             # Initialize the new Dify client implementing EssayAgentInterface
             client = DifyClient()
-            logger.info(f"DifyClient initialized. Key starts with: {client.api_key[:5] if client.api_key else 'None'}")
 
             validated_data = serializer.validated_data
-            user_id: str = validated_data["user_id"]
-            logger.info(f"User ID: {user_id}")
+            if not isinstance(validated_data, dict) or "user_id" not in validated_data:
+                return Response({"error": "Invalid request payload."}, status=status.HTTP_400_BAD_REQUEST)
 
+            user_id: str = validated_data["user_id"]
             rubric_id: int | None = validated_data.get("rubric_id")
-            logger.info(f"Rubric ID from request: {rubric_id}")
 
             # Build workflow input using the interface
             response_mode_str: str = validated_data["response_mode"]
@@ -134,6 +133,13 @@ class WorkflowRunView(APIView):
                     "created_at": int(result.created_at.timestamp()) if result.created_at else None,
                     "finished_at": int(result.finished_at.timestamp()) if result.finished_at else None,
                 },
+                "inputs": {
+                    "essay_question": validated_data["essay_question"],
+                    "essay_content": validated_data["essay_content"],
+                    "language": validated_data.get("language", "English"),
+                    "essay_rubric": "rubric_file",  # Indicator that rubric was used
+                },
+                "response_mode": validated_data["response_mode"],
             }
 
             return Response(response_data, status=status.HTTP_200_OK)
@@ -156,9 +162,6 @@ class WorkflowRunView(APIView):
             return Response({"error": str(exc)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
         except Exception as exc:
             logger.error(f"Unexpected exception in WorkflowRunView: {exc}")
-            import traceback
-
-            traceback.print_exc()
             return Response(
                 {"error": f"Internal server error: {str(exc)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )

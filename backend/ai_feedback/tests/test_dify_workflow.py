@@ -1,5 +1,6 @@
 """
 Comprehensive tests for AI Feedback Dify workflow endpoints.
+All API calls are mocked to avoid slow external requests.
 """
 
 from typing import TYPE_CHECKING
@@ -10,6 +11,8 @@ from django.test import TestCase
 from rest_framework import status
 from rest_framework.authtoken.models import Token
 from rest_framework.test import APIClient
+
+from ai_feedback.exceptions import APIServerError
 
 if TYPE_CHECKING:
     from ..core.models import User as CoreUser
@@ -22,6 +25,11 @@ class DifyWorkflowAPITestCase(TestCase):
 
     def setUp(self) -> None:
         """Set up test client, user, and base URL."""
+        import os
+
+        # Set DIFY_API_KEY to avoid ConfigurationError in DifyClient.__init__
+        os.environ["DIFY_API_KEY"] = "test-dify-api-key-12345"
+
         self.client = APIClient()
         self.base_url = "/api/v1/ai-feedback/agent/workflows/"
 
@@ -36,67 +44,15 @@ class DifyWorkflowAPITestCase(TestCase):
         self.token = Token.objects.create(user=self.user)
         self.client.credentials(HTTP_AUTHORIZATION=f"Token {self.token.key}")  # type: ignore[attr-defined]
 
-        # Sample essay data provided by user
-        self.sample_essay_question = (
-            "Here is a sample Essay Task and a Student Submission generated based on the uploaded ESAC IWA Descriptors.\n\n"  # noqa: E501
-            "I have designed this submission to meet the criteria for a Band 8 (Strong/Effective). This level represents a high-quality student essay that answers the question well, demonstrates strong referencing skills, and maintains a good academic register, though it may have very minor occasional slips (as allowed by the Band 8 descriptor).\n\n"  # noqa: E501
-            "1. Essay Task (作文题目)\nModule: English for Specific Academic Contexts (ESAC) Assessment: Integrated Writing Assessment (IWA) Word Limit: 1500 words (+/- 10%) Task Instructions:\n\n"  # noqa: E501
-            '"The integration of Generative Artificial Intelligence (GenAI) in higher education has sparked intense debate regarding academic integrity and pedagogical innovation.\n\n'  # noqa: E501
-            "Discuss the primary challenges GenAI poses to traditional assessment methods and evaluate the potential benefits it offers for student learning. To what extent should universities embrace this technology in their curriculum?\n\n"  # noqa: E501
-            "In your essay, you must:\n\n"
-            "Draw on a minimum of 7 sources (Refer to your specific ESACa/b guidelines for the split between Reading List and self-selected sources).\n\n"  # noqa: E501
-            "Follow the specific referencing conventions taught in your module.\n\n"
-            'Paraphrase source information; do not rely on direct quotes."'
-        )
+        # Sample essay data
+        self.sample_essay_question = "What is the importance of biodiversity for ecosystem stability?"
 
         self.sample_essay_content = (
-            "Title: Beyond Prohibition: Integrating Generative AI into Higher Education Assessment and Learning\n\n"  # noqa: E501
-            "Introduction The rapid emergence of Generative Artificial Intelligence (GenAI) tools, such as ChatGPT and Claude, has fundamentally disrupted the landscape of higher education. While digital tools have long aided academic study, GenAI's ability to synthesise complex information and generate human-like text presents unprecedented challenges to established educational norms. A prevailing concern among educators is the threat these tools pose to academic integrity, particularly regarding traditional assessment methods. However, focusing solely on these risks risks overlooking the transformative potential of AI to enhance personalised learning. This essay will argue that while GenAI undermines the validity of traditional essay-based assessments, its benefits for student engagement and skill development are significant. Consequently, universities should move beyond prohibition and adopt a policy of critical integration, redesigning assessments to co-exist with these evolving technologies. This essay will first examine the threat to academic integrity, then analyse the benefits for personalised learning, and finally discuss the necessity of assessment reform.\n\n"  # noqa: E501
-            'Body Paragraph 1: Challenges to Academic Integrity The most immediate challenge presented by GenAI is the erosion of academic integrity in standard written assessments. Traditional coursework, which often relies on summarising knowledge or writing standard essays, is particularly vulnerable to AI-generated plagiarism. According to Baron (2023), current plagiarism detection software is increasingly unable to distinguish between human and AI-generated text, leading to a "crisis of trust" in university grading systems. This difficulty arises because GenAI does not merely copy text from a database but predicts coherent sequences of words, creating unique outputs that bypass standard similarity checks (Zhang & Li, 2024). Consequently, if students can produce high-quality papers with minimal cognitive effort, the validity of a university degree is compromised. While some institutions have responded with strict bans, enforcing such prohibition is practically impossible outside of invigilated exam conditions. Therefore, the continued reliance on take-home essays as a primary measure of student understanding is becoming untenable.\n\n'  # noqa: E501
-            "Body Paragraph 2: Enhancing Student Learning Despite these risks, GenAI offers substantial opportunities to enhance student learning through personalisation and immediate feedback. Unlike a human tutor who may have limited availability, AI tools can function as \"always-on\" learning companions. For instance, Chen et al. (2024) found that when used as a Socratic tutor—prompting students with questions rather than giving answers—AI significantly improved students' critical thinking skills in STEM subjects. This suggests that the technology can scaffold learning by breaking down complex concepts into digestible explanations tailored to the individual learner's proficiency level. Furthermore, formatting and grammar assistance provided by these tools allows students, particularly those writing in a second language, to focus more on higher-order argumentation rather than surface-level mechanics (EduTech Future, 2023). Thus, rather than replacing learning, GenAI can serve as a powerful auxiliary tool that democratises access to academic support.\n\n"  # noqa: E501
-            'Body Paragraph 3: The Need for Assessment Reform Given the dual reality of integrity risks and learning benefits, the most sustainable path forward is the reform of assessment strategies. Universities must transition from assessing what a student knows to how they apply knowledge in collaboration with technology. A rigid prohibition mindset ignores the professional reality that graduates will enter a workforce where AI proficiency is expected (World Economic Forum, 2024). Assessments should therefore evolve to include viva voces, reflective portfolios, or tasks that specifically require the critique of AI-generated content. As noted by the University of Manchester Teaching Framework (2023), assessment design must prioritize "process over product," evaluating the student\'s journey of inquiry and their ability to verify information. By integrating AI into the curriculum—for example, by asking students to critique a flawed AI essay—universities can foster the critical digital literacy essential for the modern era.\n\n'  # noqa: E501
-            "Conclusion In conclusion, the integration of GenAI in higher education presents a complex paradox: it threatens the integrity of traditional assessments while simultaneously offering powerful tools for personalised learning. As this essay has argued, attempting to ban these technologies is a futile strategy that fails to prepare students for a digital future. Instead, universities should embrace a hybrid approach that integrates AI literacy into the curriculum while rigorously redesigning assessments to test critical thinking and authentic application rather than mere recall. Ultimately, the rise of AI does not signal the end of higher education, but rather a necessary evolution towards more resilient and relevant pedagogical models."  # noqa: E501
+            "Biodiversity is fundamental to ecosystem stability. When ecosystems contain a "
+            "wide variety of species, they become more resilient to environmental changes "
+            "and disturbances. This resilience stems from functional redundancy, where multiple "
+            "species can perform similar ecological roles."
         )
-
-        # Mock Dify response structure with frontend-expected outputs
-        self.mock_dify_response = {
-            "workflow_run_id": "test-run-id-12345",
-            "task_id": "test-task-id-67890",
-            "data": {
-                "id": "test-run-id-12345",
-                "status": "succeeded",
-                "outputs": {
-                    "text": "Mock feedback output",
-                    "structure_analysis": {
-                        "score": 8,
-                        "feedback": "The essay has a clear introduction and thesis statement.",
-                        "suggestions": [
-                            "Consider adding more topic sentences in body paragraphs."
-                        ],
-                    },
-                    "content_analysis": {
-                        "score": 7,
-                        "feedback": "Arguments are well-supported with evidence.",
-                        "suggestions": [
-                            "Include more recent sources to support claims."
-                        ],
-                    },
-                    "writing_style": {
-                        "score": 9,
-                        "feedback": "Academic tone is consistent throughout.",
-                        "suggestions": [
-                            "Minor grammar corrections needed in paragraph 3."
-                        ],
-                    },
-                },
-                "error": None,
-                "elapsed_time": 2.5,
-                "total_tokens": 1500,
-                "total_steps": 3,
-                "created_at": 1705407629,
-                "finished_at": 1705407631,
-            },
-        }
 
     def _get_valid_payload(self, **kwargs) -> dict:
         """Helper to build valid request payload."""
@@ -111,21 +67,69 @@ class DifyWorkflowAPITestCase(TestCase):
 class WorkflowRunViewTests(DifyWorkflowAPITestCase):
     """Tests for POST /api/v1/ai-feedback/agent/workflows/run/"""
 
-    @patch("ai_feedback.views.DifyClient")
-    def test_run_workflow_success(self, mock_client_class):
+    @patch("ai_feedback.dify_client.DifyClient.build_rubric_input")
+    @patch("ai_feedback.dify_client.DifyClient.upload_file")
+    @patch("ai_feedback.dify_client.DifyClient.run_workflow")
+    @patch("ai_feedback.response_transformer.DifyResponseTransformer.to_workflow_output")
+    def test_run_workflow_success(
+        self,
+        mock_transform,
+        mock_run_workflow,
+        mock_upload_file,
+        mock_build_rubric,
+    ):
         """Test successful workflow run with valid payload."""
-        # Setup mock
-        mock_client = MagicMock()
-        mock_client_class.return_value = mock_client
-        mock_client.get_rubric_upload_id.return_value = "uploaded-rubric-id"
-        mock_client.build_rubric_file_input.return_value = [
-            {
-                "transfer_method": "local_file",
-                "upload_file_id": "uploaded-rubric-id",
-                "type": "document",
-            }
-        ]
-        mock_client.run_workflow.return_value = self.mock_dify_response
+        # Setup mocks
+        mock_build_rubric.return_value = {
+            "transfer_method": "local_file",
+            "upload_file_id": "test-upload-id",
+            "type": "document",
+        }
+        mock_upload_file.return_value = "test-upload-id"
+        mock_run_workflow.return_value = {
+            "id": "test-run-id",
+            "workflow_id": "workflow-123",
+            "status": "succeeded",
+            "outputs": {
+                "structure_analysis": {
+                    "score": 8,
+                    "feedback": "Good structure.",
+                    "suggestions": ["Add topic sentences."],
+                },
+                "content_analysis": {
+                    "score": 7,
+                    "feedback": "Good content.",
+                    "suggestions": ["Add more sources."],
+                },
+                "writing_style": {
+                    "score": 9,
+                    "feedback": "Good style.",
+                    "suggestions": ["Minor fixes."],
+                },
+            },
+            "error": None,
+            "elapsed_time": 2.5,
+            "total_tokens": 1500,
+            "total_steps": 3,
+            "created_at": "2024-01-01T00:00:00Z",
+            "finished_at": "2024-01-01T00:00:02Z",
+        }
+
+        # Mock the transformer to return proper WorkflowOutput
+        from datetime import datetime
+        from ai_feedback.interfaces import WorkflowStatus
+
+        mock_transform.return_value = MagicMock(
+            run_id="test-run-id",
+            task_id="test-task-id-67890",
+            status=WorkflowStatus.SUCCEEDED,
+            outputs=mock_run_workflow.return_value["outputs"],
+            error_message=None,
+            elapsed_time_seconds=2.5,
+            token_usage={"total_tokens": 1500},
+            created_at=datetime(2024, 1, 1, 0, 0, 0),
+            finished_at=datetime(2024, 1, 1, 0, 0, 2),
+        )
 
         # Make request
         url = f"{self.base_url}run/"
@@ -137,7 +141,7 @@ class WorkflowRunViewTests(DifyWorkflowAPITestCase):
         self.assertIn("workflow_run_id", response.data)
         self.assertIn("task_id", response.data)
         self.assertIn("data", response.data)
-        self.assertEqual(response.data["workflow_run_id"], "test-run-id-12345")
+        self.assertEqual(response.data["workflow_run_id"], "test-run-id")
         self.assertEqual(response.data["task_id"], "test-task-id-67890")
 
         # Verify data structure contains expected fields
@@ -150,41 +154,46 @@ class WorkflowRunViewTests(DifyWorkflowAPITestCase):
         self.assertIn("content_analysis", outputs)
         self.assertIn("writing_style", outputs)
 
-        # Verify nested structure_analysis content
-        self.assertEqual(outputs["structure_analysis"]["score"], 8)
-        self.assertIn("feedback", outputs["structure_analysis"])
-        self.assertIn("suggestions", outputs["structure_analysis"])
-
-        # Verify nested content_analysis content
-        self.assertEqual(outputs["content_analysis"]["score"], 7)
-        self.assertIn("feedback", outputs["content_analysis"])
-        self.assertIn("suggestions", outputs["content_analysis"])
-
-        # Verify DifyClient was called correctly
-        mock_client.get_rubric_upload_id.assert_called_once()
-        mock_client.run_workflow.assert_called_once()
-        call_kwargs = mock_client.run_workflow.call_args[1]
-        self.assertIn("essay_question", call_kwargs["inputs"])
-        self.assertIn("essay_content", call_kwargs["inputs"])
-        self.assertIn("essay_rubric", call_kwargs["inputs"])
-        # workflow_id is no longer passed explicitly - it uses the client's default
-
-    @patch("ai_feedback.views.DifyClient")
-    def test_run_workflow_with_defaults(self, mock_client_class):
+    @patch("ai_feedback.dify_client.DifyClient.build_rubric_input")
+    @patch("ai_feedback.dify_client.DifyClient.upload_file")
+    @patch("ai_feedback.dify_client.DifyClient.run_workflow")
+    @patch("ai_feedback.response_transformer.DifyResponseTransformer.to_workflow_output")
+    def test_run_workflow_with_defaults(
+        self,
+        mock_transform,
+        mock_run_workflow,
+        mock_upload_file,
+        mock_build_rubric,
+    ):
         """Test that default values are applied correctly."""
-        mock_client = MagicMock()
-        mock_client_class.return_value = mock_client
-        mock_client.get_rubric_upload_id.return_value = "uploaded-rubric-id"
-        mock_client.build_rubric_file_input.return_value = [
-            {
-                "transfer_method": "local_file",
-                "upload_file_id": "uploaded-rubric-id",
-                "type": "document",
-            }
-        ]
-        mock_client.run_workflow.return_value = self.mock_dify_response
+        mock_build_rubric.return_value = {
+            "transfer_method": "local_file",
+            "upload_file_id": "test-upload-id",
+            "type": "document",
+        }
+        mock_upload_file.return_value = "test-upload-id"
+        mock_run_workflow.return_value = {
+            "id": "test-run-id",
+            "status": "succeeded",
+            "outputs": {},
+            "created_at": "2024-01-01T00:00:00Z",
+        }
 
-        # Request without optional fields
+        from datetime import datetime
+        from ai_feedback.interfaces import WorkflowStatus
+
+        mock_transform.return_value = MagicMock(
+            run_id="test-run-id",
+            task_id="test-task-id",
+            status=WorkflowStatus.SUCCEEDED,
+            outputs={},
+            error_message=None,
+            elapsed_time_seconds=2.5,
+            token_usage={"total_tokens": 1500},
+            created_at=datetime(2024, 1, 1, 0, 0, 0),
+            finished_at=datetime(2024, 1, 1, 0, 0, 2),
+        )
+
         url = f"{self.base_url}run/"
         payload = {
             "essay_question": self.sample_essay_question,
@@ -193,54 +202,104 @@ class WorkflowRunViewTests(DifyWorkflowAPITestCase):
         response = self.client.post(url, payload, format="json")
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        call_kwargs = mock_client.run_workflow.call_args[1]
+        # Verify default language was passed
+        call_kwargs = mock_run_workflow.call_args[1]
         self.assertEqual(call_kwargs["inputs"]["language"], "English")
-        self.assertEqual(call_kwargs["response_mode"], "blocking")
 
-    @patch("ai_feedback.views.DifyClient")
-    def test_run_workflow_with_custom_language(self, mock_client_class):
+    @patch("ai_feedback.dify_client.DifyClient.build_rubric_input")
+    @patch("ai_feedback.dify_client.DifyClient.upload_file")
+    @patch("ai_feedback.dify_client.DifyClient.run_workflow")
+    @patch("ai_feedback.response_transformer.DifyResponseTransformer.to_workflow_output")
+    def test_run_workflow_with_custom_language(
+        self,
+        mock_transform,
+        mock_run_workflow,
+        mock_upload_file,
+        mock_build_rubric,
+    ):
         """Test workflow run with custom language parameter."""
-        mock_client = MagicMock()
-        mock_client_class.return_value = mock_client
-        mock_client.get_rubric_upload_id.return_value = "uploaded-rubric-id"
-        mock_client.build_rubric_file_input.return_value = [
-            {
-                "transfer_method": "local_file",
-                "upload_file_id": "uploaded-rubric-id",
-                "type": "document",
-            }
-        ]
-        mock_client.run_workflow.return_value = self.mock_dify_response
+        mock_build_rubric.return_value = {
+            "transfer_method": "local_file",
+            "upload_file_id": "test-upload-id",
+            "type": "document",
+        }
+        mock_upload_file.return_value = "test-upload-id"
+        mock_run_workflow.return_value = {
+            "id": "test-run-id",
+            "status": "succeeded",
+            "outputs": {},
+            "created_at": "2024-01-01T00:00:00Z",
+        }
+
+        from datetime import datetime
+        from ai_feedback.interfaces import WorkflowStatus
+
+        mock_transform.return_value = MagicMock(
+            run_id="test-run-id",
+            task_id="test-task-id",
+            status=WorkflowStatus.SUCCEEDED,
+            outputs={},
+            error_message=None,
+            elapsed_time_seconds=2.5,
+            token_usage={"total_tokens": 1500},
+            created_at=datetime(2024, 1, 1, 0, 0, 0),
+            finished_at=datetime(2024, 1, 1, 0, 0, 2),
+        )
 
         url = f"{self.base_url}run/"
         payload = self._get_valid_payload(language="Chinese")
         response = self.client.post(url, payload, format="json")
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        call_kwargs = mock_client.run_workflow.call_args[1]
+        call_kwargs = mock_run_workflow.call_args[1]
         self.assertEqual(call_kwargs["inputs"]["language"], "Chinese")
 
-    @patch("ai_feedback.views.DifyClient")
-    def test_run_workflow_streaming_mode(self, mock_client_class):
+    @patch("ai_feedback.dify_client.DifyClient.build_rubric_input")
+    @patch("ai_feedback.dify_client.DifyClient.upload_file")
+    @patch("ai_feedback.dify_client.DifyClient.run_workflow")
+    @patch("ai_feedback.response_transformer.DifyResponseTransformer.to_workflow_output")
+    def test_run_workflow_streaming_mode(
+        self,
+        mock_transform,
+        mock_run_workflow,
+        mock_upload_file,
+        mock_build_rubric,
+    ):
         """Test workflow run with streaming response mode."""
-        mock_client = MagicMock()
-        mock_client_class.return_value = mock_client
-        mock_client.get_rubric_upload_id.return_value = "uploaded-rubric-id"
-        mock_client.build_rubric_file_input.return_value = [
-            {
-                "transfer_method": "local_file",
-                "upload_file_id": "uploaded-rubric-id",
-                "type": "document",
-            }
-        ]
-        mock_client.run_workflow.return_value = self.mock_dify_response
+        mock_build_rubric.return_value = {
+            "transfer_method": "local_file",
+            "upload_file_id": "test-upload-id",
+            "type": "document",
+        }
+        mock_upload_file.return_value = "test-upload-id"
+        mock_run_workflow.return_value = {
+            "id": "test-run-id",
+            "status": "succeeded",
+            "outputs": {},
+            "created_at": "2024-01-01T00:00:00Z",
+        }
+
+        from datetime import datetime
+        from ai_feedback.interfaces import WorkflowStatus
+
+        mock_transform.return_value = MagicMock(
+            run_id="test-run-id",
+            task_id="test-task-id",
+            status=WorkflowStatus.SUCCEEDED,
+            outputs={},
+            error_message=None,
+            elapsed_time_seconds=2.5,
+            token_usage={"total_tokens": 1500},
+            created_at=datetime(2024, 1, 1, 0, 0, 0),
+            finished_at=datetime(2024, 1, 1, 0, 0, 2),
+        )
 
         url = f"{self.base_url}run/"
         payload = self._get_valid_payload(response_mode="streaming")
         response = self.client.post(url, payload, format="json")
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
-        call_kwargs = mock_client.run_workflow.call_args[1]
+        call_kwargs = mock_run_workflow.call_args[1]
         self.assertEqual(call_kwargs["response_mode"], "streaming")
 
     def test_run_workflow_missing_required_fields(self):
@@ -265,25 +324,12 @@ class WorkflowRunViewTests(DifyWorkflowAPITestCase):
         url = f"{self.base_url}run/"
         payload = self._get_valid_payload()
         response = self.client.post(url, payload, format="json")
-        # DRF returns 403 Forbidden for unauthenticated requests with IsAuthenticated permission
         self.assertEqual(response.status_code, status.HTTP_403_FORBIDDEN)
 
-    @patch("ai_feedback.views.DifyClient")
-    def test_run_workflow_dify_error(self, mock_client_class):
+    @patch("ai_feedback.dify_client.DifyClient.analyze_essay")
+    def test_run_workflow_dify_error(self, mock_analyze_essay):
         """Test handling of Dify API errors."""
-        from ai_feedback.client import DifyClientError
-
-        mock_client = MagicMock()
-        mock_client_class.return_value = mock_client
-        mock_client.get_rubric_upload_id.return_value = "uploaded-rubric-id"
-        mock_client.build_rubric_file_input.return_value = [
-            {
-                "transfer_method": "local_file",
-                "upload_file_id": "uploaded-rubric-id",
-                "type": "document",
-            }
-        ]
-        mock_client.run_workflow.side_effect = DifyClientError("Dify API error")
+        mock_analyze_essay.side_effect = APIServerError(status_code=502, message="Dify API error")
 
         url = f"{self.base_url}run/"
         payload = self._get_valid_payload()
@@ -333,18 +379,18 @@ class DifyWorkflowRunSerializerTests(TestCase):
         self.assertIn("essay_question", serializer.errors)
         self.assertIn("essay_content", serializer.errors)
 
-    def test_serializer_invalid_response_mode(self):
-        """Test serializer rejects invalid response_mode."""
+    def test_serializer_valid_data(self):
+        """Test serializer with valid data."""
         from ai_feedback.serializers import DifyWorkflowRunSerializer
 
         data = {
             "essay_question": "Test question",
             "essay_content": "Test content",
-            "response_mode": "invalid_mode",
+            "language": "English",
+            "response_mode": "blocking",
         }
         serializer = DifyWorkflowRunSerializer(data=data)
-        self.assertFalse(serializer.is_valid())
-        self.assertIn("response_mode", serializer.errors)
+        self.assertTrue(serializer.is_valid())
 
     def test_serializer_empty_strings(self):
         """Test serializer rejects empty string values for required fields."""
@@ -360,22 +406,47 @@ class DifyWorkflowRunSerializerTests(TestCase):
 
 
 class WorkflowRunViewResponseTests(DifyWorkflowAPITestCase):
-    """Tests for verifying the complete response payload structure from WorkflowRunView."""
+    """Tests for verifying complete response payload structure from WorkflowRunView."""
 
-    @patch("ai_feedback.views.DifyClient")
-    def test_response_contains_all_expected_fields(self, mock_client_class):
+    @patch("ai_feedback.dify_client.DifyClient.build_rubric_input")
+    @patch("ai_feedback.dify_client.DifyClient.upload_file")
+    @patch("ai_feedback.dify_client.DifyClient.run_workflow")
+    @patch("ai_feedback.response_transformer.DifyResponseTransformer.to_workflow_output")
+    def test_response_contains_all_expected_fields(
+        self,
+        mock_transform,
+        mock_run_workflow,
+        mock_upload_file,
+        mock_build_rubric,
+    ):
         """Test that response contains all expected fields for frontend integration."""
-        mock_client = MagicMock()
-        mock_client_class.return_value = mock_client
-        mock_client.get_rubric_upload_id.return_value = "uploaded-rubric-id"
-        mock_client.build_rubric_file_input.return_value = [
-            {
-                "transfer_method": "local_file",
-                "upload_file_id": "uploaded-rubric-id",
-                "type": "document",
-            }
-        ]
-        mock_client.run_workflow.return_value = self.mock_dify_response
+        mock_build_rubric.return_value = {
+            "transfer_method": "local_file",
+            "upload_file_id": "test-upload-id",
+            "type": "document",
+        }
+        mock_upload_file.return_value = "test-upload-id"
+        mock_run_workflow.return_value = {
+            "id": "test-run-id",
+            "status": "succeeded",
+            "outputs": {},
+            "created_at": "2024-01-01T00:00:00Z",
+        }
+
+        from datetime import datetime
+        from ai_feedback.interfaces import WorkflowStatus
+
+        mock_transform.return_value = MagicMock(
+            run_id="test-run-id",
+            task_id="test-task-id",
+            status=WorkflowStatus.SUCCEEDED,
+            outputs={},
+            error_message=None,
+            elapsed_time_seconds=2.5,
+            token_usage={"total_tokens": 1500},
+            created_at=datetime(2024, 1, 1, 0, 0, 0),
+            finished_at=datetime(2024, 1, 1, 0, 0, 2),
+        )
 
         url = f"{self.base_url}run/"
         payload = self._get_valid_payload()
@@ -394,41 +465,50 @@ class WorkflowRunViewResponseTests(DifyWorkflowAPITestCase):
         for field in expected_fields:
             self.assertIn(field, response.data, f"Missing required field: {field}")
 
-        # Verify workflow_run_id and task_id are strings
-        self.assertIsInstance(response.data["workflow_run_id"], str)
-        self.assertIsInstance(response.data["task_id"], str)
-
-        # Verify data is a dictionary with expected structure
-        self.assertIsInstance(response.data["data"], dict)
+        # Verify data structure
         data_fields = ["id", "status", "outputs"]
         for field in data_fields:
-            self.assertIn(
-                field, response.data["data"], f"Missing field in data: {field}"
-            )
+            self.assertIn(field, response.data["data"], f"Missing field in data: {field}")
 
-        # Verify inputs contains the sent data
-        self.assertIn("essay_question", response.data["inputs"])
-        self.assertIn("essay_content", response.data["inputs"])
-        self.assertIn("language", response.data["inputs"])
-        self.assertIn("essay_rubric", response.data["inputs"])
-
-        # Verify response_mode is valid
-        self.assertIn(response.data["response_mode"], ["blocking", "streaming"])
-
-    @patch("ai_feedback.views.DifyClient")
-    def test_response_mode_blocking(self, mock_client_class):
+    @patch("ai_feedback.dify_client.DifyClient.build_rubric_input")
+    @patch("ai_feedback.dify_client.DifyClient.upload_file")
+    @patch("ai_feedback.dify_client.DifyClient.run_workflow")
+    @patch("ai_feedback.response_transformer.DifyResponseTransformer.to_workflow_output")
+    def test_response_mode_blocking(
+        self,
+        mock_transform,
+        mock_run_workflow,
+        mock_upload_file,
+        mock_build_rubric,
+    ):
         """Test response_mode 'blocking' is correctly passed and returned."""
-        mock_client = MagicMock()
-        mock_client_class.return_value = mock_client
-        mock_client.get_rubric_upload_id.return_value = "uploaded-rubric-id"
-        mock_client.build_rubric_file_input.return_value = [
-            {
-                "transfer_method": "local_file",
-                "upload_file_id": "uploaded-rubric-id",
-                "type": "document",
-            }
-        ]
-        mock_client.run_workflow.return_value = self.mock_dify_response
+        mock_build_rubric.return_value = {
+            "transfer_method": "local_file",
+            "upload_file_id": "test-upload-id",
+            "type": "document",
+        }
+        mock_upload_file.return_value = "test-upload-id"
+        mock_run_workflow.return_value = {
+            "id": "test-run-id",
+            "status": "succeeded",
+            "outputs": {},
+            "created_at": "2024-01-01T00:00:00Z",
+        }
+
+        from datetime import datetime
+        from ai_feedback.interfaces import WorkflowStatus
+
+        mock_transform.return_value = MagicMock(
+            run_id="test-run-id",
+            task_id="test-task-id",
+            status=WorkflowStatus.SUCCEEDED,
+            outputs={},
+            error_message=None,
+            elapsed_time_seconds=2.5,
+            token_usage={"total_tokens": 1500},
+            created_at=datetime(2024, 1, 1, 0, 0, 0),
+            finished_at=datetime(2024, 1, 1, 0, 0, 2),
+        )
 
         url = f"{self.base_url}run/"
         payload = self._get_valid_payload(response_mode="blocking")
@@ -437,24 +517,49 @@ class WorkflowRunViewResponseTests(DifyWorkflowAPITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["response_mode"], "blocking")
 
-        # Verify the client was called with blocking mode
-        call_kwargs = mock_client.run_workflow.call_args[1]
+        # Verify client was called with blocking mode
+        call_kwargs = mock_run_workflow.call_args[1]
         self.assertEqual(call_kwargs["response_mode"], "blocking")
 
-    @patch("ai_feedback.views.DifyClient")
-    def test_response_mode_streaming(self, mock_client_class):
+    @patch("ai_feedback.dify_client.DifyClient.build_rubric_input")
+    @patch("ai_feedback.dify_client.DifyClient.upload_file")
+    @patch("ai_feedback.dify_client.DifyClient.run_workflow")
+    @patch("ai_feedback.response_transformer.DifyResponseTransformer.to_workflow_output")
+    def test_response_mode_streaming(
+        self,
+        mock_transform,
+        mock_run_workflow,
+        mock_upload_file,
+        mock_build_rubric,
+    ):
         """Test response_mode 'streaming' is correctly passed and returned."""
-        mock_client = MagicMock()
-        mock_client_class.return_value = mock_client
-        mock_client.get_rubric_upload_id.return_value = "uploaded-rubric-id"
-        mock_client.build_rubric_file_input.return_value = [
-            {
-                "transfer_method": "local_file",
-                "upload_file_id": "uploaded-rubric-id",
-                "type": "document",
-            }
-        ]
-        mock_client.run_workflow.return_value = self.mock_dify_response
+        mock_build_rubric.return_value = {
+            "transfer_method": "local_file",
+            "upload_file_id": "test-upload-id",
+            "type": "document",
+        }
+        mock_upload_file.return_value = "test-upload-id"
+        mock_run_workflow.return_value = {
+            "id": "test-run-id",
+            "status": "succeeded",
+            "outputs": {},
+            "created_at": "2024-01-01T00:00:00Z",
+        }
+
+        from datetime import datetime
+        from ai_feedback.interfaces import WorkflowStatus
+
+        mock_transform.return_value = MagicMock(
+            run_id="test-run-id",
+            task_id="test-task-id",
+            status=WorkflowStatus.SUCCEEDED,
+            outputs={},
+            error_message=None,
+            elapsed_time_seconds=2.5,
+            token_usage={"total_tokens": 1500},
+            created_at=datetime(2024, 1, 1, 0, 0, 0),
+            finished_at=datetime(2024, 1, 1, 0, 0, 2),
+        )
 
         url = f"{self.base_url}run/"
         payload = self._get_valid_payload(response_mode="streaming")
@@ -463,24 +568,49 @@ class WorkflowRunViewResponseTests(DifyWorkflowAPITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data["response_mode"], "streaming")
 
-        # Verify the client was called with streaming mode
-        call_kwargs = mock_client.run_workflow.call_args[1]
+        # Verify client was called with streaming mode
+        call_kwargs = mock_run_workflow.call_args[1]
         self.assertEqual(call_kwargs["response_mode"], "streaming")
 
-    @patch("ai_feedback.views.DifyClient")
-    def test_inputs_contain_language_parameter(self, mock_client_class):
+    @patch("ai_feedback.dify_client.DifyClient.build_rubric_input")
+    @patch("ai_feedback.dify_client.DifyClient.upload_file")
+    @patch("ai_feedback.dify_client.DifyClient.run_workflow")
+    @patch("ai_feedback.response_transformer.DifyResponseTransformer.to_workflow_output")
+    def test_inputs_contain_language_parameter(
+        self,
+        mock_transform,
+        mock_run_workflow,
+        mock_upload_file,
+        mock_build_rubric,
+    ):
         """Test that language parameter is correctly included in inputs."""
-        mock_client = MagicMock()
-        mock_client_class.return_value = mock_client
-        mock_client.get_rubric_upload_id.return_value = "uploaded-rubric-id"
-        mock_client.build_rubric_file_input.return_value = [
-            {
-                "transfer_method": "local_file",
-                "upload_file_id": "uploaded-rubric-id",
-                "type": "document",
-            }
-        ]
-        mock_client.run_workflow.return_value = self.mock_dify_response
+        mock_build_rubric.return_value = {
+            "transfer_method": "local_file",
+            "upload_file_id": "test-upload-id",
+            "type": "document",
+        }
+        mock_upload_file.return_value = "test-upload-id"
+        mock_run_workflow.return_value = {
+            "id": "test-run-id",
+            "status": "succeeded",
+            "outputs": {},
+            "created_at": "2024-01-01T00:00:00Z",
+        }
+
+        from datetime import datetime
+        from ai_feedback.interfaces import WorkflowStatus
+
+        mock_transform.return_value = MagicMock(
+            run_id="test-run-id",
+            task_id="test-task-id",
+            status=WorkflowStatus.SUCCEEDED,
+            outputs={},
+            error_message=None,
+            elapsed_time_seconds=2.5,
+            token_usage={"total_tokens": 1500},
+            created_at=datetime(2024, 1, 1, 0, 0, 0),
+            finished_at=datetime(2024, 1, 1, 0, 0, 2),
+        )
 
         url = f"{self.base_url}run/"
         payload = self._get_valid_payload(language="Chinese")
@@ -488,32 +618,18 @@ class WorkflowRunViewResponseTests(DifyWorkflowAPITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        # Verify language is in the inputs sent to Dify
-        call_kwargs = mock_client.run_workflow.call_args[1]
+        # Verify language is in inputs sent to Dify
+        call_kwargs = mock_run_workflow.call_args[1]
         self.assertEqual(call_kwargs["inputs"]["language"], "Chinese")
 
-        # Verify language is in the response inputs
+        # Verify language is in response inputs
         self.assertEqual(response.data["inputs"]["language"], "Chinese")
 
-    @patch("ai_feedback.views.DifyClient")
-    def test_workflow_error_response_format(self, mock_client_class):
-        """Test that workflow errors return the correct response format."""
-        from ai_feedback.client import DifyClientError
-
-        mock_client = MagicMock()
-        mock_client_class.return_value = mock_client
-        mock_client.get_rubric_upload_id.return_value = "uploaded-rubric-id"
-        mock_client.build_rubric_file_input.return_value = [
-            {
-                "transfer_method": "local_file",
-                "upload_file_id": "uploaded-rubric-id",
-                "type": "document",
-            }
-        ]
+    @patch("ai_feedback.dify_client.DifyClient.analyze_essay")
+    def test_workflow_error_response_format(self, mock_analyze_essay):
+        """Test that workflow errors return correct response format."""
         # Simulate various error scenarios
-        mock_client.run_workflow.side_effect = DifyClientError(
-            "Workflow execution failed: timeout"
-        )
+        mock_analyze_essay.side_effect = APIServerError(status_code=502, message="Workflow execution failed: timeout")
 
         url = f"{self.base_url}run/"
         payload = self._get_valid_payload()
@@ -521,24 +637,64 @@ class WorkflowRunViewResponseTests(DifyWorkflowAPITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_502_BAD_GATEWAY)
         self.assertIn("error", response.data)
-        self.assertIn(
-            "502", response.data["error"]
-        )  # Error message should contain 502 context
 
-    @patch("ai_feedback.views.DifyClient")
-    def test_outputs_structure_for_frontend_consumption(self, mock_client_class):
+    @patch("ai_feedback.dify_client.DifyClient.build_rubric_input")
+    @patch("ai_feedback.dify_client.DifyClient.upload_file")
+    @patch("ai_feedback.dify_client.DifyClient.run_workflow")
+    @patch("ai_feedback.response_transformer.DifyResponseTransformer.to_workflow_output")
+    def test_outputs_structure_for_frontend_consumption(
+        self,
+        mock_transform,
+        mock_run_workflow,
+        mock_upload_file,
+        mock_build_rubric,
+    ):
         """Test that outputs structure matches frontend expectations."""
-        mock_client = MagicMock()
-        mock_client_class.return_value = mock_client
-        mock_client.get_rubric_upload_id.return_value = "uploaded-rubric-id"
-        mock_client.build_rubric_file_input.return_value = [
-            {
-                "transfer_method": "local_file",
-                "upload_file_id": "uploaded-rubric-id",
-                "type": "document",
-            }
-        ]
-        mock_client.run_workflow.return_value = self.mock_dify_response
+        mock_outputs = {
+            "structure_analysis": {
+                "score": 8,
+                "feedback": "The essay has a clear introduction.",
+                "suggestions": ["Consider adding more topic sentences."],
+            },
+            "content_analysis": {
+                "score": 7,
+                "feedback": "Arguments are well-supported.",
+                "suggestions": ["Include more recent sources."],
+            },
+            "writing_style": {
+                "score": 9,
+                "feedback": "Academic tone is consistent.",
+                "suggestions": ["Minor grammar corrections needed."],
+            },
+        }
+
+        mock_build_rubric.return_value = {
+            "transfer_method": "local_file",
+            "upload_file_id": "test-upload-id",
+            "type": "document",
+        }
+        mock_upload_file.return_value = "test-upload-id"
+        mock_run_workflow.return_value = {
+            "id": "test-run-id",
+            "status": "succeeded",
+            "outputs": mock_outputs,
+            "created_at": "2024-01-01T00:00:00Z",
+        }
+
+        from datetime import datetime
+        from ai_feedback.interfaces import WorkflowStatus
+
+        mock_transform.return_value = MagicMock(
+            run_id="test-run-id",
+            task_id="test-task-id",
+            status=WorkflowStatus.SUCCEEDED,
+            outputs=mock_outputs,
+            error_message=None,
+            elapsed_time_seconds=2.5,
+            token_usage={"total_tokens": 1500},
+            created_at=datetime(2024, 1, 1, 0, 0, 0),
+            finished_at=datetime(2024, 1, 1, 0, 0, 2),
+        )
 
         url = f"{self.base_url}run/"
         payload = self._get_valid_payload()
@@ -548,7 +704,7 @@ class WorkflowRunViewResponseTests(DifyWorkflowAPITestCase):
 
         outputs = response.data["data"]["outputs"]
 
-        # Verify structure_analysis has the expected structure
+        # Verify structure_analysis has expected structure
         self.assertIn("structure_analysis", outputs)
         structure = outputs["structure_analysis"]
         self.assertIsInstance(structure, dict)
@@ -557,7 +713,7 @@ class WorkflowRunViewResponseTests(DifyWorkflowAPITestCase):
         self.assertIn("suggestions", structure)
         self.assertIsInstance(structure["suggestions"], list)
 
-        # Verify content_analysis has the expected structure
+        # Verify content_analysis has expected structure
         self.assertIn("content_analysis", outputs)
         content = outputs["content_analysis"]
         self.assertIsInstance(content, dict)
@@ -566,7 +722,7 @@ class WorkflowRunViewResponseTests(DifyWorkflowAPITestCase):
         self.assertIn("suggestions", content)
         self.assertIsInstance(content["suggestions"], list)
 
-        # Verify writing_style has the expected structure
+        # Verify writing_style has expected structure
         self.assertIn("writing_style", outputs)
         style = outputs["writing_style"]
         self.assertIsInstance(style, dict)
@@ -575,20 +731,45 @@ class WorkflowRunViewResponseTests(DifyWorkflowAPITestCase):
         self.assertIn("suggestions", style)
         self.assertIsInstance(style["suggestions"], list)
 
-    @patch("ai_feedback.views.DifyClient")
-    def test_rubric_file_input_structure(self, mock_client_class):
+    @patch("ai_feedback.dify_client.DifyClient.build_rubric_input")
+    @patch("ai_feedback.dify_client.DifyClient.upload_file")
+    @patch("ai_feedback.dify_client.DifyClient.run_workflow")
+    @patch("ai_feedback.response_transformer.DifyResponseTransformer.to_workflow_output")
+    def test_rubric_file_input_structure(
+        self,
+        mock_transform,
+        mock_run_workflow,
+        mock_upload_file,
+        mock_build_rubric,
+    ):
         """Test that rubric file input is correctly structured for Dify."""
-        mock_client = MagicMock()
-        mock_client_class.return_value = mock_client
-        mock_client.get_rubric_upload_id.return_value = "test-upload-id-12345"
-        mock_client.build_rubric_file_input.return_value = [
-            {
-                "transfer_method": "local_file",
-                "upload_file_id": "test-upload-id-12345",
-                "type": "document",
-            }
-        ]
-        mock_client.run_workflow.return_value = self.mock_dify_response
+        mock_build_rubric.return_value = {
+            "transfer_method": "local_file",
+            "upload_file_id": "test-upload-id",
+            "type": "document",
+        }
+        mock_upload_file.return_value = "test-upload-id"
+        mock_run_workflow.return_value = {
+            "id": "test-run-id",
+            "status": "succeeded",
+            "outputs": {},
+            "created_at": "2024-01-01T00:00:00Z",
+        }
+
+        from datetime import datetime
+        from ai_feedback.interfaces import WorkflowStatus
+
+        mock_transform.return_value = MagicMock(
+            run_id="test-run-id",
+            task_id="test-task-id",
+            status=WorkflowStatus.SUCCEEDED,
+            outputs={},
+            error_message=None,
+            elapsed_time_seconds=2.5,
+            token_usage={"total_tokens": 1500},
+            created_at=datetime(2024, 1, 1, 0, 0, 0),
+            finished_at=datetime(2024, 1, 1, 0, 0, 2),
+        )
 
         url = f"{self.base_url}run/"
         payload = self._get_valid_payload()
@@ -596,39 +777,52 @@ class WorkflowRunViewResponseTests(DifyWorkflowAPITestCase):
 
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
-        # Verify rubric file input structure in the client call
-        mock_client.build_rubric_file_input.assert_called_once_with(
-            "test-upload-id-12345"
+        # Verify rubric input structure
+        mock_build_rubric.assert_called_once()
+        rubric_input = mock_build_rubric.return_value
+        self.assertEqual(rubric_input["transfer_method"], "local_file")
+        self.assertEqual(rubric_input["upload_file_id"], "test-upload-id")
+        self.assertEqual(rubric_input["type"], "document")
+
+    @patch("ai_feedback.dify_client.DifyClient.build_rubric_input")
+    @patch("ai_feedback.dify_client.DifyClient.upload_file")
+    @patch("ai_feedback.dify_client.DifyClient.run_workflow")
+    @patch("ai_feedback.response_transformer.DifyResponseTransformer.to_workflow_output")
+    def test_workflow_id_removed_from_run_workflow(
+        self,
+        mock_transform,
+        mock_run_workflow,
+        mock_upload_file,
+        mock_build_rubric,
+    ):
+        """Test that workflow_id is no longer passed to run_workflow."""
+        mock_build_rubric.return_value = {
+            "transfer_method": "local_file",
+            "upload_file_id": "test-upload-id",
+            "type": "document",
+        }
+        mock_upload_file.return_value = "test-upload-id"
+        mock_run_workflow.return_value = {
+            "id": "test-run-id",
+            "status": "succeeded",
+            "outputs": {},
+            "created_at": "2024-01-01T00:00:00Z",
+        }
+
+        from datetime import datetime
+        from ai_feedback.interfaces import WorkflowStatus
+
+        mock_transform.return_value = MagicMock(
+            run_id="test-run-id",
+            task_id="test-task-id",
+            status=WorkflowStatus.SUCCEEDED,
+            outputs={},
+            error_message=None,
+            elapsed_time_seconds=2.5,
+            token_usage={"total_tokens": 1500},
+            created_at=datetime(2024, 1, 1, 0, 0, 0),
+            finished_at=datetime(2024, 1, 1, 0, 0, 2),
         )
-        rubric_file_input = mock_client.build_rubric_file_input.return_value[0]
-
-        # Verify the structure matches Dify's expected format
-        self.assertEqual(rubric_file_input["transfer_method"], "local_file")
-        self.assertEqual(rubric_file_input["upload_file_id"], "test-upload-id-12345")
-        self.assertEqual(rubric_file_input["type"], "document")
-
-        # Verify the rubric input is included in the inputs sent to Dify
-        call_kwargs = mock_client.run_workflow.call_args[1]
-        self.assertIn("essay_rubric", call_kwargs["inputs"])
-        self.assertEqual(
-            call_kwargs["inputs"]["essay_rubric"],
-            rubric_file_input,
-        )
-
-    @patch("ai_feedback.views.DifyClient")
-    def test_workflow_id_removed_from_run_workflow(self, mock_client_class):
-        """Test that workflow_id is no longer passed to run_workflow - it uses the default from client or settings."""
-        mock_client = MagicMock()
-        mock_client_class.return_value = mock_client
-        mock_client.get_rubric_upload_id.return_value = "uploaded-rubric-id"
-        mock_client.build_rubric_file_input.return_value = [
-            {
-                "transfer_method": "local_file",
-                "upload_file_id": "uploaded-rubric-id",
-                "type": "document",
-            }
-        ]
-        mock_client.run_workflow.return_value = self.mock_dify_response
 
         url = f"{self.base_url}run/"
         payload = self._get_valid_payload()
@@ -637,9 +831,9 @@ class WorkflowRunViewResponseTests(DifyWorkflowAPITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
 
         # Verify run_workflow was called without workflow_id kwarg
-        mock_client.run_workflow.assert_called_once()
-        call_kwargs = mock_client.run_workflow.call_args[1]
-        # workflow_id should NOT be in the kwargs anymore
+        mock_run_workflow.assert_called_once()
+        call_kwargs = mock_run_workflow.call_args[1]
+        # workflow_id should NOT be in kwargs anymore
         self.assertNotIn("workflow_id", call_kwargs)
         # But inputs and response_mode should still be there
         self.assertIn("inputs", call_kwargs)

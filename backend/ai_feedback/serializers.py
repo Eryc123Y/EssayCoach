@@ -66,6 +66,12 @@ if DifyWorkflowRunSerializer is None:
         def validate(self, attrs: dict[str, Any]) -> dict[str, Any]:
             attrs.setdefault("language", "English")
             attrs.setdefault("response_mode", "blocking")
-            if not attrs.get("user_id"):
+            if not attrs.get("user_id") or attrs.get("user_id") is None:
                 attrs["user_id"] = "essaycoach-service"
+
+            # Validate response_mode choices
+            response_mode = attrs.get("response_mode")
+            if response_mode and response_mode not in ("blocking", "streaming"):
+                raise serializers.ValidationError({"response_mode": "response_mode must be 'blocking' or 'streaming'"})
+
             return attrs
