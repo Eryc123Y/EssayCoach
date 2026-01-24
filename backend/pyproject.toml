@@ -53,6 +53,7 @@ dev = [
     "pytest>=7.4,<8.0",
     "pytest-django>=4.7,<5.0",
     "pytest-mock>=3.12,<4.0",
+    "pytest-timeout>=2.3,<3.0",  # Add timeout support
     "ruff>=0.1,<1.0",
 ]
 
@@ -86,5 +87,5 @@ testpaths = ["ai_feedback/tests", "core/tests"]
 python_files = ["test_*.py"]
 python_classes = ["Test*", "*Tests"]
 python_functions = ["test_*"]
-addopts = "-v --tb=short"
+addopts = "-v --tb=short --timeout=60"
 norecursedirs = ["test_e2e*.py", "test_dify.py", ".*", "node_modules", "*.egg-info"]
