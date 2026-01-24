@@ -110,7 +110,7 @@ describe('AIAnalysisPage', () => {
   it('renders the essay submission form initially', () => {
     render(<AIAnalysisPage />);
 
-    expect(screen.getByText(/Writing Workspace/i)).toBeInTheDocument();
+    expect(screen.getByText(/Essay Analysis/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/Essay Question/i)).toBeInTheDocument();
     expect(screen.getByLabelText(/Content/i)).toBeInTheDocument();
     expect(
@@ -258,7 +258,7 @@ describe('AIAnalysisPage', () => {
     // Expect toast error
     // Note: The toast mock might be called, but we assert on page state
     // The component sets state back to 'input' on error
-    expect(await screen.findByText(/Writing Workspace/i)).toBeInTheDocument();
+    expect(await screen.findByText(/Essay Analysis/i)).toBeInTheDocument();
 
     consoleSpy.mockRestore();
   });
