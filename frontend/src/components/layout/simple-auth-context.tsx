@@ -48,48 +48,87 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [user, setUser] = useState<SimpleUser | null>(null);
   const [classes, setClasses] = useState<ClassInfo[]>([]);
   const [currentClassId, setCurrentClassId] = useState<number | null>(null);
+  const [isInitialized, setIsInitialized] = useState(false);
 
+  // Read user info from cookies - run on mount and when cookies might change
   useEffect(() => {
-    // Read basic user info from cookies
-    const email = readCookie('user_email');
-    const firstName = readCookie('user_first_name');
-    const lastName = readCookie('user_last_name');
-    const userId = readCookie('user_id');
-    const userRole = readCookie('user_role') as UserRole || 'student';
-    const isLoggedIn = Boolean(readCookie('access_token'));
+    function readUserFromCookies() {
+      const email = readCookie('user_email');
+      const firstName = readCookie('user_first_name');
+      const lastName = readCookie('user_last_name');
+      const userId = readCookie('user_id');
+      const userRole = readCookie('user_role') as UserRole || 'student';
+      // Check both access_token cookie and other user cookies to determine login status
+      const hasAccessToken = Boolean(readCookie('access_token'));
+      const hasUserCookies = email && userRole;
 
-    if (isLoggedIn && email) {
-      setUser({ id: userId || '1', email, firstName, lastName, role: userRole });
-    } else {
-      setUser(null);
+      // User is logged in if they have access_token OR have user cookies (reliable indicator)
+      const isLoggedIn = hasAccessToken || hasUserCookies;
+
+      if (isLoggedIn && email) {
+        setUser({ id: userId || '1', email, firstName, lastName, role: userRole });
+      } else {
+        setUser(null);
+      }
+      setIsInitialized(true);
     }
+
+    // Read user on mount
+    readUserFromCookies();
+
+    // Set up an interval to check for cookie changes (e.g., after login)
+    const intervalId = setInterval(readUserFromCookies, 500);
+
+    return () => clearInterval(intervalId);
   }, []);
 
-  // Fetch user's accessible classes
+  // Fetch user's accessible classes - run when user is set
   useEffect(() => {
+    // Only fetch classes if AuthContext is initialized and user exists
+    if (!isInitialized || !user) return;
+
     async function fetchClasses() {
       try {
-        const response = await fetch('/api/v1/users/me/classes/');
+        // Get token from cookie
+        const token = readCookie('access_token');
+        
+        const response = await fetch('/api/v1/core/users/me/classes/', {
+          headers: {
+            'Authorization': `Token ${token}`
+          }
+        });
+        
         if (response.ok) {
           const data = await response.json();
-          setClasses(data.results || data);
+          const classList = data.results || data;
+          
+          // Transform API response to match ClassInfo interface (classId instead of class_id)
+          const transformedClasses: ClassInfo[] = Array.isArray(classList) 
+            ? classList.map((cls: any) => ({
+                classId: cls.class_id,
+                unitName: cls.unit_name,
+                unitCode: cls.unit_code,
+                classSize: cls.class_size
+              }))
+            : [];
+          
+          setClasses(transformedClasses);
 
           // Set first class as current if none selected
-          if (data.results?.length > 0 && !currentClassId) {
-            setCurrentClassId(data.results[0].class_id);
-          } else if (Array.isArray(data) && data.length > 0 && !currentClassId) {
-            setCurrentClassId(data[0].class_id);
+          if (transformedClasses.length > 0 && !currentClassId) {
+            setCurrentClassId(transformedClasses[0].classId);
           }
+        } else if (response.status === 401) {
+          // Unauthorized - redirect to login
+          console.warn('Unauthorized access to classes API');
         }
       } catch (error) {
         console.error('Failed to fetch classes:', error);
       }
     }
 
-    if (user) {
-      fetchClasses();
-    }
-  }, [user]);
+    fetchClasses();
+  }, [user, isInitialized]);
 
   const currentClass = useMemo(() => {
     return classes.find(c => c.classId === currentClassId) || classes[0] || null;
