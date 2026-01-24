@@ -45,7 +45,7 @@ export default function AIAnalysisPage() {
 
   // Check for view=results URL parameter to show demo results
   useEffect(() => {
-    const viewParam = searchParams.get('view');
+    const viewParam = searchParams?.get('view');
     if (viewParam && viewParam.toString() === 'results') {
       const mockScores: ScoreData[] = [
         {
