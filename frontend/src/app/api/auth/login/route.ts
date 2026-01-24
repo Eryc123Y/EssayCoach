@@ -60,32 +60,32 @@ export async function POST(req: NextRequest) {
       maxAge: 60 * 60 * 24 // 24 hours
     });
 
-    // Mirror user info in cookies for simple-auth-context.tsx
-    res.cookies.set('user_email', user.email, {
+     // Mirror user info in cookies for simple-auth-context.tsx (using normalizedUser for consistency)
+    res.cookies.set('user_email', normalizedUser.email || '', {
       httpOnly: false,
       sameSite: 'lax',
       path: '/',
       maxAge: 60 * 60 * 24
     });
-    res.cookies.set('user_first_name', user.first_name || '', {
+    res.cookies.set('user_first_name', normalizedUser.first_name || '', {
       httpOnly: false,
       sameSite: 'lax',
       path: '/',
       maxAge: 60 * 60 * 24
     });
-    res.cookies.set('user_last_name', user.last_name || '', {
+    res.cookies.set('user_last_name', normalizedUser.last_name || '', {
       httpOnly: false,
       sameSite: 'lax',
       path: '/',
       maxAge: 60 * 60 * 24
     });
-    res.cookies.set('user_role', user.role || 'student', {
+    res.cookies.set('user_role', normalizedUser.role, {
       httpOnly: false,
       sameSite: 'lax',
       path: '/',
       maxAge: 60 * 60 * 24
     });
-    res.cookies.set('user_id', String(user.user_id || user.id || ''), {
+    res.cookies.set('user_id', String(normalizedUser.user_id || normalizedUser.id || ''), {
       httpOnly: false,
       sameSite: 'lax',
       path: '/',
