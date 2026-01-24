@@ -141,8 +141,7 @@ class LoginView(APIView):
         tags=["Authentication"],
         summary="User login",
         description=(
-            "Authenticate a user with email and password. Returns an authentication "
-            "token and user profile information."
+            "Authenticate a user with email and password. Returns an authentication token and user profile information."
         ),
         request=UserLoginSerializer,
         responses={
@@ -177,9 +176,7 @@ class LoginView(APIView):
         },
     )
     def post(self, request: Request) -> Response:
-        serializer = UserLoginSerializer(
-            data=request.data, context={"request": request}
-        )
+        serializer = UserLoginSerializer(data=request.data, context={"request": request})
 
         if serializer.is_valid():
             user: User = serializer.validated_data["user"]
@@ -188,9 +185,14 @@ class LoginView(APIView):
             # Serialize user data
             user_data: dict[str, Any] = UserProfileSerializer(user).data
 
-            response_data: dict[str, Any] = format_success_response(
-                data={"token": token.key, "user": user_data}
-            )
+            # Debug: Print the serialized user data to see actual fields
+            import logging
+
+            logger = logging.getLogger(__name__)
+            logger.info(f"[Login Debug] Serialized user data: {user_data}")
+            logger.info(f"[Login Debug] User role field value: {user_data.get('role', 'NOT_FOUND')}")
+
+            response_data: dict[str, Any] = format_success_response(data={"token": token.key, "user": user_data})
             return Response(response_data, status=status.HTTP_200_OK)
 
         # Handle validation errors
@@ -202,9 +204,7 @@ class LoginView(APIView):
                 error_obj = error_list[0]
                 if isinstance(error_obj, dict):
                     error_code = error_obj.get("code", "INVALID_CREDENTIALS")
-                    error_message = error_obj.get(
-                        "message", "Invalid email or password"
-                    )
+                    error_message = error_obj.get("message", "Invalid email or password")
 
                     status_code = status.HTTP_401_UNAUTHORIZED
                     if error_code == "ACCOUNT_LOCKED":
@@ -212,9 +212,7 @@ class LoginView(APIView):
                     elif error_code == "INVALID_INPUT":
                         status_code = status.HTTP_400_BAD_REQUEST
 
-                    return format_error_response(
-                        code=error_code, message=error_message, status_code=status_code
-                    )
+                    return format_error_response(code=error_code, message=error_message, status_code=status_code)
 
         return format_error_response(
             code="INVALID_INPUT",
@@ -243,9 +241,7 @@ class LogoutView(APIView):
         except Exception:
             pass
 
-        return Response(
-            format_success_response(data={}, message="Successfully logged out")
-        )
+        return Response(format_success_response(data={}, message="Successfully logged out"))
 
 
 class PasswordResetView(APIView):
@@ -279,9 +275,7 @@ class PasswordResetView(APIView):
             user = User.objects.get(user_email=email)
             user.set_password(new_password)
             user.save()
-            return Response(
-                format_success_response(data={}, message="Password reset successful")
-            )
+            return Response(format_success_response(data={}, message="Password reset successful"))
         except User.DoesNotExist:
             return format_error_response(
                 code="EMAIL_NOT_FOUND",
@@ -305,20 +299,14 @@ class PasswordChangeView(APIView):
         responses={200: OpenApiResponse(description="Password changed successfully")},
     )
     def post(self, request: Request) -> Response:
-        serializer = PasswordChangeSerializer(
-            data=request.data, context={"request": request}
-        )
+        serializer = PasswordChangeSerializer(data=request.data, context={"request": request})
 
         if serializer.is_valid():
             user = request.user
             new_password = serializer.validated_data["new_password"]
             user.set_password(new_password)
             user.save()
-            return Response(
-                format_success_response(
-                    data={}, message="Password changed successfully"
-                )
-            )
+            return Response(format_success_response(data={}, message="Password changed successfully"))
 
         return format_error_response(
             code="VALIDATION_ERROR",
@@ -352,14 +340,10 @@ class UserProfileView(APIView):
         responses={200: UserProfileSerializer},
     )
     def patch(self, request: Request) -> Response:
-        serializer = UserUpdateSerializer(
-            instance=request.user, data=request.data, partial=True
-        )
+        serializer = UserUpdateSerializer(instance=request.user, data=request.data, partial=True)
         if serializer.is_valid():
             user = serializer.save()
-            return Response(
-                format_success_response(data=UserProfileSerializer(user).data)
-            )
+            return Response(format_success_response(data=UserProfileSerializer(user).data))
         return format_error_response(
             code="VALIDATION_ERROR",
             message="Invalid input data",

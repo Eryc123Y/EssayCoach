@@ -38,6 +38,9 @@ export async function POST(req: NextRequest) {
 
     const result = await response.json();
     const { token, user } = result.data;
+    
+    // Debug: Log the user object to see what fields are available
+    console.log('[Login Debug] User object from API:', JSON.stringify(user, null, 2));
 
     const res = NextResponse.json({ access: token, user });
 
