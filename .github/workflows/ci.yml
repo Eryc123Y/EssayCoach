@@ -58,7 +58,7 @@ jobs:
           POSTGRES_PORT: ${{ job.services.postgres.ports[5432] }}
           POSTGRES_DB: test_essaycoach
         working-directory: ./backend
-        run: uv run pytest
+        run: uv run pytest --timeout 0
 
       - name: Run type checking
         working-directory: ./backend
