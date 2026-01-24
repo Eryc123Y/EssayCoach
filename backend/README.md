@@ -70,7 +70,7 @@ uv run python manage.py <command>
 uv run pytest
 
 # Type checking
-uv run mypy .
+uv run pyright .
 
 # Code formatting
 uv run black .
@@ -104,7 +104,7 @@ uv run pytest
 uv run black .
 
 # 4. Check types
-uv run mypy .
+uv run pyright .
 
 # 5. Lint
 uv run ruff check .
