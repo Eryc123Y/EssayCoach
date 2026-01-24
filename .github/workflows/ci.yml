@@ -68,7 +68,7 @@ jobs:
         run: cd backend && uv run pytest
 
       - name: Run type checking
-        run: cd backend && uv run mypy .
+        run: cd backend && uv run pyright .
 
       - name: Run linting
         run: cd backend && uv run ruff check .
