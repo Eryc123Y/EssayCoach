@@ -1,8 +1,8 @@
 'use client';
 
-import { Check, ChevronsUpDown, GalleryVerticalEnd } from 'lucide-react';
 import * as React from 'react';
 
+import { Icons } from '@/components/icons';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -33,7 +33,8 @@ export function OrgSwitcher({
   currentClass,
   onClassChange
 }: OrgSwitcherProps) {
-  const selectedClass = currentClass || (classes.length > 0 ? classes[0] : null);
+  const selectedClass =
+    currentClass || (classes.length > 0 ? classes[0] : null);
 
   const handleClassChange = (cls: ClassInfo) => {
     onClassChange(cls.classId);
@@ -50,31 +51,55 @@ export function OrgSwitcher({
           <DropdownMenuTrigger asChild>
             <SidebarMenuButton
               size='lg'
-              className='data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground'
+              className='h-auto py-2 data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground transition-all'
+              aria-label='Select class'
             >
-              <div className='bg-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg'>
-                <GalleryVerticalEnd className='size-4' />
+              <div className='flex w-full flex-col gap-1.5'>
+                <div className='flex items-center gap-2 px-0.5'>
+                  <div className='flex aspect-square size-5 items-center justify-center rounded-md bg-primary/10 text-primary'>
+                    <Icons.classSwitcher className='size-3.5' />
+                  </div>
+                  <span className='text-[10px] font-bold uppercase tracking-widest text-muted-foreground/80'>
+                    Current Class
+                  </span>
+                </div>
+                <div className='flex items-center justify-between gap-2 px-0.5'>
+                  <div className='flex flex-col items-start gap-0.5 overflow-hidden leading-none'>
+                    <span className='truncate font-bold text-sidebar-foreground group-data-[collapsible=icon]:hidden'>
+                      {selectedClass.unitName}
+                    </span>
+                    <span className='text-[10px] text-muted-foreground/60 group-data-[collapsible=icon]:hidden'>
+                      {selectedClass.unitCode}
+                    </span>
+                  </div>
+                  <Icons.chevronDown className='size-4 shrink-0 opacity-40 group-data-[collapsible=icon]:hidden' />
+                </div>
               </div>
-              <div className='flex flex-col gap-0.5 leading-none'>
-                <span className='font-semibold'>{selectedClass.unitName}</span>
-                <span className=''>{selectedClass.unitCode}</span>
-              </div>
-              {classes.length > 1 && <ChevronsUpDown className='ml-auto' />}
             </SidebarMenuButton>
           </DropdownMenuTrigger>
           <DropdownMenuContent
-            className='w-[--radix-dropdown-menu-trigger-width]'
+            className='w-[--radix-dropdown-menu-trigger-width] min-w-64 rounded-xl border-slate-200 dark:border-slate-800 shadow-lg'
             align='start'
+            sideOffset={4}
           >
+            <div className='px-2 py-1.5 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/50'>
+              Switch Class
+            </div>
             {classes.map((cls) => (
               <DropdownMenuItem
                 key={cls.classId}
                 onSelect={() => handleClassChange(cls)}
+                className='flex flex-col items-start gap-0.5 py-2 px-3 focus:bg-sidebar-accent'
               >
-                {cls.unitName}
-                {cls.classId === selectedClass.classId && (
-                  <Check className='ml-auto' />
-                )}
+                <div className='flex w-full items-center justify-between'>
+                  <span className='font-semibold'>{cls.unitName}</span>
+                  {cls.classId === selectedClass.classId && (
+                    <Icons.check className='size-4 text-primary' />
+                  )}
+                </div>
+                <span className='text-xs text-muted-foreground'>
+                  {cls.unitCode}
+                </span>
               </DropdownMenuItem>
             ))}
           </DropdownMenuContent>

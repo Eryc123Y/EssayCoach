@@ -2,6 +2,7 @@ import {
   IconAlertTriangle,
   IconArrowRight,
   IconCheck,
+  IconChevronDown,
   IconChevronLeft,
   IconChevronRight,
   IconCommand,
@@ -33,7 +34,8 @@ import {
   IconLayoutList,
   IconBook,
   IconClock,
-  IconBooks
+  IconBooks,
+  IconUsers
 } from '@tabler/icons-react';
 
 export type Icon = React.ComponentType<IconProps>;
@@ -46,6 +48,7 @@ export const Icons = {
   spinner: IconLoader2,
   chevronLeft: IconChevronLeft,
   chevronRight: IconChevronRight,
+  chevronDown: IconChevronDown,
   trash: IconTrash,
   employee: IconUserX,
   post: IconFileText,
@@ -72,5 +75,6 @@ export const Icons = {
   kanban: IconLayoutList,
   book: IconBook,
   history: IconClock,
-  library: IconBooks
+  library: IconBooks,
+  classSwitcher: IconUsers
 };
