@@ -8,7 +8,7 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         """Seed database with test data for development"""
 
-        from core.models import User, Unit, Class, Enrollment, TeachingAssn
+        from core.models import Class, Enrollment, TeachingAssn, Unit, User
 
         # Step 1: Create admin user
         print("Creating admin user...")

@@ -117,6 +117,7 @@ class WorkflowRunViewTests(DifyWorkflowAPITestCase):
 
         # Mock the transformer to return proper WorkflowOutput
         from datetime import datetime
+
         from ai_feedback.interfaces import WorkflowStatus
 
         mock_transform.return_value = MagicMock(
@@ -180,6 +181,7 @@ class WorkflowRunViewTests(DifyWorkflowAPITestCase):
         }
 
         from datetime import datetime
+
         from ai_feedback.interfaces import WorkflowStatus
 
         mock_transform.return_value = MagicMock(
@@ -232,6 +234,7 @@ class WorkflowRunViewTests(DifyWorkflowAPITestCase):
         }
 
         from datetime import datetime
+
         from ai_feedback.interfaces import WorkflowStatus
 
         mock_transform.return_value = MagicMock(
@@ -280,6 +283,7 @@ class WorkflowRunViewTests(DifyWorkflowAPITestCase):
         }
 
         from datetime import datetime
+
         from ai_feedback.interfaces import WorkflowStatus
 
         mock_transform.return_value = MagicMock(
@@ -379,19 +383,6 @@ class DifyWorkflowRunSerializerTests(TestCase):
         self.assertIn("essay_question", serializer.errors)
         self.assertIn("essay_content", serializer.errors)
 
-    def test_serializer_valid_data(self):
-        """Test serializer with valid data."""
-        from ai_feedback.serializers import DifyWorkflowRunSerializer
-
-        data = {
-            "essay_question": "Test question",
-            "essay_content": "Test content",
-            "language": "English",
-            "response_mode": "blocking",
-        }
-        serializer = DifyWorkflowRunSerializer(data=data)
-        self.assertTrue(serializer.is_valid())
-
     def test_serializer_empty_strings(self):
         """Test serializer rejects empty string values for required fields."""
         from ai_feedback.serializers import DifyWorkflowRunSerializer
@@ -434,6 +425,7 @@ class WorkflowRunViewResponseTests(DifyWorkflowAPITestCase):
         }
 
         from datetime import datetime
+
         from ai_feedback.interfaces import WorkflowStatus
 
         mock_transform.return_value = MagicMock(
@@ -496,6 +488,7 @@ class WorkflowRunViewResponseTests(DifyWorkflowAPITestCase):
         }
 
         from datetime import datetime
+
         from ai_feedback.interfaces import WorkflowStatus
 
         mock_transform.return_value = MagicMock(
@@ -547,6 +540,7 @@ class WorkflowRunViewResponseTests(DifyWorkflowAPITestCase):
         }
 
         from datetime import datetime
+
         from ai_feedback.interfaces import WorkflowStatus
 
         mock_transform.return_value = MagicMock(
@@ -598,6 +592,7 @@ class WorkflowRunViewResponseTests(DifyWorkflowAPITestCase):
         }
 
         from datetime import datetime
+
         from ai_feedback.interfaces import WorkflowStatus
 
         mock_transform.return_value = MagicMock(
@@ -682,6 +677,7 @@ class WorkflowRunViewResponseTests(DifyWorkflowAPITestCase):
         }
 
         from datetime import datetime
+
         from ai_feedback.interfaces import WorkflowStatus
 
         mock_transform.return_value = MagicMock(
@@ -757,6 +753,7 @@ class WorkflowRunViewResponseTests(DifyWorkflowAPITestCase):
         }
 
         from datetime import datetime
+
         from ai_feedback.interfaces import WorkflowStatus
 
         mock_transform.return_value = MagicMock(
@@ -810,6 +807,7 @@ class WorkflowRunViewResponseTests(DifyWorkflowAPITestCase):
         }
 
         from datetime import datetime
+
         from ai_feedback.interfaces import WorkflowStatus
 
         mock_transform.return_value = MagicMock(

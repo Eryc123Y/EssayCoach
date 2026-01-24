@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 from django.contrib.auth import get_user_model
 from django.test import TestCase
@@ -51,6 +51,7 @@ class TestWorkflowIntegration(TestCase):
         3. Verify that the workflow succeeds with rubric integration.
         """
         from datetime import datetime
+
         from ai_feedback.interfaces import WorkflowOutput, WorkflowStatus
 
         # Setup Dify mocks
@@ -117,6 +118,7 @@ class TestWorkflowIntegration(TestCase):
     ):
         """Verify that providing a non-existent rubric_id returns 404."""
         from datetime import datetime
+
         from ai_feedback.exceptions import RubricError
         from ai_feedback.interfaces import WorkflowOutput, WorkflowStatus
 
