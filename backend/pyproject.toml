@@ -41,15 +41,19 @@ build-backend = "setuptools.build_meta"
 packages = ["essay_coach", "core", "ai_feedback", "auth", "analytics"]
 
 [tool.uv]
-dev-dependencies = [
-    "django-stubs",
-    "types-requests",
-    "black",
-    "pyright",
-    "pytest",
-    "pytest-django",
-    "pytest-mock",
-    "ruff",
+# dev-dependencies moved to dependency-groups.dev (PEP 735)
+# This avoids deprecation warning
+
+[dependency-groups]
+dev = [
+    "django-stubs>=4.2,<5.0",
+    "types-requests>=2.31,<3.0",
+    "black>=24.1,<25.0",
+    "pyright>=1.1.0,<2.0",
+    "pytest>=7.4,<8.0",
+    "pytest-django>=4.7,<5.0",
+    "pytest-mock>=3.12,<4.0",
+    "ruff>=0.1,<1.0",
 ]
 
 [tool.ruff]
