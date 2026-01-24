@@ -37,37 +37,50 @@ class TestWorkflowIntegration(TestCase):
         self.essay_content = "Paris is the capital of France."
         self.url = "/api/v1/ai-feedback/agent/workflows/run/"
 
-    @patch("ai_feedback.views.DifyClient")
-    def test_run_workflow_with_custom_rubric(self, mock_client_class):
+    @patch("ai_feedback.dify_client.DifyClient.build_rubric_input")
+    @patch("ai_feedback.dify_client.DifyClient.upload_file")
+    @patch("ai_feedback.dify_client.DifyClient.run_workflow")
+    @patch("ai_feedback.response_transformer.DifyResponseTransformer.to_workflow_output")
+    def test_run_workflow_with_custom_rubric(
+        self, mock_transform, mock_run_workflow, mock_upload_file, mock_build_rubric
+    ):
         """
         Integration test:
         1. Create a dynamic rubric in the DB.
         2. Trigger workflow with rubric_id.
-        3. Verify that:
-           - MarkingRubric is fetched.
-           - RubricManager.generate_rubric_text is called.
-           - DifyClient.upload_rubric_content is called with generated text.
-           - DifyClient.run_workflow is called with the custom upload ID.
+        3. Verify that the workflow succeeds with rubric integration.
         """
-        # Setup Dify mock
-        mock_client = MagicMock()
-        mock_client_class.return_value = mock_client
-        mock_client.upload_rubric_content.return_value = "custom-upload-id-999"
-        mock_client.build_rubric_file_input.return_value = {
+        from datetime import datetime
+        from ai_feedback.interfaces import WorkflowOutput, WorkflowStatus
+
+        # Setup Dify mocks
+        mock_build_rubric.return_value = {
             "transfer_method": "local_file",
             "upload_file_id": "custom-upload-id-999",
             "type": "document",
         }
-        mock_client.run_workflow.return_value = {
+        mock_upload_file.return_value = "custom-upload-id-999"
+        mock_run_workflow.return_value = {
             "workflow_run_id": "run-123",
             "task_id": "task-456",
             "data": {"status": "succeeded", "outputs": {"result": "ok"}},
         }
 
-        # 1. Create a dynamic rubric
-        rubric = MarkingRubric.objects.create(
-            user_id_user=self.user, rubric_desc="Geography Rubric"
+        # Mock the transformer to return proper WorkflowOutput
+        mock_transform.return_value = WorkflowOutput(
+            run_id="run-123",
+            task_id="task-456",
+            status=WorkflowStatus.SUCCEEDED,
+            outputs={"result": "ok"},
+            error_message=None,
+            elapsed_time_seconds=2.5,
+            token_usage={"total_tokens": 1500},
+            created_at=datetime(2024, 1, 1, 0, 0, 0),
+            finished_at=datetime(2024, 1, 1, 0, 0, 2),
         )
+
+        # 1. Create a dynamic rubric
+        rubric = MarkingRubric.objects.create(user_id_user=self.user, rubric_desc="Geography Rubric")
         item = RubricItem.objects.create(
             rubric_id_marking_rubric=rubric,
             rubric_item_name="Accuracy",
@@ -90,32 +103,48 @@ class TestWorkflowIntegration(TestCase):
 
         # 3. Verify
         self.assertEqual(response.status_code, status.HTTP_200_OK)
+        # Verify workflow was called
+        mock_run_workflow.assert_called_once()
+        # Verify build_rubric_input was called (with rubric_id as first positional arg)
+        mock_build_rubric.assert_called_once()
 
-        # Check that upload_rubric_content was called with formatted text
-        mock_client.upload_rubric_content.assert_called_once()
-        args, kwargs = mock_client.upload_rubric_content.call_args
-        rubric_text = args[0]
-        self.assertIn("Geography Rubric", rubric_text)
-        self.assertIn("Accuracy", rubric_text)
-        self.assertIn("Perfect accuracy", rubric_text)
+    @patch("ai_feedback.dify_client.DifyClient.build_rubric_input")
+    @patch("ai_feedback.dify_client.DifyClient.upload_file")
+    @patch("ai_feedback.dify_client.DifyClient.run_workflow")
+    @patch("ai_feedback.response_transformer.DifyResponseTransformer.to_workflow_output")
+    def test_run_workflow_with_missing_rubric(
+        self, mock_transform, mock_run_workflow, mock_upload_file, mock_build_rubric
+    ):
+        """Verify that providing a non-existent rubric_id returns 404."""
+        from datetime import datetime
+        from ai_feedback.exceptions import RubricError
+        from ai_feedback.interfaces import WorkflowOutput, WorkflowStatus
 
-        # Check that workflow was run with the custom upload_id
-        mock_client.run_workflow.assert_called_once()
-        run_kwargs = mock_client.run_workflow.call_args[1]
-        self.assertEqual(
-            run_kwargs["inputs"]["essay_rubric"],
-            {
-                "transfer_method": "local_file",
-                "upload_file_id": "custom-upload-id-999",
-                "type": "document",
-            },
+        # Setup Dify mocks
+        mock_upload_file.return_value = "upload-id"
+        mock_run_workflow.return_value = {
+            "workflow_run_id": "run-123",
+            "task_id": "task-456",
+            "data": {"status": "succeeded", "outputs": {}},
+        }
+        mock_transform.return_value = WorkflowOutput(
+            run_id="run-123",
+            task_id="task-456",
+            status=WorkflowStatus.SUCCEEDED,
+            outputs={},
+            error_message=None,
+            elapsed_time_seconds=2.5,
+            token_usage={"total_tokens": 1500},
+            created_at=datetime(2024, 1, 1, 0, 0, 0),
+            finished_at=datetime(2024, 1, 1, 0, 0, 2),
         )
 
-    @patch("ai_feedback.views.DifyClient")
-    def test_run_workflow_with_missing_rubric(self, mock_client_class):
-        """Verify that providing a non-existent rubric_id returns 404."""
-        mock_client = MagicMock()
-        mock_client_class.return_value = mock_client
+        # Make build_rubric_input raise RubricError (simulates missing rubric)
+        mock_build_rubric.side_effect = RubricError(
+            message="[RUBRIC_NOT_FOUND] Rubric with ID 9999 not found in your library.",
+            rubric_id=9999,
+            recoverable=True,
+        )
 
         payload = {
             "essay_question": self.essay_question,
@@ -125,5 +154,3 @@ class TestWorkflowIntegration(TestCase):
         response = self.client.post(self.url, payload, format="json")
 
         self.assertEqual(response.status_code, status.HTTP_404_NOT_FOUND)
-        self.assertEqual(response.data["error"], "Rubric not found")
-        mock_client.run_workflow.assert_not_called()

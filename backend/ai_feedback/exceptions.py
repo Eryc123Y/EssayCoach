@@ -280,6 +280,7 @@ class WorkflowError(EssayAgentError):
         run_id: str | None = None,
         recoverable: bool = False,
         details: dict[str, Any] | None = None,
+        original_error: Exception | None = None,
     ) -> None:
         error_details = {"workflow_id": workflow_id, "run_id": run_id}
         error_details.update(details or {})
@@ -289,6 +290,7 @@ class WorkflowError(EssayAgentError):
             code=ErrorCode.WORKFLOW_EXECUTION_FAILED,
             recoverable=recoverable,
             details=error_details,
+            original_error=original_error,
         )
 
 
@@ -301,6 +303,7 @@ class RubricError(EssayAgentError):
         rubric_id: int | None = None,
         recoverable: bool = False,
         details: dict[str, Any] | None = None,
+        original_error: Exception | None = None,
     ) -> None:
         error_details = {"rubric_id": rubric_id}
         error_details.update(details or {})
@@ -312,4 +315,5 @@ class RubricError(EssayAgentError):
             code=code,
             recoverable=recoverable,
             details=error_details,
+            original_error=original_error,
         )

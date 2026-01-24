@@ -145,6 +145,9 @@ class WorkflowRunView(APIView):
             return Response(response_data, status=status.HTTP_200_OK)
         except RubricError as exc:
             logger.error(f"Rubric error in WorkflowRunView: {exc}")
+            # Check if this is a "not found" error
+            if "RUBRIC_NOT_FOUND" in str(exc) or "not found" in str(exc).lower():
+                return Response({"error": str(exc)}, status=status.HTTP_404_NOT_FOUND)
             return Response({"error": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
         except APITimeoutError as exc:
             logger.error(f"API timeout in WorkflowRunView: {exc}")
