@@ -53,7 +53,7 @@ dev = [
     "pytest>=7.4,<8.0",
     "pytest-django>=4.7,<5.0",
     "pytest-mock>=3.12,<4.0",
-    "pytest-timeout>=2.3,<3.0",  # Add timeout support
+    "pytest-timeout>=2.3,<3.0",
     "ruff>=0.1,<1.0",
 ]
 
@@ -73,9 +73,6 @@ reportGeneralTypeIssues = false
 reportAttributeAccessIssue = false
 reportIncompatibleMethodOverride = false
 reportIncompatibleVariableOverride = false
-
-# Use pyrightignore for file exclusions
-# Excludes test files, migrations, and problematic third-party code
 
 [tool.black]
 line-length = 120
