@@ -2,8 +2,8 @@
 
 # Install all dependencies
 install:
-	@echo "Installing Python dependencies (in root .venv)..."
-	@uv venv .venv && uv pip install -e backend/
+	@echo "Installing Python dependencies (in backend .venv)..."
+	@cd backend && uv venv .venv && uv pip install -e .
 	@echo "Installing Node dependencies..."
 	@cd frontend && pnpm install
 
@@ -31,7 +31,7 @@ dev: db
 dev-backend:
 	@echo "Starting Django backend on http://127.0.0.1:8000..."
 	@echo "📚 API Docs available at: http://127.0.0.1:8000/api/schema/"
-	@./.venv/bin/python backend/manage.py runserver 127.0.0.1:8000
+	@cd backend && .venv/bin/python manage.py runserver 127.0.0.1:8000
 
 # Start frontend only
 dev-frontend:
@@ -59,19 +59,19 @@ db-reset:
 # Django management
 migrate:
 	@echo "Running Django migrations..."
-	@./.venv/bin/python backend/manage.py migrate
+	@cd backend && .venv/bin/python manage.py migrate
 
 createsuperuser:
 	@echo "Creating Django superuser..."
-	@./.venv/bin/python backend/manage.py createsuperuser
+	@cd backend && .venv/bin/python manage.py createsuperuser
 
 shell:
 	@echo "Opening Django shell..."
-	@./.venv/bin/python backend/manage.py shell
+	@cd backend && .venv/bin/python manage.py shell
 
 seed-db:
 	@echo "Seeding database with initial data..."
-	@./.venv/bin/python backend/manage.py seed_db
+	@cd backend && .venv/bin/python manage.py seed_db
 	@echo ""
 	@echo "✅ Database seeded successfully!"
 	@echo "👤 Admin login: admin@example.com / admin"
@@ -80,7 +80,7 @@ seed-db:
 # Testing
 test:
 	@echo "Running Python tests..."
-	@./.venv/bin/pytest backend/
+	@cd backend && .venv/bin/pytest
 	@echo ""
 	@echo "Running Node tests..."
 	@cd frontend && pnpm test
@@ -88,28 +88,28 @@ test:
 # Code quality
 lint:
 	@echo "Running Python linter..."
-	@./.venv/bin/ruff check backend/
+	@cd backend && .venv/bin/ruff check .
 	@echo ""
 	@echo "Running Node linter..."
 	@cd frontend && pnpm lint
 
 lint-fix:
 	@echo "Auto-fixing Python lint issues..."
-	@./.venv/bin/ruff check --fix backend/
+	@cd backend && .venv/bin/ruff check --fix .
 	@echo ""
 	@echo "Auto-fixing Node lint issues..."
 	@cd frontend && pnpm lint:fix
 
 format:
 	@echo "Formatting Python code..."
-	@./.venv/bin/black backend/
+	@cd backend && .venv/bin/black .
 	@echo ""
 	@echo "Formatting Node code..."
 	@cd frontend && pnpm format
 
 typecheck:
 	@echo "Running Python type checking..."
-	@./.venv/bin/mypy backend/
+	@cd backend && .venv/bin/mypy .
 
 # Build
 build:
@@ -119,7 +119,7 @@ build:
 # Cleanup
 clean:
 	@echo "Cleaning up Python cache..."
-	@rm -rf .venv __pycache__ .pytest_cache .ruff_cache .mypy_cache
+	@rm -rf backend/.venv backend/__pycache__ backend/.pytest_cache backend/.ruff_cache backend/.mypy_cache
 	@echo "Cleaning up Node cache..."
 	@cd frontend && rm -rf node_modules .next
 
@@ -143,4 +143,4 @@ docker-logs-pg:
 # Documentation
 docs:
 	@echo "Starting documentation server..."
-	./.venv/bin/mkdocs serve
+	@./.venv/bin/mkdocs serve

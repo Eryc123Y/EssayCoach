@@ -10,10 +10,12 @@ dependencies = [
     "psycopg2-binary>=2.9,<3.0",
     "django-cors-headers>=4.3,<5.0",
     "drf-spectacular>=0.27,<1.0",
+    "drf-pydantic>=2.0,<3.0",
     "requests>=2.31,<3.0",
     "pillow>=10.2,<11.0",
     "pypdf2>=3.0,<4.0",
     "python-dotenv>=1.0,<2.0",
+    "pydantic>=2.12.5",
 ]
 
 [project.optional-dependencies]
@@ -66,3 +68,12 @@ plugins = ["mypy_django_plugin.main"]
 [tool.black]
 line-length = 120
 target-version = ['py312']
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "essay_coach.settings"
+testpaths = ["ai_feedback/tests", "core/tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*", "*Tests"]
+python_functions = ["test_*"]
+addopts = "-v --tb=short"
+norecursedirs = ["test_e2e*.py", "test_dify.py", ".*", "node_modules", "*.egg-info"]

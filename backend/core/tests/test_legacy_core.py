@@ -2,13 +2,14 @@
 Unit tests for the core app models, serializers, and API endpoints.
 Tests cover CRUD operations for all core models.
 """
+
 from datetime import timedelta
 from decimal import Decimal
 
 from django.test import TestCase
 from django.utils import timezone
 
-from .models import (
+from core.models import (
     Class,
     Enrollment,
     Feedback,
@@ -30,24 +31,24 @@ class UserModelTest(TestCase):
     def setUp(self):
         """Create test user"""
         self.user = User.objects.create_user(
-            user_email='testuser@example.com',
-            password='testpass123',
-            user_fname='John',
-            user_lname='Doe',
+            user_email="testuser@example.com",
+            password="testpass123",
+            user_fname="John",
+            user_lname="Doe",
         )
 
     def test_create_user(self):
         """Test creating a user"""
-        self.assertEqual(self.user.user_email, 'testuser@example.com')
-        self.assertEqual(self.user.user_fname, 'John')
-        self.assertEqual(self.user.user_lname, 'Doe')
-        self.assertTrue(self.user.check_password('testpass123'))
+        self.assertEqual(self.user.user_email, "testuser@example.com")
+        self.assertEqual(self.user.user_fname, "John")
+        self.assertEqual(self.user.user_lname, "Doe")
+        self.assertTrue(self.user.check_password("testpass123"))
 
     def test_create_superuser(self):
         """Test creating a superuser"""
         admin = User.objects.create_superuser(
-            user_email='admin@example.com',
-            password='adminpass123',
+            user_email="admin@example.com",
+            password="adminpass123",
         )
         self.assertTrue(admin.is_staff)
         self.assertTrue(admin.is_superuser)
@@ -60,8 +61,8 @@ class UserModelTest(TestCase):
         """Test that email must be unique"""
         with self.assertRaises(Exception):
             User.objects.create_user(
-                user_email='testuser@example.com',
-                password='testpass123',
+                user_email="testuser@example.com",
+                password="testpass123",
             )
 
 
@@ -71,20 +72,20 @@ class UnitModelTest(TestCase):
     def setUp(self):
         """Create test unit"""
         self.unit = Unit.objects.create(
-            unit_id='ENG101',
-            unit_name='English Composition',
-            unit_desc='Basic writing and composition skills',
+            unit_id="ENG101",
+            unit_name="English Composition",
+            unit_desc="Basic writing and composition skills",
         )
 
     def test_create_unit(self):
         """Test creating a unit"""
-        self.assertEqual(self.unit.unit_id, 'ENG101')
-        self.assertEqual(self.unit.unit_name, 'English Composition')
+        self.assertEqual(self.unit.unit_id, "ENG101")
+        self.assertEqual(self.unit.unit_name, "English Composition")
 
     def test_unit_primary_key(self):
         """Test unit ID as primary key"""
-        unit = Unit.objects.get(unit_id='ENG101')
-        self.assertEqual(unit.unit_name, 'English Composition')
+        unit = Unit.objects.get(unit_id="ENG101")
+        self.assertEqual(unit.unit_name, "English Composition")
 
 
 class ClassModelTest(TestCase):
@@ -93,8 +94,8 @@ class ClassModelTest(TestCase):
     def setUp(self):
         """Create test unit and class"""
         self.unit = Unit.objects.create(
-            unit_id='ENG101',
-            unit_name='English Composition',
+            unit_id="ENG101",
+            unit_name="English Composition",
         )
         self.class_obj = Class.objects.create(
             unit_id_unit=self.unit,
@@ -103,7 +104,7 @@ class ClassModelTest(TestCase):
 
     def test_create_class(self):
         """Test creating a class"""
-        self.assertEqual(self.class_obj.unit_id_unit.unit_id, 'ENG101')
+        self.assertEqual(self.class_obj.unit_id_unit.unit_id, "ENG101")
         self.assertEqual(self.class_obj.class_size, 30)
 
     def test_class_size_constraint(self):
@@ -122,12 +123,12 @@ class EnrollmentModelTest(TestCase):
     def setUp(self):
         """Create test data"""
         self.user = User.objects.create_user(
-            user_email='student@example.com',
-            password='pass123',
+            user_email="student@example.com",
+            password="pass123",
         )
         self.unit = Unit.objects.create(
-            unit_id='ENG101',
-            unit_name='English Composition',
+            unit_id="ENG101",
+            unit_name="English Composition",
         )
         self.class_obj = Class.objects.create(
             unit_id_unit=self.unit,
@@ -141,7 +142,7 @@ class EnrollmentModelTest(TestCase):
 
     def test_create_enrollment(self):
         """Test creating an enrollment"""
-        self.assertEqual(self.enrollment.user_id_user.user_email, 'student@example.com')
+        self.assertEqual(self.enrollment.user_id_user.user_email, "student@example.com")
         self.assertEqual(self.enrollment.class_id_class.class_size, 30)
 
     def test_enrollment_timestamp(self):
@@ -164,18 +165,18 @@ class MarkingRubricModelTest(TestCase):
     def setUp(self):
         """Create test user and rubric"""
         self.user = User.objects.create_user(
-            user_email='teacher@example.com',
-            password='pass123',
+            user_email="teacher@example.com",
+            password="pass123",
         )
         self.rubric = MarkingRubric.objects.create(
             user_id_user=self.user,
-            rubric_desc='Essay Evaluation Rubric',
+            rubric_desc="Essay Evaluation Rubric",
         )
 
     def test_create_rubric(self):
         """Test creating a rubric"""
-        self.assertEqual(self.rubric.user_id_user.user_email, 'teacher@example.com')
-        self.assertEqual(self.rubric.rubric_desc, 'Essay Evaluation Rubric')
+        self.assertEqual(self.rubric.user_id_user.user_email, "teacher@example.com")
+        self.assertEqual(self.rubric.rubric_desc, "Essay Evaluation Rubric")
 
     def test_rubric_timestamp(self):
         """Test that rubric has creation timestamp"""
@@ -188,31 +189,31 @@ class RubricItemModelTest(TestCase):
     def setUp(self):
         """Create test rubric and item"""
         self.user = User.objects.create_user(
-            user_email='teacher@example.com',
-            password='pass123',
+            user_email="teacher@example.com",
+            password="pass123",
         )
         self.rubric = MarkingRubric.objects.create(
             user_id_user=self.user,
-            rubric_desc='Essay Rubric',
+            rubric_desc="Essay Rubric",
         )
         self.item = RubricItem.objects.create(
             rubric_id_marking_rubric=self.rubric,
-            rubric_item_name='Thesis Statement',
-            rubric_item_weight=Decimal('25.0'),
+            rubric_item_name="Thesis Statement",
+            rubric_item_weight=Decimal("25.0"),
         )
 
     def test_create_rubric_item(self):
         """Test creating a rubric item"""
-        self.assertEqual(self.item.rubric_item_name, 'Thesis Statement')
-        self.assertEqual(self.item.rubric_item_weight, Decimal('25.0'))
+        self.assertEqual(self.item.rubric_item_name, "Thesis Statement")
+        self.assertEqual(self.item.rubric_item_weight, Decimal("25.0"))
 
     def test_rubric_item_weight_constraint(self):
         """Test that weight must be positive"""
         with self.assertRaises(Exception):
             item = RubricItem.objects.create(
                 rubric_id_marking_rubric=self.rubric,
-                rubric_item_name='Test Item',
-                rubric_item_weight=Decimal('-5.0'),
+                rubric_item_name="Test Item",
+                rubric_item_weight=Decimal("-5.0"),
             )
             item.full_clean()
 
@@ -223,22 +224,22 @@ class RubricLevelDescModelTest(TestCase):
     def setUp(self):
         """Create test level description"""
         self.user = User.objects.create_user(
-            user_email='teacher@example.com',
-            password='pass123',
+            user_email="teacher@example.com",
+            password="pass123",
         )
         self.rubric = MarkingRubric.objects.create(
             user_id_user=self.user,
         )
         self.item = RubricItem.objects.create(
             rubric_id_marking_rubric=self.rubric,
-            rubric_item_name='Thesis',
-            rubric_item_weight=Decimal('25.0'),
+            rubric_item_name="Thesis",
+            rubric_item_weight=Decimal("25.0"),
         )
         self.level = RubricLevelDesc.objects.create(
             rubric_item_id_rubric_item=self.item,
             level_min_score=0,
             level_max_score=5,
-            level_desc='Poor thesis statement',
+            level_desc="Poor thesis statement",
         )
 
     def test_create_level_desc(self):
@@ -253,12 +254,12 @@ class TaskModelTest(TestCase):
     def setUp(self):
         """Create test task"""
         self.user = User.objects.create_user(
-            user_email='teacher@example.com',
-            password='pass123',
+            user_email="teacher@example.com",
+            password="pass123",
         )
         self.unit = Unit.objects.create(
-            unit_id='ENG101',
-            unit_name='English Composition',
+            unit_id="ENG101",
+            unit_name="English Composition",
         )
         self.rubric = MarkingRubric.objects.create(
             user_id_user=self.user,
@@ -271,7 +272,7 @@ class TaskModelTest(TestCase):
 
     def test_create_task(self):
         """Test creating a task"""
-        self.assertEqual(self.task.unit_id_unit.unit_id, 'ENG101')
+        self.assertEqual(self.task.unit_id_unit.unit_id, "ENG101")
         self.assertEqual(self.task.rubric_id_marking_rubric.rubric_id, self.rubric.rubric_id)
 
     def test_task_timestamps(self):
@@ -287,16 +288,16 @@ class SubmissionModelTest(TestCase):
     def setUp(self):
         """Create test submission"""
         self.user = User.objects.create_user(
-            user_email='student@example.com',
-            password='pass123',
+            user_email="student@example.com",
+            password="pass123",
         )
         self.unit = Unit.objects.create(
-            unit_id='ENG101',
-            unit_name='English Composition',
+            unit_id="ENG101",
+            unit_name="English Composition",
         )
         self.teacher = User.objects.create_user(
-            user_email='teacher@example.com',
-            password='pass123',
+            user_email="teacher@example.com",
+            password="pass123",
         )
         self.rubric = MarkingRubric.objects.create(
             user_id_user=self.teacher,
@@ -309,13 +310,13 @@ class SubmissionModelTest(TestCase):
         self.submission = Submission.objects.create(
             user_id_user=self.user,
             task_id_task=self.task,
-            submission_txt='This is my essay content...',
+            submission_txt="This is my essay content...",
         )
 
     def test_create_submission(self):
         """Test creating a submission"""
-        self.assertEqual(self.submission.user_id_user.user_email, 'student@example.com')
-        self.assertEqual(self.submission.submission_txt, 'This is my essay content...')
+        self.assertEqual(self.submission.user_id_user.user_email, "student@example.com")
+        self.assertEqual(self.submission.submission_txt, "This is my essay content...")
 
     def test_submission_timestamp(self):
         """Test that submission has timestamp"""
@@ -328,16 +329,16 @@ class FeedbackModelTest(TestCase):
     def setUp(self):
         """Create test feedback"""
         self.student = User.objects.create_user(
-            user_email='student@example.com',
-            password='pass123',
+            user_email="student@example.com",
+            password="pass123",
         )
         self.teacher = User.objects.create_user(
-            user_email='teacher@example.com',
-            password='pass123',
+            user_email="teacher@example.com",
+            password="pass123",
         )
         self.unit = Unit.objects.create(
-            unit_id='ENG101',
-            unit_name='English Composition',
+            unit_id="ENG101",
+            unit_name="English Composition",
         )
         self.rubric = MarkingRubric.objects.create(
             user_id_user=self.teacher,
@@ -350,7 +351,7 @@ class FeedbackModelTest(TestCase):
         self.submission = Submission.objects.create(
             user_id_user=self.student,
             task_id_task=self.task,
-            submission_txt='Essay content',
+            submission_txt="Essay content",
         )
         self.feedback = Feedback.objects.create(
             submission_id_submission=self.submission,
@@ -360,7 +361,7 @@ class FeedbackModelTest(TestCase):
     def test_create_feedback(self):
         """Test creating feedback"""
         self.assertEqual(self.feedback.submission_id_submission.submission_id, self.submission.submission_id)
-        self.assertEqual(self.feedback.user_id_user.user_email, 'teacher@example.com')
+        self.assertEqual(self.feedback.user_id_user.user_email, "teacher@example.com")
 
 
 class FeedbackItemModelTest(TestCase):
@@ -369,24 +370,24 @@ class FeedbackItemModelTest(TestCase):
     def setUp(self):
         """Create test feedback item"""
         self.student = User.objects.create_user(
-            user_email='student@example.com',
-            password='pass123',
+            user_email="student@example.com",
+            password="pass123",
         )
         self.teacher = User.objects.create_user(
-            user_email='teacher@example.com',
-            password='pass123',
+            user_email="teacher@example.com",
+            password="pass123",
         )
         self.unit = Unit.objects.create(
-            unit_id='ENG101',
-            unit_name='English Composition',
+            unit_id="ENG101",
+            unit_name="English Composition",
         )
         self.rubric = MarkingRubric.objects.create(
             user_id_user=self.teacher,
         )
         self.item = RubricItem.objects.create(
             rubric_id_marking_rubric=self.rubric,
-            rubric_item_name='Thesis',
-            rubric_item_weight=Decimal('25.0'),
+            rubric_item_name="Thesis",
+            rubric_item_weight=Decimal("25.0"),
         )
         self.task = Task.objects.create(
             unit_id_unit=self.unit,
@@ -396,7 +397,7 @@ class FeedbackItemModelTest(TestCase):
         self.submission = Submission.objects.create(
             user_id_user=self.student,
             task_id_task=self.task,
-            submission_txt='Essay content',
+            submission_txt="Essay content",
         )
         self.feedback = Feedback.objects.create(
             submission_id_submission=self.submission,
@@ -406,14 +407,14 @@ class FeedbackItemModelTest(TestCase):
             feedback_id_feedback=self.feedback,
             rubric_item_id_rubric_item=self.item,
             feedback_item_score=8,
-            feedback_item_comment='Good thesis',
-            feedback_item_source='human',
+            feedback_item_comment="Good thesis",
+            feedback_item_source="human",
         )
 
     def test_create_feedback_item(self):
         """Test creating a feedback item"""
         self.assertEqual(self.feedback_item.feedback_item_score, 8)
-        self.assertEqual(self.feedback_item.feedback_item_source, 'human')
+        self.assertEqual(self.feedback_item.feedback_item_source, "human")
 
     def test_feedback_item_source_constraint(self):
         """Test that source must be ai, human, or revised"""
@@ -422,7 +423,7 @@ class FeedbackItemModelTest(TestCase):
                 feedback_id_feedback=self.feedback,
                 rubric_item_id_rubric_item=self.item,
                 feedback_item_score=7,
-                feedback_item_source='invalid',
+                feedback_item_source="invalid",
             )
             item.full_clean()
 
@@ -433,12 +434,12 @@ class TeachingAssnModelTest(TestCase):
     def setUp(self):
         """Create test teaching assignment"""
         self.teacher = User.objects.create_user(
-            user_email='teacher@example.com',
-            password='pass123',
+            user_email="teacher@example.com",
+            password="pass123",
         )
         self.unit = Unit.objects.create(
-            unit_id='ENG101',
-            unit_name='English Composition',
+            unit_id="ENG101",
+            unit_name="English Composition",
         )
         self.class_obj = Class.objects.create(
             unit_id_unit=self.unit,
@@ -451,6 +452,5 @@ class TeachingAssnModelTest(TestCase):
 
     def test_create_teaching_assignment(self):
         """Test creating a teaching assignment"""
-        self.assertEqual(self.assignment.user_id_user.user_email, 'teacher@example.com')
+        self.assertEqual(self.assignment.user_id_user.user_email, "teacher@example.com")
         self.assertEqual(self.assignment.class_id_class.class_size, 30)
-

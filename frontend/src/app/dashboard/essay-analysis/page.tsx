@@ -119,146 +119,141 @@ export default function AIAnalysisPage() {
     setIsLoading(true);
 
     try {
-      // Call the Dify API
-      const response = await fetchDifyWorkflowRun({
+      // Submit essay to start workflow (blocking mode waits for completion)
+      const submitResponse = await fetchDifyWorkflowRun({
         essay_question: data.question,
         essay_content: data.content,
-        language: 'English', // Could be made dynamic
+        language: 'English',
         response_mode: 'blocking',
         user_id: user?.id || 'anonymous-student',
         rubric_id: data.rubricId
       });
 
-      // Parse the response
-      // Backend returns: { workflow_run_id, status, data: { id, outputs }, ... }
-      const runStatus = response.status;
-      const outputs = response.data?.outputs;
+      // In blocking mode, outputs should be returned directly
+      const outputs = submitResponse.data?.outputs;
 
-      if (runStatus === 'succeeded' && outputs) {
-        // Transform scores
-        let scores: ScoreData[] = [];
-        let insights: Insight[] = [];
-        let overallScore = 0;
-
-        // Case 1: Structured JSON output (Ideal)
-        if (outputs.structure_analysis) {
-          scores = [
-            {
-              category: 'Structure',
-              score: outputs.structure_analysis?.score || 0,
-              fullMark: 100,
-              description: outputs.structure_analysis?.comments
-            },
-            {
-              category: 'Content',
-              score: outputs.content_analysis?.score || 0,
-              fullMark: 100,
-              description: outputs.content_analysis?.comments
-            },
-            {
-              category: 'Style',
-              score: outputs.style_analysis?.score || 0,
-              fullMark: 100,
-              description: outputs.style_analysis?.comments
-            }
-          ];
-          overallScore = outputs.overall_score || 0;
-
-          // Transform grammar notes to insights
-          insights = (outputs.grammar_notes || []).map(
-            (note: any, index: number) => ({
-              id: `grammar-${index}`,
-              type: 'critical',
-              category: 'Grammar',
-              title: note.type || 'Correction',
-              description: `${note.explanation} (Original: "${note.original}" -> Suggestion: "${note.suggestion}")`,
-              location: undefined
-            })
-          );
-        }
-        // Case 2: Markdown Text output (Fallback for current Dify App)
-        else if (outputs.text) {
-          // Attempt to parse Markdown table for scores
-          // Look for | Criterion | Score |
-          const text = outputs.text;
-
-          // Helper to extract score from "X/Y" format
-          const extractScore = (regex: RegExp): number => {
-            const match = text.match(regex);
-            if (match && match[1]) {
-              const [num, den] = match[1].split('/').map(Number);
-              return den ? Math.round((num / den) * 100) : 0;
-            }
-            return 0;
-          };
-
-          const structureScore = extractScore(
-            /\| Organization & Flow \| (\d+\/\d+) \|/
-          );
-          const contentScore =
-            (extractScore(/\| Topic Focus \| (\d+\/\d+) \|/) +
-              extractScore(/\| Evidence & Support \| (\d+\/\d+) \|/)) /
-            2;
-          const styleScore = extractScore(
-            /\| Language & Mechanics \| (\d+\/\d+) \|/
-          );
-
-          // Extract Total Score
-          const totalMatch = text.match(
-            /\|\s*\*\*TOTAL\*\*\s*\|\s*\*\*(\d+\/\d+)\*\*\s*\|/
-          );
-          if (totalMatch) {
-            const [num, den] = totalMatch[1].split('/').map(Number);
-            overallScore = den ? Math.round((num / den) * 100) : 0;
-          }
-
-          scores = [
-            {
-              category: 'Structure',
-              score: structureScore,
-              fullMark: 100,
-              description: 'Derived from Organization & Flow'
-            },
-            {
-              category: 'Content',
-              score: contentScore,
-              fullMark: 100,
-              description: 'Derived from Topic Focus & Evidence'
-            },
-            {
-              category: 'Style',
-              score: styleScore,
-              fullMark: 100,
-              description: 'Derived from Language & Mechanics'
-            }
-          ];
-
-          // Create a generic insight pointing to the full report
-          insights = [
-            {
-              id: 'full-report',
-              type: 'info',
-              category: 'General',
-              title: 'Full Assessment',
-              description: 'See the detailed Markdown report for full feedback.'
-            }
-          ];
-
-          // Also store the raw text somewhere if possible, but for now we adapt to the UI
-        }
-
-        setAnalysisResult({
-          overallScore,
-          scores,
-          insights
-        });
-      } else {
-        console.error('Unexpected Dify response status:', response);
-        throw new Error('Analysis failed to complete successfully.');
+      if (!outputs) {
+        throw new Error('Analysis completed but no results returned. Please try again.');
       }
-      } catch (error) {
-      console.error('Analysis failed:', error);
 
+      // Transform scores
+      let scores: ScoreData[] = [];
+      let insights: Insight[] = [];
+      let overallScore = 0;
+
+      // Case 1: Structured JSON output (Ideal)
+      if (outputs.structure_analysis) {
+        scores = [
+          {
+            category: 'Structure',
+            score: outputs.structure_analysis?.score || 0,
+            fullMark: 100,
+            description: outputs.structure_analysis?.comments
+          },
+          {
+            category: 'Content',
+            score: outputs.content_analysis?.score || 0,
+            fullMark: 100,
+            description: outputs.content_analysis?.comments
+          },
+          {
+            category: 'Style',
+            score: outputs.style_analysis?.score || 0,
+            fullMark: 100,
+            description: outputs.style_analysis?.comments
+          }
+        ];
+        overallScore = outputs.overall_score || 0;
+
+        // Transform grammar notes to insights
+        insights = (outputs.grammar_notes || []).map(
+          (note: any, index: number) => ({
+            id: `grammar-${index}`,
+            type: 'critical',
+            category: 'Grammar',
+            title: note.type || 'Correction',
+            description: `${note.explanation} (Original: "${note.original}" -> Suggestion: "${note.suggestion}")`,
+            location: undefined
+          })
+        );
+      }
+      // Case 2: Markdown Text output (Fallback for current Dify App)
+      else if (outputs.text) {
+        // Attempt to parse Markdown table for scores
+        // Look for | Criterion | Score |
+        const text = outputs.text;
+
+        // Helper to extract score from "X/Y" format
+        const extractScore = (regex: RegExp): number => {
+          const match = text.match(regex);
+          if (match && match[1]) {
+            const [num, den] = match[1].split('/').map(Number);
+            return den ? Math.round((num / den) * 100) : 0;
+          }
+          return 0;
+        };
+
+        const structureScore = extractScore(
+          /\| Organization & Flow \| (\d+\/\d+) \|/
+        );
+        const contentScore =
+          (extractScore(/\| Topic Focus \| (\d+\/\d+) \|/) +
+            extractScore(/\| Evidence & Support \| (\d+\/\d+) \|/)) /
+          2;
+        const styleScore = extractScore(
+          /\| Language & Mechanics \| (\d+\/\d+) \|/
+        );
+
+        // Extract Total Score
+        const totalMatch = text.match(
+          /\|\s*\*\*TOTAL\*\*\s*\|\s*\*\*(\d+\/\d+)\*\*\s*\|/
+        );
+        if (totalMatch) {
+          const [num, den] = totalMatch[1].split('/').map(Number);
+          overallScore = den ? Math.round((num / den) * 100) : 0;
+        }
+
+        scores = [
+          {
+            category: 'Structure',
+            score: structureScore,
+            fullMark: 100,
+            description: 'Derived from Organization & Flow'
+          },
+          {
+            category: 'Content',
+            score: contentScore,
+            fullMark: 100,
+            description: 'Derived from Topic Focus & Evidence'
+          },
+          {
+            category: 'Style',
+            score: styleScore,
+            fullMark: 100,
+            description: 'Derived from Language & Mechanics'
+          }
+        ];
+
+        // Create a generic insight pointing to the full report
+        insights = [
+          {
+            id: 'full-report',
+            type: 'info',
+            category: 'General',
+            title: 'Full Assessment',
+            description: 'See the detailed Markdown report for full feedback.'
+          }
+        ];
+      } else {
+        throw new Error('Unable to parse analysis results.');
+      }
+
+      setAnalysisResult({
+        overallScore,
+        scores,
+        insights
+      });
+    } catch (error) {
       // Type error for proper message access
       const err = error as { message?: string; error?: unknown };
 

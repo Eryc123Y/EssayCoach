@@ -133,16 +133,12 @@ SPECTACULAR_SETTINGS = {
         {"name": "Users", "description": "User management endpoints"},
         {
             "name": "Courses",
-            "description": (
-                "Course structure management (Units, Classes, Enrollments, "
-                "Teaching Assignments)"
-            ),
+            "description": ("Course structure management (Units, Classes, Enrollments, Teaching Assignments)"),
         },
         {
             "name": "Rubrics",
             "description": (
-                "Rubric configuration and management (Marking Rubrics, "
-                "Rubric Items, Rubric Level Descriptions)"
+                "Rubric configuration and management (Marking Rubrics, Rubric Items, Rubric Level Descriptions)"
             ),
         },
         {"name": "Tasks", "description": "Assignment and task management"},
@@ -200,12 +196,6 @@ DATABASES = {
     }
 }
 
-if IS_TESTING:
-    DATABASES["default"] = {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": ":memory:",
-    }
-
 
 # Password validation
 # https://docs.djangoproject.com/en/4.2/ref/settings/#auth-password-validators
@@ -255,9 +245,7 @@ AUTH_USER_MODEL = "core.User"
 
 # SiliconFlow AI Configuration (for rubric parsing)
 SILICONFLOW_API_KEY = os.environ.get("SILICONFLOW_API_KEY", "")
-SILICONFLOW_API_URL = (
-    "https://api.siliconflow.cn/v1/chat/completions"  # 使用正确的.cn域名
-)
+SILICONFLOW_API_URL = "https://api.siliconflow.cn/v1/chat/completions"  # 使用正确的.cn域名
 SILICONFLOW_MODEL = "Qwen/Qwen3-Next-80B-A3B-Instruct"
 
 # Logging Configuration

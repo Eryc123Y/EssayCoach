@@ -62,7 +62,6 @@ export default function RubricsPage() {
       const response = await fetchRubricList();
       setRubrics(response.results);
     } catch (error: any) {
-      console.error('Failed to load rubrics:', error);
       toast.error('Failed to load rubrics');
     } finally {
       setIsLoading(false);
@@ -102,7 +101,6 @@ export default function RubricsPage() {
       setDeleteDialogOpen(false);
       setRubricToDelete(null);
     } catch (error: any) {
-      console.error('Failed to delete rubric:', error);
       toast.error(error.message || 'Failed to delete rubric');
     } finally {
       setIsDeleting(false);

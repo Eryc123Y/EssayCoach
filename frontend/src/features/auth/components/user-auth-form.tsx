@@ -11,11 +11,10 @@ import {
 import { Input } from '@/components/ui/input';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useTransition } from 'react';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import * as z from 'zod';
-import GithubSignInButton from './github-auth-button';
 
 const formSchema = z.object({
   email: z.string().email({ message: 'Enter a valid email address' }),
@@ -27,7 +26,7 @@ type UserFormValue = z.infer<typeof formSchema>;
 export default function UserAuthForm() {
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get('callbackUrl');
-  const [loading, startTransition] = useTransition();
+  const [loading] = useState(false);
   const router = useRouter();
   const defaultValues = {
     email: 'admin@example.com',
@@ -49,8 +48,6 @@ export default function UserAuthForm() {
         const err = await response.json().catch(() => ({}));
         throw new Error(err?.message || 'Request failed');
       }
-      const result = await response.json();
-      console.log('Backend auth result:', result);
       toast.success('Signed in successfully');
       const target = callbackUrl || '/dashboard/overview';
       router.push(target);

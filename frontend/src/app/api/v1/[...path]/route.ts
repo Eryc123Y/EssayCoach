@@ -30,7 +30,6 @@ async function proxy(
   const body = hasBody ? await req.blob() : undefined;
 
   try {
-    console.log(`[Proxy] Forwarding ${req.method} request to: ${targetUrl}`);
     const response = await fetch(targetUrl, {
       method: req.method,
       headers: headers,
@@ -38,8 +37,6 @@ async function proxy(
       // distinct: follow redirects automatically to avoid browser loops
       redirect: 'follow'
     });
-
-    console.log(`[Proxy] Received response status: ${response.status}`);
 
     // Create a new response to return to the client
     const responseHeaders = new Headers(response.headers);
@@ -54,13 +51,6 @@ async function proxy(
       headers: responseHeaders
     });
   } catch (error) {
-    console.error(`[Proxy] FATAL ERROR [${req.method} ${pathString}]:`, error);
-    if (error instanceof TypeError && error.message === 'fetch failed') {
-      console.error(
-        '[Proxy] This usually means Django is not running or not accessible at http://127.0.0.1:8000'
-      );
-    }
-    console.error(`Proxy Error [${req.method} ${pathString}]:`, error);
     return NextResponse.json(
       { error: 'Backend service unavailable' },
       { status: 502 }

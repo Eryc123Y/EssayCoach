@@ -42,7 +42,6 @@ import {
         const data = await fetchRubricDetail(rubricId);
         setRubric(data);
       } catch (error: any) {
-        console.error('Failed to load rubric:', error);
         toast.error('Failed to load rubric details');
       } finally {
         setIsLoading(false);

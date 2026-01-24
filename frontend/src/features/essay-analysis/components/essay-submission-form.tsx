@@ -49,7 +49,9 @@ export function EssaySubmissionForm({
   useEffect(() => {
     fetchRubricList()
       .then((res) => setRubrics(res.results))
-      .catch((err) => console.error('Failed to fetch rubrics:', err));
+      .catch(() => {
+        // Silently fail - the form will work without rubrics
+      });
   }, []);
 
   const handleSubmit = (e: React.FormEvent) => {

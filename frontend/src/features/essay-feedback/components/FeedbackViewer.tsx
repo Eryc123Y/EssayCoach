@@ -4,32 +4,85 @@ import {
   Card,
   CardContent,
   CardHeader,
-  CardTitle,
-  CardDescription
+  CardTitle
 } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { Badge } from '@/components/ui/badge';
 import { Alert, AlertDescription } from '@/components/ui/alert';
-import type { DifyWorkflowStatus } from '@/types/dify';
+import { Button } from '@/components/ui/button';
+import type { WorkflowStatusResponse } from '@/service/agent/agent-service';
 import { FeedbackCharts } from './FeedbackCharts';
 import { RevisionChat } from './RevisionChat';
 import {
   CheckCircle2,
   FileText,
-  BarChart3,
   Sparkles,
   AlertCircle,
   FileEdit
 } from 'lucide-react';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Button } from '@/components/ui/button';
 
 interface FeedbackViewerProps {
-  result: DifyWorkflowStatus | null;
+  result: WorkflowStatusResponse | null;
   isRunning: boolean;
   progress: number;
   error: string | null;
   onRetry?: () => void;
+}
+
+/**
+ * Adapts the new EssayAnalysisOutput schema to the legacy display format.
+ * This ensures backward compatibility while supporting the new interface.
+ */
+function adaptOutputsToLegacyFormat(outputs: WorkflowStatusResponse['outputs']) {
+  if (!outputs) return null;
+
+  // If already in legacy format (has feedback_summary)
+  if ('feedback_summary' in outputs) {
+    return outputs as unknown as {
+      overall_score: number;
+      feedback_summary: string;
+      structure_analysis: { score: number; comments: string; suggestions: string[] };
+      content_analysis: { score: number; comments: string; suggestions: string[] };
+      style_analysis: { score: number; comments: string; suggestions: string[] };
+      grammar_notes: Array<{ type: string; original: string; suggestion: string; explanation: string }>;
+    };
+  }
+
+  // Convert from new EssayAnalysisOutput format to legacy format
+  const newOutput = outputs as {
+    overall_score: number;
+    percentage_score: number;
+    feedback_items: Array<{
+      criterion_name: string;
+      score: number;
+      max_score: number;
+      feedback: string;
+      suggestions: string[];
+    }>;
+    overall_feedback: string;
+    strengths: string[];
+    suggestions: string[];
+  };
+
+  return {
+    overall_score: newOutput.percentage_score || newOutput.overall_score,
+    feedback_summary: newOutput.overall_feedback,
+    structure_analysis: {
+      score: newOutput.feedback_items?.find(i => i.criterion_name.toLowerCase().includes('structure'))?.score || 75,
+      comments: newOutput.feedback_items?.find(i => i.criterion_name.toLowerCase().includes('structure'))?.feedback || '',
+      suggestions: newOutput.feedback_items?.find(i => i.criterion_name.toLowerCase().includes('structure'))?.suggestions || []
+    },
+    content_analysis: {
+      score: newOutput.feedback_items?.find(i => i.criterion_name.toLowerCase().includes('content'))?.score || 75,
+      comments: newOutput.feedback_items?.find(i => i.criterion_name.toLowerCase().includes('content'))?.feedback || '',
+      suggestions: newOutput.feedback_items?.find(i => i.criterion_name.toLowerCase().includes('content'))?.suggestions || []
+    },
+    style_analysis: {
+      score: newOutput.feedback_items?.find(i => i.criterion_name.toLowerCase().includes('style'))?.score || 75,
+      comments: newOutput.feedback_items?.find(i => i.criterion_name.toLowerCase().includes('style'))?.feedback || '',
+      suggestions: newOutput.feedback_items?.find(i => i.criterion_name.toLowerCase().includes('style'))?.suggestions || []
+    },
+    grammar_notes: [] // New schema doesn't have this, would need mapping
+  };
 }
 
 export function FeedbackViewer({
@@ -135,7 +188,19 @@ export function FeedbackViewer({
     );
   }
 
-  const outputs = result.outputs;
+  // Adapt new schema to legacy format for display
+  const outputs = adaptOutputsToLegacyFormat(result.outputs);
+
+  if (!outputs) {
+    return (
+      <Alert variant='destructive'>
+        <AlertCircle className='h-4 w-4' />
+        <AlertDescription>
+          Unable to parse feedback results. Please try again.
+        </AlertDescription>
+      </Alert>
+    );
+  }
 
   return (
     <div className='animate-in fade-in slide-in-from-bottom-4 space-y-6 duration-500'>

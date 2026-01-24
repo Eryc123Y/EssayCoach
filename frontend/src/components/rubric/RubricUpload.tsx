@@ -181,7 +181,6 @@ export function RubricUpload({ onSuccess }: RubricUploadProps) {
         toast.error(response.error || 'Failed to import rubric');
       }
     } catch (error: any) {
-      console.error('Upload error:', error);
       toast.error(error.message || 'Failed to upload rubric');
     } finally {
       setIsUploading(false);

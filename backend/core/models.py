@@ -19,13 +19,9 @@ if TYPE_CHECKING:
 
 
 class Class(models.Model):
-    class_id = models.SmallAutoField(
-        primary_key=True, db_comment="Unique identifier for a class under a unit"
-    )
+    class_id = models.SmallAutoField(primary_key=True, db_comment="Unique identifier for a class under a unit")
     unit_id_unit = models.ForeignKey("Unit", models.CASCADE, db_column="unit_id_unit")
-    class_size = models.SmallIntegerField(
-        default=0, db_comment="current number of students in the class"
-    )
+    class_size = models.SmallIntegerField(default=0, db_comment="current number of students in the class")
 
     class Meta:
         managed = True
@@ -37,9 +33,7 @@ class Class(models.Model):
 
 
 class Enrollment(models.Model):
-    enrollment_id = models.AutoField(
-        primary_key=True, db_comment="Unique identifier for each enrollment"
-    )
+    enrollment_id = models.AutoField(primary_key=True, db_comment="Unique identifier for each enrollment")
     user_id_user = models.ForeignKey("User", models.CASCADE, db_column="user_id_user")
     class_id_class = models.ForeignKey("Class", models.CASCADE, db_column="class_id_class")
     unit_id_unit = models.ForeignKey("Unit", models.CASCADE, db_column="unit_id_unit")
@@ -65,9 +59,7 @@ class Enrollment(models.Model):
 
 class Feedback(models.Model):
     feedback_id = models.AutoField(primary_key=True)
-    submission_id_submission = models.OneToOneField(
-        "Submission", models.CASCADE, db_column="submission_id_submission"
-    )
+    submission_id_submission = models.OneToOneField("Submission", models.CASCADE, db_column="submission_id_submission")
     user_id_user = models.ForeignKey("User", models.CASCADE, db_column="user_id_user")
 
     class Meta:
@@ -76,15 +68,9 @@ class Feedback(models.Model):
 
 
 class FeedbackItem(models.Model):
-    feedback_item_id = models.AutoField(
-        primary_key=True, db_comment="unique identifier for feedback item"
-    )
-    feedback_id_feedback = models.ForeignKey(
-        Feedback, models.CASCADE, db_column="feedback_id_feedback"
-    )
-    rubric_item_id_rubric_item = models.ForeignKey(
-        "RubricItem", models.CASCADE, db_column="rubric_item_id_rubric_item"
-    )
+    feedback_item_id = models.AutoField(primary_key=True, db_comment="unique identifier for feedback item")
+    feedback_id_feedback = models.ForeignKey(Feedback, models.CASCADE, db_column="feedback_id_feedback")
+    rubric_item_id_rubric_item = models.ForeignKey("RubricItem", models.CASCADE, db_column="rubric_item_id_rubric_item")
     feedback_item_score = models.SmallIntegerField(db_comment="actual score of the item")
     feedback_item_comment = models.TextField(
         blank=True, null=True, db_comment="short description to the sub-item grade"
@@ -113,12 +99,8 @@ class FeedbackItem(models.Model):
 class MarkingRubric(models.Model):
     rubric_id = models.AutoField(primary_key=True, db_comment="unique identifier for rubrics")
     user_id_user = models.ForeignKey("User", models.CASCADE, db_column="user_id_user")
-    rubric_create_time = models.DateTimeField(
-        auto_now_add=True, db_comment="timestamp when the rubirc is created"
-    )
-    rubric_desc = models.CharField(
-        max_length=100, blank=True, null=True, db_comment="description to the rubrics"
-    )
+    rubric_create_time = models.DateTimeField(auto_now_add=True, db_comment="timestamp when the rubirc is created")
+    rubric_desc = models.CharField(max_length=100, blank=True, null=True, db_comment="description to the rubrics")
 
     class Meta:
         managed = True
@@ -178,9 +160,7 @@ class RubricLevelDesc(models.Model):
 
 
 class Submission(models.Model):
-    submission_id = models.AutoField(
-        primary_key=True, db_comment="unique identifier for submission"
-    )
+    submission_id = models.AutoField(primary_key=True, db_comment="unique identifier for submission")
     submission_time = models.DateTimeField(auto_now_add=True, db_comment="time/date of submission")
     task_id_task = models.ForeignKey("Task", models.CASCADE, db_column="task_id_task")
     user_id_user = models.ForeignKey("User", models.CASCADE, db_column="user_id_user")
@@ -195,20 +175,14 @@ class Submission(models.Model):
 class Task(models.Model):
     task_id = models.AutoField(primary_key=True, db_comment="Unique identifier for task.")
     unit_id_unit = models.ForeignKey("Unit", models.CASCADE, db_column="unit_id_unit")
-    rubric_id_marking_rubric = models.ForeignKey(
-        MarkingRubric, models.CASCADE, db_column="rubric_id_marking_rubric"
-    )
-    task_publish_datetime = models.DateTimeField(
-        auto_now_add=True, db_comment="time/date when the task is published"
-    )
+    rubric_id_marking_rubric = models.ForeignKey(MarkingRubric, models.CASCADE, db_column="rubric_id_marking_rubric")
+    task_publish_datetime = models.DateTimeField(auto_now_add=True, db_comment="time/date when the task is published")
     task_due_datetime = models.DateTimeField(db_comment="time/date when the task is due")
 
     class Meta:
         managed = True
         db_table = "task"
-        db_table_comment = (
-            "Task created by lecturer/admin for students in some classes/units to complete"
-        )
+        db_table_comment = "Task created by lecturer/admin for students in some classes/units to complete"
         constraints = [
             CheckConstraint(
                 check=Q(task_publish_datetime__lt=models.F("task_due_datetime")),
@@ -250,9 +224,7 @@ class Unit(models.Model):
 
 
 class CoreUserManager(BaseUserManager):
-    def create_user(
-        self, user_email: str, password: str | None = None, **extra_fields: Any
-    ) -> User:
+    def create_user(self, user_email: str, password: str | None = None, **extra_fields: Any) -> User:
         if not user_email:
             raise ValueError("Users must have an email address")
         email = self.normalize_email(user_email)
@@ -270,18 +242,10 @@ class CoreUserManager(BaseUserManager):
 class User(AbstractBaseUser, PermissionsMixin):
     user_id: models.AutoField = models.AutoField(primary_key=True, db_column="user_id")
     user_email: models.EmailField = models.EmailField(unique=True, db_column="user_email")
-    user_fname: models.CharField = models.CharField(
-        max_length=20, blank=True, null=True, db_column="user_fname"
-    )
-    user_lname: models.CharField = models.CharField(
-        max_length=20, blank=True, null=True, db_column="user_lname"
-    )
-    user_role: models.CharField = models.CharField(
-        max_length=10, blank=True, null=True, db_column="user_role"
-    )
-    user_status: models.CharField = models.CharField(
-        max_length=15, blank=True, null=True, db_column="user_status"
-    )
+    user_fname: models.CharField = models.CharField(max_length=20, blank=True, null=True, db_column="user_fname")
+    user_lname: models.CharField = models.CharField(max_length=20, blank=True, null=True, db_column="user_lname")
+    user_role: models.CharField = models.CharField(max_length=10, blank=True, null=True, db_column="user_role")
+    user_status: models.CharField = models.CharField(max_length=15, blank=True, null=True, db_column="user_status")
     password: models.CharField = models.CharField(max_length=255, db_column="user_credential")
     is_active: models.BooleanField = models.BooleanField(default=True)
     is_staff: models.BooleanField = models.BooleanField(default=False)

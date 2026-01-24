@@ -1,7 +1,45 @@
 import { render, screen, fireEvent } from '@testing-library/react';
 import { FeedbackViewer } from './FeedbackViewer';
-import type { DifyWorkflowStatus } from '@/types/dify';
+import type { WorkflowStatusResponse } from '@/service/agent/agent-service';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
+
+// Helper to create a valid WorkflowStatusResponse for testing
+function createMockWorkflowStatusResponse(overrides: Partial<WorkflowStatusResponse> = {}): WorkflowStatusResponse {
+  return {
+    workflow_run_id: 'test-run-123',
+    task_id: 'test-task-456',
+    status: 'succeeded',
+    outputs: {
+      overall_score: 85,
+      percentage_score: 85,
+      total_possible: 100,
+      feedback_items: [
+        {
+          criterion_name: 'Structure',
+          score: 8,
+          max_score: 10,
+          feedback: 'Well organized essay',
+          suggestions: ['Add more transitions'],
+        },
+        {
+          criterion_name: 'Content',
+          score: 9,
+          max_score: 10,
+          feedback: 'Strong arguments',
+          suggestions: ['Add more examples'],
+        },
+      ],
+      overall_feedback: 'Great essay overall',
+      strengths: ['Clear thesis', 'Good structure'],
+      suggestions: ['Add more citations'],
+      analysis_metadata: {},
+    },
+    error_message: null,
+    elapsed_time_seconds: 12.5,
+    token_usage: { total: 1500, prompt: 800, completion: 700 },
+    ...overrides,
+  };
+}
 
 // Mock child components
 vi.mock('./FeedbackCharts', () => ({
@@ -134,7 +172,7 @@ vi.mock('@/components/ui/button', () => ({
 
 describe('FeedbackViewer', () => {
   const defaultProps = {
-    result: null as DifyWorkflowStatus | null,
+    result: null as WorkflowStatusResponse | null,
     isRunning: false,
     progress: 0,
     error: null as string | null,
@@ -143,40 +181,64 @@ describe('FeedbackViewer', () => {
 
   const createMockOutputs = (overrides = {}) => ({
     overall_score: 85,
-    feedback_summary: 'This is a well-structured essay with good content.',
-    structure_analysis: {
-      score: 80,
-      comments: 'Good structure',
-      suggestions: ['Add more transitions']
-    },
-    content_analysis: {
-      score: 85,
-      comments: 'Strong arguments',
-      suggestions: ['Add more examples']
-    },
-    style_analysis: {
-      score: 90,
-      comments: 'Clear writing',
-      suggestions: ['Vary sentence length']
-    },
-    grammar_notes: [
+    percentage_score: 85,
+    total_possible: 100,
+    feedback_items: [
       {
-        type: 'spelling',
-        original: 'teh',
-        suggestion: 'the',
-        explanation: 'Common typo'
-      }
+        criterion_name: 'Structure',
+        score: 8,
+        max_score: 10,
+        feedback: 'Well organized essay',
+        suggestions: ['Add more transitions'],
+      },
+      {
+        criterion_name: 'Content',
+        score: 9,
+        max_score: 10,
+        feedback: 'Strong arguments',
+        suggestions: ['Add more examples'],
+      },
     ],
-    ...overrides
+    overall_feedback: 'Great essay overall',
+    strengths: ['Clear thesis', 'Good structure'],
+    suggestions: ['Add more citations'],
+    analysis_metadata: {},
+    ...overrides,
   });
 
-  const createMockResult = (overrides = {}): DifyWorkflowStatus => ({
-    id: 'run-123',
+  const createMockResult = (overrides = {}): WorkflowStatusResponse => ({
+    workflow_run_id: 'test-run-123',
+    task_id: 'test-task-456',
     status: 'succeeded',
-    outputs: createMockOutputs(),
-    total_steps: 5,
-    elapsed_time: 2.5,
-    ...overrides
+    outputs: {
+      overall_score: 85,
+      percentage_score: 85,
+      total_possible: 100,
+      feedback_items: [
+        {
+          criterion_name: 'Structure',
+          score: 8,
+          max_score: 10,
+          feedback: 'Well organized essay',
+          suggestions: ['Add more transitions'],
+        },
+        {
+          criterion_name: 'Content',
+          score: 9,
+          max_score: 10,
+          feedback: 'Strong arguments',
+          suggestions: ['Add more examples'],
+        },
+      ],
+      overall_feedback: 'Great essay overall',
+      strengths: ['Clear thesis', 'Good structure'],
+      suggestions: ['Add more citations'],
+      analysis_metadata: {},
+    },
+    error_message: null,
+    elapsed_time_seconds: 12.5,
+    token_usage: { total: 1500, prompt: 800, completion: 700 },
+    ...overrides,
   });
 
   beforeEach(() => {
@@ -304,7 +366,7 @@ describe('FeedbackViewer', () => {
     });
 
     it('should display empty state when result exists but outputs are missing', () => {
-      const resultWithNoOutputs = { ...createMockResult(), outputs: undefined };
+      const resultWithNoOutputs = { ...createMockResult(), outputs: null };
       render(<FeedbackViewer {...defaultProps} result={resultWithNoOutputs} />);
 
       expect(screen.getByText(/No feedback yet/i)).toBeInTheDocument();

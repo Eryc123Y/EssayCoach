@@ -68,7 +68,7 @@ export async function POST(req: NextRequest) {
       path: '/',
       maxAge: 60 * 60 * 24
     });
-    res.cookies.set('user_role', user.user_role || 'student', {
+    res.cookies.set('user_role', user.role || 'student', {
       httpOnly: false,
       sameSite: 'lax',
       path: '/',

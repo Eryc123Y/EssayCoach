@@ -1,9 +1,9 @@
 import { renderHook, act, waitFor } from '@testing-library/react';
 import { useDifyWorkflow } from './useDifyWorkflow';
-import * as difyApi from '@/service/api/dify';
+import * as agentService from '@/service/agent/agent-service';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 
-vi.mock('@/service/api/dify');
+vi.mock('@/service/agent/agent-service');
 
 describe('useDifyWorkflow', () => {
   beforeEach(() => {
@@ -20,44 +20,49 @@ describe('useDifyWorkflow', () => {
     const mockWorkflowRunId = 'run-123';
     const mockOutputs = {
       overall_score: 85,
-      feedback_summary: 'Good essay',
-      structure_analysis: { score: 80, comments: 'Good', suggestions: [] },
-      content_analysis: { score: 85, comments: 'Good', suggestions: [] },
-      style_analysis: { score: 90, comments: 'Good', suggestions: [] },
-      grammar_notes: []
+      percentage_score: 85,
+      total_possible: 100,
+      feedback_items: [
+        {
+          criterion_name: 'Structure',
+          score: 8,
+          max_score: 10,
+          feedback: 'Well organized essay',
+          suggestions: ['Add more transitions'],
+        },
+        {
+          criterion_name: 'Content',
+          score: 9,
+          max_score: 10,
+          feedback: 'Strong arguments',
+          suggestions: ['Add more examples'],
+        },
+      ],
+      overall_feedback: 'Great essay overall',
+      strengths: ['Clear thesis', 'Good structure'],
+      suggestions: ['Add more citations'],
+      analysis_metadata: {},
     };
 
-    // Mock fetchDifyWorkflowRun response
-    vi.mocked(difyApi.fetchDifyWorkflowRun).mockResolvedValue({
+    // Mock agentService.analyzeEssay response
+    vi.mocked(agentService.agentService.analyzeEssay).mockResolvedValue({
       workflow_run_id: mockWorkflowRunId,
       task_id: 'task-123',
-      data: {
-        id: mockWorkflowRunId,
-        status: 'running',
-        outputs: {},
-        error: null,
-        elapsed_time: 0,
-        total_tokens: 0,
-        total_steps: 0,
-        created_at: 123,
-        finished_at: null,
-        created_by: {
-          id: 'user-1',
-          user: 'user-1',
-          name: 'User',
-          email: 'user@example.com'
-        }
-      }
+      status: 'running',
+      data: { id: mockWorkflowRunId },
+      inputs: {},
+      response_mode: 'blocking'
     });
 
-    // Mock fetchWorkflowStatus response
-    vi.mocked(difyApi.fetchWorkflowStatus).mockResolvedValue({
-      id: mockWorkflowRunId,
+    // Mock agentService.getWorkflowStatus response
+    vi.mocked(agentService.agentService.getWorkflowStatus).mockResolvedValue({
+      workflow_run_id: mockWorkflowRunId,
+      task_id: 'task-123',
       status: 'succeeded',
       outputs: mockOutputs,
-      error: undefined,
-      elapsed_time: 1,
-      total_steps: 1
+      error_message: null,
+      elapsed_time_seconds: 12.5,
+      token_usage: { total: 1500, prompt: 800, completion: 700 }
     });
 
     const { result } = renderHook(() => useDifyWorkflow());
@@ -78,12 +83,12 @@ describe('useDifyWorkflow', () => {
     expect(result.current.isSuccess).toBe(true);
     expect(result.current.result?.status).toBe('succeeded');
     expect(result.current.result?.outputs).toEqual(mockOutputs);
-    expect(difyApi.fetchDifyWorkflowRun).toHaveBeenCalledOnce();
-    expect(difyApi.fetchWorkflowStatus).toHaveBeenCalled();
+    expect(agentService.agentService.analyzeEssay).toHaveBeenCalledOnce();
+    expect(agentService.agentService.getWorkflowStatus).toHaveBeenCalled();
   });
 
   it('should handle workflow run failure on submission', async () => {
-    vi.mocked(difyApi.fetchDifyWorkflowRun).mockRejectedValue(
+    vi.mocked(agentService.agentService.analyzeEssay).mockRejectedValue(
       new Error('Network error')
     );
 
