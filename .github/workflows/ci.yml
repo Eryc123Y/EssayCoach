@@ -29,49 +29,38 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Setup Python
-        uses: actions/setup-python@v5
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v4
         with:
-          python-version: "3.12"
-
-      - name: Install uv
-        run: pip install uv
-
-      - name: Cache uv
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cache/uv
-            .venv
-          key: ${{ runner.os }}-uv-${{ hashFiles('backend/pyproject.toml') }}
-          restore-keys: |
-            ${{ runner.os }}-uv-
+          enable-cache: false
 
       - name: Install dependencies
+        working-directory: ./backend
         run: |
-          cd backend
-          uv venv
-          uv pip install -e .
+          uv sync
+          uv sync --no-dev
 
       - name: Run migrations
         env:
           POSTGRES_HOST: localhost
           POSTGRES_PORT: ${{ job.services.postgres.ports[5432] }}
-        run: |
-          cd backend
-          uv run python manage.py migrate --noinput
+        working-directory: ./backend
+        run: uv run python manage.py migrate --noinput
 
       - name: Run tests
         env:
           POSTGRES_HOST: localhost
           POSTGRES_PORT: ${{ job.services.postgres.ports[5432] }}
-        run: cd backend && uv run pytest
+        working-directory: ./backend
+        run: uv run pytest
 
       - name: Run type checking
-        run: cd backend && uv run pyright .
+        working-directory: ./backend
+        run: uv run pyright .
 
       - name: Run linting
-        run: cd backend && uv run ruff check .
+        working-directory: ./backend
+        run: uv run ruff check .
 
   frontend-test:
     runs-on: ubuntu-latest

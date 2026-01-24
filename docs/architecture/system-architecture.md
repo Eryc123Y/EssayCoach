@@ -52,7 +52,7 @@ graph LR
 - **Package Management**: uv (Python) and pnpm (Node.js)
 - **Database**: PostgreSQL 17 managed via Docker Compose
 - **Automation**: Makefile interface for all dev tasks
-- **Code Quality**: Ruff, Black, MyPy, Prettier
+- **Code Quality**: Ruff, Black, Pyright, Prettier
 
 ## 📊 Data Flow Architecture
 
@@ -192,6 +192,132 @@ graph TB
     Validation --> DRFValidation
     RateLimit --> Throttle
 ```
+
+## 👤 Role-Based Navigation
+
+### Overview
+
+EssayCoach implements role-based navigation to provide users with personalized dashboard experiences based on their role (Student, Lecturer, or Admin). The navigation system filters menu items on the client side using role metadata associated with each navigation item.
+
+### User Roles
+
+| Role      | Description                                  | Typical Users          |
+|-----------|----------------------------------------------|------------------------|
+| `student` | Can view assignments, submit essays, receive feedback | Enrolled students |
+| `lecturer`| Can manage rubrics, view class analytics     | Course instructors, TAs |
+| `admin`   | Full system access including user management | System administrators  |
+
+### Navigation Configuration
+
+Navigation items are defined in `frontend/src/constants/data.ts` with a `roles` field that specifies which roles can access each menu item:
+
+```typescript
+interface NavItem {
+  title: string;
+  url: string;
+  icon: string;  // Icon identifier from Icons mapping
+  isActive: boolean;
+  items: NavSubItem[];
+  roles?: string[];  // Role-based access control
+}
+
+// Example: Rubrics only visible to lecturers and admins
+{
+  title: 'Rubrics',
+  url: '/dashboard/rubrics',
+  icon: 'book',
+  roles: ['lecturer', 'admin'],
+}
+```
+
+### Role-Based Menu Matrix
+
+| Menu Item         | Student | Lecturer | Admin |
+|-------------------|---------|----------|-------|
+| Dashboard         | ✅      | ✅       | ✅    |
+| Assignments       | ✅      | ✅       | ✅    |
+| Essay Analysis    | ✅      | ✅       | ✅    |
+| Rubrics           | ❌      | ✅       | ✅    |
+| Library           | ❌      | ✅       | ✅    |
+| Analytics         | ❌      | ❌       | ✅    |
+| User Management   | ❌      | ❌       | ✅    |
+
+### Backend API: User Classes Endpoint
+
+The frontend retrieves the user's enrolled and assigned classes via a role-aware API endpoint:
+
+**Endpoint**: `GET /api/v1/core/users/me/classes/`
+
+**Response** (Student):
+```json
+[
+  {
+    "class_id": 1,
+    "unit_name": "Introduction to Computer Science",
+    "unit_code": "CS101",
+    "class_size": 25
+  }
+]
+```
+
+**Response** (Lecturer):
+```json
+[
+  {
+    "class_id": 1,
+    "unit_name": "Advanced Essay Writing",
+    "unit_code": "ENG301",
+    "class_size": 18
+  }
+]
+```
+
+**Response** (Admin):
+Returns all classes in the system.
+
+### Implementation Flow
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant Frontend
+    participant AuthContext
+    participant Sidebar
+    participant Backend
+
+    User->>Frontend: Login
+    Frontend->>Backend: POST /api/v1/auth/login/
+    Backend-->>Frontend: Tokens + user role
+    Frontend->>AuthContext: Set user, role, classes
+    
+    AuthContext->>Sidebar: user.role, classes
+    Sidebar->>Sidebar: Filter navItems by role
+    
+    Note over Sidebar: Only shows menu items<br/>matching user.role
+    
+    User->>Sidebar: Navigate to visible menu
+    Sidebar->>Frontend: Route change
+```
+
+### Class Selection (OrgSwitcher)
+
+Lecturers and students with access to multiple classes can switch between them using the OrgSwitcher component. The selected class context is maintained in the authentication state:
+
+```typescript
+// From simple-auth-context.tsx
+const { classes, currentClass, setCurrentClass } = useAuth();
+// currentClass persists class selection across the session
+```
+
+### Related Files
+
+| File                              | Purpose                                      |
+|-----------------------------------|----------------------------------------------|
+| `frontend/src/constants/data.ts`  | NavItem definitions with roles field         |
+| `frontend/src/components/layout/app-sidebar.tsx` | Sidebar with role-based filtering |
+| `frontend/src/components/layout/simple-auth-context.tsx` | Auth state management |
+| `backend/core/views.py`           | UserClassesViewSet with role-based filtering |
+| `backend/core/serializers.py`     | UserClassSerializer for class data           |
 
 ## 🧪 Testing Strategy
 

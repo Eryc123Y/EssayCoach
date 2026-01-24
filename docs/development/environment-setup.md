@@ -140,10 +140,10 @@ cd backend && uv run pytest
 cd frontend && pnpm test
 ```
 
-### Type Checking (mypy)
+### Type Checking (pyright)
 ```bash
-# Run mypy on all backend code
-make typecheck
+# Run pyright on all backend code
+cd backend && uv run pyright .
 ```
 
 ## 📊 Monitoring and Debugging
@@ -184,7 +184,7 @@ If you get connection errors on `localhost`, use `127.0.0.1` instead. Modern Nod
 - `fix/*`: Bug fixes
 
 ### Code Standards
-- **Python**: Follow PEP 8, use `ruff` for linting, `black` for formatting, and `mypy` for types.
+- **Python**: Follow PEP 8, use `ruff` for linting, `black` for formatting, and `pyright` for types.
 - **TypeScript**: Use strict mode, follow project patterns in existing components.
 
 ## 🌐 Useful URLs

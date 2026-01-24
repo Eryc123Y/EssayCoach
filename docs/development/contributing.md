@@ -44,7 +44,7 @@ docs(api): update endpoint documentation
 - Follow PEP 8
 - Use type hints (required for new code)
 - Write docstrings
-- Run `mypy-check` for type checking
+- Run `pyright` for type checking
 - Run `ruff` for linting
 
 ### TypeScript (Frontend)

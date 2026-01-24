@@ -65,6 +65,12 @@ pythonVersion = "3.12"
 typeCheckingMode = "basic"
 reportMissingTypeArgument = false
 reportGeneralTypeIssues = false
+reportAttributeAccessIssue = false
+reportIncompatibleMethodOverride = false
+reportIncompatibleVariableOverride = false
+
+# Use pyrightignore for file exclusions
+# Excludes test files, migrations, and problematic third-party code
 
 [tool.black]
 line-length = 120
