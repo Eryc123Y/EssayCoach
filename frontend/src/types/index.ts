@@ -13,7 +13,7 @@ export interface NavItem {
   description?: string;
   isActive?: boolean;
   items?: NavItem[];
-  roles?: UserRole[];  // Which roles can see this item
+  roles?: UserRole[]; // Which roles can see this item
 }
 
 export interface NavItemWithChildren extends NavItem {

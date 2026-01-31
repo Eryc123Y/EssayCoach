@@ -38,16 +38,19 @@ export async function POST(req: NextRequest) {
 
     const result = await response.json();
     const { token, user } = result.data;
-    
+
     // Normalize user role field - backend may return 'role' or other field names
     const normalizedUser = {
       ...user,
       // Ensure role field is consistent
       role: user.role || user.user_role || 'student'
     };
-    
+
     // Debug: Log the user object to see what fields are available
-    console.log('[Login Debug] Raw user from API:', JSON.stringify(user, null, 2));
+    console.log(
+      '[Login Debug] Raw user from API:',
+      JSON.stringify(user, null, 2)
+    );
     console.log('[Login Debug] Normalized user role:', normalizedUser.role);
 
     const res = NextResponse.json({ access: token, user: normalizedUser });
@@ -60,7 +63,7 @@ export async function POST(req: NextRequest) {
       maxAge: 60 * 60 * 24 // 24 hours
     });
 
-     // Mirror user info in cookies for simple-auth-context.tsx (using normalizedUser for consistency)
+    // Mirror user info in cookies for simple-auth-context.tsx (using normalizedUser for consistency)
     res.cookies.set('user_email', normalizedUser.email || '', {
       httpOnly: false,
       sameSite: 'lax',
@@ -85,12 +88,16 @@ export async function POST(req: NextRequest) {
       path: '/',
       maxAge: 60 * 60 * 24
     });
-    res.cookies.set('user_id', String(normalizedUser.user_id || normalizedUser.id || ''), {
-      httpOnly: false,
-      sameSite: 'lax',
-      path: '/',
-      maxAge: 60 * 60 * 24
-    });
+    res.cookies.set(
+      'user_id',
+      String(normalizedUser.user_id || normalizedUser.id || ''),
+      {
+        httpOnly: false,
+        sameSite: 'lax',
+        path: '/',
+        maxAge: 60 * 60 * 24
+      }
+    );
 
     return res;
   } catch (error) {

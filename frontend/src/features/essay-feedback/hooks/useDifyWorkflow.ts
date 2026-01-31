@@ -1,12 +1,16 @@
 /**
  * Hook for managing Dify workflow execution with EssayAgentInterface abstraction.
- * 
+ *
  * This hook provides a unified interface for essay analysis workflows,
  * abstracting away the specific AI provider implementation.
  */
 
 import { useState, useCallback, useEffect } from 'react';
-import { agentService, type EssayAnalysisInput, type WorkflowStatusResponse } from '@/service/agent/agent-service';
+import {
+  agentService,
+  type EssayAnalysisInput,
+  type WorkflowStatusResponse
+} from '@/service/agent/agent-service';
 
 const POLLING_INTERVAL = 2000; // 2 seconds
 const MAX_POLLING_TIME = 300000; // 5 minutes
@@ -47,7 +51,7 @@ export function useDifyWorkflow() {
         language: data.language,
         response_mode: data.response_mode,
         user_id: data.user_id,
-        rubric_id: data.rubric_id,
+        rubric_id: data.rubric_id
       };
 
       // Use the unified agent service interface
@@ -57,7 +61,8 @@ export function useDifyWorkflow() {
       setStatus('running');
     } catch (err) {
       setStatus('failed');
-      const errorMessage = err instanceof Error ? err.message : 'Submission failed';
+      const errorMessage =
+        err instanceof Error ? err.message : 'Submission failed';
       setError(errorMessage);
       throw err;
     }

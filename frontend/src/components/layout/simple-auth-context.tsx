@@ -57,7 +57,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const firstName = readCookie('user_first_name');
       const lastName = readCookie('user_last_name');
       const userId = readCookie('user_id');
-      const userRole = readCookie('user_role') as UserRole || 'student';
+      const userRole = (readCookie('user_role') as UserRole) || 'student';
       // Check both access_token cookie and other user cookies to determine login status
       const hasAccessToken = Boolean(readCookie('access_token'));
       const hasUserCookies = email && userRole;
@@ -94,19 +94,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       try {
         // Get token from cookie
         const token = readCookie('access_token');
-        
+
         const response = await fetch('/api/v1/core/users/me/classes/', {
           headers: {
-            'Authorization': `Token ${token}`
+            Authorization: `Token ${token}`
           }
         });
-        
+
         if (response.ok) {
           const data = await response.json();
           const classList = data.results || data;
-          
+
           // Transform API response to match ClassInfo interface (classId instead of class_id)
-          const transformedClasses: ClassInfo[] = Array.isArray(classList) 
+          const transformedClasses: ClassInfo[] = Array.isArray(classList)
             ? classList.map((cls: any) => ({
                 classId: cls.class_id,
                 unitName: cls.unit_name,
@@ -114,7 +114,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 classSize: cls.class_size
               }))
             : [];
-          
+
           setClasses(transformedClasses);
 
           // Set first class as current if none selected
@@ -134,7 +134,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   }, [user, isInitialized]);
 
   const currentClass = useMemo(() => {
-    return classes.find(c => c.classId === currentClassId) || classes[0] || null;
+    return (
+      classes.find((c) => c.classId === currentClassId) || classes[0] || null
+    );
   }, [classes, currentClassId]);
 
   const value = useMemo<AuthContextValue>(

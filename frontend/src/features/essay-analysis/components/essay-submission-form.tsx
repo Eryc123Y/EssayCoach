@@ -181,7 +181,6 @@ export function EssaySubmissionForm({
             </CardContent>
 
             <CardFooter className='flex justify-end border-t border-slate-100 bg-slate-50/50 px-8 py-6 dark:border-slate-800 dark:bg-slate-900/50'>
-
               <Button
                 type='submit'
                 size='lg'
@@ -189,7 +188,7 @@ export function EssaySubmissionForm({
                 className={cn(
                   'group/btn relative h-14 px-8 text-lg font-semibold tracking-wide transition-all duration-300',
                   'rounded-xl border border-slate-200 bg-slate-900 text-white shadow-sm hover:bg-slate-800',
-                  'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-400/40',
+                  'focus-visible:ring-2 focus-visible:ring-slate-400/40 focus-visible:outline-none',
                   'dark:border-slate-700 dark:bg-slate-100 dark:text-slate-900 dark:hover:bg-white',
                   (!question || !content || isSubmitting) &&
                     'cursor-not-allowed border-slate-200 bg-slate-200 text-slate-500 shadow-none dark:border-slate-800 dark:bg-slate-800 dark:text-slate-400'

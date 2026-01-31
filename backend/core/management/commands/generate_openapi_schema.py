@@ -31,7 +31,7 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options):
         output_path = Path(options["output"])
-        schema_format = options["format"]
+        _format = options["format"]
 
         self.stdout.write(f"Generating OpenAPI schema to {output_path}...")
 

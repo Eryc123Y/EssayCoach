@@ -1,11 +1,6 @@
 'use client';
 
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle
-} from '@/components/ui/card';
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Alert, AlertDescription } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -32,7 +27,9 @@ interface FeedbackViewerProps {
  * Adapts the new EssayAnalysisOutput schema to the legacy display format.
  * This ensures backward compatibility while supporting the new interface.
  */
-function adaptOutputsToLegacyFormat(outputs: WorkflowStatusResponse['outputs']) {
+function adaptOutputsToLegacyFormat(
+  outputs: WorkflowStatusResponse['outputs']
+) {
   if (!outputs) return null;
 
   // If already in legacy format (has feedback_summary)
@@ -40,10 +37,27 @@ function adaptOutputsToLegacyFormat(outputs: WorkflowStatusResponse['outputs']) 
     return outputs as unknown as {
       overall_score: number;
       feedback_summary: string;
-      structure_analysis: { score: number; comments: string; suggestions: string[] };
-      content_analysis: { score: number; comments: string; suggestions: string[] };
-      style_analysis: { score: number; comments: string; suggestions: string[] };
-      grammar_notes: Array<{ type: string; original: string; suggestion: string; explanation: string }>;
+      structure_analysis: {
+        score: number;
+        comments: string;
+        suggestions: string[];
+      };
+      content_analysis: {
+        score: number;
+        comments: string;
+        suggestions: string[];
+      };
+      style_analysis: {
+        score: number;
+        comments: string;
+        suggestions: string[];
+      };
+      grammar_notes: Array<{
+        type: string;
+        original: string;
+        suggestion: string;
+        explanation: string;
+      }>;
     };
   }
 
@@ -67,19 +81,46 @@ function adaptOutputsToLegacyFormat(outputs: WorkflowStatusResponse['outputs']) 
     overall_score: newOutput.percentage_score || newOutput.overall_score,
     feedback_summary: newOutput.overall_feedback,
     structure_analysis: {
-      score: newOutput.feedback_items?.find(i => i.criterion_name.toLowerCase().includes('structure'))?.score || 75,
-      comments: newOutput.feedback_items?.find(i => i.criterion_name.toLowerCase().includes('structure'))?.feedback || '',
-      suggestions: newOutput.feedback_items?.find(i => i.criterion_name.toLowerCase().includes('structure'))?.suggestions || []
+      score:
+        newOutput.feedback_items?.find((i) =>
+          i.criterion_name.toLowerCase().includes('structure')
+        )?.score || 75,
+      comments:
+        newOutput.feedback_items?.find((i) =>
+          i.criterion_name.toLowerCase().includes('structure')
+        )?.feedback || '',
+      suggestions:
+        newOutput.feedback_items?.find((i) =>
+          i.criterion_name.toLowerCase().includes('structure')
+        )?.suggestions || []
     },
     content_analysis: {
-      score: newOutput.feedback_items?.find(i => i.criterion_name.toLowerCase().includes('content'))?.score || 75,
-      comments: newOutput.feedback_items?.find(i => i.criterion_name.toLowerCase().includes('content'))?.feedback || '',
-      suggestions: newOutput.feedback_items?.find(i => i.criterion_name.toLowerCase().includes('content'))?.suggestions || []
+      score:
+        newOutput.feedback_items?.find((i) =>
+          i.criterion_name.toLowerCase().includes('content')
+        )?.score || 75,
+      comments:
+        newOutput.feedback_items?.find((i) =>
+          i.criterion_name.toLowerCase().includes('content')
+        )?.feedback || '',
+      suggestions:
+        newOutput.feedback_items?.find((i) =>
+          i.criterion_name.toLowerCase().includes('content')
+        )?.suggestions || []
     },
     style_analysis: {
-      score: newOutput.feedback_items?.find(i => i.criterion_name.toLowerCase().includes('style'))?.score || 75,
-      comments: newOutput.feedback_items?.find(i => i.criterion_name.toLowerCase().includes('style'))?.feedback || '',
-      suggestions: newOutput.feedback_items?.find(i => i.criterion_name.toLowerCase().includes('style'))?.suggestions || []
+      score:
+        newOutput.feedback_items?.find((i) =>
+          i.criterion_name.toLowerCase().includes('style')
+        )?.score || 75,
+      comments:
+        newOutput.feedback_items?.find((i) =>
+          i.criterion_name.toLowerCase().includes('style')
+        )?.feedback || '',
+      suggestions:
+        newOutput.feedback_items?.find((i) =>
+          i.criterion_name.toLowerCase().includes('style')
+        )?.suggestions || []
     },
     grammar_notes: [] // New schema doesn't have this, would need mapping
   };

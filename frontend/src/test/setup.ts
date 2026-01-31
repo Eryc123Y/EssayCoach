@@ -9,7 +9,7 @@ vi.mock('next/navigation', () => ({
     push: vi.fn(),
     replace: vi.fn(),
     prefetch: vi.fn(),
-    back: vi.fn(),
+    back: vi.fn()
   })),
   usePathname: vi.fn(() => '/test'),
   useLayoutEffect: vi.fn((fn) => {
@@ -17,5 +17,5 @@ vi.mock('next/navigation', () => ({
       // Execute effect in browser environment
       fn();
     }
-  }),
+  })
 }));

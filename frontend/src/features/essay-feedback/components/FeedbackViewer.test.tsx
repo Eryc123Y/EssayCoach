@@ -4,7 +4,9 @@ import type { WorkflowStatusResponse } from '@/service/agent/agent-service';
 import { vi, describe, it, expect, beforeEach } from 'vitest';
 
 // Helper to create a valid WorkflowStatusResponse for testing
-function createMockWorkflowStatusResponse(overrides: Partial<WorkflowStatusResponse> = {}): WorkflowStatusResponse {
+function createMockWorkflowStatusResponse(
+  overrides: Partial<WorkflowStatusResponse> = {}
+): WorkflowStatusResponse {
   return {
     workflow_run_id: 'test-run-123',
     task_id: 'test-task-456',
@@ -19,25 +21,25 @@ function createMockWorkflowStatusResponse(overrides: Partial<WorkflowStatusRespo
           score: 8,
           max_score: 10,
           feedback: 'Well organized essay',
-          suggestions: ['Add more transitions'],
+          suggestions: ['Add more transitions']
         },
         {
           criterion_name: 'Content',
           score: 9,
           max_score: 10,
           feedback: 'Strong arguments',
-          suggestions: ['Add more examples'],
-        },
+          suggestions: ['Add more examples']
+        }
       ],
       overall_feedback: 'Great essay overall',
       strengths: ['Clear thesis', 'Good structure'],
       suggestions: ['Add more citations'],
-      analysis_metadata: {},
+      analysis_metadata: {}
     },
     error_message: null,
     elapsed_time_seconds: 12.5,
     token_usage: { total: 1500, prompt: 800, completion: 700 },
-    ...overrides,
+    ...overrides
   };
 }
 
@@ -189,21 +191,21 @@ describe('FeedbackViewer', () => {
         score: 8,
         max_score: 10,
         feedback: 'Well organized essay',
-        suggestions: ['Add more transitions'],
+        suggestions: ['Add more transitions']
       },
       {
         criterion_name: 'Content',
         score: 9,
         max_score: 10,
         feedback: 'Strong arguments',
-        suggestions: ['Add more examples'],
-      },
+        suggestions: ['Add more examples']
+      }
     ],
     overall_feedback: 'Great essay overall',
     strengths: ['Clear thesis', 'Good structure'],
     suggestions: ['Add more citations'],
     analysis_metadata: {},
-    ...overrides,
+    ...overrides
   });
 
   const createLegacyOutputs = (overrides = {}) => ({
@@ -212,20 +214,20 @@ describe('FeedbackViewer', () => {
     structure_analysis: {
       score: 8,
       comments: 'Well organized essay',
-      suggestions: ['Add more transitions'],
+      suggestions: ['Add more transitions']
     },
     content_analysis: {
       score: 9,
       comments: 'Strong arguments',
-      suggestions: ['Add more examples'],
+      suggestions: ['Add more examples']
     },
     style_analysis: {
       score: 8,
       comments: 'Clear writing style',
-      suggestions: ['Vary sentence structure'],
+      suggestions: ['Vary sentence structure']
     },
     grammar_notes: [],
-    ...overrides,
+    ...overrides
   });
 
   const createMockResult = (overrides = {}): WorkflowStatusResponse => ({
@@ -236,7 +238,7 @@ describe('FeedbackViewer', () => {
     error_message: null,
     elapsed_time_seconds: 12.5,
     token_usage: { total: 1500, prompt: 800, completion: 700 },
-    ...overrides,
+    ...overrides
   });
 
   beforeEach(() => {

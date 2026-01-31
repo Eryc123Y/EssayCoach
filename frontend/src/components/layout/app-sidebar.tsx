@@ -57,22 +57,29 @@ export default function AppSidebar() {
       console.log('[Sidebar Debug] No user found, returning empty nav items');
       return [];
     }
-    
+
     console.log('[Sidebar Debug] User found:', JSON.stringify(user));
     console.log('[Sidebar Debug] User role:', user.role);
-    
-    const result = navItems.filter(item => {
+
+    const result = navItems.filter((item) => {
       if (!item.roles) {
-        console.log(`[Sidebar Debug] ${item.title}: No role restriction, visible`);
-        return true;  // No role restriction, visible to all
+        console.log(
+          `[Sidebar Debug] ${item.title}: No role restriction, visible`
+        );
+        return true; // No role restriction, visible to all
       }
-      
+
       const isVisible = item.roles.includes(user.role);
-      console.log(`[Sidebar Debug] ${item.title}: Roles=${JSON.stringify(item.roles)}, UserRole=${user.role}, Visible=${isVisible}`);
+      console.log(
+        `[Sidebar Debug] ${item.title}: Roles=${JSON.stringify(item.roles)}, UserRole=${user.role}, Visible=${isVisible}`
+      );
       return isVisible;
     });
-    
-    console.log('[Sidebar Debug] Filtered nav items:', result.map(i => i.title));
+
+    console.log(
+      '[Sidebar Debug] Filtered nav items:',
+      result.map((i) => i.title)
+    );
     return result;
   }, [user]);
 

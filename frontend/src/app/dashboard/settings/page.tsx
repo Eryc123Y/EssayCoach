@@ -63,27 +63,41 @@ export default function SettingsPage() {
 
           <Card className='flex h-full flex-col border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-950'>
             <CardHeader>
-              <CardTitle className='text-base font-semibold'>Notifications</CardTitle>
+              <CardTitle className='text-base font-semibold'>
+                Notifications
+              </CardTitle>
             </CardHeader>
             <CardContent className='flex flex-1 flex-col space-y-4'>
               <div className='flex items-center justify-between gap-4 rounded-lg border border-slate-200 px-4 py-3 dark:border-slate-800'>
                 <div>
                   <p className='text-sm font-medium'>Email updates</p>
-                  <p className='text-xs text-muted-foreground'>Weekly progress summaries</p>
+                  <p className='text-muted-foreground text-xs'>
+                    Weekly progress summaries
+                  </p>
                 </div>
-                <Switch checked={emailUpdates} onCheckedChange={setEmailUpdates} />
+                <Switch
+                  checked={emailUpdates}
+                  onCheckedChange={setEmailUpdates}
+                />
               </div>
               <div className='flex items-center justify-between gap-4 rounded-lg border border-slate-200 px-4 py-3 dark:border-slate-800'>
                 <div>
                   <p className='text-sm font-medium'>Deadline alerts</p>
-                  <p className='text-xs text-muted-foreground'>Upcoming submissions reminders</p>
+                  <p className='text-muted-foreground text-xs'>
+                    Upcoming submissions reminders
+                  </p>
                 </div>
-                <Switch checked={deadlineAlerts} onCheckedChange={setDeadlineAlerts} />
+                <Switch
+                  checked={deadlineAlerts}
+                  onCheckedChange={setDeadlineAlerts}
+                />
               </div>
               <div className='flex items-center justify-between gap-4 rounded-lg border border-slate-200 px-4 py-3 dark:border-slate-800'>
                 <div>
                   <p className='text-sm font-medium'>AI improvement tips</p>
-                  <p className='text-xs text-muted-foreground'>Insights based on recent drafts</p>
+                  <p className='text-muted-foreground text-xs'>
+                    Insights based on recent drafts
+                  </p>
                 </div>
                 <Switch checked={aiTips} onCheckedChange={setAiTips} />
               </div>
@@ -95,7 +109,9 @@ export default function SettingsPage() {
 
           <Card className='flex h-full flex-col border-slate-200 bg-white shadow-sm dark:border-slate-800 dark:bg-slate-950'>
             <CardHeader>
-              <CardTitle className='text-base font-semibold'>Preferences</CardTitle>
+              <CardTitle className='text-base font-semibold'>
+                Preferences
+              </CardTitle>
             </CardHeader>
             <CardContent className='flex flex-1 flex-col space-y-4'>
               <div className='space-y-2'>

@@ -51,24 +51,24 @@ export function OrgSwitcher({
           <DropdownMenuTrigger asChild>
             <SidebarMenuButton
               size='lg'
-              className='h-auto py-2 data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground transition-all'
+              className='data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground h-auto py-2 transition-all'
               aria-label='Select class'
             >
               <div className='flex w-full flex-col gap-1.5'>
                 <div className='flex items-center gap-2 px-0.5'>
-                  <div className='flex aspect-square size-5 items-center justify-center rounded-md bg-primary/10 text-primary'>
+                  <div className='bg-primary/10 text-primary flex aspect-square size-5 items-center justify-center rounded-md'>
                     <Icons.classSwitcher className='size-3.5' />
                   </div>
-                  <span className='text-[10px] font-bold uppercase tracking-widest text-muted-foreground/80'>
+                  <span className='text-muted-foreground/80 text-[10px] font-bold tracking-widest uppercase'>
                     Current Class
                   </span>
                 </div>
                 <div className='flex items-center justify-between gap-2 px-0.5'>
                   <div className='flex flex-col items-start gap-0.5 overflow-hidden leading-none'>
-                    <span className='truncate font-bold text-sidebar-foreground group-data-[collapsible=icon]:hidden'>
+                    <span className='text-sidebar-foreground truncate font-bold group-data-[collapsible=icon]:hidden'>
                       {selectedClass.unitName}
                     </span>
-                    <span className='text-[10px] text-muted-foreground/60 group-data-[collapsible=icon]:hidden'>
+                    <span className='text-muted-foreground/60 text-[10px] group-data-[collapsible=icon]:hidden'>
                       {selectedClass.unitCode}
                     </span>
                   </div>
@@ -78,26 +78,26 @@ export function OrgSwitcher({
             </SidebarMenuButton>
           </DropdownMenuTrigger>
           <DropdownMenuContent
-            className='w-[--radix-dropdown-menu-trigger-width] min-w-64 rounded-xl border-slate-200 dark:border-slate-800 shadow-lg'
+            className='w-[--radix-dropdown-menu-trigger-width] min-w-64 rounded-xl border-slate-200 shadow-lg dark:border-slate-800'
             align='start'
             sideOffset={4}
           >
-            <div className='px-2 py-1.5 text-[10px] font-bold uppercase tracking-widest text-muted-foreground/50'>
+            <div className='text-muted-foreground/50 px-2 py-1.5 text-[10px] font-bold tracking-widest uppercase'>
               Switch Class
             </div>
             {classes.map((cls) => (
               <DropdownMenuItem
                 key={cls.classId}
                 onSelect={() => handleClassChange(cls)}
-                className='flex flex-col items-start gap-0.5 py-2 px-3 focus:bg-sidebar-accent'
+                className='focus:bg-sidebar-accent flex flex-col items-start gap-0.5 px-3 py-2'
               >
                 <div className='flex w-full items-center justify-between'>
                   <span className='font-semibold'>{cls.unitName}</span>
                   {cls.classId === selectedClass.classId && (
-                    <Icons.check className='size-4 text-primary' />
+                    <Icons.check className='text-primary size-4' />
                   )}
                 </div>
-                <span className='text-xs text-muted-foreground'>
+                <span className='text-muted-foreground text-xs'>
                   {cls.unitCode}
                 </span>
               </DropdownMenuItem>

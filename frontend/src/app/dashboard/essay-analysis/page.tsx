@@ -52,19 +52,22 @@ export default function AIAnalysisPage() {
           category: 'Structure',
           score: 75,
           fullMark: 100,
-          description: 'Your essay has a clear introduction, well-developed body paragraphs, and a concise conclusion. The logical flow between paragraphs could be improved with better transitions.'
+          description:
+            'Your essay has a clear introduction, well-developed body paragraphs, and a concise conclusion. The logical flow between paragraphs could be improved with better transitions.'
         },
         {
           category: 'Content',
           score: 82,
           fullMark: 100,
-          description: 'Strong argument development with relevant examples. Some claims would benefit from additional evidence and citations to support your points.'
+          description:
+            'Strong argument development with relevant examples. Some claims would benefit from additional evidence and citations to support your points.'
         },
         {
           category: 'Style',
           score: 68,
           fullMark: 100,
-          description: 'Good vocabulary usage but occasional wordiness. Consider varying sentence structure and reducing repetitive phrases for more engaging writing.'
+          description:
+            'Good vocabulary usage but occasional wordiness. Consider varying sentence structure and reducing repetitive phrases for more engaging writing.'
         }
       ];
 
@@ -74,7 +77,8 @@ export default function AIAnalysisPage() {
           type: 'critical',
           category: 'Structure',
           title: 'Missing Transition Words',
-          description: 'The connection between paragraph 2 and paragraph 3 is abrupt. Consider adding transitional phrases like "Furthermore" or "In addition to this".',
+          description:
+            'The connection between paragraph 2 and paragraph 3 is abrupt. Consider adding transitional phrases like "Furthermore" or "In addition to this".',
           location: 'Paragraph 3'
         },
         {
@@ -82,7 +86,8 @@ export default function AIAnalysisPage() {
           type: 'suggestion',
           category: 'Content',
           title: 'Add More Evidence',
-          description: 'Your claim about economic impact would be stronger with specific statistics or a real-world example.',
+          description:
+            'Your claim about economic impact would be stronger with specific statistics or a real-world example.',
           location: 'Paragraph 2'
         },
         {
@@ -90,14 +95,16 @@ export default function AIAnalysisPage() {
           type: 'strength',
           category: 'Style',
           title: 'Strong Thesis Statement',
-          description: 'Your thesis is clear, specific, and effectively outlines the main arguments that follow.',
+          description:
+            'Your thesis is clear, specific, and effectively outlines the main arguments that follow.',
           location: 'Introduction'
         }
       ];
 
       setEssayData({
         question: 'The Impact of Technology on Modern Education',
-        content: 'This is a sample essay content used for demonstration purposes.'
+        content:
+          'This is a sample essay content used for demonstration purposes.'
       });
 
       setAnalysisResult({
@@ -134,7 +141,9 @@ export default function AIAnalysisPage() {
       const outputs = submitResponse.data?.outputs;
 
       if (!outputs) {
-        throw new Error('Analysis completed but no results returned. Please try again.');
+        throw new Error(
+          'Analysis completed but no results returned. Please try again.'
+        );
       }
 
       // Transform scores
@@ -259,7 +268,8 @@ export default function AIAnalysisPage() {
       const err = error as { message?: string; error?: unknown };
 
       // Check if it's a Dify API error (has "error" field in response)
-      const isDifyError = error && typeof error === 'object' && 'error' in error;
+      const isDifyError =
+        error && typeof error === 'object' && 'error' in error;
 
       // Check if it's a backend validation error (missing rubric)
       const isRubricError =
@@ -273,10 +283,12 @@ export default function AIAnalysisPage() {
         errorMessage = err.message || 'Dify workflow failed';
       } else if (isRubricError) {
         // Backend validation error - no rubric selected
-        errorMessage = 'No rubric available. Please upload a rubric first before submitting essays.';
+        errorMessage =
+          'No rubric available. Please upload a rubric first before submitting essays.';
       } else if (error instanceof Error) {
         // Generic error
-        errorMessage = error.message || 'Failed to analyze essay. Please try again.';
+        errorMessage =
+          error.message || 'Failed to analyze essay. Please try again.';
       } else {
         errorMessage = 'An unexpected error occurred. Please try again.';
       }

@@ -12,7 +12,7 @@ export const navItems: NavItem[] = [
     isActive: false,
     shortcut: ['d', 'd'],
     items: [],
-    roles: ['student', 'lecturer', 'admin'],
+    roles: ['student', 'lecturer', 'admin']
   },
   // Assignments - visible to all
   {
@@ -22,7 +22,7 @@ export const navItems: NavItem[] = [
     shortcut: ['a', 'a'],
     isActive: false,
     items: [],
-    roles: ['student', 'lecturer', 'admin'],
+    roles: ['student', 'lecturer', 'admin']
   },
   // Essay Analysis - visible to all
   {
@@ -32,17 +32,17 @@ export const navItems: NavItem[] = [
     shortcut: ['e', 'e'],
     isActive: false,
     items: [],
-    roles: ['student', 'lecturer', 'admin'],
+    roles: ['student', 'lecturer', 'admin']
   },
   // Rubrics - only lecturer and admin
   {
     title: 'Rubrics',
     url: '/dashboard/rubrics',
-    icon: 'book',  // Using 'book' icon for rubrics (different from 'clipboard' used by Assignments)
+    icon: 'book', // Using 'book' icon for rubrics (different from 'clipboard' used by Assignments)
     shortcut: ['r', 'r'],
     isActive: false,
     items: [],
-    roles: ['lecturer', 'admin'],
+    roles: ['lecturer', 'admin']
   },
   // Library - only lecturer and admin
   {
@@ -52,7 +52,7 @@ export const navItems: NavItem[] = [
     shortcut: ['l', 'b'],
     isActive: false,
     items: [],
-    roles: ['lecturer', 'admin'],
+    roles: ['lecturer', 'admin']
   },
   // Analytics - only admin
   {
@@ -62,7 +62,7 @@ export const navItems: NavItem[] = [
     shortcut: ['g', 'g'],
     isActive: false,
     items: [],
-    roles: ['admin'],
+    roles: ['admin']
   },
   // User Management - only admin
   {
@@ -72,8 +72,8 @@ export const navItems: NavItem[] = [
     shortcut: ['u', 'u'],
     isActive: false,
     items: [],
-    roles: ['admin'],
-  },
+    roles: ['admin']
+  }
 ];
 
 export interface RecentSubmission {

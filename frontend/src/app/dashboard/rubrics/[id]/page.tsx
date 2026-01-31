@@ -23,14 +23,14 @@ import {
   Accordion,
   AccordionContent,
   AccordionItem,
-  AccordionTrigger,
+  AccordionTrigger
 } from '@/components/ui/accordion';
 
- export default function RubricDetailPage() {
+export default function RubricDetailPage() {
   const params = useParams();
   const router = useRouter();
   const rubricId = parseInt(params.id as string);
-   
+
   const [rubric, setRubric] = useState<RubricDetail | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [showInfo, setShowInfo] = useState(false);
@@ -185,11 +185,13 @@ import {
       <div className='space-y-6'>
         <motion.div
           layout
-          className='flex items-center justify-between gap-2 pb-2 border-b border-border/50'
+          className='border-border/50 flex items-center justify-between gap-2 border-b pb-2'
         >
           <div className='flex items-center gap-2'>
-            <ClipboardList className="h-5 w-5 text-indigo-500" />
-            <h2 className="text-xl font-semibold tracking-tight text-foreground">Rubric Structure</h2>
+            <ClipboardList className='h-5 w-5 text-indigo-500' />
+            <h2 className='text-foreground text-xl font-semibold tracking-tight'>
+              Rubric Structure
+            </h2>
           </div>
           <Button
             variant='outline'
@@ -197,7 +199,8 @@ import {
             onClick={() => setShowInfo(!showInfo)}
             className={cn(
               'text-muted-foreground hover:text-foreground transition-colors duration-300',
-              showInfo && 'bg-indigo-50 border-indigo-200 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400'
+              showInfo &&
+                'border-indigo-200 bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400'
             )}
           >
             <motion.div
@@ -209,147 +212,161 @@ import {
                 scale: { duration: 0.3, ease: [0.4, 0, 0.2, 1] },
                 color: { duration: 0.2 }
               }}
-              className="mr-2"
+              className='mr-2'
             >
-              <Info className="h-4 w-4" />
+              <Info className='h-4 w-4' />
             </motion.div>
-            <span className="text-sm font-medium">
+            <span className='text-sm font-medium'>
               {showInfo ? 'Hide Information' : 'Understanding This Rubric'}
             </span>
             <motion.div
               animate={{ rotate: showInfo ? 180 : 0 }}
               transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
-              className="ml-2"
+              className='ml-2'
             >
-              <ChevronDown className="h-4 w-4" />
+              <ChevronDown className='h-4 w-4' />
             </motion.div>
           </Button>
         </motion.div>
 
         <AnimatePresence mode='wait'>
           {showInfo && (
-          <motion.div
-            layout
-            initial={{ opacity: 0, scale: 0.98 }}
-            animate={{
-              opacity: 1,
-              scale: 1
-            }}
-            exit={{ opacity: 0, scale: 0.98 }}
-            transition={{
-              duration: 0.25,
-              ease: [0.4, 0, 0.2, 1]
-            }}
-            className='mb-6 rounded-xl border border-border/50 bg-slate-50 dark:bg-slate-900/50 p-6'
-          >
-            <h3 className="text-lg font-semibold tracking-tight text-foreground mb-4">
-              Understanding This Rubric
-            </h3>
+            <motion.div
+              layout
+              initial={{ opacity: 0, scale: 0.98 }}
+              animate={{
+                opacity: 1,
+                scale: 1
+              }}
+              exit={{ opacity: 0, scale: 0.98 }}
+              transition={{
+                duration: 0.25,
+                ease: [0.4, 0, 0.2, 1]
+              }}
+              className='border-border/50 mb-6 rounded-xl border bg-slate-50 p-6 dark:bg-slate-900/50'
+            >
+              <h3 className='text-foreground mb-4 text-lg font-semibold tracking-tight'>
+                Understanding This Rubric
+              </h3>
 
-            <div className='space-y-4'>
-              <div>
-                <h4 className="text-base font-medium text-indigo-600 dark:text-indigo-400 mb-2">
-                  Core Concepts
-                </h4>
-                <p className="text-sm text-muted-foreground leading-relaxed">
-                  Learn the fundamental concepts behind rubric-based evaluation.
-                </p>
-              </div>
-
-              <div className='space-y-3'>
+              <div className='space-y-4'>
                 <div>
-                  <p className="font-medium text-foreground mb-1">
-                    Dimensions:
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    The criteria or dimensions evaluated in each essay (e.g., Organization, Content, Grammar). Each essay is scored across all dimensions.
+                  <h4 className='mb-2 text-base font-medium text-indigo-600 dark:text-indigo-400'>
+                    Core Concepts
+                  </h4>
+                  <p className='text-muted-foreground text-sm leading-relaxed'>
+                    Learn the fundamental concepts behind rubric-based
+                    evaluation.
                   </p>
                 </div>
-                <div>
-                  <p className="font-medium text-foreground mb-1">
-                    Weight:
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    The percentage importance of each dimension. All weights add up to 100% to determine the overall score.
-                  </p>
-                </div>
-                <div>
-                  <p className="font-medium text-foreground mb-1">
-                    Score Ranges:
-                  </p>
-                  <p className="text-sm text-muted-foreground">
-                    Point ranges for each performance level: Excellent, Standard, or Needs Work.
-                  </p>
-                </div>
-              </div>
 
-              <div>
-                <h4 className="text-base font-medium text-indigo-600 dark:text-indigo-400 mb-2">
-                  Performance Levels
-                </h4>
-                <p className="text-sm text-muted-foreground leading-relaxed mb-4">
-                  Understand what each score level means for essay evaluation.
-                </p>
-                <div className="space-y-3">
-                  <div className='flex items-start gap-3'>
-                    <Badge variant='outline' className="bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/30 dark:text-emerald-400">
-                      Excellent
-                    </Badge>
-                    <p className="text-sm text-muted-foreground ml-3">
-                      High-quality work that meets all criteria with excellence.
+                <div className='space-y-3'>
+                  <div>
+                    <p className='text-foreground mb-1 font-medium'>
+                      Dimensions:
+                    </p>
+                    <p className='text-muted-foreground text-sm'>
+                      The criteria or dimensions evaluated in each essay (e.g.,
+                      Organization, Content, Grammar). Each essay is scored
+                      across all dimensions.
                     </p>
                   </div>
-                  <div className='flex items-start gap-3'>
-                    <Badge variant='outline' className="bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/30 dark:text-blue-400">
-                      Standard
-                    </Badge>
-                    <p className="text-sm text-muted-foreground ml-3">
-                      Acceptable work that meets most criteria.
+                  <div>
+                    <p className='text-foreground mb-1 font-medium'>Weight:</p>
+                    <p className='text-muted-foreground text-sm'>
+                      The percentage importance of each dimension. All weights
+                      add up to 100% to determine the overall score.
                     </p>
                   </div>
-                  <div className='flex items-start gap-3'>
-                    <Badge variant='outline' className="bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/30 dark:text-amber-400">
-                      Needs Work
-                    </Badge>
-                    <p className="text-sm text-muted-foreground ml-3">
-                      Work that needs improvement to meet expectations.
+                  <div>
+                    <p className='text-foreground mb-1 font-medium'>
+                      Score Ranges:
+                    </p>
+                    <p className='text-muted-foreground text-sm'>
+                      Point ranges for each performance level: Excellent,
+                      Standard, or Needs Work.
                     </p>
                   </div>
                 </div>
-              </div>
 
-              <div>
-                <h4 className="text-base font-medium text-indigo-600 dark:text-indigo-400 mb-2">
-                  Example
-                </h4>
-                <Card className='border-border/50 bg-white dark:bg-slate-950'>
-                  <CardContent className="text-sm text-muted-foreground">
-                    <p className="mb-2">
-                      Consider an essay evaluated on Organization (30%) and Content (70%):
-                    </p>
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium text-foreground">
-                          Excellent:
-                        </span>
-                        <span className="text-emerald-600 dark:text-emerald-400">
-                          Organization: 9/10 (90%), Content: 8/10 (80%)
-                        </span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium text-foreground">
-                          Overall:
-                        </span>
-                        <span className="text-emerald-600 dark:text-emerald-400">
-                          8.5 / 10 (85%)
-                        </span>
-                      </div>
+                <div>
+                  <h4 className='mb-2 text-base font-medium text-indigo-600 dark:text-indigo-400'>
+                    Performance Levels
+                  </h4>
+                  <p className='text-muted-foreground mb-4 text-sm leading-relaxed'>
+                    Understand what each score level means for essay evaluation.
+                  </p>
+                  <div className='space-y-3'>
+                    <div className='flex items-start gap-3'>
+                      <Badge
+                        variant='outline'
+                        className='border-emerald-200 bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400'
+                      >
+                        Excellent
+                      </Badge>
+                      <p className='text-muted-foreground ml-3 text-sm'>
+                        High-quality work that meets all criteria with
+                        excellence.
+                      </p>
                     </div>
-                  </CardContent>
-                </Card>
+                    <div className='flex items-start gap-3'>
+                      <Badge
+                        variant='outline'
+                        className='border-blue-200 bg-blue-50 text-blue-700 dark:bg-blue-950/30 dark:text-blue-400'
+                      >
+                        Standard
+                      </Badge>
+                      <p className='text-muted-foreground ml-3 text-sm'>
+                        Acceptable work that meets most criteria.
+                      </p>
+                    </div>
+                    <div className='flex items-start gap-3'>
+                      <Badge
+                        variant='outline'
+                        className='border-amber-200 bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400'
+                      >
+                        Needs Work
+                      </Badge>
+                      <p className='text-muted-foreground ml-3 text-sm'>
+                        Work that needs improvement to meet expectations.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div>
+                  <h4 className='mb-2 text-base font-medium text-indigo-600 dark:text-indigo-400'>
+                    Example
+                  </h4>
+                  <Card className='border-border/50 bg-white dark:bg-slate-950'>
+                    <CardContent className='text-muted-foreground text-sm'>
+                      <p className='mb-2'>
+                        Consider an essay evaluated on Organization (30%) and
+                        Content (70%):
+                      </p>
+                      <div className='space-y-2'>
+                        <div className='flex items-center gap-2'>
+                          <span className='text-foreground font-medium'>
+                            Excellent:
+                          </span>
+                          <span className='text-emerald-600 dark:text-emerald-400'>
+                            Organization: 9/10 (90%), Content: 8/10 (80%)
+                          </span>
+                        </div>
+                        <div className='flex items-center gap-2'>
+                          <span className='text-foreground font-medium'>
+                            Overall:
+                          </span>
+                          <span className='text-emerald-600 dark:text-emerald-400'>
+                            8.5 / 10 (85%)
+                          </span>
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
               </div>
-            </div>
-          </motion.div>
+            </motion.div>
           )}
         </AnimatePresence>
 

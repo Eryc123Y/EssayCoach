@@ -28,20 +28,20 @@ describe('useDifyWorkflow', () => {
           score: 8,
           max_score: 10,
           feedback: 'Well organized essay',
-          suggestions: ['Add more transitions'],
+          suggestions: ['Add more transitions']
         },
         {
           criterion_name: 'Content',
           score: 9,
           max_score: 10,
           feedback: 'Strong arguments',
-          suggestions: ['Add more examples'],
-        },
+          suggestions: ['Add more examples']
+        }
       ],
       overall_feedback: 'Great essay overall',
       strengths: ['Clear thesis', 'Good structure'],
       suggestions: ['Add more citations'],
-      analysis_metadata: {},
+      analysis_metadata: {}
     };
 
     // Mock agentService.analyzeEssay response

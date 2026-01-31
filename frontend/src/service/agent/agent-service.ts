@@ -1,9 +1,9 @@
 /**
  * Abstract AI Agent Service Layer
- * 
+ *
  * This module provides a unified interface for AI essay feedback services,
  * abstracting away the specific AI provider (Dify, LangChain, etc.).
- * 
+ *
  * This enables seamless provider switching without affecting frontend components.
  */
 
@@ -69,12 +69,12 @@ export interface AgentService {
    * Analyze an essay and generate feedback
    */
   analyzeEssay(input: EssayAnalysisInput): Promise<WorkflowRunResponse>;
-  
+
   /**
    * Get the status of a workflow run
    */
   getWorkflowStatus(runId: string): Promise<WorkflowStatusResponse>;
-  
+
   /**
    * Check if the AI service is healthy
    */
@@ -85,7 +85,7 @@ export interface AgentService {
 
 class DifyService implements AgentService {
   private baseUrl = '/api/v1/ai-feedback';
-  
+
   async analyzeEssay(input: EssayAnalysisInput): Promise<WorkflowRunResponse> {
     const response = await request<WorkflowRunResponse>({
       url: `${this.baseUrl}/agent/workflows/run/`,
@@ -96,29 +96,29 @@ class DifyService implements AgentService {
         language: input.language || 'English',
         response_mode: input.response_mode || 'blocking',
         user_id: input.user_id,
-        rubric_id: input.rubric_id,
-      },
+        rubric_id: input.rubric_id
+      }
     });
-    
+
     return response;
   }
-  
+
   async getWorkflowStatus(runId: string): Promise<WorkflowStatusResponse> {
     const response = await request<WorkflowStatusResponse>({
       url: `${this.baseUrl}/agent/workflows/run/${runId}/status/`,
-      method: 'GET',
+      method: 'GET'
     });
-    
+
     return response;
   }
-  
+
   async healthCheck(): Promise<boolean> {
     try {
       // Try to run a simple analysis with minimal input
       await this.analyzeEssay({
         essay_question: 'Test question',
         essay_content: 'Test content',
-        response_mode: 'blocking',
+        response_mode: 'blocking'
       });
       return true;
     } catch {
@@ -158,14 +158,14 @@ export function getGradeLetter(percentage: number): string {
  */
 export function formatElapsedTime(seconds: number | null): string {
   if (seconds === null) return 'N/A';
-  
+
   if (seconds < 60) {
     return `${Math.round(seconds)}s`;
   }
-  
+
   const minutes = Math.floor(seconds / 60);
   const remainingSeconds = Math.round(seconds % 60);
-  
+
   return `${minutes}m ${remainingSeconds}s`;
 }
 
