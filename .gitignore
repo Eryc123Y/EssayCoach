@@ -208,3 +208,9 @@ nitro.json
 .output/
 /AGENTS.md
 .DS_Store
+
+# Auto-generated documentation (build-only, not committed)
+docs/api-reference/endpoints.md
+docs/api-reference/endpoints 2.md
+docs/backend/models/models.md
+.doc_generator_cache.json

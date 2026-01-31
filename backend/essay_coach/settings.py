@@ -49,6 +49,7 @@ INSTALLED_APPS = [
     "rest_framework.authtoken",  # For token-based authentication
     "django_filters",
     "drf_spectacular",  # OpenAPI 3.0 schema generation
+    "django_extensions",  # Management commands including graph_models for ERD
     # Custom Apps
     "core",
     "auth",
@@ -154,6 +155,16 @@ SPECTACULAR_SETTINGS = {
         "filter": True,
         "showExtensions": True,
         "showCommonExtensions": True,
+    },
+    "REDOC": {
+        "hideHostname": False,
+        "showApiVersion": True,
+    },
+    "POSTPROCESSING_HOOKS": [
+        "drf_spectacular.hooks.postprocess_schema_enums",
+    ],
+    "ENUM_NAME_OVERRIDES": {
+        # Override enum names for better documentation
     },
 }
 

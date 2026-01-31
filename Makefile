@@ -1,4 +1,4 @@
-.PHONY: install dev dev-backend dev-frontend test lint clean db
+.PHONY: install dev dev-backend dev-frontend test lint clean db docs docs-generate docs-erd
 
 # Install all dependencies
 install:
@@ -141,6 +141,28 @@ docker-logs-pg:
 	@docker compose logs -f postgres
 
 # Documentation
-docs:
+docs-generate:
+	@echo "Generating documentation..."
+	@python scripts/generate-docs.py
+
+docs-api:
+	@echo "Generating OpenAPI schema JSON..."
+	@.venv/bin/python backend/manage.py generate_openapi_schema --output docs/api-reference/openapi-schema.json
+	@echo "OpenAPI schema generated at docs/api-reference/openapi-schema.json"
+
+docs-erd:
+	@echo "Generating ERD diagram..."
+	@python scripts/generate-docs.py --erd-only
+
+docs-build: docs-api
+	@echo "Building documentation..."
+	@python scripts/generate-docs.py
+	@.venv/bin/mkdocs build
+	@echo ""
+	@echo "✅ Documentation built successfully!"
+	@echo "📚 Output: site/"
+
+docs: docs-api
 	@echo "Starting documentation server..."
-	@./.venv/bin/mkdocs serve
+	@python scripts/generate-docs.py
+	@.venv/bin/mkdocs serve
