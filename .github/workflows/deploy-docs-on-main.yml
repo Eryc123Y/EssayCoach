@@ -38,10 +38,12 @@ jobs:
 
       - name: Install dependencies and build documentation
         run: |
-          # Install mkdocs and plugins using pip directly (no venv needed in CI)
-          pip install mkdocs-material pymdown-extensions mkdocs-mermaid2-plugin mkdocs-git-revision-date-localized-plugin mkdocs-minify-plugin
+          # Create virtual environment
+          uv venv
+          # Install mkdocs and plugins
+          uv pip install mkdocs-material pymdown-extensions mkdocs-mermaid2-plugin mkdocs-git-revision-date-localized-plugin mkdocs-minify-plugin
           # Build documentation
-          mkdocs build --strict
+          uv run mkdocs build --strict
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
