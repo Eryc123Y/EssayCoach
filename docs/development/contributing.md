@@ -4,15 +4,15 @@
 
 ### Prerequisites
 - Python 3.12+
-- Node.js 18+
-- PostgreSQL 14+
-- Nix package manager (recommended)
+- Node.js 22+
+- Docker and Docker Compose
+- **uv** (for Python management)
 
 ### Development Setup
 1. Fork the repository
 2. Clone your fork: `git clone https://github.com/your-username/EssayCoach.git`
-3. Enter development environment: `nix develop`
-4. Start services: `just dev`
+3. Setup environment: `make install`
+4. Start services: `make dev`
 
 ## Development Workflow
 
@@ -34,7 +34,7 @@ docs(api): update endpoint documentation
 ### Pull Request Process
 1. Create feature branch from `main`
 2. Make changes with tests
-3. Run test suite: `just test`
+3. Run test suite: `make test`
 4. Update documentation if needed
 5. Submit PR with template
 
@@ -44,7 +44,7 @@ docs(api): update endpoint documentation
 - Follow PEP 8
 - Use type hints (required for new code)
 - Write docstrings
-- Run `mypy-check` for type checking
+- Run `pyright` for type checking
 - Run `ruff` for linting
 
 ### TypeScript (Frontend)

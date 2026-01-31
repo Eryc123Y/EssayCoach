@@ -53,18 +53,21 @@ backend/
 
 ### Run All Tests
 ```bash
-pytest
+# Via project Makefile
+make test
+
+# Directly via uv
+cd backend && uv run pytest
 ```
 
 ### Run with Coverage
 ```bash
-pytest --cov=apps --cov-report=html
+cd backend && uv run pytest --cov=. --cov-report=html
 ```
 
-### Run Specific Test Categories
+### Run Specific Tests
 ```bash
-pytest tests/unit/
-pytest tests/integration/
+cd backend && uv run pytest path/to/test.py
 ```
 
 ### Run Async Tests

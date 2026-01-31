@@ -1,6 +1,5 @@
 from django.db import migrations
 
-
 SQL = r'''
 DO $$
 DECLARE
@@ -9,8 +8,8 @@ DECLARE
 BEGIN
     -- Check if the user table exists
     SELECT EXISTS (
-        SELECT FROM information_schema.tables 
-        WHERE table_schema = 'public' 
+        SELECT FROM information_schema.tables
+        WHERE table_schema = 'public'
         AND table_name = 'user'
     ) INTO v_table_exists;
 

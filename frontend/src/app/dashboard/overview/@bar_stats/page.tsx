@@ -1,8 +1,8 @@
-import { delay } from '@/constants/mock-api';
+import { delay } from '@/lib/utils';
 import { BarGraph } from '@/features/overview/components/bar-graph';
 
-export default async function BarStats() {
-  await await delay(1000);
+export default async function BarStatsPage() {
+  await delay(1000);
 
   return <BarGraph />;
 }

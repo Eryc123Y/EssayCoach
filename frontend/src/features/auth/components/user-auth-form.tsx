@@ -11,29 +11,26 @@ import {
 import { Input } from '@/components/ui/input';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { useTransition } from 'react';
+import { useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { toast } from 'sonner';
 import * as z from 'zod';
-import GithubSignInButton from './github-auth-button';
 
 const formSchema = z.object({
   email: z.string().email({ message: 'Enter a valid email address' }),
-  password: z
-    .string()
-    .min(6, { message: 'Password must be at least 6 characters' })
+  password: z.string().min(1, { message: 'Password is required' })
 });
 
 type UserFormValue = z.infer<typeof formSchema>;
 
 export default function UserAuthForm() {
   const searchParams = useSearchParams();
-  const callbackUrl = searchParams.get('callbackUrl');
-  const [loading, startTransition] = useTransition();
+  const callbackUrl = searchParams?.get('callbackUrl');
+  const [loading] = useState(false);
   const router = useRouter();
   const defaultValues = {
-    email: 'dev@essaycoach.com',
-    password: 'password'
+    email: 'admin@example.com',
+    password: 'admin'
   };
   const form = useForm<UserFormValue>({
     resolver: zodResolver(formSchema),
@@ -51,9 +48,7 @@ export default function UserAuthForm() {
         const err = await response.json().catch(() => ({}));
         throw new Error(err?.message || 'Request failed');
       }
-      const result = await response.json();
-      console.log('Backend auth (mock) result:', result);
-      toast.success('Signed in with backend (mock)');
+      toast.success('Signed in successfully');
       const target = callbackUrl || '/dashboard/overview';
       router.push(target);
     } catch (error: unknown) {
@@ -112,7 +107,7 @@ export default function UserAuthForm() {
             className='mt-2 ml-auto w-full'
             type='submit'
           >
-            Sign In (Mock)
+            Sign In
           </Button>
         </form>
       </Form>

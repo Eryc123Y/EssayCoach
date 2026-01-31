@@ -148,7 +148,7 @@ cython_debug/
 .pyright_canary
 .pyright
 .pyright.lock
-  
+
 # Node.js
 node_modules
 npm-debug.log*
@@ -168,6 +168,8 @@ dist-ssr
 .env.development.local
 .env.test.local
 .env.production.local
+backend/.env
+frontend/.env.local
 
 # IDEs and Editors
 .vscode/*
@@ -180,12 +182,16 @@ dist-ssr
 *.sln
 *.sw?
 
-# Nix
-result*
-.direnv/
-.nix-zsh/
+# uv
+.venv/
+uv.lock
+
+# PostgreSQL (managed by Docker)
 .dev_pg/
-.DS_Store
+.pg_socket/
+
+# Docker volumes
+pg_data/
 
 # SQLite
 *.db
@@ -196,21 +202,15 @@ dev.db
 # Coverage reports
 coverage/
 
-# Cypress
-cypress/videos/
-cypress/screenshots/
-
-# TypeScript incremental build info
-*.tsbuildinfo 
-
-# Local PostgreSQL volumes & dev cluster
-.docker/
-docker/db/data/
-.dev_pg/
-.pg_socket/
-
 # Nitro (Backend Framework)
 .nitro/
 nitro.json
 .output/
 /AGENTS.md
+.DS_Store
+
+# Auto-generated documentation (build-only, not committed)
+docs/api-reference/endpoints.md
+docs/api-reference/endpoints 2.md
+docs/backend/models/models.md
+.doc_generator_cache.json

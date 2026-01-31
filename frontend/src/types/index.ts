@@ -1,5 +1,7 @@
 import { Icons } from '@/components/icons';
 
+export type UserRole = 'student' | 'lecturer' | 'admin';
+
 export interface NavItem {
   title: string;
   url: string;
@@ -11,6 +13,7 @@ export interface NavItem {
   description?: string;
   isActive?: boolean;
   items?: NavItem[];
+  roles?: UserRole[]; // Which roles can see this item
 }
 
 export interface NavItemWithChildren extends NavItem {

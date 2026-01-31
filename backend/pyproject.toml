@@ -1,0 +1,103 @@
+[project]
+name = "essaycoach-backend"
+version = "0.1.0"
+description = "EssayCoach Django Backend"
+requires-python = ">=3.12"
+dependencies = [
+    "django>=4.2,<5.0",
+    "djangorestframework>=3.14,<4.0",
+    "django-filter>=23.5,<25.0",
+    "psycopg2-binary>=2.9,<3.0",
+    "django-cors-headers>=4.3,<5.0",
+    "drf-spectacular>=0.27,<1.0",
+    "drf-pydantic>=2.0,<3.0",
+    "requests>=2.31,<3.0",
+    "pillow>=10.2,<11.0",
+    "pypdf2>=3.0,<4.0",
+    "python-dotenv>=1.0,<2.0",
+    "pydantic>=2.12.5",
+    "django-extensions>=3.2,<4.0",
+    "typing-extensions[dev]>=4.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+    "django-stubs>=4.2,<5.0",
+    "types-requests>=2.31,<3.0",
+    "black>=24.1,<25.0",
+    "pyright>=1.1.0,<2.0",
+    "pytest>=7.4,<8.0",
+    "pytest-django>=4.7,<5.0",
+    "pytest-mock>=3.12,<4.0",
+    "ruff>=0.1,<1.0",
+]
+
+[project.scripts]
+essaycoach = "essay_coach.__main__:main"
+
+[build-system]
+requires = ["setuptools", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools]
+packages = ["essay_coach", "core", "ai_feedback", "auth", "analytics"]
+
+[tool.uv]
+# dev-dependencies moved to dependency-groups.dev (PEP 735)
+# This avoids deprecation warning
+
+[dependency-groups]
+dev = [
+    "django-stubs>=4.2,<5.0",
+    "types-requests>=2.31,<3.0",
+    "black>=24.1,<25.0",
+    "pyright>=1.1.0,<2.0",
+    "pytest>=7.4,<8.0",
+    "pytest-django>=4.7,<5.0",
+    "pytest-mock>=3.12,<4.0",
+    "pytest-timeout>=2.3,<3.0",
+    "ruff>=0.1,<1.0",
+]
+
+[tool.ruff]
+target-version = "py312"
+line-length = 120
+select = ["E", "F", "I", "N", "W", "UP"]
+
+[tool.ruff.per-file-ignores]
+"**/migrations/*.py" = ["E501"]
+"conftest.py" = ["E402"]  # pytest-django requires django.setup() after env vars
+
+[tool.pyright]
+pythonVersion = "3.12"
+typeCheckingMode = "basic"
+reportMissingTypeArgument = false
+reportGeneralTypeIssues = false
+reportAttributeAccessIssue = false
+reportIncompatibleVariableOverride = false
+reportArgumentType = false
+reportOptionalSubscript = false
+reportIndexIssue = false
+reportAssignmentType = false
+reportCallIssue = false
+reportUndefinedVariable = false
+reportIncompatibleMethodOverride = false
+reportRedeclaration = false
+reportPossiblyUnboundVariable = false
+reportReturnType = false
+reportMissingImports = false
+reportOptionalMemberAccess = false
+reportInvalidTypeForm = false
+
+[tool.black]
+line-length = 120
+target-version = ['py312']
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "essay_coach.settings"
+testpaths = ["ai_feedback/tests", "core/tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*", "*Tests"]
+python_functions = ["test_*"]
+addopts = "-v --tb=short --timeout=60"
+norecursedirs = ["test_e2e*.py", "test_dify.py", ".*", "node_modules", "*.egg-info"]

@@ -1,8 +1,8 @@
 'use client';
 
-import { Check, ChevronsUpDown, GalleryVerticalEnd } from 'lucide-react';
 import * as React from 'react';
 
+import { Icons } from '@/components/icons';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -15,34 +15,35 @@ import {
   SidebarMenuItem
 } from '@/components/ui/sidebar';
 
-interface Tenant {
-  id: string;
-  name: string;
+interface ClassInfo {
+  classId: number;
+  unitName: string;
+  unitCode: string;
+  classSize: number;
+}
+
+interface OrgSwitcherProps {
+  classes: ClassInfo[];
+  currentClass: ClassInfo | null;
+  onClassChange: (classId: number) => void;
 }
 
 export function OrgSwitcher({
-  tenants,
-  defaultTenant,
-  onTenantSwitch
-}: {
-  tenants: Tenant[];
-  defaultTenant: Tenant;
-  onTenantSwitch?: (tenantId: string) => void;
-}) {
-  const [selectedTenant, setSelectedTenant] = React.useState<
-    Tenant | undefined
-  >(defaultTenant || (tenants.length > 0 ? tenants[0] : undefined));
+  classes,
+  currentClass,
+  onClassChange
+}: OrgSwitcherProps) {
+  const selectedClass =
+    currentClass || (classes.length > 0 ? classes[0] : null);
 
-  const handleTenantSwitch = (tenant: Tenant) => {
-    setSelectedTenant(tenant);
-    if (onTenantSwitch) {
-      onTenantSwitch(tenant.id);
-    }
+  const handleClassChange = (cls: ClassInfo) => {
+    onClassChange(cls.classId);
   };
 
-  if (!selectedTenant) {
+  if (!selectedClass) {
     return null;
   }
+
   return (
     <SidebarMenu>
       <SidebarMenuItem>
@@ -50,31 +51,55 @@ export function OrgSwitcher({
           <DropdownMenuTrigger asChild>
             <SidebarMenuButton
               size='lg'
-              className='data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground'
+              className='data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground h-auto py-2 transition-all'
+              aria-label='Select class'
             >
-              <div className='bg-primary text-sidebar-primary-foreground flex aspect-square size-8 items-center justify-center rounded-lg'>
-                <GalleryVerticalEnd className='size-4' />
+              <div className='flex w-full flex-col gap-1.5'>
+                <div className='flex items-center gap-2 px-0.5'>
+                  <div className='bg-primary/10 text-primary flex aspect-square size-5 items-center justify-center rounded-md'>
+                    <Icons.classSwitcher className='size-3.5' />
+                  </div>
+                  <span className='text-muted-foreground/80 text-[10px] font-bold tracking-widest uppercase'>
+                    Current Class
+                  </span>
+                </div>
+                <div className='flex items-center justify-between gap-2 px-0.5'>
+                  <div className='flex flex-col items-start gap-0.5 overflow-hidden leading-none'>
+                    <span className='text-sidebar-foreground truncate font-bold group-data-[collapsible=icon]:hidden'>
+                      {selectedClass.unitName}
+                    </span>
+                    <span className='text-muted-foreground/60 text-[10px] group-data-[collapsible=icon]:hidden'>
+                      {selectedClass.unitCode}
+                    </span>
+                  </div>
+                  <Icons.chevronDown className='size-4 shrink-0 opacity-40 group-data-[collapsible=icon]:hidden' />
+                </div>
               </div>
-              <div className='flex flex-col gap-0.5 leading-none'>
-                <span className='font-semibold'>Next Starter</span>
-                <span className=''>{selectedTenant.name}</span>
-              </div>
-              <ChevronsUpDown className='ml-auto' />
             </SidebarMenuButton>
           </DropdownMenuTrigger>
           <DropdownMenuContent
-            className='w-[--radix-dropdown-menu-trigger-width]'
+            className='w-[--radix-dropdown-menu-trigger-width] min-w-64 rounded-xl border-slate-200 shadow-lg dark:border-slate-800'
             align='start'
+            sideOffset={4}
           >
-            {tenants.map((tenant) => (
+            <div className='text-muted-foreground/50 px-2 py-1.5 text-[10px] font-bold tracking-widest uppercase'>
+              Switch Class
+            </div>
+            {classes.map((cls) => (
               <DropdownMenuItem
-                key={tenant.id}
-                onSelect={() => handleTenantSwitch(tenant)}
+                key={cls.classId}
+                onSelect={() => handleClassChange(cls)}
+                className='focus:bg-sidebar-accent flex flex-col items-start gap-0.5 px-3 py-2'
               >
-                {tenant.name}{' '}
-                {tenant.id === selectedTenant.id && (
-                  <Check className='ml-auto' />
-                )}
+                <div className='flex w-full items-center justify-between'>
+                  <span className='font-semibold'>{cls.unitName}</span>
+                  {cls.classId === selectedClass.classId && (
+                    <Icons.check className='text-primary size-4' />
+                  )}
+                </div>
+                <span className='text-muted-foreground text-xs'>
+                  {cls.unitCode}
+                </span>
               </DropdownMenuItem>
             ))}
           </DropdownMenuContent>

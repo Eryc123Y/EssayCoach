@@ -1,5 +1,7 @@
 # API Specification
 
+> **Current Implementation Note**: The current AI analysis implementation is **synchronous**. While some diagrams below show an asynchronous flow (using Celery/Redis), the current system calls the Dify workflow directly and waits for the response. These diagrams represent the target architecture for future development.
+
 ## 🚀 API Overview
 
 EssayCoach provides a comprehensive RESTful API built with Django REST Framework, designed for educational applications with AI-powered essay feedback capabilities.

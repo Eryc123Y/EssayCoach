@@ -307,8 +307,8 @@ class Migration(migrations.Migration):
             DO $$
             BEGIN
                 IF EXISTS (
-                    SELECT FROM information_schema.tables 
-                    WHERE table_schema = 'public' 
+                    SELECT FROM information_schema.tables
+                    WHERE table_schema = 'public'
                     AND table_name = 'user'
                 ) THEN
                     COMMENT ON TABLE public."user" IS 'A table for all user entities, including student, teacher, and admins.';

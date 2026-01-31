@@ -1,8 +1,9 @@
 # Technique Stacks
 
-This document contains plans and specifications for the choice of technique stacks in the EssayCoach platform.
+> **Current Implementation Status**: The current AI analysis engine is implemented using **Dify.ai** workflows. The technology stack below represents the target architecture for the next phase of development (transitioning to LangGraph/LangChain).
 
 ## Overview
+
 
 The stack is chosen to optimize for **orchestration control** (*LangGraph*) and **structured data reliability** (*Pydantic/LangChain*). We prioritize explicit control flows over "black box" agent automations to ensure the grading logic is deterministic and traceable.
 

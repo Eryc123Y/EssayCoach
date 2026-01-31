@@ -1,35 +1,39 @@
-from django.urls import path, include
+from django.urls import include, path
 from rest_framework.routers import DefaultRouter
+
 from .views import (
-    UserViewSet,
-    UnitViewSet,
     ClassViewSet,
     EnrollmentViewSet,
+    FeedbackItemViewSet,
+    FeedbackViewSet,
     MarkingRubricViewSet,
     RubricItemViewSet,
     RubricLevelDescViewSet,
-    TaskViewSet,
+    RubricViewSet,
     SubmissionViewSet,
-    FeedbackViewSet,
-    FeedbackItemViewSet,
+    TaskViewSet,
     TeachingAssnViewSet,
+    UnitViewSet,
+    UserClassesViewSet,
+    UserViewSet,
 )
 
 router = DefaultRouter()
-router.register(r'users', UserViewSet)
-router.register(r'units', UnitViewSet)
-router.register(r'classes', ClassViewSet)
-router.register(r'enrollments', EnrollmentViewSet)
-router.register(r'marking-rubrics', MarkingRubricViewSet)
-router.register(r'rubric-items', RubricItemViewSet)
-router.register(r'rubric-level-descs', RubricLevelDescViewSet)
-router.register(r'tasks', TaskViewSet)
-router.register(r'submissions', SubmissionViewSet)
-router.register(r'feedbacks', FeedbackViewSet)
-router.register(r'feedback-items', FeedbackItemViewSet)
-router.register(r'teaching-assignments', TeachingAssnViewSet)
+router.register(r"users", UserViewSet)
+router.register(r"users/me/classes", UserClassesViewSet, basename="user-classes")
+router.register(r"units", UnitViewSet)
+router.register(r"classes", ClassViewSet)
+router.register(r"enrollments", EnrollmentViewSet)
+router.register(r"marking-rubrics", MarkingRubricViewSet, basename="marking-rubrics")
+router.register(r"rubric-items", RubricItemViewSet, basename="rubric-items")
+router.register(r"rubric-level-descs", RubricLevelDescViewSet, basename="rubric-level-descs")
+router.register(r"tasks", TaskViewSet, basename="tasks")
+router.register(r"submissions", SubmissionViewSet, basename="submissions")
+router.register(r"feedbacks", FeedbackViewSet, basename="feedbacks")
+router.register(r"feedback-items", FeedbackItemViewSet, basename="feedback-items")
+router.register(r"teaching-assignments", TeachingAssnViewSet, basename="teaching-assignments")
+router.register(r"rubrics", RubricViewSet, basename="rubrics")
 
 urlpatterns = [
-    path('', include(router.urls)),
+    path("", include(router.urls)),
 ]
-

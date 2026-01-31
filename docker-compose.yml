@@ -8,12 +8,16 @@ services:
     ports:
       - "5432:5432"
     environment:
-      # You can override these in a local .env file (see .env.example)
-      POSTGRES_USER: ${POSTGRES_USER:-essayadmin}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-changeme}
-      POSTGRES_DB: ${POSTGRES_DB:-essaycoach}
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: essaycoach
     volumes:
-      # Persistent data volume
-      - ./docker/db/data:/var/lib/postgresql/data
-      # Initialisation scripts (executed on first run only)
-      - ./docker/db/init:/docker-entrypoint-initdb.d 
+      - pg_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  pg_data:

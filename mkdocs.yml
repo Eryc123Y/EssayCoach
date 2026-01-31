@@ -13,20 +13,9 @@ theme:
   name: material
   
   palette:
-    # Dark mode with enhanced colors
-    - scheme: slate
-      primary: blue
-      accent: cyan
-      toggle:
-        icon: material/brightness-4
-        name: Switch to light mode
-    # Light mode with enhanced colors
     - scheme: default
-      primary: blue
-      accent: cyan
-      toggle:
-        icon: material/brightness-7
-        name: Switch to dark mode
+      primary: emerald
+      accent: teal
   
   font:
     text: Inter
@@ -73,7 +62,7 @@ nav:
     - System Architecture: architecture/system-architecture.md
     - Database Design: architecture/database-design.md
     - API Specification: architecture/api-specification.md
-    - Nix Environment: architecture/nix-environment.md
+    - Dev Environment: architecture/development-environment.md
     - Functional Modules: Functional Module Design.md
     - Navigation Design: Navigation Bars Design.md
   - Database Schema:
@@ -88,6 +77,10 @@ nav:
     - Serializers & Views: backend/serializers-views.md
     - Async Processing: backend/async-processing.md
     - Testing Strategies: backend/testing.md
+  - API Reference:
+      - Swagger UI: api-reference/swagger-ui.md
+      - REST API: api-reference/endpoints.md
+      - Database Models: backend/models/models.md
   - Frontend Architecture:
     - Component Structure: frontend/component-structure.md
     - State Management: frontend/state-management.md
@@ -97,6 +90,11 @@ nav:
     - Environment Setup: development/environment-setup.md
     - Debugging Guide: development/debugging.md
     - Contributing: development/contributing.md
+    - Configuration: development/configuration.md
+  - Project Planning:
+    - Roadmap: planning/ROADMAP.md
+    - Architecture TODO: planning/ARCHITECTURE_TODO.md
+    - Analysis Results: planning/TODO_ESSAY_ANALYSIS_RESULTS.md
   - Agentic Workflow:
     - Agentic Design Plans: agentic-workflow/agentic-design.md
     - Workflow Orchestration: agentic-workflow/workflow-orchestration.md
@@ -139,6 +137,7 @@ plugins:
   - search
   - mermaid2:
       version: 10.6.1
+      javascript: static/js/mermaid.min.js
   - git-revision-date-localized:
       type: datetime
   - minify:

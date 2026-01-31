@@ -1,36 +1,51 @@
 from __future__ import annotations
 
-from django.conf import settings
+import logging
+
 from drf_spectacular.utils import OpenApiExample, OpenApiResponse, extend_schema
 from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from .client import DifyClient, DifyClientError
-from .serializers import (
-    DifyWorkflowRunSerializer,
+from .dify_client import DifyClient
+from .exceptions import (
+    APIServerError,
+    APITimeoutError,
+    EssayAgentError,
+    RubricError,
+    WorkflowError,
 )
+from .interfaces import ResponseMode, WorkflowInput
+from .schemas import WorkflowRunRequest
+
+logger = logging.getLogger(__name__)
+
 
 class WorkflowRunView(APIView):
     """
     Start the Essay Agent workflow in Dify with the default published workflow.
 
-    The view builds the DSL inputs, uploads the shared `rubric.pdf`, and
+    The view builds the DSL inputs, uploads the shared rubric, and
     returns the workflow run metadata so clients can track the execution.
+
+    This view uses drf_pydantic's auto-generated serializer from WorkflowRunRequest,
+    which combines Pydantic validation with DRF serializer functionality.
     """
 
     permission_classes = [IsAuthenticated]
 
+    # Use the auto-generated drf_serializer from WorkflowRunRequest
     @extend_schema(
         tags=["AI Feedback"],
         summary="Run the Essay Agent Dify workflow",
         description=(
             "Triggers the Essay Agent workflow using Dify. Provide `essay_question` and "
-            "`essay_content`; the API automatically sends `rubric.pdf` as the `essay_rubric` "
-            "file input. Optional `language` and `response_mode` (blocking or streaming) are supported."
+            "`essay_content`; the API automatically handles rubric upload. "
+            "Optional `language` and `response_mode` (blocking or streaming) are supported. "
+            "Uses EssayAgentInterface for provider-agnostic architecture."
         ),
-        request=DifyWorkflowRunSerializer,
+        request=WorkflowRunRequest.drf_serializer,
         responses={
             200: OpenApiResponse(
                 description="Dify workflow run metadata",
@@ -43,8 +58,12 @@ class WorkflowRunView(APIView):
                             "status": "running",
                             "data": {
                                 "id": "fdlsjfjejkghjda",
-                                "workflow_id": "fldjaslkfjlsda",
                             },
+                            "inputs": {
+                                "essay_question": "Sample question",
+                                "essay_content": "Sample essay content",
+                            },
+                            "response_mode": "blocking",
                         },
                     )
                 ],
@@ -65,86 +84,85 @@ class WorkflowRunView(APIView):
         ],
     )
     def post(self, request) -> Response:
-        serializer = DifyWorkflowRunSerializer(data=request.data)
+        serializer = WorkflowRunRequest.drf_serializer(data=request.data)
         serializer.is_valid(raise_exception=True)
 
         try:
+            # Initialize the new Dify client implementing EssayAgentInterface
             client = DifyClient()
-            workflow_id = client.default_workflow_id or settings.DIFY_DEFAULT_WORKFLOW_ID
-            if not workflow_id:
-                return Response(
-                    {"detail": "DIFY_WORKFLOW_ID must be configured in the environment."},
-                    status=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                )
 
-            user_id = serializer.validated_data["user_id"]
-            inputs = {
-                "essay_question": serializer.validated_data["essay_question"],
-                "essay_content": serializer.validated_data["essay_content"],
-                "language": serializer.validated_data.get("language", "English"),
-                "essay_rubric": client.build_rubric_file_input(
-                    client.get_rubric_upload_id(user_id)
-                ),
+            validated_data = serializer.validated_data
+            if not isinstance(validated_data, dict) or "user_id" not in validated_data:
+                return Response({"error": "Invalid request payload."}, status=status.HTTP_400_BAD_REQUEST)
+
+            user_id: str = validated_data["user_id"]
+            rubric_id: int | None = validated_data.get("rubric_id")
+
+            # Build workflow input using the interface
+            response_mode_str: str = validated_data["response_mode"]
+            response_mode = ResponseMode(response_mode_str)
+
+            workflow_input = WorkflowInput(
+                essay_question=validated_data["essay_question"],
+                essay_content=validated_data["essay_content"],
+                language=validated_data.get("language", "English"),
+                user_id=user_id,
+                rubric_id=rubric_id,
+                response_mode=response_mode,
+            )
+
+            result = client.analyze_essay(workflow_input)
+
+            status_value = result.status.value if hasattr(result.status, "value") else result.status
+            logger.info(f"Dify workflow result - run_id: {result.run_id}, status: {status_value}")
+
+            # Build response matching frontend expectations
+            response_data = {
+                "workflow_run_id": result.run_id,
+                "task_id": result.task_id,
+                "data": {
+                    "id": result.run_id,
+                    "status": status_value,
+                    "outputs": result.outputs,
+                    "error": result.error_message,
+                    "elapsed_time": result.elapsed_time_seconds,
+                    "total_tokens": result.token_usage.get("total_tokens") if result.token_usage else None,
+                    "total_steps": None,
+                    "created_at": int(result.created_at.timestamp()) if result.created_at else None,
+                    "finished_at": int(result.finished_at.timestamp()) if result.finished_at else None,
+                },
+                "inputs": {
+                    "essay_question": validated_data["essay_question"],
+                    "essay_content": validated_data["essay_content"],
+                    "language": validated_data.get("language", "English"),
+                    "essay_rubric": "rubric_file",  # Indicator that rubric was used
+                },
+                "response_mode": validated_data["response_mode"],
             }
 
-            result = client.run_workflow(
-                inputs=inputs,
-                user=user_id,
-                response_mode=serializer.validated_data["response_mode"],
-                workflow_id=workflow_id,
+            return Response(response_data, status=status.HTTP_200_OK)
+        except RubricError as exc:
+            logger.error(f"Rubric error in WorkflowRunView: {exc}")
+            # Check if this is a "not found" error
+            if "RUBRIC_NOT_FOUND" in str(exc) or "not found" in str(exc).lower():
+                return Response({"error": str(exc)}, status=status.HTTP_404_NOT_FOUND)
+            return Response({"error": str(exc)}, status=status.HTTP_400_BAD_REQUEST)
+        except APITimeoutError as exc:
+            logger.error(f"API timeout in WorkflowRunView: {exc}")
+            return Response(
+                {"error": "AI service request timed out. Please try again."}, status=status.HTTP_504_GATEWAY_TIMEOUT
             )
-        except DifyClientError as exc:
-            return Response({"error": str(exc)}, status=status.HTTP_502_BAD_GATEWAY)
-
-        payload = {
-            "workflow_run_id": result.get("workflow_run_id"),
-            "task_id": result.get("task_id"),
-            "data": result.get("data"),
-            "inputs": inputs,
-            "response_mode": serializer.validated_data["response_mode"],
-        }
-        return Response(payload, status=status.HTTP_200_OK)
-
-
-class WorkflowRunStatusView(APIView):
-    """
-    Fetch the latest status and outputs of a running workflow.
-
-    Delegates to Dify's `/workflows/run/{workflow_run_id}` endpoint so the
-    frontend can poll asynchronously after a blocking request or stream.
-    """
-
-    permission_classes = [IsAuthenticated]
-
-    @extend_schema(
-        tags=["AI Feedback"],
-        summary="Get Dify workflow run status",
-        description="Fetches the latest status/outputs of a workflow run by ID.",
-        responses={
-            200: OpenApiResponse(
-                description="Current state of the workflow run",
-                examples=[
-                    OpenApiExample(
-                        "Status response",
-                        value={
-                            "id": "b1ad3277-089e-42c6-9dff-6820d94fbc76",
-                            "workflow_id": "19eff89f-ec03-4f75-b0fc-897e7effea02",
-                            "status": "succeeded",
-                            "outputs": {
-                                "text": "Nice to meet you."
-                            },
-                            "total_steps": 3,
-                        },
-                    )
-                ],
+        except APIServerError as exc:
+            logger.error(f"API server error in WorkflowRunView: {exc}")
+            return Response({"error": f"AI service error: {str(exc)}"}, status=status.HTTP_502_BAD_GATEWAY)
+        except WorkflowError as exc:
+            logger.error(f"Workflow error in WorkflowRunView: {exc}")
+            return Response({"error": str(exc)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        except EssayAgentError as exc:
+            logger.error(f"Essay agent error in WorkflowRunView: {exc}")
+            return Response({"error": str(exc)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        except Exception as exc:
+            logger.error(f"Unexpected exception in WorkflowRunView: {exc}")
+            return Response(
+                {"error": f"Internal server error: {str(exc)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
-        },
-    )
-    def get(self, request, workflow_run_id: str) -> Response:
-        try:
-            client = DifyClient()
-            result = client.get_workflow_run(workflow_run_id)
-        except DifyClientError as exc:
-            return Response({"error": str(exc)}, status=status.HTTP_502_BAD_GATEWAY)
-
-        return Response(result, status=status.HTTP_200_OK)

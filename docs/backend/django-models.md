@@ -227,20 +227,22 @@ class RubricItem(models.Model):
 # core/models.py
 class RubricLevelDesc(models.Model):
     """Detailed descriptions for score ranges in rubric items"""
-    level_desc_id = models.AutoField(primary_key=True, db_comment='unique identifier for each level desc under one rubric')
+    level_desc_id = models.AutoField(primary_key=True, db_comment='unique identifier for each level desc under a rubric')
     rubric_item_id_rubric_item = models.ForeignKey(RubricItem, models.CASCADE, db_column='rubric_item_id_rubric_item')
-    level_min_score = models.SmallIntegerField(db_comment='min for the item')
-    level_max_score = models.SmallIntegerField(db_comment='max for the item')
+    level_min_score = models.SmallIntegerField(db_comment='min for item')
+    level_max_score = models.SmallIntegerField(db_comment='max for item')
     level_desc = models.TextField()
-
+ 
     class Meta:
         managed = True
         db_table = 'rubric_level_desc'
         db_table_comment = 'The detailed description to each of the score range under a rubric item under a rubric.'
         constraints = [
-            CheckConstraint(check=Q(level_min_score__gte=0) & Q(level_max_score__gt=0) & Q(level_min_score__lt=models.F('level_max_score')), name='min_max_ck')
+            CheckConstraint(check=Q(level_min_score__gte=0) & Q(level_max_score__gte=0) & Q(level_min_score__lte=models.F('level_max_score')), name='min_max_ck')
         ]
 ```
+
+**Special Note**: The constraint uses `__lte` (less than or equal) instead of strict `__lt` to allow equal score ranges (e.g., 0-0). This enables "No submission" levels that are standard in educational rubrics. Python validation in `rubric_manager.py` ensures equal scores are only permitted for legitimate "No submission" cases (level name is "0" or description contains "no submission"/"absent").
 
 #### Feedback Model
 ```python

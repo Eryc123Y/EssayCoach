@@ -1,8 +1,9 @@
 # Workflow Orchestration
 
-This document contains plans and specifications for workflow orchestration in the EssayCoach platform.
+> **Note on Current Implementation**: While the following document outlines a planned migration to **LangGraph** for complex agentic workflows, the **current production implementation** uses **Dify.ai** for workflow orchestration. The Dify workflow is currently called synchronously via the `ai_feedback` backend application.
 
 ## Overview
+
 
 Orchestration is handled by a *StateGraph*. The workflow begins with a **Parallel Scatter**, splitting the execution into three simultaneous threads. The most complex thread, the Fact Checker, operates strictly as a *Corrective Retrieval Augmented Generation (CRAG)* workflow.
 

@@ -1,4 +1,5 @@
 'use client';
+
 import {
   Collapsible,
   CollapsibleContent,
@@ -30,64 +31,72 @@ import {
 } from '@/components/ui/sidebar';
 import { UserAvatarProfile } from '@/components/user-avatar-profile';
 import { navItems } from '@/constants/data';
-import { useMediaQuery } from '@/hooks/use-media-query';
 import { useAuth } from '@/components/layout/simple-auth-context';
 import {
   IconBell,
   IconChevronRight,
   IconChevronsDown,
-  IconCreditCard,
   IconLogout,
-  IconPhotoUp,
+  IconSettings,
   IconUserCircle
 } from '@tabler/icons-react';
-import { Button } from '@/components/ui/button';
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import * as React from 'react';
 import { Icons } from '../icons';
 import { OrgSwitcher } from '../org-switcher';
-export const company = {
-  name: 'Acme Inc',
-  logo: IconPhotoUp,
-  plan: 'Enterprise'
-};
-
-const tenants = [
-  { id: '1', name: 'Acme Inc' },
-  { id: '2', name: 'Beta Corp' },
-  { id: '3', name: 'Gamma Ltd' }
-];
 
 export default function AppSidebar() {
   const pathname = usePathname();
-  const { isOpen } = useMediaQuery();
-  const { user, logout } = useAuth();
+  const { user, classes, currentClass, setCurrentClass, logout } = useAuth();
   const router = useRouter();
-  const handleSwitchTenant = (_tenantId: string) => {
-    // Tenant switching functionality would be implemented here
-  };
 
-  const activeTenant = tenants[0];
+  // Filter nav items based on user role
+  const filteredNavItems = React.useMemo(() => {
+    if (!user) {
+      console.log('[Sidebar Debug] No user found, returning empty nav items');
+      return [];
+    }
 
-  React.useEffect(() => {
-    // Side effects based on sidebar state changes
-  }, [isOpen]);
+    console.log('[Sidebar Debug] User found:', JSON.stringify(user));
+    console.log('[Sidebar Debug] User role:', user.role);
+
+    const result = navItems.filter((item) => {
+      if (!item.roles) {
+        console.log(
+          `[Sidebar Debug] ${item.title}: No role restriction, visible`
+        );
+        return true; // No role restriction, visible to all
+      }
+
+      const isVisible = item.roles.includes(user.role);
+      console.log(
+        `[Sidebar Debug] ${item.title}: Roles=${JSON.stringify(item.roles)}, UserRole=${user.role}, Visible=${isVisible}`
+      );
+      return isVisible;
+    });
+
+    console.log(
+      '[Sidebar Debug] Filtered nav items:',
+      result.map((i) => i.title)
+    );
+    return result;
+  }, [user]);
 
   return (
     <Sidebar collapsible='icon'>
       <SidebarHeader>
         <OrgSwitcher
-          tenants={tenants}
-          defaultTenant={activeTenant}
-          onTenantSwitch={handleSwitchTenant}
+          classes={classes}
+          currentClass={currentClass}
+          onClassChange={(classId) => setCurrentClass(classId)}
         />
       </SidebarHeader>
       <SidebarContent className='overflow-x-hidden'>
         <SidebarGroup>
-          <SidebarGroupLabel>Overview</SidebarGroupLabel>
+          <SidebarGroupLabel>Menu</SidebarGroupLabel>
           <SidebarMenu>
-            {navItems.map((item) => {
+            {filteredNavItems.map((item) => {
               const Icon = item.icon ? Icons[item.icon] : Icons.logo;
               return item?.items && item?.items?.length > 0 ? (
                 <Collapsible
@@ -167,7 +176,7 @@ export default function AppSidebar() {
                 </SidebarMenuButton>
               </DropdownMenuTrigger>
               <DropdownMenuContent
-                className='w-(--radix-dropdown-menu-trigger-width) min-w-56 rounded-lg'
+                className='w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg'
                 side='bottom'
                 align='end'
                 sideOffset={4}
@@ -196,9 +205,11 @@ export default function AppSidebar() {
                     <IconUserCircle className='mr-2 h-4 w-4' />
                     Profile
                   </DropdownMenuItem>
-                  <DropdownMenuItem>
-                    <IconCreditCard className='mr-2 h-4 w-4' />
-                    Billing
+                  <DropdownMenuItem
+                    onClick={() => router.push('/dashboard/settings')}
+                  >
+                    <IconSettings className='mr-2 h-4 w-4' />
+                    Settings
                   </DropdownMenuItem>
                   <DropdownMenuItem>
                     <IconBell className='mr-2 h-4 w-4' />

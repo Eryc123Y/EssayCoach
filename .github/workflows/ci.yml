@@ -1,0 +1,104 @@
+name: CI
+
+on:
+  push:
+    branches: [main, develop]
+  pull_request:
+    branches: [main, develop]
+
+jobs:
+  backend-test:
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: postgres
+          POSTGRES_DB: test_essaycoach
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: false
+
+      - name: Install dependencies
+        working-directory: ./backend
+        run: |
+          uv sync
+          uv sync --no-dev
+
+      - name: Create logs directory
+        working-directory: ./backend
+        run: mkdir -p logs
+
+      - name: Run migrations
+        env:
+          POSTGRES_HOST: localhost
+          POSTGRES_PORT: ${{ job.services.postgres.ports[5432] }}
+          POSTGRES_DB: test_essaycoach
+        working-directory: ./backend
+        run: uv run python manage.py migrate --noinput
+
+      - name: Run tests
+        env:
+          POSTGRES_HOST: localhost
+          POSTGRES_PORT: ${{ job.services.postgres.ports[5432] }}
+          POSTGRES_DB: test_essaycoach
+        working-directory: ./backend
+        run: uv run pytest --timeout 0
+
+      - name: Run type checking
+        working-directory: ./backend
+        run: uv run pyright .
+
+      - name: Run linting
+        working-directory: ./backend
+        run: uv run ruff check .
+
+  frontend-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Install pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 10
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "pnpm"
+          cache-dependency-path: frontend/pnpm-lock.yaml
+
+      - name: Install dependencies
+        working-directory: ./frontend
+        run: pnpm install
+
+      - name: Run linter
+        working-directory: ./frontend
+        run: pnpm lint
+
+      - name: Run tests
+        working-directory: ./frontend
+        run: pnpm test
+
+      - name: Build
+        working-directory: ./frontend
+        run: pnpm build

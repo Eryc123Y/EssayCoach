@@ -3,6 +3,7 @@ import { withSentryConfig } from '@sentry/nextjs';
 
 // Define the base Next.js configuration
 const baseConfig: NextConfig = {
+  trailingSlash: true,
   images: {
     remotePatterns: [
       {
@@ -11,14 +12,16 @@ const baseConfig: NextConfig = {
         port: ''
       }
     ]
-  },
-  transpilePackages: ['geist']
+  }
 };
 
 let configWithPlugins = baseConfig;
 
 // Conditionally enable Sentry configuration
-if (!process.env.NEXT_PUBLIC_SENTRY_DISABLED) {
+if (
+  !process.env.NEXT_PUBLIC_SENTRY_DISABLED &&
+  process.env.NODE_ENV === 'production'
+) {
   configWithPlugins = withSentryConfig(configWithPlugins, {
     // For all available options, see:
     // https://www.npmjs.com/package/@sentry/webpack-plugin#options
@@ -43,7 +46,7 @@ if (!process.env.NEXT_PUBLIC_SENTRY_DISABLED) {
     // This can increase your server load as well as your hosting bill.
     // Note: Check that the configured route will not match with your Next.js middleware, otherwise reporting of client-
     // side errors will fail.
-    tunnelRoute: '/monitoring',
+    // tunnelRoute: '/monitoring',
 
     // Automatically tree-shake Sentry logger statements to reduce bundle size
     disableLogger: true,

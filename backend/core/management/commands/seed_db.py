@@ -1,299 +1,174 @@
-import random
-from datetime import timedelta
-
-from core.models import User, Unit, Class, Enrollment, TeachingAssn, MarkingRubric, RubricItem, RubricLevelDesc, Task, \
-    Submission, Feedback, FeedbackItem
 from django.contrib.auth.hashers import make_password
-from django.contrib.auth.models import Group
 from django.core.management.base import BaseCommand
-from django.db import transaction, connection
-from django.utils import timezone
 
 
 class Command(BaseCommand):
-    help = 'Seeds the database with initial data'
+    help = "Seed database with initial data for development"
 
     def handle(self, *args, **options):
-        self.stdout.write('Seeding database...')
-        
-        # Check if data already exists to avoid duplicates/errors
-        if User.objects.count() > 0:
-            self.stdout.write(self.style.WARNING('Database already contains data. Skipping seed.'))
-            return
+        """Seed database with test data for development"""
 
+        from core.models import Class, Enrollment, TeachingAssn, Unit, User
+
+        # Step 1: Create admin user
+        print("Creating admin user...")
         try:
-            with transaction.atomic():
-                self.create_users()
-                self.create_units()
-                self.create_classes()
-                self.create_enrollments()
-                self.create_teaching_assns()
-                self.create_rubrics()
-                self.create_tasks()
-                self.create_submissions()
-                self.create_feedback()
-            self.stdout.write(self.style.SUCCESS('Database seeded successfully!'))
-        except Exception as e:
-            self.stdout.write(self.style.ERROR(f'Error seeding database: {e}'))
-            raise e
-
-    def create_users(self):
-        self.stdout.write('Creating users...')
-        users_data = [
-            (1, 'John', 'Doe', 'john.doe@example.com', 'student', 'active'),
-            (2, 'Jane', 'Smith', 'jane.smith@example.com', 'lecturer', 'active'),
-            (3, 'Admin', 'User', 'admin@example.com', 'admin', 'active'),
-            (4, 'Alice', 'Johnson', 'alice.johnson@example.com', 'student', 'active'),
-            (5, 'Bob', 'Williams', 'bob.williams@example.com', 'student', 'active'),
-            # ... Adding a subset of users for brevity, but enough for testing ...
-            # Realistically we would read from a CSV or list all 120. 
-            # I will generate the rest procedurally to match the scale (120 users).
-        ]
-        
-        # Add specific users from SQL
-        specific_users = [
-            (1, 'John', 'Doe', 'john.doe@example.com', 'student', 'active'),
-            (2, 'Jane', 'Smith', 'jane.smith@example.com', 'lecturer', 'active'),
-            (3, 'Admin', 'User', 'admin@example.com', 'admin', 'active'),
-            # ...
-        ]
-        
-        # Bulk create preparation
-        users_to_create = []
-        
-        # 1. Specific Users
-        # We'll create the first few manually to ensure they exist for login testing
-        users_to_create.append(User(user_id=1, user_fname='John', user_lname='Doe', user_email='john.doe@example.com', user_role='student', user_status='active', password=make_password('password')))
-        users_to_create.append(User(user_id=2, user_fname='Jane', user_lname='Smith', user_email='jane.smith@example.com', user_role='lecturer', user_status='active', password=make_password('password')))
-        users_to_create.append(User(user_id=3, user_fname='Admin', user_lname='User', user_email='admin@example.com', user_role='admin', user_status='active', password=make_password('password')))
-
-        # 2. Generate remaining students (4-94)
-        for i in range(4, 95):
-            users_to_create.append(User(
-                user_id=i,
-                user_fname=f'Student{i}',
-                user_lname=f'User{i}',
-                user_email=f'student{i}@example.com',
-                user_role='student',
-                user_status='active',
-                password=make_password('password')
-            ))
-            
-        # 3. Lecturers (95-97)
-        for i in range(95, 98):
-             users_to_create.append(User(
-                user_id=i,
-                user_fname=f'Lecturer{i}',
-                user_lname=f'Teach',
-                user_email=f'lecturer{i}@example.com',
-                user_role='lecturer',
-                user_status='active',
-                password=make_password('password')
-            ))
-
-        # 4. Admins (98-99)
-        for i in range(98, 100):
-            users_to_create.append(User(
-                user_id=i,
-                user_fname=f'Admin{i}',
-                user_lname=f'User',
-                user_email=f'admin{i}@example.com',
-                user_role='admin',
-                user_status='active',
-                password=make_password('password')
-            ))
-
-        # 5. Unregistered Students (100-120)
-        for i in range(100, 121):
-            users_to_create.append(User(
-                user_id=i,
-                user_fname=f'NewStudent{i}',
-                user_lname=f'User{i}',
-                user_email=f'newstudent{i}@example.com',
-                user_role='student',
-                user_status='unregistered',
-                password=make_password('password')
-            ))
-
-        User.objects.bulk_create(users_to_create)
-        
-        # Assign Groups
-        for user in User.objects.all():
-            if user.user_role:
-                try:
-                    group = Group.objects.get(name=user.user_role)
-                    user.groups.add(group)
-                except Group.DoesNotExist:
-                    pass
-        
-        # Reset sequence to prevent duplicate key errors on next insert
-        # After bulk creating users with explicit user_id values, we need to advance
-        # the sequence to the next available value (max + 1)
-        with connection.cursor() as cursor:
-            cursor.execute(
-                "SELECT setval(pg_get_serial_sequence('\"user\"', 'user_id'), "
-                "(SELECT COALESCE(MAX(user_id), 0) + 1 FROM \"user\"));"
+            admin = User.objects.get(user_email="admin@example.com")
+            print("  Admin user already exists")
+        except User.DoesNotExist:
+            admin = User.objects.create_superuser(
+                user_email="admin@example.com",
+                password="admin",
+                user_fname="Admin",
+                user_lname="User",
+                user_role="admin",
+                user_status="active",
             )
+            print(f"  Created admin user: {admin.user_email}")
 
-
-    def create_units(self):
-        self.stdout.write('Creating units...')
-        units = [
-            ('CS101', 'Introduction to Computer Science', 'A foundational course.'),
-            ('ENG202', 'Advanced Academic Writing', 'Advanced writing techniques.'),
-            ('MATH303', 'Calculus III', 'Multivariable calculus.'),
-            ('HIST404', 'World History', 'Overview of world history.'),
-            ('PHIL505', 'Philosophy of Science', 'Philosophical underpinnings.'),
-            ('BIO606', 'Biology 101', 'Principles of biology.'),
-            ('CHEM707', 'Chemistry Basics', 'Basic chemistry concepts.'),
-            ('ART808', 'Art History', 'Survey of art history.'),
-            ('PSY909', 'Introduction to Psychology', 'Psychological theories.'),
-            ('SOC1010', 'Sociology Fundamentals', 'Basic sociology concepts.'),
-        ]
-        Unit.objects.bulk_create([Unit(unit_id=u[0], unit_name=u[1], unit_desc=u[2]) for u in units])
-
-    def create_classes(self):
-        self.stdout.write('Creating classes...')
-        unit_ids = ['CS101', 'ENG202', 'MATH303', 'HIST404', 'PHIL505', 'BIO606', 'CHEM707', 'ART808', 'PSY909', 'SOC1010', 'ENG202', 'PSY909', 'SOC1010']
-        for uid in unit_ids:
-            Class.objects.create(unit_id_unit_id=uid)
-
-    def create_enrollments(self):
-        self.stdout.write('Creating enrollments...')
-        students = User.objects.filter(user_role='student', user_status='active')
-        
-        enrollments = []
-        
-        # Core units logic
-        core_units = ['CS101', 'ENG202', 'MATH303', 'PSY909']
-        
-        for student in students:
-            # Core unit assignment based on ID
-            idx = student.user_id % 4
-            unit_id = core_units[idx]
-            
-            # Find a class for this unit
-            cls = Class.objects.filter(unit_id_unit_id=unit_id).first()
-            if cls:
-                enrollments.append(Enrollment(user_id_user=student, class_id_class=cls, unit_id_unit_id=unit_id))
-            
-            # Random electives
-            if random.random() > 0.6:
-                elective_units = ['HIST404', 'PHIL505', 'BIO606', 'CHEM707', 'ART808', 'SOC1010']
-                e_unit = random.choice(elective_units)
-                e_cls = Class.objects.filter(unit_id_unit_id=e_unit).first()
-                if e_cls:
-                    enrollments.append(Enrollment(user_id_user=student, class_id_class=e_cls, unit_id_unit_id=e_unit))
-        
-        # Use ignore_conflicts to handle potential duplicates from random logic
-        Enrollment.objects.bulk_create(enrollments, ignore_conflicts=True)
-
-    def create_teaching_assns(self):
-        self.stdout.write('Creating teaching assignments...')
-        lecturers = list(User.objects.filter(user_role='lecturer', user_status='active'))
-        classes = list(Class.objects.all())
-        
-        if not lecturers:
-            return
-
-        assns = []
-        for i, cls in enumerate(classes):
-            lecturer = lecturers[i % len(lecturers)]
-            assns.append(TeachingAssn(user_id_user=lecturer, class_id_class=cls))
-        
-        TeachingAssn.objects.bulk_create(assns, ignore_conflicts=True)
-
-    def create_rubrics(self):
-        self.stdout.write('Creating rubrics...')
-        lecturers = User.objects.filter(user_role='lecturer', user_status='active')
-        if not lecturers.exists():
-            return
-
-        rubrics = [
-            (lecturers[0], 'Standard rubric for introductory essays.'),
-            (lecturers[0], 'Advanced rubric for research papers.'),
-            (lecturers[0], 'Comprehensive rubric for final projects.'),
-        ]
-        
-        for lecturer, desc in rubrics:
-            r = MarkingRubric.objects.create(user_id_user=lecturer, rubric_desc=desc)
-            
-            # Create items
-            items = [
-                ('Content', 40.0),
-                ('Organization', 30.0),
-                ('Language', 30.0)
-            ]
-            for name, weight in items:
-                ri = RubricItem.objects.create(rubric_id_marking_rubric=r, rubric_item_name=name, rubric_item_weight=weight)
-                
-                # Create levels
-                RubricLevelDesc.objects.create(rubric_item_id_rubric_item=ri, level_min_score=0, level_max_score=4, level_desc='Poor')
-                RubricLevelDesc.objects.create(rubric_item_id_rubric_item=ri, level_min_score=5, level_max_score=7, level_desc='Good')
-                RubricLevelDesc.objects.create(rubric_item_id_rubric_item=ri, level_min_score=8, level_max_score=10, level_desc='Excellent')
-
-    def create_tasks(self):
-        self.stdout.write('Creating tasks...')
-        rubric = MarkingRubric.objects.first()
-        if not rubric:
-            return
-            
-        units = Unit.objects.all()
-        for unit in units:
-            Task.objects.create(
-                unit_id_unit=unit,
-                rubric_id_marking_rubric=rubric,
-                task_due_datetime=timezone.now() + timedelta(days=30)
-            )
-
-    def create_submissions(self):
-        self.stdout.write('Creating submissions...')
-        tasks = Task.objects.all()
-        
-        submissions = []
-        for task in tasks:
-            # Find enrolled students for this unit
-            enrollments = Enrollment.objects.filter(unit_id_unit=task.unit_id_unit)
-            for enrollment in enrollments:
-                if random.random() > 0.3: # 70% submission rate
-                    submissions.append(Submission(
-                        task_id_task=task,
-                        user_id_user=enrollment.user_id_user,
-                        submission_txt=f'Submission content for {task.unit_id_unit.unit_id} by {enrollment.user_id_user.user_email}'
-                    ))
-        Submission.objects.bulk_create(submissions)
-
-    def create_feedback(self):
-        self.stdout.write('Creating feedback...')
-        submissions = Submission.objects.all()
-        
-        for submission in submissions:
-            if random.random() > 0.2: # 80% feedback rate
-                # Find a teacher
-                # Simplified: just pick the first lecturer
-                lecturer = User.objects.filter(user_role='lecturer').first()
-                if not lecturer:
-                    continue
-                    
-                feedback = Feedback.objects.create(
-                    submission_id_submission=submission,
-                    user_id_user=lecturer
+        # Step 2: Create lecturer users
+        print("\nCreating lecturer users...")
+        lecturers = []
+        for i in range(1, 3):
+            email = f"lecturer{i}@example.com"
+            try:
+                lecturer = User.objects.get(user_email=email)
+                print(f"  Lecturer {i} already exists")
+            except User.DoesNotExist:
+                lecturer = User.objects.create(
+                    user_email=email,
+                    user_fname="Lecturer",
+                    user_lname=f"{i}",
+                    user_role="lecturer",
+                    user_status="active",
+                    password=make_password(f"lecturer{i}"),
+                    is_active=True,
                 )
-                
-                # Feedback Items
-                task = submission.task_id_task
-                rubric = task.rubric_id_marking_rubric
-                rubric_items = RubricItem.objects.filter(rubric_id_marking_rubric=rubric)
-                
-                f_items = []
-                for ri in rubric_items:
-                    f_items.append(FeedbackItem(
-                        feedback_id_feedback=feedback,
-                        rubric_item_id_rubric_item=ri,
-                        feedback_item_score=random.randint(5, 10),
-                        feedback_item_comment='Good work.',
-                        feedback_item_source='human'
-                    ))
-                FeedbackItem.objects.bulk_create(f_items)
+                print(f"  Created lecturer {i}: {lecturer.user_email}")
+            lecturers.append(lecturer)
 
+        # Step 3: Create student users
+        print("\nCreating student users...")
+        students = []
+        for i in range(1, 7):
+            email = f"student{i}@example.com"
+            try:
+                user = User.objects.get(user_email=email)
+                print(f"  Student {i} already exists")
+            except User.DoesNotExist:
+                user = User.objects.create(
+                    user_email=email,
+                    user_fname="Student",
+                    user_lname=f"{i}",
+                    user_role="student",
+                    user_status="active",
+                    password=make_password(f"student{i}"),
+                    is_active=True,
+                )
+                print(f"  Created student {i}: {user.user_email}")
+            students.append(user)
 
+        # Step 4: Create units
+        print("\nCreating units...")
+        units_data = [
+            {"unit_id": "ENG101", "unit_name": "English Composition"},
+            {"unit_id": "ENG201", "unit_name": "Advanced Writing"},
+            {"unit_id": "HIS101", "unit_name": "World History"},
+        ]
+        units = []
+        for unit_data in units_data:
+            unit, created = Unit.objects.get_or_create(
+                unit_id=unit_data["unit_id"],
+                defaults={
+                    "unit_name": unit_data["unit_name"],
+                    "unit_desc": f"Introduction to {unit_data['unit_name']}",
+                },
+            )
+            if created:
+                print(f"  Created unit: {unit.unit_name}")
+            else:
+                print(f"  Unit already exists: {unit.unit_name}")
+            units.append(unit)
+
+        # Step 5: Create classes for each unit
+        print("\nCreating classes...")
+        classes_data = [
+            {"unit": units[0], "name": "AP English", "lecturer": lecturers[0]},
+            {"unit": units[1], "name": "Creative Writing", "lecturer": lecturers[1]},
+            {"unit": units[2], "name": "History 101", "lecturer": lecturers[0]},
+        ]
+        created_classes = []
+        for idx, cls_data in enumerate(classes_data, start=1):
+            unit = cls_data["unit"]
+            class_name = cls_data["name"]
+            lecturer = cls_data["lecturer"]
+
+            # Create class with specific ID to avoid conflicts
+            cls, created = Class.objects.get_or_create(
+                class_id=idx,
+                defaults={"unit_id_unit": unit, "class_size": 0},
+            )
+            if created:
+                print(f"  Created class: {class_name} (ID: {cls.class_id})")
+            else:
+                print(f"  Class already exists: {class_name} (ID: {cls.class_id})")
+
+            # Create teaching association
+            TeachingAssn.objects.get_or_create(
+                user_id_user=lecturer,
+                class_id_class=cls,
+            )
+            print(f"  Assigned {lecturer.user_fname} to {class_name}")
+            created_classes.append(cls)
+
+        # Step 6: Enroll students in classes
+        print("\nEnrolling students in classes...")
+        # Student 1-2: ENG101 (AP English)
+        for student in students[:2]:
+            enrollment, created = Enrollment.objects.get_or_create(
+                user_id_user=student,
+                class_id_class=created_classes[0],  # AP English
+                unit_id_unit=units[0],
+            )
+            if created:
+                print(f"  Enrolled {student.user_email} in AP English")
+            created_classes[0].class_size = Enrollment.objects.filter(class_id_class=created_classes[0]).count()
+            created_classes[0].save()
+
+        # Student 3-4: ENG201 (Creative Writing)
+        for student in students[2:4]:
+            enrollment, created = Enrollment.objects.get_or_create(
+                user_id_user=student,
+                class_id_class=created_classes[1],  # Creative Writing
+                unit_id_unit=units[1],
+            )
+            if created:
+                print(f"  Enrolled {student.user_email} in Creative Writing")
+            created_classes[1].class_size = Enrollment.objects.filter(class_id_class=created_classes[1]).count()
+            created_classes[1].save()
+
+        # Student 5-6: HIS101 (History 101)
+        for student in students[4:6]:
+            enrollment, created = Enrollment.objects.get_or_create(
+                user_id_user=student,
+                class_id_class=created_classes[2],  # History 101
+                unit_id_unit=units[2],
+            )
+            if created:
+                print(f"  Enrolled {student.user_email} in History 101")
+            created_classes[2].class_size = Enrollment.objects.filter(class_id_class=created_classes[2]).count()
+            created_classes[2].save()
+
+        # Summary
+        print("\n" + "=" * 50)
+        print("Seed completed successfully!")
+        print("=" * 50)
+        print(f"  Users: {User.objects.count()} (1 admin, {len(lecturers)} lecturers, {len(students)} students)")
+        print(f"  Units: {Unit.objects.count()}")
+        print(f"  Classes: {Class.objects.count()}")
+        print(f"  Enrollments: {Enrollment.objects.count()}")
+        print(f"  Teaching Associations: {TeachingAssn.objects.count()}")
+        print("\nTest accounts:")
+        print("  Admin: admin@example.com / admin")
+        print("  Lecturers: lecturer1@example.com / lecturer1, lecturer2@example.com / lecturer2")
+        print("  Students: student1@example.com / student1, ...")

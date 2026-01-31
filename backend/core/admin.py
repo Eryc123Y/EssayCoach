@@ -24,18 +24,18 @@ from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.utils.translation import gettext_lazy as _
 
 from .models import (
-    User,
-    Unit,
     Class,
     Enrollment,
-    TeachingAssn,
+    Feedback,
+    FeedbackItem,
     MarkingRubric,
     RubricItem,
     RubricLevelDesc,
-    Task,
     Submission,
-    Feedback,
-    FeedbackItem,
+    Task,
+    TeachingAssn,
+    Unit,
+    User,
 )
 
 
@@ -49,7 +49,7 @@ class CustomUserAdmin(BaseUserAdmin):
         }),
         (_('Important dates'), {'fields': ('last_login', 'date_joined')}),
     )
-    
+
     # Fields to add when create a new user.
     add_fieldsets = (
         (None, {
@@ -57,17 +57,17 @@ class CustomUserAdmin(BaseUserAdmin):
             'fields': ('user_email', 'password1', 'password2'),
         }),
     )
-    
+
     # To display in the admin interface.
     list_display = ('user_email', 'user_fname', 'user_lname', 'user_role', 'user_status', 'is_staff')
     list_filter = ('is_staff', 'is_superuser', 'is_active', 'user_role', 'user_status')
-    
+
     # Searching field.
     search_fields = ('user_email', 'user_fname', 'user_lname')
-    
+
     # Ordering of the user list.
     ordering = ('user_email',)
-    
+
     # To display the user groups and permissions in a horizontal filter.
     filter_horizontal = ('groups', 'user_permissions')
 

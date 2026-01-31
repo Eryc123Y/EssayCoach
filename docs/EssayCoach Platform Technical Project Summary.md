@@ -124,7 +124,7 @@ The backend is built using **Django** with a modular app structure. While initia
 *   **Code Quality:** Linting (Flake8, Black), type hinting (MyPy), unit/integration/E2E testing for all services.
 *   **Documentation:** API documentation (FastAPI auto-generates OpenAPI specs), architectural diagrams, READMEs for each service.
 *   **Observability:** Implement structured logging, expose Prometheus-compatible metrics endpoints, consider distributed tracing (e.g., OpenTelemetry integration).
-*   **Reproducible Dev Environment:** The entire toolchain (Python, Django, PostgreSQL CLI, Docker, etc.) is pinned and provisioned via **Nix flakes**. Team members simply run `nix develop` to enter an identical shell across macOS, Linux, and CI environments.
+*   **Reproducible Dev Environment:** The entire toolchain (Python 3.12, Node.js 22, PostgreSQL 17) is provisioned via **uv** and **Docker Compose**. Developers use a unified `Makefile` interface to ensure identical environments across macOS, Linux, and CI.
 *   **Database Migrations:** Utilize Django's built-in migrations for managing database schema changes in a version-controlled manner, ensuring smooth upgrades.
 
 ## 6. Scalability & Extensibility
