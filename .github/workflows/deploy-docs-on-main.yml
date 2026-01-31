@@ -23,19 +23,25 @@ jobs:
         with:
           fetch-depth: 0
 
-      - name: Setup Nix
-        uses: DeterminateSystems/nix-installer-action@main
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: false
 
       - name: Setup Pages
         uses: actions/configure-pages@v4
 
-      
-
-      - name: Build documentation
+      - name: Install dependencies and build documentation
         run: |
-          nix develop --command bash -c "
-            mkdocs build --strict
-          "
+          # Install mkdocs and plugins
+          uv pip install mkdocs-material pymdown-extensions mkdocs-mermaid2-plugin mkdocs-git-revision-date-localized-plugin mkdocs-minify-plugin
+          # Build documentation
+          mkdocs build --strict
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v3
