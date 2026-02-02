@@ -71,23 +71,26 @@ select = ["E", "F", "I", "N", "W", "UP"]
 [tool.pyright]
 pythonVersion = "3.12"
 typeCheckingMode = "basic"
-reportMissingTypeArgument = false
-reportGeneralTypeIssues = false
-reportAttributeAccessIssue = false
-reportIncompatibleVariableOverride = false
+# ===== Critical Checks (Enable Immediately) =====
+reportMissingImports = true          # Import errors cause runtime failures
+reportUndefinedVariable = true       # Undefined variables cause runtime failures
+reportInvalidTypeForm = true         # Type annotation syntax errors
+reportRedeclaration = true           # Redeclarations are usually logic errors
+# ===== Important Checks (Enable Short-term) =====
+reportPossiblyUnboundVariable = true   # Possibly unbound variables
+reportGeneralTypeIssues = false        # General type issues (disabled temporarily)
+reportAttributeAccessIssue = false     # Attribute access errors
+reportOptionalMemberAccess = true      # Optional type member access
+# ===== Advanced Checks (Enable Mid-term) =====
 reportArgumentType = false
-reportOptionalSubscript = false
-reportIndexIssue = false
 reportAssignmentType = false
 reportCallIssue = false
-reportUndefinedVariable = false
 reportIncompatibleMethodOverride = false
-reportRedeclaration = false
-reportPossiblyUnboundVariable = false
+reportIncompatibleVariableOverride = false
+reportIndexIssue = false
+reportMissingTypeArgument = false
+reportOptionalSubscript = false
 reportReturnType = false
-reportMissingImports = false
-reportOptionalMemberAccess = false
-reportInvalidTypeForm = false
 
 [tool.black]
 line-length = 120

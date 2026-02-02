@@ -256,7 +256,7 @@ AUTH_USER_MODEL = "core.User"
 
 # SiliconFlow AI Configuration (for rubric parsing)
 SILICONFLOW_API_KEY = os.environ.get("SILICONFLOW_API_KEY", "")
-SILICONFLOW_API_URL = "https://api.siliconflow.cn/v1/chat/completions"  # 使用正确的.cn域名
+SILICONFLOW_API_URL = "https://api.siliconflow.cn/v1/chat/completions"  # Use correct .cn domain for China region
 SILICONFLOW_MODEL = "Qwen/Qwen3-Next-80B-A3B-Instruct"
 
 # Logging Configuration
