@@ -15,7 +15,7 @@ from rest_framework.test import APIClient
 from ai_feedback.exceptions import APIServerError
 
 if TYPE_CHECKING:
-    from ..core.models import User as CoreUser
+    from core.models import User as CoreUser
 else:
     CoreUser = get_user_model()
 

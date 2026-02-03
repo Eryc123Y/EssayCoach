@@ -313,6 +313,7 @@ class RubricViewSet(viewsets.ModelViewSet):
 
         serializer = RubricUploadSerializer(data=request.data)
         serializer.is_valid(raise_exception=True)
+        assert serializer.validated_data is not None
 
         pdf_file = serializer.validated_data["file"]
         rubric_name = serializer.validated_data.get("rubric_name")
@@ -322,6 +323,7 @@ class RubricViewSet(viewsets.ModelViewSet):
             manager = RubricManager(parser)
 
             result = manager.import_rubric_with_ai(pdf_file, request.user, rubric_name)
+            assert result is not None
 
             if not result.get("detection", {}).get("is_rubric", False):
                 return Response(
