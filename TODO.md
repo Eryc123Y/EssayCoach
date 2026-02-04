@@ -407,6 +407,160 @@ except User.DoesNotExist:
 
 ---
 
+## 🔧 P4 - 架构升级（Django Ninja 迁移）
+
+### 18. Django Ninja 迁移规划 ⭐⭐⭐
+**目标**: 从 Django REST Framework 迁移到 Django Ninja，获得现代异步 API 架构
+**预估总工时**: 80 小时（分 4 个阶段，8 周完成）
+**关键收益**: 原生异步支持、类型安全、现代 Python 特性、更好的性能
+
+#### Phase 1: 基础搭建（Week 1-2）
+**工时**: 16 小时
+
+- [ ] **18.1 项目结构规划**（4h）
+  - [ ] 创建 `backend/api_v2/` 模块结构
+  - [ ] 设计 Schema 组织方式（按 domain 分组）
+  - [ ] 规划与现有 DRF 代码的共存策略
+  - [ ] 文档化 API v2 架构决策
+
+- [ ] **18.2 Ninja 核心配置**（4h）
+  - [ ] 安装依赖: `django-ninja`, `pydantic[email]`
+  - [ ] 创建 `backend/api_v2/api.py` NinjaAPI 实例
+  - [ ] 配置 Swagger UI / OpenAPI 文档路径
+  - [ ] 设置认证集成（复用 Django session）
+  - [ ] URL 路由配置 `backend/essay_coach/urls.py`
+
+- [ ] **18.3 共享 Schema 基类**（4h）
+  - [ ] 创建 `backend/api_v2/schemas/base.py`
+  - [ ] 定义 `TimestampSchema`（created_at, updated_at）
+  - [ ] 定义 `PaginatedResponse` 泛型
+  - [ ] 定义常见字段类型别名（UserId, Score 等）
+  - [ ] 创建 `BaseFilterSchema` 用于列表查询
+
+- [ ] **18.4 类型工具集**（4h）
+  - [ ] 创建 `backend/api_v2/utils/types.py`
+  - [ ] 定义 Literal 类型（Status, Role 等）
+  - [ ] 创建 TypedDict 用于 API 响应
+  - [ ] 辅助函数：DRF Serializer → Pydantic Schema 转换
+  - [ ] 辅助函数：QuerySet 分页封装
+
+#### Phase 2: 试点迁移（Week 3-4）
+**工时**: 24 小时
+
+- [ ] **18.5 ai_feedback 模块迁移（Pilot）**（12h）
+  - [ ] 分析现有 `ai_feedback/views.py` DRF 代码
+  - [ ] 创建 `backend/api_v2/ai_feedback/schemas.py`
+    - `EssaySubmitIn/Out`
+    - `FeedbackOut`
+    - `ChatMessageIn/Out`
+    - `WorkflowRunIn/Out`
+  - [ ] 创建 `backend/api_v2/ai_feedback/views.py`
+    - `submit_essay()` - 作文提交
+    - `get_feedback()` - 获取反馈
+    - `chat_with_ai()` - AI 对话
+    - `run_workflow()` - 工作流执行
+  - [ ] 实现异步优化：AI 调用使用 `async/await`
+  - [ ] 添加流式响应支持（`chat_stream`）
+  - [ ] 注册路由：`api_v2/api.py`
+
+- [ ] **18.6 auth 模块迁移**（8h）
+  - [ ] 创建 `backend/api_v2/auth/schemas.py`
+    - `LoginIn/Out`
+    - `RegisterIn/Out`
+    - `UserOut`, `PasswordChangeIn`
+  - [ ] 创建 `backend/api_v2/auth/views.py`
+    - `login()` - 异步认证
+    - `logout()` - 登出
+    - `register()` - 注册
+    - `get_current_user()` - 当前用户
+  - [ ] 实现 Token refresh 逻辑
+  - [ ] 集成 Django session 认证
+  - [ ] 注册路由
+
+- [ ] **18.7 试点验证**（4h）
+  - [ ] 编写 Phase 2 API 测试用例
+  - [ ] 性能对比：Ninja vs DRF 响应时间
+  - [ ] 类型检查：验证 Pydantic Schema 完整性
+  - [ ] 文档验证：Swagger UI 文档完整性
+  - [ ] 团队 Code Review 和经验总结
+
+#### Phase 3: 核心迁移（Week 5-7）
+**工时**: 32 小时
+
+- [ ] **18.8 core 模块迁移 - Models & Schemas**（8h）
+  - [ ] 分析现有 `core/models.py` 和 `core/serializers.py`
+  - [ ] 创建 `backend/api_v2/core/schemas/` 包
+    - `user.py` - User 相关 Schema
+    - `class.py` - Class/Unit 相关
+    - `rubric.py` - 评分标准
+    - `task.py` - 作业任务
+    - `submission.py` - 学生提交
+  - [ ] 使用 Pydantic v2 特性：
+    - `@model_validator` 复杂验证
+    - `@computed_field` 计算字段
+    - `Field(strict=True)` 严格模式
+  - [ ] Schema 单元测试
+
+- [ ] **18.9 core 模块迁移 - Views**（12h）
+  - [ ] 创建 `backend/api_v2/core/views/` 包
+    - `users.py` - 用户管理 CRUD
+    - `classes.py` - 班级管理
+    - `rubrics.py` - 评分标准
+    - `tasks.py` - 作业任务
+    - `submissions.py` - 提交管理
+  - [ ] 实现通用 CRUD 模式：
+    - `list` - 列表 + 过滤 + 分页
+    - `get` - 详情
+    - `create` - 创建
+    - `update` - 全量更新
+    - `patch` - 部分更新
+    - `delete` - 删除
+  - [ ] 使用 Ninja 的 `Router` 组织代码
+  - [ ] 集成权限检查（teacher/student/admin）
+  - [ ] 实现复杂查询（筛选、排序、搜索）
+
+- [ ] **18.10 高级特性实现**（8h）
+  - [ ] **批量操作 API**
+    - `POST /batch-delete` - 批量删除
+    - `POST /batch-update` - 批量更新状态
+  - [ ] **导入/导出 API**
+    - `POST /import` - 从 CSV/Excel 导入
+    - `GET /export` - 导出为 CSV/Excel
+  - [ ] **实时通知 API**
+    - WebSocket 集成（后续扩展）
+    - SSE (Server-Sent Events) 用于进度通知
+  - [ ] **缓存优化**
+    - 使用 `django-cacheops` 或 `django-cachalot`
+    - API 响应缓存装饰器
+
+- [ ] **18.11 测试与优化**（4h）
+  - [ ] 编写 Ninja API 测试（使用 `django.test.AsyncClient`）
+  - [ ] 性能测试：对比 v1 (DRF) vs v2 (Ninja)
+  - [ ] 安全性测试：认证、权限、输入验证
+  - [ ] 文档完善：API v2 使用指南
+
+#### Phase 4: 清理与发布（Week 8）
+**工时**: 8 小时
+
+- [ ] **18.12 弃用 DRF 代码**（4h）
+  - [ ] 标记 DRF ViewSet 为 `@deprecated`
+  - [ ] 更新 API 文档，引导用户使用 v2
+  - [ ] 配置监控，追踪 v1 API 使用情况
+  - [ ] 制定 v1 最终下线时间表（建议 3-6 个月后）
+
+- [ ] **18.13 依赖清理**（2h）
+  - [ ] 从 `pyproject.toml` 移除不再需要的 DRF 依赖（确认 v1 下线后）
+  - [ ] 清理 DRF 专属配置（settings.py）
+  - [ ] 更新 `requirements.txt`（如果使用）
+
+- [ ] **18.14 最终验证**（2h）
+  - [ ] 完整回归测试
+  - [ ] 生产环境部署验证
+  - [ ] 性能基准对比报告
+  - [ ] 团队迁移总结文档
+
+---
+
 ## 📈 进度追踪
 
 ### 本周（Week 1）- 认证安全
