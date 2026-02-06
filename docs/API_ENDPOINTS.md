@@ -9,6 +9,13 @@ This document provides a comprehensive reference for all REST API endpoints in t
 | Development | `http://127.0.0.1:8000/api/v1/`       |
 | Production  | `https://api.essaycoach.com/api/v1/`   |
 
+### v2 Base URLs
+
+| Environment | URL                                    |
+|-------------|----------------------------------------|
+| Development | `http://127.0.0.1:8000/api/v2/`       |
+| Production  | `https://api.essaycoach.com/api/v2/`   |
+
 ## Authentication
 
 All API endpoints (except `/auth/`) require authentication via Token authentication.
@@ -77,6 +84,27 @@ Authorization: Token <access_token>
 ### GET /api/v1/auth/me/
 
 Get current authenticated user information.
+
+**Headers:**
+```
+Authorization: Token <access_token>
+```
+
+**Success Response (200):**
+```json
+{
+  "id": 1,
+  "email": "user@example.com",
+  "first_name": "John",
+  "last_name": "Doe",
+  "role": "student",
+  "date_joined": "2026-01-15T10:30:00Z"
+}
+```
+
+### GET /api/v2/auth/me/
+
+Get current authenticated user information (v2). Response payload matches v1.
 
 **Headers:**
 ```
@@ -462,6 +490,15 @@ Check feedback generation status.
   "progress": 100
 }
 ```
+
+### Agent Workflow (Dify)
+
+| Method | Endpoint | Purpose |
+|--------|----------|---------|
+| POST | `/api/v1/ai-feedback/agent/workflows/run/` | Run Dify workflow |
+| GET | `/api/v1/ai-feedback/agent/workflows/run/{workflow_run_id}/status/` | Get workflow status |
+| POST | `/api/v2/ai-feedback/agent/workflows/run/` | Run Dify workflow (v2) |
+| GET | `/api/v2/ai-feedback/agent/workflows/run/{workflow_run_id}/status/` | Get workflow status (v2) |
 
 ---
 

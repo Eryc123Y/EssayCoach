@@ -16,6 +16,7 @@ dev: db
 	@echo "║  🌐 Frontend:    http://127.0.0.1:5100                        ║"
 	@echo "║  🔧 Backend:     http://127.0.0.1:8000                        ║"
 	@echo "║  📚 API Docs:    http://127.0.0.1:8000/api/docs/              ║"
+	@echo "║  📚 API v2 Docs: http://127.0.0.1:8000/api/v2/docs/           ║"
 	@echo "╠════════════════════════════════════════════════════════════════╣"
 	@echo "║  👤 Admin Login: admin@example.com / admin                    ║"
 	@echo "║  👨‍🎓 Test Users:  student1@example.com / student1               ║"
@@ -30,7 +31,8 @@ dev: db
 # Start backend only
 dev-backend:
 	@echo "Starting Django backend on http://127.0.0.1:8000..."
-	@echo "📚 API Docs available at: http://127.0.0.1:8000/api/schema/"
+	@echo "📚 API v1 Docs: http://127.0.0.1:8000/api/docs/"
+	@echo "📚 API v2 Docs: http://127.0.0.1:8000/api/v2/docs/"
 	@cd backend && .venv/bin/python manage.py runserver 127.0.0.1:8000
 
 # Start frontend only
@@ -79,8 +81,11 @@ seed-db:
 
 # Testing
 test:
-	@echo "Running Python tests..."
-	@cd backend && .venv/bin/pytest
+	@echo "Running API v1 tests..."
+	@cd backend && .venv/bin/pytest api_v1/ -v --timeout=120
+	@echo ""
+	@echo "Running API v2 tests..."
+	@cd backend && .venv/bin/pytest api_v2/ -v --timeout=120
 	@echo ""
 	@echo "Running Node tests..."
 	@cd frontend && pnpm test

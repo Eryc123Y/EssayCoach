@@ -15,6 +15,15 @@ import secrets
 import sys
 from pathlib import Path
 
+# Load environment variables from .env file in project root
+try:
+    from dotenv import load_dotenv
+
+    env_path = Path(__file__).resolve().parent.parent.parent / ".env"
+    load_dotenv(env_path)
+except ImportError:
+    pass
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -50,11 +59,10 @@ INSTALLED_APPS = [
     "django_filters",
     "drf_spectacular",  # OpenAPI 3.0 schema generation
     "django_extensions",  # Management commands including graph_models for ERD
-    # Custom Apps
-    "core",
-    "auth",
-    "analytics",
-    "ai_feedback",
+    # Custom Apps - API v1 (DRF)
+    "api_v1.core",
+    "api_v1.auth",
+    "api_v1.ai_feedback",
 ]
 
 MIDDLEWARE = [

@@ -23,14 +23,14 @@ from drf_spectacular.views import (
     SpectacularSwaggerView,
 )
 
+# Import Ninja API v2
+from api_v2.api import api_v2
+
 urlpatterns = [
     path("admin/", admin.site.urls),
-    # API Documentation
+    path("api/v2/", api_v2.urls),
     path("api/schema/", SpectacularAPIView.as_view(), name="schema"),
     path("api/docs/", SpectacularSwaggerView.as_view(url_name="schema"), name="swagger-ui"),
     path("api/redoc/", SpectacularRedocView.as_view(url_name="schema"), name="redoc"),
-    # API Endpoints
-    path("api/v1/auth/", include("auth.urls")),
-    path("api/v1/core/", include("core.urls")),
-    path("api/v1/ai-feedback/", include("ai_feedback.urls")),
+    path("api/v1/", include("api_v1.urls")),
 ]

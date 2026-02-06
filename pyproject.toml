@@ -19,9 +19,3 @@ strict = true
 [tool.black]
 line-length = 100
 target-version = ['py312']
-
-[dependency-groups]
-dev = [
-    "django-stubs>=4.2,<5.0",
-    "django-stubs-ext>=5.2.9",
-]
