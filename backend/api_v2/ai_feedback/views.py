@@ -44,9 +44,9 @@ router = Router(tags=["AI Feedback"], auth=TokenAuth())
     response=WorkflowRunOut,
     summary="Run the Essay Agent Dify workflow",
     description="""
-    Triggers the Essay Agent workflow using Dify. Provide `essay_question` and 
+    Triggers the Essay Agent workflow using Dify. Provide `essay_question` and
     `essay_content`; the API automatically handles rubric upload.
-    
+
     Optional `language` and `response_mode` (blocking or streaming) are supported.
     Uses EssayAgentInterface for provider-agnostic architecture.
     """,
@@ -177,7 +177,7 @@ def chat_with_ai(request: HttpRequest, data: ChatMessageIn) -> ChatMessageOut:
     summary="Get workflow run status",
     description="""
     Get the status and results of a workflow run by its ID.
-    
+
     This endpoint polls Dify to check the current status of a workflow execution.
     Returns status, outputs, error message, and timing information.
     """,

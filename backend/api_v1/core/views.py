@@ -1,7 +1,7 @@
-from django.conf import settings
-from drf_spectacular.utils import extend_schema
 from typing import Any, cast
 
+from django.conf import settings
+from drf_spectacular.utils import extend_schema
 from rest_framework import status, viewsets
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated

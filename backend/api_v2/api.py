@@ -15,7 +15,11 @@ Usage:
 """
 
 from ninja import NinjaAPI
-from ninja.security import django_auth
+
+from .advanced.views import router as advanced_router
+from .ai_feedback.views import router as ai_feedback_router
+from .auth.views import router as auth_router
+from .core.views import router as core_router
 
 # Create the main Ninja API instance
 api_v2 = NinjaAPI(
@@ -43,12 +47,6 @@ api_v2 = NinjaAPI(
     openapi_url="/openapi.json",
 )
 
-
-# Import and register routers from each module
-from .advanced.views import router as advanced_router
-from .ai_feedback.views import router as ai_feedback_router
-from .auth.views import router as auth_router
-from .core.views import router as core_router
 
 api_v2.add_router("/ai-feedback/", ai_feedback_router)
 api_v2.add_router("/auth/", auth_router)

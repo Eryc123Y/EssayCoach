@@ -6,7 +6,6 @@ from decimal import Decimal
 from ninja import Schema
 from pydantic import Field
 
-
 # =============================================================================
 # User Schemas
 # =============================================================================

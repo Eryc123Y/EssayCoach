@@ -14,25 +14,25 @@ import os
 import sys
 from pathlib import Path
 
-# Add backend to Python path
-sys.path.insert(0, str(Path(__file__).parent))
+import django
+import pytest
+from django.conf import settings
+from django.core.files.uploadedfile import SimpleUploadedFile
+
+from api_v1.ai_feedback.rubric_parser import SiliconFlowRubricParser
+from api_v1.core.rubric_manager import RubricImportError, RubricManager
+
+# Configure Django settings module
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "essay_coach.settings")
 
 # Setup Django
-import django
-
 django.setup()
 
-import pytest
-from django.conf import settings
-
-if not settings.SILICONFLOW_API_KEY or settings.SILICONFLOW_API_KEY == "your-siliconflow-api-key-here":
+if (
+    not settings.SILICONFLOW_API_KEY
+    or settings.SILICONFLOW_API_KEY == "your-siliconflow-api-key-here"
+):
     pytest.skip("SILICONFLOW_API_KEY not configured", allow_module_level=True)
-
-from django.core.files.uploadedfile import SimpleUploadedFile  # noqa: E402
-
-from api_v1.ai_feedback.rubric_parser import SiliconFlowRubricParser  # noqa: E402
-from api_v1.core.rubric_manager import RubricImportError, RubricManager  # noqa: E402
 
 
 def _run_pdf_extraction() -> bool:
@@ -49,7 +49,9 @@ def _run_pdf_extraction() -> bool:
         with open(pdf_path, "rb") as f:
             pdf_content = f.read()
 
-        uploaded_file = SimpleUploadedFile("rubric.pdf", pdf_content, content_type="application/pdf")
+        uploaded_file = SimpleUploadedFile(
+            "rubric.pdf", pdf_content, content_type="application/pdf"
+        )
 
         parser = SiliconFlowRubricParser()
         text = parser.extract_text_from_pdf(uploaded_file)

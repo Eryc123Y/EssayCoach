@@ -6,9 +6,9 @@ These tests verify API structure and schema validation.
 import pytest
 from pydantic import ValidationError
 
-from api_v2.ai_feedback.schemas import WorkflowRunIn, WorkflowRunOut
-from api_v2.auth.schemas import UserRegistrationIn, UserLoginIn
-from api_v2.core.schemas import UserIn, UnitIn, ClassIn
+from api_v2.ai_feedback.schemas import WorkflowRunIn
+from api_v2.auth.schemas import UserLoginIn, UserRegistrationIn
+from api_v2.core.schemas import ClassIn, UnitIn, UserIn
 
 
 class TestAIFeedbackSchemas:
@@ -95,8 +95,9 @@ class TestAPIStructure:
         assert api_v2.version == "2.0.0"
 
     def test_openapi_schema_generation(self):
-        from api_v2.api import api_v2
         from ninja.openapi.schema import get_schema
+
+        from api_v2.api import api_v2
 
         schema = get_schema(api_v2)
         assert schema["info"]["title"] == "EssayCoach API v2"
@@ -104,32 +105,36 @@ class TestAPIStructure:
         assert len(schema["paths"]) > 0
 
     def test_auth_endpoints_registered(self):
-        from api_v2.api import api_v2
         from ninja.openapi.schema import get_schema
+
+        from api_v2.api import api_v2
 
         schema = get_schema(api_v2)
         auth_paths = [p for p in schema["paths"].keys() if p.startswith("/auth/")]
         assert len(auth_paths) == 6
 
     def test_ai_feedback_endpoints_registered(self):
-        from api_v2.api import api_v2
         from ninja.openapi.schema import get_schema
+
+        from api_v2.api import api_v2
 
         schema = get_schema(api_v2)
         ai_paths = [p for p in schema["paths"].keys() if p.startswith("/ai-feedback/")]
         assert len(ai_paths) == 3
 
     def test_core_endpoints_registered(self):
-        from api_v2.api import api_v2
         from ninja.openapi.schema import get_schema
+
+        from api_v2.api import api_v2
 
         schema = get_schema(api_v2)
         core_paths = [p for p in schema["paths"].keys() if p.startswith("/core/")]
         assert len(core_paths) == 28
 
     def test_advanced_endpoints_registered(self):
-        from api_v2.api import api_v2
         from ninja.openapi.schema import get_schema
+
+        from api_v2.api import api_v2
 
         schema = get_schema(api_v2)
         advanced_paths = [p for p in schema["paths"].keys() if p.startswith("/advanced/")]

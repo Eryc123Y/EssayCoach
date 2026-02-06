@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import logging
-from typing import TYPE_CHECKING
 
 from django.contrib.auth import authenticate
 from django.contrib.auth.password_validation import validate_password

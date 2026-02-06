@@ -4,9 +4,8 @@ Run with: uv run pytest api_v2/tests/test_ninja_api.py -v
 """
 
 import pytest
-from django.test import Client
 from django.core.files.uploadedfile import SimpleUploadedFile
-from unittest.mock import MagicMock, patch
+from django.test import Client
 
 
 @pytest.mark.django_db
@@ -53,7 +52,7 @@ def test_auth_register_endpoint():
 def test_auth_login_endpoint():
     from api_v1.core.models import User
 
-    user = User.objects.create_user(
+    User.objects.create_user(
         user_email="testlogin@example.com",
         password="TestPass123!",
         user_role="student",

@@ -2,9 +2,8 @@
 API views for authentication endpoints.
 """
 
-from typing import TYPE_CHECKING, Any, cast
-
 import logging
+from typing import TYPE_CHECKING, Any, cast
 
 from django.contrib.auth import get_user_model
 from django.contrib.auth.password_validation import validate_password

@@ -7,10 +7,10 @@ It integrates with Django's existing authentication system.
 
 from __future__ import annotations
 
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING
 
 from django.contrib.auth import get_user_model
-from ninja.security import APIKeyHeader, HttpBearer
+from ninja.security import HttpBearer
 from rest_framework.authtoken.models import Token
 
 if TYPE_CHECKING:
