@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from django.conf import settings
 from ninja import Router
+
 from ninja.errors import HttpError
 from ninja.files import UploadedFile
 
@@ -26,11 +27,15 @@ from django.http import HttpRequest
 from ..utils.auth import TokenAuth
 from .schemas import (
     ClassDetailOut,
+    ClassFilterParams,
     ClassIn,
     ClassOut,
+    EnrollmentFilterParams,
     EnrollmentIn,
     EnrollmentOut,
+    FeedbackFilterParams,
     FeedbackIn,
+    FeedbackItemFilterParams,
     FeedbackItemIn,
     FeedbackItemOut,
     FeedbackOut,
@@ -38,20 +43,28 @@ from .schemas import (
     MarkingRubricOut,
     PaginationParams,
     RubricDetailOut,
+    RubricFilterParams,
     RubricImportOut,
     RubricItemDetailOut,
+    RubricItemFilterParams,
     RubricItemIn,
     RubricItemOut,
+    RubricLevelDescFilterParams,
     RubricLevelDescIn,
     RubricLevelDescOut,
+    SubmissionFilterParams,
     SubmissionIn,
     SubmissionOut,
+    TaskFilterParams,
     TaskIn,
     TaskOut,
+    TeachingAssnFilterParams,
     TeachingAssnIn,
     TeachingAssnOut,
+    UnitFilterParams,
     UnitIn,
     UnitOut,
+    UserFilterParams,
     UserIn,
     UserOut,
 )
@@ -75,9 +88,9 @@ def paginate(queryset, params: PaginationParams):
 
 
 @router.get("/users/", response=list[UserOut])
-def list_users(request: HttpRequest, params: PaginationParams = PaginationParams()):
-    qs = User.objects.all()
-    return paginate(qs, params)["results"]
+def list_users(request: HttpRequest, filters: UserFilterParams):
+    qs = filters.filter(User.objects.all())
+    return paginate(qs, PaginationParams())["results"]
 
 
 @router.post("/users/", response=UserOut)
@@ -134,9 +147,9 @@ def delete_user(request: HttpRequest, user_id: int):
 
 
 @router.get("/units/", response=list[UnitOut])
-def list_units(request: HttpRequest, params: PaginationParams = PaginationParams()):
-    qs = Unit.objects.all()
-    return paginate(qs, params)["results"]
+def list_units(request: HttpRequest, filters: UnitFilterParams = UnitFilterParams()):
+    qs = filters.filter(Unit.objects.all())
+    return paginate(qs, PaginationParams())["results"]
 
 
 @router.post("/units/", response=UnitOut)
@@ -181,9 +194,9 @@ def delete_unit(request: HttpRequest, unit_id: str):
 
 
 @router.get("/classes/", response=list[ClassOut])
-def list_classes(request: HttpRequest, params: PaginationParams = PaginationParams()):
-    qs = Class.objects.all()
-    return paginate(qs, params)["results"]
+def list_classes(request: HttpRequest, filters: ClassFilterParams = ClassFilterParams()):
+    qs = filters.filter(Class.objects.all())
+    return paginate(qs, PaginationParams())["results"]
 
 
 @router.post("/classes/", response=ClassOut)
@@ -230,9 +243,9 @@ def delete_class(request: HttpRequest, class_id: int):
 
 
 @router.get("/enrollments/", response=list[EnrollmentOut])
-def list_enrollments(request: HttpRequest, params: PaginationParams = PaginationParams()):
-    qs = Enrollment.objects.all()
-    return paginate(qs, params)["results"]
+def list_enrollments(request: HttpRequest, filters: EnrollmentFilterParams = EnrollmentFilterParams()):
+    qs = filters.filter(Enrollment.objects.all())
+    return paginate(qs, PaginationParams())["results"]
 
 
 @router.post("/enrollments/", response=EnrollmentOut)
@@ -265,9 +278,9 @@ def delete_enrollment(request: HttpRequest, enrollment_id: int):
 
 
 @router.get("/rubrics/", response=list[MarkingRubricOut])
-def list_rubrics(request: HttpRequest, params: PaginationParams = PaginationParams()):
-    qs = MarkingRubric.objects.filter(user_id_user=request.auth)
-    return paginate(qs, params)["results"]
+def list_rubrics(request: HttpRequest, filters: RubricFilterParams = RubricFilterParams()):
+    qs = filters.filter(MarkingRubric.objects.filter(user_id_user=request.auth))
+    return paginate(qs, PaginationParams())["results"]
 
 
 @router.post("/rubrics/", response=MarkingRubricOut)
@@ -397,9 +410,9 @@ def delete_rubric(request: HttpRequest, rubric_id: int):
 
 
 @router.get("/rubric-items/", response=list[RubricItemOut])
-def list_rubric_items(request: HttpRequest, params: PaginationParams = PaginationParams()):
-    qs = RubricItem.objects.all()
-    return paginate(qs, params)["results"]
+def list_rubric_items(request: HttpRequest, filters: RubricItemFilterParams = RubricItemFilterParams()):
+    qs = filters.filter(RubricItem.objects.all())
+    return paginate(qs, PaginationParams())["results"]
 
 
 @router.post("/rubric-items/", response=RubricItemOut)
@@ -449,9 +462,9 @@ def delete_rubric_item(request: HttpRequest, item_id: int):
 
 
 @router.get("/rubric-levels/", response=list[RubricLevelDescOut])
-def list_rubric_levels(request: HttpRequest, params: PaginationParams = PaginationParams()):
-    qs = RubricLevelDesc.objects.all()
-    return paginate(qs, params)["results"]
+def list_rubric_levels(request: HttpRequest, filters: RubricLevelDescFilterParams = RubricLevelDescFilterParams()):
+    qs = filters.filter(RubricLevelDesc.objects.all())
+    return paginate(qs, PaginationParams())["results"]
 
 
 @router.post("/rubric-levels/", response=RubricLevelDescOut)
@@ -503,9 +516,9 @@ def delete_rubric_level(request: HttpRequest, level_id: int):
 
 
 @router.get("/tasks/", response=list[TaskOut])
-def list_tasks(request: HttpRequest, params: PaginationParams = PaginationParams()):
-    qs = Task.objects.all()
-    return paginate(qs, params)["results"]
+def list_tasks(request: HttpRequest, filters: TaskFilterParams = TaskFilterParams()):
+    qs = filters.filter(Task.objects.all())
+    return paginate(qs, PaginationParams())["results"]
 
 
 @router.post("/tasks/", response=TaskOut)
@@ -559,9 +572,9 @@ def delete_task(request: HttpRequest, task_id: int):
 
 
 @router.get("/submissions/", response=list[SubmissionOut])
-def list_submissions(request: HttpRequest, params: PaginationParams = PaginationParams()):
-    qs = Submission.objects.all()
-    return paginate(qs, params)["results"]
+def list_submissions(request: HttpRequest, filters: SubmissionFilterParams = SubmissionFilterParams()):
+    qs = filters.filter(Submission.objects.all())
+    return paginate(qs, PaginationParams())["results"]
 
 
 @router.post("/submissions/", response=SubmissionOut)
@@ -611,9 +624,9 @@ def delete_submission(request: HttpRequest, submission_id: int):
 
 
 @router.get("/feedbacks/", response=list[FeedbackOut])
-def list_feedbacks(request: HttpRequest, params: PaginationParams = PaginationParams()):
-    qs = Feedback.objects.all()
-    return paginate(qs, params)["results"]
+def list_feedbacks(request: HttpRequest, filters: FeedbackFilterParams = FeedbackFilterParams()):
+    qs = filters.filter(Feedback.objects.all())
+    return paginate(qs, PaginationParams())["results"]
 
 
 @router.post("/feedbacks/", response=FeedbackOut)
@@ -651,9 +664,9 @@ def delete_feedback(request: HttpRequest, feedback_id: int):
 
 
 @router.get("/feedback-items/", response=list[FeedbackItemOut])
-def list_feedback_items(request: HttpRequest, params: PaginationParams = PaginationParams()):
-    qs = FeedbackItem.objects.all()
-    return paginate(qs, params)["results"]
+def list_feedback_items(request: HttpRequest, filters: FeedbackItemFilterParams = FeedbackItemFilterParams()):
+    qs = filters.filter(FeedbackItem.objects.all())
+    return paginate(qs, PaginationParams())["results"]
 
 
 @router.post("/feedback-items/", response=FeedbackItemOut)
