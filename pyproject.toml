@@ -19,3 +19,9 @@ strict = true
 [tool.black]
 line-length = 100
 target-version = ['py312']
+
+[dependency-groups]
+dev = [
+    "pytest>=9.0.2",
+    "pytest-django>=4.11.1",
+]
