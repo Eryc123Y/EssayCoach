@@ -2,8 +2,9 @@ from __future__ import annotations
 
 from datetime import datetime
 from decimal import Decimal
+from typing import Annotated  # For Pydantic V2 compatible FilterSchema syntax
 
-from ninja import FilterSchema, Schema
+from ninja import FilterLookup, FilterSchema, Schema  # FieldLookup replaces Field(q=...)
 from ninja.orm import ModelSchema
 from pydantic import Field
 
@@ -381,25 +382,22 @@ class RubricImportOut(Schema):
 
 
 # =============================================================================
-# Pagination & Filter Schemas
+# Filter Schemas for List Endpoints (Pydantic V2 Compatible)
 # =============================================================================
-
-
-
-
-# =============================================================================
-# Filter Schemas for List Endpoints
-# =============================================================================
+# NOTE: Using Annotated + FieldLookup instead of Field(q=...) to avoid
+# Pydantic V2 deprecation warnings. This syntax is compatible with both V2 and V3.
 
 
 class UnitFilterParams(FilterSchema):
     """Filter parameters for Unit list endpoint."""
+
     unit_id: str | None = None
-    unit_name: str | None = Field(None, q="unit_name__icontains")
+    unit_name: Annotated[str | None, FilterLookup(q="unit_name__icontains")] = None
 
 
 class ClassFilterParams(FilterSchema):
     """Filter parameters for Class list endpoint."""
+
     unit_id_unit: str | None = None
     class_size__gte: int | None = None
     class_size__lte: int | None = None
@@ -407,6 +405,7 @@ class ClassFilterParams(FilterSchema):
 
 class EnrollmentFilterParams(FilterSchema):
     """Filter parameters for Enrollment list endpoint."""
+
     user_id_user: int | None = None
     class_id_class: int | None = None
     unit_id_unit: str | None = None
@@ -414,18 +413,21 @@ class EnrollmentFilterParams(FilterSchema):
 
 class RubricFilterParams(FilterSchema):
     """Filter parameters for MarkingRubric list endpoint."""
+
     user_id_user: int | None = None
-    rubric_desc: str | None = Field(None, q="rubric_desc__icontains")
+    rubric_desc: Annotated[str | None, FilterLookup(q="rubric_desc__icontains")] = None
 
 
 class RubricItemFilterParams(FilterSchema):
     """Filter parameters for RubricItem list endpoint."""
+
     rubric_id_marking_rubric: int | None = None
-    rubric_item_name: str | None = Field(None, q="rubric_item_name__icontains")
+    rubric_item_name: Annotated[str | None, FilterLookup(q="rubric_item_name__icontains")] = None
 
 
 class RubricLevelDescFilterParams(FilterSchema):
     """Filter parameters for RubricLevelDesc list endpoint."""
+
     rubric_item_id_rubric_item: int | None = None
     level_min_score__gte: int | None = None
     level_max_score__lte: int | None = None
@@ -433,6 +435,7 @@ class RubricLevelDescFilterParams(FilterSchema):
 
 class TaskFilterParams(FilterSchema):
     """Filter parameters for Task list endpoint."""
+
     unit_id_unit: str | None = None
     rubric_id_marking_rubric: int | None = None
     task_due_datetime__gte: datetime | None = None
@@ -441,18 +444,21 @@ class TaskFilterParams(FilterSchema):
 
 class SubmissionFilterParams(FilterSchema):
     """Filter parameters for Submission list endpoint."""
+
     task_id_task: int | None = None
     user_id_user: int | None = None
 
 
 class FeedbackFilterParams(FilterSchema):
     """Filter parameters for Feedback list endpoint."""
+
     submission_id_submission: int | None = None
     user_id_user: int | None = None
 
 
 class FeedbackItemFilterParams(FilterSchema):
     """Filter parameters for FeedbackItem list endpoint."""
+
     feedback_id_feedback: int | None = None
     rubric_item_id_rubric_item: int | None = None
     feedback_item_score__gte: int | None = None
@@ -461,6 +467,7 @@ class FeedbackItemFilterParams(FilterSchema):
 
 class TeachingAssnFilterParams(FilterSchema):
     """Filter parameters for TeachingAssn list endpoint."""
+
     user_id_user: int | None = None
     class_id_class: int | None = None
 
@@ -475,62 +482,6 @@ class PaginationParams(Schema):
 class UserFilterParams(FilterSchema):
     """Filter parameters for user list endpoints with multi-field search."""
 
-    user_role: str | None = Field(None, q="user_role")
-    user_status: str | None = Field(None, q="user_status")
-    search: str | None = Field(None, q=["user_email", "user_fname", "user_lname"])
-
-
-# =============================================================================
-# Filter Schemas for List Endpoints
-# =============================================================================
-
-
-class UnitFilterParams(FilterSchema):
-    search: str | None = Field(None, q=["unit_id", "unit_name"])
-
-
-class ClassFilterParams(FilterSchema):
-    unit_id_unit: str | None = Field(None, q="unit_id_unit")
-
-
-class EnrollmentFilterParams(FilterSchema):
-    user_id_user: int | None = Field(None, q="user_id_user")
-    class_id_class: int | None = Field(None, q="class_id_class")
-    unit_id_unit: str | None = Field(None, q="unit_id_unit")
-
-
-class RubricFilterParams(FilterSchema):
-    user_id_user: int | None = Field(None, q="user_id_user")
-    search: str | None = Field(None, q="rubric_desc")
-
-
-class RubricItemFilterParams(FilterSchema):
-    rubric_id_marking_rubric: int | None = Field(None, q="rubric_id_marking_rubric")
-
-
-class RubricLevelDescFilterParams(FilterSchema):
-    rubric_item_id_rubric_item: int | None = Field(None, q="rubric_item_id_rubric_item")
-
-
-class TaskFilterParams(FilterSchema):
-    unit_id_unit: str | None = Field(None, q="unit_id_unit")
-    rubric_id_marking_rubric: int | None = Field(None, q="rubric_id_marking_rubric")
-
-
-class SubmissionFilterParams(FilterSchema):
-    task_id_task: int | None = Field(None, q="task_id_task")
-    user_id_user: int | None = Field(None, q="user_id_user")
-
-
-class FeedbackFilterParams(FilterSchema):
-    submission_id_submission: int | None = Field(None, q="submission_id_submission")
-    user_id_user: int | None = Field(None, q="user_id_user")
-
-
-class FeedbackItemFilterParams(FilterSchema):
-    feedback_id_feedback: int | None = Field(None, q="feedback_id_feedback")
-
-
-class TeachingAssnFilterParams(FilterSchema):
-    user_id_user: int | None = Field(None, q="user_id_user")
-    class_id_class: int | None = Field(None, q="class_id_class")
+    user_role: str | None = None
+    user_status: str | None = None
+    search: Annotated[str | None, FilterLookup(q=["user_email", "user_fname", "user_lname"])] = None
