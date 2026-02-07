@@ -21,6 +21,8 @@ from api_v1.core.models import (
 )
 from api_v1.core.models import RubricLevelDesc as RubricLevelDescModel
 
+from django.http import HttpRequest
+
 from ..utils.auth import TokenAuth
 from .schemas import (
     ClassDetailOut,
@@ -73,13 +75,13 @@ def paginate(queryset, params: PaginationParams):
 
 
 @router.get("/users/", response=list[UserOut])
-def list_users(request, params: PaginationParams = PaginationParams()):
+def list_users(request: HttpRequest, params: PaginationParams = PaginationParams()):
     qs = User.objects.all()
     return paginate(qs, params)["results"]
 
 
 @router.post("/users/", response=UserOut)
-def create_user(request, data: UserIn):
+def create_user(request: HttpRequest, data: UserIn):
     user = User.objects.create_user(
         user_email=data.user_email,
         password=data.password,
@@ -94,7 +96,7 @@ def create_user(request, data: UserIn):
 
 
 @router.get("/users/{user_id}/", response=UserOut)
-def get_user(request, user_id: int):
+def get_user(request: HttpRequest, user_id: int):
     try:
         return User.objects.get(user_id=user_id)
     except User.DoesNotExist:
@@ -102,7 +104,7 @@ def get_user(request, user_id: int):
 
 
 @router.put("/users/{user_id}/", response=UserOut)
-def update_user(request, user_id: int, data: UserIn):
+def update_user(request: HttpRequest, user_id: int, data: UserIn):
     try:
         user = User.objects.get(user_id=user_id)
         for key, value in data.dict().items():
@@ -117,7 +119,7 @@ def update_user(request, user_id: int, data: UserIn):
 
 
 @router.delete("/users/{user_id}/")
-def delete_user(request, user_id: int):
+def delete_user(request: HttpRequest, user_id: int):
     try:
         user = User.objects.get(user_id=user_id)
         user.delete()
@@ -132,19 +134,19 @@ def delete_user(request, user_id: int):
 
 
 @router.get("/units/", response=list[UnitOut])
-def list_units(request, params: PaginationParams = PaginationParams()):
+def list_units(request: HttpRequest, params: PaginationParams = PaginationParams()):
     qs = Unit.objects.all()
     return paginate(qs, params)["results"]
 
 
 @router.post("/units/", response=UnitOut)
-def create_unit(request, data: UnitIn):
+def create_unit(request: HttpRequest, data: UnitIn):
     unit = Unit.objects.create(**data.dict())
     return unit
 
 
 @router.get("/units/{unit_id}/", response=UnitOut)
-def get_unit(request, unit_id: str):
+def get_unit(request: HttpRequest, unit_id: str):
     try:
         return Unit.objects.get(unit_id=unit_id)
     except Unit.DoesNotExist:
@@ -152,7 +154,7 @@ def get_unit(request, unit_id: str):
 
 
 @router.put("/units/{unit_id}/", response=UnitOut)
-def update_unit(request, unit_id: str, data: UnitIn):
+def update_unit(request: HttpRequest, unit_id: str, data: UnitIn):
     try:
         unit = Unit.objects.get(unit_id=unit_id)
         for key, value in data.dict().items():
@@ -164,7 +166,7 @@ def update_unit(request, unit_id: str, data: UnitIn):
 
 
 @router.delete("/units/{unit_id}/")
-def delete_unit(request, unit_id: str):
+def delete_unit(request: HttpRequest, unit_id: str):
     try:
         unit = Unit.objects.get(unit_id=unit_id)
         unit.delete()
@@ -179,20 +181,20 @@ def delete_unit(request, unit_id: str):
 
 
 @router.get("/classes/", response=list[ClassOut])
-def list_classes(request, params: PaginationParams = PaginationParams()):
+def list_classes(request: HttpRequest, params: PaginationParams = PaginationParams()):
     qs = Class.objects.all()
     return paginate(qs, params)["results"]
 
 
 @router.post("/classes/", response=ClassOut)
-def create_class(request, data: ClassIn):
+def create_class(request: HttpRequest, data: ClassIn):
     unit = Unit.objects.get(unit_id=data.unit_id_unit)
     class_obj = Class.objects.create(unit_id_unit=unit, class_size=data.class_size)
     return class_obj
 
 
 @router.get("/classes/{class_id}/", response=ClassOut)
-def get_class(request, class_id: int):
+def get_class(request: HttpRequest, class_id: int):
     try:
         return Class.objects.get(class_id=class_id)
     except Class.DoesNotExist:
@@ -200,7 +202,7 @@ def get_class(request, class_id: int):
 
 
 @router.put("/classes/{class_id}/", response=ClassOut)
-def update_class(request, class_id: int, data: ClassIn):
+def update_class(request: HttpRequest, class_id: int, data: ClassIn):
     try:
         class_obj = Class.objects.get(class_id=class_id)
         if data.unit_id_unit:
@@ -213,7 +215,7 @@ def update_class(request, class_id: int, data: ClassIn):
 
 
 @router.delete("/classes/{class_id}/")
-def delete_class(request, class_id: int):
+def delete_class(request: HttpRequest, class_id: int):
     try:
         class_obj = Class.objects.get(class_id=class_id)
         class_obj.delete()
@@ -228,19 +230,19 @@ def delete_class(request, class_id: int):
 
 
 @router.get("/enrollments/", response=list[EnrollmentOut])
-def list_enrollments(request, params: PaginationParams = PaginationParams()):
+def list_enrollments(request: HttpRequest, params: PaginationParams = PaginationParams()):
     qs = Enrollment.objects.all()
     return paginate(qs, params)["results"]
 
 
 @router.post("/enrollments/", response=EnrollmentOut)
-def create_enrollment(request, data: EnrollmentIn):
+def create_enrollment(request: HttpRequest, data: EnrollmentIn):
     enrollment = Enrollment.objects.create(**data.dict())
     return enrollment
 
 
 @router.get("/enrollments/{enrollment_id}/", response=EnrollmentOut)
-def get_enrollment(request, enrollment_id: int):
+def get_enrollment(request: HttpRequest, enrollment_id: int):
     try:
         return Enrollment.objects.get(enrollment_id=enrollment_id)
     except Enrollment.DoesNotExist:
@@ -248,7 +250,7 @@ def get_enrollment(request, enrollment_id: int):
 
 
 @router.delete("/enrollments/{enrollment_id}/")
-def delete_enrollment(request, enrollment_id: int):
+def delete_enrollment(request: HttpRequest, enrollment_id: int):
     try:
         enrollment = Enrollment.objects.get(enrollment_id=enrollment_id)
         enrollment.delete()
@@ -263,13 +265,13 @@ def delete_enrollment(request, enrollment_id: int):
 
 
 @router.get("/rubrics/", response=list[MarkingRubricOut])
-def list_rubrics(request, params: PaginationParams = PaginationParams()):
+def list_rubrics(request: HttpRequest, params: PaginationParams = PaginationParams()):
     qs = MarkingRubric.objects.filter(user_id_user=request.auth)
     return paginate(qs, params)["results"]
 
 
 @router.post("/rubrics/", response=MarkingRubricOut)
-def create_rubric(request, data: MarkingRubricIn):
+def create_rubric(request: HttpRequest, data: MarkingRubricIn):
     rubric = MarkingRubric.objects.create(
         user_id_user=request.auth,
         rubric_desc=data.rubric_desc,
@@ -278,7 +280,7 @@ def create_rubric(request, data: MarkingRubricIn):
 
 
 @router.post("/rubrics/import_from_pdf_with_ai/", response=RubricImportOut)
-def import_rubric_from_pdf_with_ai(request, file: UploadedFile, rubric_name: str | None = None):
+def import_rubric_from_pdf_with_ai(request: HttpRequest, file: UploadedFile, rubric_name: str | None = None):
     from api_v1.ai_feedback.rubric_parser import RubricParseError, SiliconFlowRubricParser
     from api_v1.core.rubric_manager import RubricImportError, RubricManager
 
@@ -312,7 +314,7 @@ def import_rubric_from_pdf_with_ai(request, file: UploadedFile, rubric_name: str
 
 
 @router.get("/rubrics/{rubric_id}/", response=MarkingRubricOut)
-def get_rubric(request, rubric_id: int):
+def get_rubric(request: HttpRequest, rubric_id: int):
     try:
         return MarkingRubric.objects.get(rubric_id=rubric_id, user_id_user=request.auth)
     except MarkingRubric.DoesNotExist:
@@ -320,7 +322,7 @@ def get_rubric(request, rubric_id: int):
 
 
 @router.get("/rubrics/{rubric_id}/detail/", response=RubricDetailOut)
-def get_rubric_detail(request, rubric_id: int):
+def get_rubric_detail(request: HttpRequest, rubric_id: int):
     try:
         rubric = MarkingRubric.objects.get(rubric_id=rubric_id, user_id_user=request.auth)
         rubric_items = list(RubricItem.objects.filter(rubric_id_marking_rubric=rubric))
@@ -364,12 +366,12 @@ def get_rubric_detail(request, rubric_id: int):
 
 
 @router.get("/rubrics/{rubric_id}/detail_with_items/", response=RubricDetailOut)
-def get_rubric_detail_with_items(request, rubric_id: int):
+def get_rubric_detail_with_items(request: HttpRequest, rubric_id: int):
     return get_rubric_detail(request, rubric_id)
 
 
 @router.put("/rubrics/{rubric_id}/", response=MarkingRubricOut)
-def update_rubric(request, rubric_id: int, data: MarkingRubricIn):
+def update_rubric(request: HttpRequest, rubric_id: int, data: MarkingRubricIn):
     try:
         rubric = MarkingRubric.objects.get(rubric_id=rubric_id, user_id_user=request.auth)
         rubric.rubric_desc = data.rubric_desc
@@ -380,7 +382,7 @@ def update_rubric(request, rubric_id: int, data: MarkingRubricIn):
 
 
 @router.delete("/rubrics/{rubric_id}/")
-def delete_rubric(request, rubric_id: int):
+def delete_rubric(request: HttpRequest, rubric_id: int):
     try:
         rubric = MarkingRubric.objects.get(rubric_id=rubric_id, user_id_user=request.auth)
         rubric.delete()
@@ -395,13 +397,13 @@ def delete_rubric(request, rubric_id: int):
 
 
 @router.get("/rubric-items/", response=list[RubricItemOut])
-def list_rubric_items(request, params: PaginationParams = PaginationParams()):
+def list_rubric_items(request: HttpRequest, params: PaginationParams = PaginationParams()):
     qs = RubricItem.objects.all()
     return paginate(qs, params)["results"]
 
 
 @router.post("/rubric-items/", response=RubricItemOut)
-def create_rubric_item(request, data: RubricItemIn):
+def create_rubric_item(request: HttpRequest, data: RubricItemIn):
     rubric = MarkingRubric.objects.get(rubric_id=data.rubric_id_marking_rubric)
     item = RubricItem.objects.create(
         rubric_id_marking_rubric=rubric,
@@ -412,7 +414,7 @@ def create_rubric_item(request, data: RubricItemIn):
 
 
 @router.get("/rubric-items/{item_id}/", response=RubricItemOut)
-def get_rubric_item(request, item_id: int):
+def get_rubric_item(request: HttpRequest, item_id: int):
     try:
         return RubricItem.objects.get(rubric_item_id=item_id)
     except RubricItem.DoesNotExist:
@@ -420,7 +422,7 @@ def get_rubric_item(request, item_id: int):
 
 
 @router.put("/rubric-items/{item_id}/", response=RubricItemOut)
-def update_rubric_item(request, item_id: int, data: RubricItemIn):
+def update_rubric_item(request: HttpRequest, item_id: int, data: RubricItemIn):
     try:
         item = RubricItem.objects.get(rubric_item_id=item_id)
         item.rubric_item_name = data.rubric_item_name
@@ -432,7 +434,7 @@ def update_rubric_item(request, item_id: int, data: RubricItemIn):
 
 
 @router.delete("/rubric-items/{item_id}/")
-def delete_rubric_item(request, item_id: int):
+def delete_rubric_item(request: HttpRequest, item_id: int):
     try:
         item = RubricItem.objects.get(rubric_item_id=item_id)
         item.delete()
@@ -447,13 +449,13 @@ def delete_rubric_item(request, item_id: int):
 
 
 @router.get("/rubric-levels/", response=list[RubricLevelDescOut])
-def list_rubric_levels(request, params: PaginationParams = PaginationParams()):
+def list_rubric_levels(request: HttpRequest, params: PaginationParams = PaginationParams()):
     qs = RubricLevelDesc.objects.all()
     return paginate(qs, params)["results"]
 
 
 @router.post("/rubric-levels/", response=RubricLevelDescOut)
-def create_rubric_level(request, data: RubricLevelDescIn):
+def create_rubric_level(request: HttpRequest, data: RubricLevelDescIn):
     item = RubricItem.objects.get(rubric_item_id=data.rubric_item_id_rubric_item)
     level = RubricLevelDesc.objects.create(
         rubric_item_id_rubric_item=item,
@@ -465,7 +467,7 @@ def create_rubric_level(request, data: RubricLevelDescIn):
 
 
 @router.get("/rubric-levels/{level_id}/", response=RubricLevelDescOut)
-def get_rubric_level(request, level_id: int):
+def get_rubric_level(request: HttpRequest, level_id: int):
     try:
         return RubricLevelDesc.objects.get(level_desc_id=level_id)
     except RubricLevelDesc.DoesNotExist:
@@ -473,7 +475,7 @@ def get_rubric_level(request, level_id: int):
 
 
 @router.put("/rubric-levels/{level_id}/", response=RubricLevelDescOut)
-def update_rubric_level(request, level_id: int, data: RubricLevelDescIn):
+def update_rubric_level(request: HttpRequest, level_id: int, data: RubricLevelDescIn):
     try:
         level = RubricLevelDesc.objects.get(level_desc_id=level_id)
         level.level_min_score = data.level_min_score
@@ -486,7 +488,7 @@ def update_rubric_level(request, level_id: int, data: RubricLevelDescIn):
 
 
 @router.delete("/rubric-levels/{level_id}/")
-def delete_rubric_level(request, level_id: int):
+def delete_rubric_level(request: HttpRequest, level_id: int):
     try:
         level = RubricLevelDesc.objects.get(level_desc_id=level_id)
         level.delete()
@@ -501,13 +503,13 @@ def delete_rubric_level(request, level_id: int):
 
 
 @router.get("/tasks/", response=list[TaskOut])
-def list_tasks(request, params: PaginationParams = PaginationParams()):
+def list_tasks(request: HttpRequest, params: PaginationParams = PaginationParams()):
     qs = Task.objects.all()
     return paginate(qs, params)["results"]
 
 
 @router.post("/tasks/", response=TaskOut)
-def create_task(request, data: TaskIn):
+def create_task(request: HttpRequest, data: TaskIn):
     unit = Unit.objects.get(unit_id=data.unit_id_unit)
     rubric = MarkingRubric.objects.get(rubric_id=data.rubric_id_marking_rubric)
     task = Task.objects.create(
@@ -519,7 +521,7 @@ def create_task(request, data: TaskIn):
 
 
 @router.get("/tasks/{task_id}/", response=TaskOut)
-def get_task(request, task_id: int):
+def get_task(request: HttpRequest, task_id: int):
     try:
         return Task.objects.get(task_id=task_id)
     except Task.DoesNotExist:
@@ -527,7 +529,7 @@ def get_task(request, task_id: int):
 
 
 @router.put("/tasks/{task_id}/", response=TaskOut)
-def update_task(request, task_id: int, data: TaskIn):
+def update_task(request: HttpRequest, task_id: int, data: TaskIn):
     try:
         task = Task.objects.get(task_id=task_id)
         if data.unit_id_unit:
@@ -542,7 +544,7 @@ def update_task(request, task_id: int, data: TaskIn):
 
 
 @router.delete("/tasks/{task_id}/")
-def delete_task(request, task_id: int):
+def delete_task(request: HttpRequest, task_id: int):
     try:
         task = Task.objects.get(task_id=task_id)
         task.delete()
@@ -557,13 +559,13 @@ def delete_task(request, task_id: int):
 
 
 @router.get("/submissions/", response=list[SubmissionOut])
-def list_submissions(request, params: PaginationParams = PaginationParams()):
+def list_submissions(request: HttpRequest, params: PaginationParams = PaginationParams()):
     qs = Submission.objects.all()
     return paginate(qs, params)["results"]
 
 
 @router.post("/submissions/", response=SubmissionOut)
-def create_submission(request, data: SubmissionIn):
+def create_submission(request: HttpRequest, data: SubmissionIn):
     task = Task.objects.get(task_id=data.task_id_task)
     user = User.objects.get(user_id=data.user_id_user)
     submission = Submission.objects.create(
@@ -575,7 +577,7 @@ def create_submission(request, data: SubmissionIn):
 
 
 @router.get("/submissions/{submission_id}/", response=SubmissionOut)
-def get_submission(request, submission_id: int):
+def get_submission(request: HttpRequest, submission_id: int):
     try:
         return Submission.objects.get(submission_id=submission_id)
     except Submission.DoesNotExist:
@@ -583,7 +585,7 @@ def get_submission(request, submission_id: int):
 
 
 @router.put("/submissions/{submission_id}/", response=SubmissionOut)
-def update_submission(request, submission_id: int, data: SubmissionIn):
+def update_submission(request: HttpRequest, submission_id: int, data: SubmissionIn):
     try:
         submission = Submission.objects.get(submission_id=submission_id)
         submission.submission_txt = data.submission_txt
@@ -594,7 +596,7 @@ def update_submission(request, submission_id: int, data: SubmissionIn):
 
 
 @router.delete("/submissions/{submission_id}/")
-def delete_submission(request, submission_id: int):
+def delete_submission(request: HttpRequest, submission_id: int):
     try:
         submission = Submission.objects.get(submission_id=submission_id)
         submission.delete()
@@ -609,13 +611,13 @@ def delete_submission(request, submission_id: int):
 
 
 @router.get("/feedbacks/", response=list[FeedbackOut])
-def list_feedbacks(request, params: PaginationParams = PaginationParams()):
+def list_feedbacks(request: HttpRequest, params: PaginationParams = PaginationParams()):
     qs = Feedback.objects.all()
     return paginate(qs, params)["results"]
 
 
 @router.post("/feedbacks/", response=FeedbackOut)
-def create_feedback(request, data: FeedbackIn):
+def create_feedback(request: HttpRequest, data: FeedbackIn):
     submission = Submission.objects.get(submission_id=data.submission_id_submission)
     user = User.objects.get(user_id=data.user_id_user)
     feedback = Feedback.objects.create(
@@ -626,7 +628,7 @@ def create_feedback(request, data: FeedbackIn):
 
 
 @router.get("/feedbacks/{feedback_id}/", response=FeedbackOut)
-def get_feedback(request, feedback_id: int):
+def get_feedback(request: HttpRequest, feedback_id: int):
     try:
         return Feedback.objects.get(feedback_id=feedback_id)
     except Feedback.DoesNotExist:
@@ -634,7 +636,7 @@ def get_feedback(request, feedback_id: int):
 
 
 @router.delete("/feedbacks/{feedback_id}/")
-def delete_feedback(request, feedback_id: int):
+def delete_feedback(request: HttpRequest, feedback_id: int):
     try:
         feedback = Feedback.objects.get(feedback_id=feedback_id)
         feedback.delete()
@@ -649,13 +651,13 @@ def delete_feedback(request, feedback_id: int):
 
 
 @router.get("/feedback-items/", response=list[FeedbackItemOut])
-def list_feedback_items(request, params: PaginationParams = PaginationParams()):
+def list_feedback_items(request: HttpRequest, params: PaginationParams = PaginationParams()):
     qs = FeedbackItem.objects.all()
     return paginate(qs, params)["results"]
 
 
 @router.post("/feedback-items/", response=FeedbackItemOut)
-def create_feedback_item(request, data: FeedbackItemIn):
+def create_feedback_item(request: HttpRequest, data: FeedbackItemIn):
     feedback = Feedback.objects.get(feedback_id=data.feedback_id_feedback)
     rubric_item = RubricItem.objects.get(rubric_item_id=data.rubric_item_id_rubric_item)
     item = FeedbackItem.objects.create(
@@ -669,7 +671,7 @@ def create_feedback_item(request, data: FeedbackItemIn):
 
 
 @router.get("/feedback-items/{item_id}/", response=FeedbackItemOut)
-def get_feedback_item(request, item_id: int):
+def get_feedback_item(request: HttpRequest, item_id: int):
     try:
         return FeedbackItem.objects.get(feedback_item_id=item_id)
     except FeedbackItem.DoesNotExist:
@@ -677,7 +679,7 @@ def get_feedback_item(request, item_id: int):
 
 
 @router.put("/feedback-items/{item_id}/", response=FeedbackItemOut)
-def update_feedback_item(request, item_id: int, data: FeedbackItemIn):
+def update_feedback_item(request: HttpRequest, item_id: int, data: FeedbackItemIn):
     try:
         item = FeedbackItem.objects.get(feedback_item_id=item_id)
         item.feedback_item_score = data.feedback_item_score
@@ -690,7 +692,7 @@ def update_feedback_item(request, item_id: int, data: FeedbackItemIn):
 
 
 @router.delete("/feedback-items/{item_id}/")
-def delete_feedback_item(request, item_id: int):
+def delete_feedback_item(request: HttpRequest, item_id: int):
     try:
         item = FeedbackItem.objects.get(feedback_item_id=item_id)
         item.delete()
@@ -705,13 +707,13 @@ def delete_feedback_item(request, item_id: int):
 
 
 @router.get("/teaching-assignments/", response=list[TeachingAssnOut])
-def list_teaching_assignments(request, params: PaginationParams = PaginationParams()):
+def list_teaching_assignments(request: HttpRequest, params: PaginationParams = PaginationParams()):
     qs = TeachingAssn.objects.all()
     return paginate(qs, params)["results"]
 
 
 @router.post("/teaching-assignments/", response=TeachingAssnOut)
-def create_teaching_assignment(request, data: TeachingAssnIn):
+def create_teaching_assignment(request: HttpRequest, data: TeachingAssnIn):
     user = User.objects.get(user_id=data.user_id_user)
     class_obj = Class.objects.get(class_id=data.class_id_class)
     assignment = TeachingAssn.objects.create(
@@ -722,7 +724,7 @@ def create_teaching_assignment(request, data: TeachingAssnIn):
 
 
 @router.get("/teaching-assignments/{assignment_id}/", response=TeachingAssnOut)
-def get_teaching_assignment(request, assignment_id: int):
+def get_teaching_assignment(request: HttpRequest, assignment_id: int):
     try:
         return TeachingAssn.objects.get(teaching_assn_id=assignment_id)
     except TeachingAssn.DoesNotExist:
@@ -730,7 +732,7 @@ def get_teaching_assignment(request, assignment_id: int):
 
 
 @router.delete("/teaching-assignments/{assignment_id}/")
-def delete_teaching_assignment(request, assignment_id: int):
+def delete_teaching_assignment(request: HttpRequest, assignment_id: int):
     try:
         assignment = TeachingAssn.objects.get(teaching_assn_id=assignment_id)
         assignment.delete()

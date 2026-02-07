@@ -117,8 +117,8 @@ def run_workflow(request: HttpRequest, data: WorkflowRunIn) -> WorkflowRunOut:
         raise HttpError(500, str(exc))
 
     except Exception as exc:
-        logger.error(f"Unexpected exception in run_workflow: {exc}")
-        raise HttpError(500, f"Internal server error: {str(exc)}")
+        logger.exception(f"Unexpected exception in run_workflow: {exc}")
+        raise HttpError(500, "Internal server error") from None
 
 
 @router.post(
@@ -167,8 +167,8 @@ def chat_with_ai(request: HttpRequest, data: ChatMessageIn) -> ChatMessageOut:
         raise HttpError(500, "AI service is not properly configured.")
 
     except Exception as exc:
-        logger.error(f"Unexpected error in chat_with_ai: {exc}")
-        raise HttpError(500, f"Internal server error: {str(exc)}")
+        logger.exception(f"Unexpected error in chat_with_ai: {exc}")
+        raise HttpError(500, "Internal server error") from None
 
 
 @router.get(
@@ -223,8 +223,8 @@ def get_workflow_status(request: HttpRequest, workflow_run_id: str) -> WorkflowS
         raise HttpError(502, f"AI service error: {str(exc)}")
 
     except Exception as exc:
-        logger.error(f"Unexpected error in get_workflow_status: {exc}")
-        raise HttpError(500, f"Internal server error: {str(exc)}")
+        logger.exception(f"Unexpected error in get_workflow_status: {exc}")
+        raise HttpError(500, "Internal server error") from None
 
 
 def _call_dify_chat(

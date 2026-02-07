@@ -5,6 +5,7 @@ import logging
 from django.contrib.auth import authenticate
 from django.contrib.auth.password_validation import validate_password
 from django.core.exceptions import ValidationError
+from django.http import HttpRequest
 from ninja import Router
 from ninja.errors import HttpError
 
@@ -44,7 +45,7 @@ def _user_to_schema(user: User) -> UserOut:
 
 
 @router.post("/register/", response=AuthResponse)
-def register(request, data: UserRegistrationIn) -> AuthResponse:
+def register(request: HttpRequest, data: UserRegistrationIn) -> AuthResponse:
     if data.password != data.password_confirm:
         raise HttpError(400, "Password fields didn't match")
 
@@ -78,7 +79,7 @@ def register(request, data: UserRegistrationIn) -> AuthResponse:
 
 
 @router.post("/login/", response=AuthResponse)
-def login(request, data: UserLoginIn) -> AuthResponse:
+def login(request: HttpRequest, data: UserLoginIn) -> AuthResponse:
     user = authenticate(request, username=data.email, password=data.password)
 
     if not user:
@@ -101,20 +102,20 @@ def login(request, data: UserLoginIn) -> AuthResponse:
 
 
 @router.post("/logout/", response=MessageResponse, auth=TokenAuth())
-def logout(request) -> MessageResponse:
+def logout(request: HttpRequest) -> MessageResponse:
     if hasattr(request, "auth") and request.auth:
         delete_user_tokens(request.auth)
     return MessageResponse(message="Successfully logged out")
 
 
 @router.get("/me/", response=UserInfoResponse, auth=TokenAuth())
-def get_me(request) -> UserInfoResponse:
+def get_me(request: HttpRequest) -> UserInfoResponse:
     user = request.auth
     return UserInfoResponse(data=_user_to_schema(user))
 
 
 @router.patch("/me/", response=AuthResponse, auth=TokenAuth())
-def update_me(request, data: UserUpdateIn) -> AuthResponse:
+def update_me(request: HttpRequest, data: UserUpdateIn) -> AuthResponse:
     user = request.auth
 
     if data.first_name is not None:
@@ -130,7 +131,7 @@ def update_me(request, data: UserUpdateIn) -> AuthResponse:
 
 
 @router.post("/password-change/", response=MessageResponse, auth=TokenAuth())
-def password_change(request, data: PasswordChangeIn) -> MessageResponse:
+def password_change(request: HttpRequest, data: PasswordChangeIn) -> MessageResponse:
     user = request.auth
 
     if not user.check_password(data.current_password):
@@ -151,7 +152,7 @@ def password_change(request, data: PasswordChangeIn) -> MessageResponse:
 
 
 @router.post("/password-reset/", response=MessageResponse)
-def password_reset(request, data: PasswordResetIn) -> MessageResponse:
+def password_reset(request: HttpRequest, data: PasswordResetIn) -> MessageResponse:
     if data.new_password != data.new_password_confirm:
         raise HttpError(400, "Password fields didn't match")
 
