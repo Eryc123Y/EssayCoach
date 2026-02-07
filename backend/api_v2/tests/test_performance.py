@@ -61,14 +61,13 @@ def test_units_list_performance(create_test_data):
     """Benchmark units list endpoint performance."""
     from api_v2.core.views import list_units
     from django.http import HttpRequest
-    from api_v2.core.schemas import PaginationParams
+    from api_v2.core.schemas import UnitFilterParams
     
     # Create mock request
     request = HttpRequest()
     request.method = 'GET'
     
     # Warm up
-    from api_v2.core.schemas import UnitFilterParams
     filters = UnitFilterParams()
     list_units(request, filters)
     
@@ -93,15 +92,16 @@ def test_classes_list_performance(create_test_data):
     """Benchmark classes list endpoint performance."""
     from api_v2.core.views import list_classes
     from django.http import HttpRequest
-    from api_v2.core.schemas import PaginationParams
+    from api_v2.core.schemas import ClassFilterParams
     
     request = HttpRequest()
     request.method = 'GET'
     
-    params = PaginationParams(page=1, page_size=50)
+    # Create filter params (updated for FilterSchema)
+    filters = ClassFilterParams()
     
     # Warm up
-    list_classes(request, params)
+    list_classes(request, filters)
     
     # Benchmark
     start_time = time.time()
@@ -123,16 +123,19 @@ def test_rubrics_list_performance(create_test_data):
     """Benchmark rubrics list endpoint performance."""
     from api_v2.core.views import list_rubrics
     from django.http import HttpRequest
-    from api_v2.core.schemas import PaginationParams
+    from api_v2.core.schemas import RubricFilterParams
+    from unittest.mock import MagicMock
     
     request = HttpRequest()
     request.method = 'GET'
-    request.user = create_test_data['user']
+    # Mock auth attribute required by list_rubrics
+    request.auth = create_test_data['user']
     
-    params = PaginationParams(page=1, page_size=50)
+    # Create filter params (updated for FilterSchema)
+    filters = RubricFilterParams()
     
     # Warm up
-    list_rubrics(request, params)
+    list_rubrics(request, filters)
     
     # Benchmark
     start_time = time.time()
@@ -211,7 +214,7 @@ def test_pagination_performance(create_test_data):
     
     for _ in range(iterations):
         params = PaginationParams(page=1, page_size=50)
-        paginate(qs, params)  # pagination test
+        paginate(qs, params)
     
     elapsed = time.time() - start_time
     avg_time = elapsed / iterations * 1000
