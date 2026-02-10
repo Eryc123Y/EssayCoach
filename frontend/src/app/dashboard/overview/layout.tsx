@@ -10,11 +10,13 @@ import {
 import React from 'react';
 
 export default function OverViewLayout({
+  children,
   submissions,
   pie_stats,
   bar_stats,
   area_stats
 }: {
+  children: React.ReactNode;
   submissions: React.ReactNode;
   pie_stats: React.ReactNode;
   bar_stats: React.ReactNode;

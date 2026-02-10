@@ -62,7 +62,12 @@ export default function RubricsPage() {
       const response = await fetchRubricList();
       setRubrics(response.results);
     } catch (error: any) {
-      toast.error('Failed to load rubrics');
+      if (error.message?.includes('401') || error.message?.includes('Unauthorized')) {
+        toast.error('Please login to view rubrics');
+        router.push('/auth/sign-in');
+      } else {
+        toast.error('Failed to load rubrics: ' + (error.message || 'Unknown error'));
+      }
     } finally {
       setIsLoading(false);
     }
