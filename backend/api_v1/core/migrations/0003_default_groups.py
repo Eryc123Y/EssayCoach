@@ -2,9 +2,9 @@ from django.db import migrations, transaction
 
 
 def create_default_groups_and_map_roles(apps, schema_editor):
-    Group = apps.get_model('auth', 'Group')
+    Group = apps.get_model("auth", "Group")
     # Ensure default groups exist
-    role_names = ['admin', 'lecturer', 'student']
+    role_names = ["admin", "lecturer", "student"]
     name_to_id = {}
     for name in role_names:
         group, _ = Group.objects.get_or_create(name=name)
@@ -63,11 +63,10 @@ class Migration(migrations.Migration):
     # atomic transaction avoids leaving the connection in an aborted state.
     atomic = False
     dependencies = [
-        ('core', '0002_triggers'),
-        ('auth', '0012_alter_user_first_name_max_length'),
+        ("core", "0002_triggers"),
+        ("auth", "0012_alter_user_first_name_max_length"),
     ]
 
     operations = [
         migrations.RunPython(create_default_groups_and_map_roles, reverse_code=noop),
     ]
-

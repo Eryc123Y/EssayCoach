@@ -17,7 +17,7 @@ export async function GET(req: NextRequest) {
       process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000'
     ).replace('localhost', '127.0.0.1');
 
-    const response = await fetch(`${apiUrl}/api/v1/auth/me/`, {
+    const response = await fetch(`${apiUrl}/api/v2/auth/me/`, {
       method: 'GET',
       headers: {
         Authorization: `Token ${token}`,

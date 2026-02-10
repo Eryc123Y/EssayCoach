@@ -4,7 +4,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("core", "0006_widen_user_email_len"),
     ]
@@ -23,9 +22,7 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "class_size",
-                    models.SmallIntegerField(
-                        db_comment="current number of students in the class"
-                    ),
+                    models.SmallIntegerField(db_comment="current number of students in the class"),
                 ),
             ],
             options={
@@ -49,9 +46,7 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "enrollment_time",
-                    models.DateTimeField(
-                        db_comment="The time when the student is enrolled in the DBMS"
-                    ),
+                    models.DateTimeField(db_comment="The time when the student is enrolled in the DBMS"),
                 ),
             ],
             options={
@@ -120,9 +115,7 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "rubric_create_time",
-                    models.DateTimeField(
-                        db_comment="timestamp when the rubirc is created"
-                    ),
+                    models.DateTimeField(db_comment="timestamp when the rubirc is created"),
                 ),
                 (
                     "rubric_desc",
@@ -153,9 +146,7 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "rubric_item_name",
-                    models.CharField(
-                        db_comment="Title(header) name for the item", max_length=50
-                    ),
+                    models.CharField(db_comment="Title(header) name for the item", max_length=50),
                 ),
                 (
                     "rubric_item_weight",
@@ -216,9 +207,7 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "submission_txt",
-                    models.TextField(
-                        db_comment="complete content of the essay submission"
-                    ),
+                    models.TextField(db_comment="complete content of the essay submission"),
                 ),
             ],
             options={
@@ -240,9 +229,7 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "task_publish_datetime",
-                    models.DateTimeField(
-                        db_comment="time/date when the task is published"
-                    ),
+                    models.DateTimeField(db_comment="time/date when the task is published"),
                 ),
                 (
                     "task_due_datetime",
@@ -291,9 +278,7 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "unit_desc",
-                    models.TextField(
-                        blank=True, db_comment="details of the unit", null=True
-                    ),
+                    models.TextField(blank=True, db_comment="details of the unit", null=True),
                 ),
             ],
             options={
@@ -303,7 +288,7 @@ class Migration(migrations.Migration):
             },
         ),
         migrations.RunSQL(
-            sql=r'''
+            sql=r"""
             DO $$
             BEGIN
                 IF EXISTS (
@@ -314,7 +299,7 @@ class Migration(migrations.Migration):
                     COMMENT ON TABLE public."user" IS 'A table for all user entities, including student, teacher, and admins.';
                 END IF;
             END$$;
-            ''',
+            """,
             reverse_sql=migrations.RunSQL.noop,
         ),
     ]

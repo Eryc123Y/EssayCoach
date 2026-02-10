@@ -1,6 +1,6 @@
 from django.db import migrations
 
-SQL = r'''
+SQL = r"""
 DO $$
 DECLARE
     v_len integer;
@@ -28,15 +28,14 @@ BEGIN
         END IF;
     END IF;
 END$$;
-'''
+"""
 
 
 class Migration(migrations.Migration):
     dependencies = [
-        ('core', '0005_setup_permissions'),
+        ("core", "0005_setup_permissions"),
     ]
 
     operations = [
         migrations.RunSQL(SQL),
     ]
-

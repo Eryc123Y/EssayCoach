@@ -6,7 +6,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     initial = True
 
     dependencies = [
@@ -19,9 +18,7 @@ class Migration(migrations.Migration):
             fields=[
                 (
                     "last_login",
-                    models.DateTimeField(
-                        blank=True, null=True, verbose_name="last login"
-                    ),
+                    models.DateTimeField(blank=True, null=True, verbose_name="last login"),
                 ),
                 (
                     "is_superuser",
@@ -33,39 +30,27 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "user_id",
-                    models.AutoField(
-                        db_column="user_id", primary_key=True, serialize=False
-                    ),
+                    models.AutoField(db_column="user_id", primary_key=True, serialize=False),
                 ),
                 (
                     "user_email",
-                    models.EmailField(
-                        db_column="user_email", max_length=254, unique=True
-                    ),
+                    models.EmailField(db_column="user_email", max_length=254, unique=True),
                 ),
                 (
                     "user_fname",
-                    models.CharField(
-                        blank=True, db_column="user_fname", max_length=20, null=True
-                    ),
+                    models.CharField(blank=True, db_column="user_fname", max_length=20, null=True),
                 ),
                 (
                     "user_lname",
-                    models.CharField(
-                        blank=True, db_column="user_lname", max_length=20, null=True
-                    ),
+                    models.CharField(blank=True, db_column="user_lname", max_length=20, null=True),
                 ),
                 (
                     "user_role",
-                    models.CharField(
-                        blank=True, db_column="user_role", max_length=10, null=True
-                    ),
+                    models.CharField(blank=True, db_column="user_role", max_length=10, null=True),
                 ),
                 (
                     "user_status",
-                    models.CharField(
-                        blank=True, db_column="user_status", max_length=15, null=True
-                    ),
+                    models.CharField(blank=True, db_column="user_status", max_length=15, null=True),
                 ),
                 (
                     "password",
@@ -116,9 +101,7 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "class_size",
-                    models.SmallIntegerField(
-                        db_comment="current number of students in the class", default=0
-                    ),
+                    models.SmallIntegerField(db_comment="current number of students in the class", default=0),
                 ),
             ],
             options={
@@ -194,9 +177,7 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "rubric_item_name",
-                    models.CharField(
-                        db_comment="Title(header) name for the item", max_length=50
-                    ),
+                    models.CharField(db_comment="Title(header) name for the item", max_length=50),
                 ),
                 (
                     "rubric_item_weight",
@@ -239,9 +220,7 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "unit_desc",
-                    models.TextField(
-                        blank=True, db_comment="details of the unit", null=True
-                    ),
+                    models.TextField(blank=True, db_comment="details of the unit", null=True),
                 ),
             ],
             options={
@@ -342,15 +321,11 @@ class Migration(migrations.Migration):
                 ),
                 (
                     "submission_time",
-                    models.DateTimeField(
-                        auto_now_add=True, db_comment="time/date of submission"
-                    ),
+                    models.DateTimeField(auto_now_add=True, db_comment="time/date of submission"),
                 ),
                 (
                     "submission_txt",
-                    models.TextField(
-                        db_comment="complete content of the essay submission"
-                    ),
+                    models.TextField(db_comment="complete content of the essay submission"),
                 ),
                 (
                     "task_id_task",
@@ -549,9 +524,7 @@ class Migration(migrations.Migration):
         migrations.AddConstraint(
             model_name="task",
             constraint=models.CheckConstraint(
-                check=models.Q(
-                    ("task_publish_datetime__lt", models.F("task_due_datetime"))
-                ),
+                check=models.Q(("task_publish_datetime__lt", models.F("task_due_datetime"))),
                 name="task_publish_time_task_due_time_ck",
             ),
         ),
@@ -568,9 +541,7 @@ class Migration(migrations.Migration):
         ),
         migrations.AddConstraint(
             model_name="rubricitem",
-            constraint=models.CheckConstraint(
-                check=models.Q(("rubric_item_weight__gt", 0)), name="item_weight_ck"
-            ),
+            constraint=models.CheckConstraint(check=models.Q(("rubric_item_weight__gt", 0)), name="item_weight_ck"),
         ),
         migrations.AddConstraint(
             model_name="feedbackitem",
@@ -582,9 +553,7 @@ class Migration(migrations.Migration):
         migrations.AddConstraint(
             model_name="feedbackitem",
             constraint=models.CheckConstraint(
-                check=models.Q(
-                    ("feedback_item_source__in", ["ai", "human", "revised"])
-                ),
+                check=models.Q(("feedback_item_source__in", ["ai", "human", "revised"])),
                 name="feedback_item_source_ck",
             ),
         ),
@@ -597,9 +566,7 @@ class Migration(migrations.Migration):
         ),
         migrations.AddConstraint(
             model_name="class",
-            constraint=models.CheckConstraint(
-                check=models.Q(("class_size__gte", 0)), name="class_size_ck"
-            ),
+            constraint=models.CheckConstraint(check=models.Q(("class_size__gte", 0)), name="class_size_ck"),
         ),
         migrations.AddConstraint(
             model_name="user",
@@ -611,9 +578,7 @@ class Migration(migrations.Migration):
         migrations.AddConstraint(
             model_name="user",
             constraint=models.CheckConstraint(
-                check=models.Q(
-                    ("user_status__in", ["active", "suspended", "unregistered"])
-                ),
+                check=models.Q(("user_status__in", ["active", "suspended", "unregistered"])),
                 name="user_status_ck",
             ),
         ),

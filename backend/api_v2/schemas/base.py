@@ -22,9 +22,7 @@ class TimestampSchema(Schema):
     """
 
     created_at: datetime = Field(..., description="Timestamp when the record was created")
-    updated_at: datetime | None = Field(
-        None, description="Timestamp when the record was last updated"
-    )
+    updated_at: datetime | None = Field(None, description="Timestamp when the record was last updated")
 
 
 class ErrorResponse(Schema):
@@ -42,9 +40,7 @@ class ErrorDetail(Schema):
 
     code: str = Field(..., description="Machine-readable error code")
     message: str = Field(..., description="Human-readable error message")
-    details: dict[str, Any] | None = Field(
-        None, description="Additional error details (validation errors, etc.)"
-    )
+    details: dict[str, Any] | None = Field(None, description="Additional error details (validation errors, etc.)")
 
 
 class SuccessResponse(Schema):
@@ -102,9 +98,7 @@ class BaseFilterSchema(Schema):
             search: str | None = None
     """
 
-    ordering: str | None = Field(
-        None, description="Field to order by (prefix with - for descending)"
-    )
+    ordering: str | None = Field(None, description="Field to order by (prefix with - for descending)")
 
 
 # Common field type aliases for consistency

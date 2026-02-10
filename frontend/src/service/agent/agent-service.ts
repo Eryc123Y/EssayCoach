@@ -84,7 +84,7 @@ export interface AgentService {
 // === Dify Service Implementation ===
 
 class DifyService implements AgentService {
-  private baseUrl = '/api/v1/ai-feedback';
+  private baseUrl = '/api/v2/ai-feedback';
 
   async analyzeEssay(input: EssayAnalysisInput): Promise<WorkflowRunResponse> {
     const response = await request<WorkflowRunResponse>({

@@ -28,10 +28,7 @@ os.environ.setdefault("DJANGO_SETTINGS_MODULE", "essay_coach.settings")
 # Setup Django
 django.setup()
 
-if (
-    not settings.SILICONFLOW_API_KEY
-    or settings.SILICONFLOW_API_KEY == "your-siliconflow-api-key-here"
-):
+if not settings.SILICONFLOW_API_KEY or settings.SILICONFLOW_API_KEY == "your-siliconflow-api-key-here":
     pytest.skip("SILICONFLOW_API_KEY not configured", allow_module_level=True)
 
 
@@ -49,9 +46,7 @@ def _run_pdf_extraction() -> bool:
         with open(pdf_path, "rb") as f:
             pdf_content = f.read()
 
-        uploaded_file = SimpleUploadedFile(
-            "rubric.pdf", pdf_content, content_type="application/pdf"
-        )
+        uploaded_file = SimpleUploadedFile("rubric.pdf", pdf_content, content_type="application/pdf")
 
         parser = SiliconFlowRubricParser()
         text = parser.extract_text_from_pdf(uploaded_file)

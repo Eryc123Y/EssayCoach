@@ -2,14 +2,13 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('core', '0001_initial'),
+        ("core", "0001_initial"),
     ]
 
     operations = [
         migrations.RunSQL(
-            sql=r'''
+            sql=r"""
             CREATE OR REPLACE FUNCTION public.increase_class_size ()
                 RETURNS trigger
                 LANGUAGE plpgsql
@@ -57,13 +56,12 @@ class Migration(migrations.Migration):
                 ON public.enrollment
                 FOR EACH ROW
                 EXECUTE PROCEDURE public.decrease_class_size();
-            ''',
-            reverse_sql=r'''
+            """,
+            reverse_sql=r"""
             DROP TRIGGER IF EXISTS trg_increment_class_size ON public.enrollment;
             DROP TRIGGER IF EXISTS trg_decrement_class_size ON public.enrollment;
             DROP FUNCTION IF EXISTS public.increase_class_size();
             DROP FUNCTION IF EXISTS public.decrease_class_size();
-            '''
+            """,
         ),
     ]
-

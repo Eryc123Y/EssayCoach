@@ -4,7 +4,6 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("core", "0007_class_enrollment_feedback_feedbackitem_markingrubric_and_more"),
     ]

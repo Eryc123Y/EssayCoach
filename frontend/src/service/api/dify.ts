@@ -10,7 +10,7 @@ import type {
  */
 export function fetchDifyWorkflowRun(data: DifyWorkflowRunRequest) {
   return request<DifyWorkflowRunResponse>({
-    url: '/api/v1/ai-feedback/agent/workflows/run/',
+    url: '/api/v2/ai-feedback/agent/workflows/run/',
     method: 'post',
     data
   });
@@ -21,6 +21,6 @@ export function fetchDifyWorkflowRun(data: DifyWorkflowRunRequest) {
  */
 export function fetchWorkflowStatus(workflowRunId: string) {
   return request<DifyWorkflowStatus>({
-    url: `/api/v1/ai-feedback/agent/workflows/run/${workflowRunId}/status/`
+    url: `/api/v2/ai-feedback/agent/workflows/run/${workflowRunId}/status/`
   });
 }

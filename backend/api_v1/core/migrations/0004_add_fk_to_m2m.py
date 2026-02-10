@@ -1,6 +1,6 @@
 from django.db import migrations
 
-ADD_FKS_SQL = r'''
+ADD_FKS_SQL = r"""
 DO $$
 BEGIN
     -- Only proceed if tables exist
@@ -32,10 +32,10 @@ BEGIN
         END IF;
     END IF;
 END$$;
-'''
+"""
 
 
-DROP_FKS_SQL = r'''
+DROP_FKS_SQL = r"""
 DO $$
 BEGIN
     IF EXISTS (SELECT FROM information_schema.tables WHERE table_name = 'core_user_groups') THEN
@@ -56,16 +56,15 @@ BEGIN
         END IF;
     END IF;
 END$$;
-'''
+"""
 
 
 class Migration(migrations.Migration):
     dependencies = [
-        ('core', '0003_default_groups'),
-        ('auth', '0012_alter_user_first_name_max_length'),
+        ("core", "0003_default_groups"),
+        ("auth", "0012_alter_user_first_name_max_length"),
     ]
 
     operations = [
         migrations.RunSQL(ADD_FKS_SQL, reverse_sql=DROP_FKS_SQL),
     ]
-

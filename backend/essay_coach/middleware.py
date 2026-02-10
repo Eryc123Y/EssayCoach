@@ -26,8 +26,8 @@ class PostSlashRedirectMiddleware:
     # Paths that should be handled with trailing slash redirects
     # These are the API endpoints that commonly receive POST requests
     POST_SLASH_PATHS = [
-        '/api/v1/ai-feedback/agent/workflows/run',
-        '/api/v1/ai-feedback/agent/workflows/run/',
+        "/api/v1/ai-feedback/agent/workflows/run",
+        "/api/v1/ai-feedback/agent/workflows/run/",
     ]
 
     def __init__(self, get_response):
@@ -36,7 +36,7 @@ class PostSlashRedirectMiddleware:
 
     def __call__(self, request):
         # Only process POST requests
-        if request.method != 'POST':
+        if request.method != "POST":
             return self.get_response(request)
 
         path = request.path
@@ -44,10 +44,10 @@ class PostSlashRedirectMiddleware:
         # Check if this path should have a trailing slash
         if path in self.POST_SLASH_PATHS:
             # Check if the path doesn't end with a slash
-            if not path.endswith('/'):
+            if not path.endswith("/"):
                 # Redirect to the same path with trailing slash
                 # Use 307 to preserve POST method and body
-                redirect_path = path + '/'
+                redirect_path = path + "/"
                 return HttpResponseRedirect(redirect_path, status=307)
 
         return self.get_response(request)

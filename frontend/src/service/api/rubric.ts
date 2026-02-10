@@ -69,7 +69,7 @@ export function uploadRubricPDF(
   }
 
   return request<RubricImportResponse>({
-    url: '/api/v1/core/rubrics/import_from_pdf_with_ai/',
+    url: '/api/v2/core/rubrics/import_from_pdf_with_ai/',
     method: 'POST',
     data: formData
   });
@@ -83,7 +83,7 @@ export function fetchRubricList(params?: {
   page_size?: number;
 }): Promise<RubricListResponse> {
   return request<RubricListResponse>({
-    url: '/api/v1/core/rubrics/',
+    url: '/api/v2/core/rubrics/',
     method: 'GET',
     params
   });
@@ -94,7 +94,7 @@ export function fetchRubricList(params?: {
  */
 export function fetchRubricDetail(rubricId: number): Promise<RubricDetail> {
   return request<RubricDetail>({
-    url: `/api/v1/core/rubrics/${rubricId}/detail_with_items/`,
+    url: `/api/v2/core/rubrics/${rubricId}/detail/`,
     method: 'GET'
   }).then((data) => {
     data.rubric_items = data.rubric_items ?? [];
@@ -110,7 +110,7 @@ export function fetchRubricDetail(rubricId: number): Promise<RubricDetail> {
  */
 export function deleteRubric(rubricId: number): Promise<void> {
   return request<void>({
-    url: `/api/v1/core/rubrics/${rubricId}/`,
+    url: `/api/v2/core/rubrics/${rubricId}/`,
     method: 'DELETE'
   });
 }

@@ -42,34 +42,41 @@ from .models import (
 class CustomUserAdmin(BaseUserAdmin):
     # Fields to display in the admin interface.
     fieldsets = (
-        (None, {'fields': ('user_email', 'password')}),
-        (_('Personal info'), {'fields': ('user_fname', 'user_lname', 'user_role', 'user_status')}),
-        (_('Permissions'), {
-            'fields': ('is_active', 'is_staff', 'is_superuser', 'groups', 'user_permissions'),
-        }),
-        (_('Important dates'), {'fields': ('last_login', 'date_joined')}),
+        (None, {"fields": ("user_email", "password")}),
+        (_("Personal info"), {"fields": ("user_fname", "user_lname", "user_role", "user_status")}),
+        (
+            _("Permissions"),
+            {
+                "fields": ("is_active", "is_staff", "is_superuser", "groups", "user_permissions"),
+            },
+        ),
+        (_("Important dates"), {"fields": ("last_login", "date_joined")}),
     )
 
     # Fields to add when create a new user.
     add_fieldsets = (
-        (None, {
-            'classes': ('wide',),
-            'fields': ('user_email', 'password1', 'password2'),
-        }),
+        (
+            None,
+            {
+                "classes": ("wide",),
+                "fields": ("user_email", "password1", "password2"),
+            },
+        ),
     )
 
     # To display in the admin interface.
-    list_display = ('user_email', 'user_fname', 'user_lname', 'user_role', 'user_status', 'is_staff')
-    list_filter = ('is_staff', 'is_superuser', 'is_active', 'user_role', 'user_status')
+    list_display = ("user_email", "user_fname", "user_lname", "user_role", "user_status", "is_staff")
+    list_filter = ("is_staff", "is_superuser", "is_active", "user_role", "user_status")
 
     # Searching field.
-    search_fields = ('user_email', 'user_fname', 'user_lname')
+    search_fields = ("user_email", "user_fname", "user_lname")
 
     # Ordering of the user list.
-    ordering = ('user_email',)
+    ordering = ("user_email",)
 
     # To display the user groups and permissions in a horizontal filter.
-    filter_horizontal = ('groups', 'user_permissions')
+    filter_horizontal = ("groups", "user_permissions")
+
 
 # Register your models here.
 admin.site.register(User, CustomUserAdmin)

@@ -14,9 +14,7 @@ from api_v1.core.rubric_manager import RubricImportError, RubricManager
 @pytest.fixture
 def teacher(db):
     """Fixture for a teacher user."""
-    return User.objects.create_user(
-        user_email="teacher@example.com", password="password123", user_role="lecturer"
-    )
+    return User.objects.create_user(user_email="teacher@example.com", password="password123", user_role="lecturer")
 
 
 @pytest.fixture
@@ -128,19 +126,12 @@ class TestRubricManager:
         assert item_arg.rubric_item_weight == Decimal("60.0")
 
         # Check levels (RubricLevelDescs)
-        assert (
-            RubricLevelDesc.objects.filter(rubric_item_id_rubric_item=item_arg).count()
-            == 2
-        )
-        level_poor = RubricLevelDesc.objects.get(
-            rubric_item_id_rubric_item=item_arg, level_min_score=0
-        )
+        assert RubricLevelDesc.objects.filter(rubric_item_id_rubric_item=item_arg).count() == 2
+        level_poor = RubricLevelDesc.objects.get(rubric_item_id_rubric_item=item_arg, level_min_score=0)
         assert level_poor.level_max_score == 30
         assert "Poor" in level_poor.level_desc
 
-    def test_create_rubric_in_db_rollback_on_error(
-        self, manager, teacher, valid_rubric_data
-    ):
+    def test_create_rubric_in_db_rollback_on_error(self, manager, teacher, valid_rubric_data):
         """Test that transaction rolls back if an error occurs during save."""
         # Force an error by providing invalid data that passes validation but fails DB save
         # (e.g. name too long)
@@ -184,9 +175,7 @@ class TestRubricManager:
     def test_generate_rubric_text(self, manager, teacher):
         """Test rubric text generation for AI prompt."""
         # Create a sample rubric
-        rubric = MarkingRubric.objects.create(
-            user_id_user=teacher, rubric_desc="Test Rubric"
-        )
+        rubric = MarkingRubric.objects.create(user_id_user=teacher, rubric_desc="Test Rubric")
         item = RubricItem.objects.create(
             rubric_id_marking_rubric=rubric,
             rubric_item_name="Grammar",

@@ -47,6 +47,7 @@ This documentation is organized for developers and contributors:
 - **Database Schema**: Complete database design with relationships and constraints
 - **Backend Deep Dive**: Django models, serializers, views, and async processing
 - **Frontend Architecture**: Next.js component structure and state management
+- **Performance Optimization**: [Frontend Performance Guide](frontend/performance-optimization.md) - Vercel React best practices applied
 - **Agentic Workflow**: Plans for agentic design, orchestration, and technique stacks
 - **Project Planning**: Roadmaps, architecture tasks, and development plans
 - **Development Guide**: Setup instructions and contribution guidelines

@@ -1,13 +1,18 @@
 from __future__ import annotations
 
+import hashlib
 import json
+import logging
 import os
+import tempfile
 from pathlib import Path
 from typing import Any
 
 import requests
 
 from api_v1.core.models import MarkingRubric, RubricItem
+
+logger = logging.getLogger(__name__)
 
 
 class DifyClientError(Exception):
@@ -43,8 +48,6 @@ class DifyClient:
         user: str,
         file_type: str = "PDF",
     ) -> str:
-        import hashlib
-
         # Use hash of content + user for the cache key
         file_hash = hashlib.md5(file_path.read_bytes()).hexdigest()
         cache_key = f"{user}:{file_hash}"
@@ -118,8 +121,6 @@ class DifyClient:
 
     def upload_rubric_content(self, content: str, filename: str, user: str) -> str:
         """Upload rubric content as a temporary file."""
-        import tempfile
-
         with tempfile.NamedTemporaryFile(mode="w+", suffix=".txt", delete=False) as temp:
             temp.write(content)
             temp_path = Path(temp.name)
@@ -145,14 +146,13 @@ class DifyClient:
             DifyClientError: If rubric data cannot be retrieved or built
         """
         # Build rubric structure from database
-        rubric_items = RubricItem.objects.filter(
-            rubric_id_marking_rubric=rubric.rubric_id
-        ).prefetch_related("level_descriptions")
+        rubric_items = RubricItem.objects.filter(rubric_id_marking_rubric=rubric.rubric_id).prefetch_related(
+            "level_descriptions"
+        )
 
         if not rubric_items.exists():
             raise DifyClientError(
-                f"No rubric items found for rubric ID {rubric.rubric_id}. "
-                "This rubric may be empty or corrupted."
+                f"No rubric items found for rubric ID {rubric.rubric_id}. This rubric may be empty or corrupted."
             )
 
         dimensions = []
@@ -176,19 +176,18 @@ class DifyClient:
                 }
             )
 
-        rubric_text = f"""
-Rubric: {rubric.rubric_desc}
-
-Evaluation Criteria:
-"""
+        rubric_text_lines = [
+            f"Rubric: {rubric.rubric_desc}",
+            "",
+            "Evaluation Criteria:",
+        ]
 
         for dim in dimensions:
-            rubric_text += f"\n{dim['name']} ({dim['weight']}%)\n"
+            rubric_text_lines.append(f"\n{dim['name']} ({dim['weight']}%)")
             for level in dim["levels"]:
-                rubric_text += f"  - {level['score_range']} pts: {level['name']}\n"
+                rubric_text_lines.append(f"  - {level['score_range']} pts: {level['name']}")
 
-        # Upload as a temporary text file
-        import tempfile
+        rubric_text = "\n".join(rubric_text_lines)
 
         with tempfile.NamedTemporaryFile(
             mode="w+", suffix=".txt", delete=False, prefix=f"rubric_{rubric.rubric_id}_"
@@ -198,16 +197,16 @@ Evaluation Criteria:
 
         try:
             upload_id = self.upload_file(temp_path, user)
-            print(f"DEBUG: Rubric uploaded with ID: {upload_id}")
+            logger.debug(f"Rubric uploaded with ID: {upload_id}")
 
-            # Return the Dify file input structure
+            # Return Dify file input structure
             return {
                 "transfer_method": "local_file",
                 "upload_file_id": upload_id,
                 "type": "document",
             }
         except Exception as e:
-            print(f"ERROR: Failed to upload rubric: {e}")
+            logger.error(f"Failed to upload rubric: {e}")
             raise DifyClientError(f"Failed to build rubric from database: {e}")
         finally:
             if temp_path.exists():
@@ -229,11 +228,7 @@ Evaluation Criteria:
         """
         # If no rubric_id provided, find first available rubric for user
         if rubric_id is None:
-            rubric = (
-                MarkingRubric.objects.filter(user_id_user=user)
-                .order_by("-rubric_create_time")
-                .first()
-            )
+            rubric = MarkingRubric.objects.filter(user_id_user=user).order_by("-rubric_create_time").first()
 
             if not rubric:
                 raise DifyClientError(
@@ -242,7 +237,7 @@ Evaluation Criteria:
                     "Go to Rubric Library → Upload Rubric → Return to submit essay."
                 )
 
-            print(f"DEBUG: Using first available rubric ID: {rubric.rubric_id}")
+            logger.debug(f"Using first available rubric ID: {rubric.rubric_id}")
             # Pass the MarkingRubric object, not the ID
             return self.build_rubric_from_database(rubric, user)
 
@@ -251,10 +246,9 @@ Evaluation Criteria:
             rubric = MarkingRubric.objects.get(rubric_id=rubric_id)
         except MarkingRubric.DoesNotExist:
             raise DifyClientError(
-                f"Rubric with ID {rubric_id} not found in your library. "
-                "Please select a valid rubric from the dropdown."
+                f"Rubric with ID {rubric_id} not found in your library. Please select a valid rubric from dropdown."
             )
 
-        print(f"DEBUG: Using provided rubric ID: {rubric_id}")
+        logger.debug(f"Using provided rubric ID: {rubric_id}")
         # Pass the MarkingRubric object, not the ID
         return self.build_rubric_from_database(rubric, user)

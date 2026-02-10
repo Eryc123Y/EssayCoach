@@ -1,8 +1,8 @@
 from __future__ import annotations
 
 from django.conf import settings
+from django.http import HttpRequest
 from ninja import Router
-
 from ninja.errors import HttpError
 from ninja.files import UploadedFile
 
@@ -21,8 +21,6 @@ from api_v1.core.models import (
     User,
 )
 from api_v1.core.models import RubricLevelDesc as RubricLevelDescModel
-
-from django.http import HttpRequest
 
 from ..utils.auth import TokenAuth
 from .schemas import (
@@ -58,7 +56,6 @@ from .schemas import (
     TaskFilterParams,
     TaskIn,
     TaskOut,
-    TeachingAssnFilterParams,
     TeachingAssnIn,
     TeachingAssnOut,
     UnitFilterParams,
