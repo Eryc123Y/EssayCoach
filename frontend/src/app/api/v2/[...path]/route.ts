@@ -17,7 +17,7 @@ async function proxy(
   headers.set('Host', '127.0.0.1:8000');
 
   if (token) {
-    headers.set('Authorization', `Token ${token}`);
+    headers.set('Authorization', `Bearer ${token}`);
   }
 
   const hasBody = !['GET', 'HEAD'].includes(req.method);
