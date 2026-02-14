@@ -47,27 +47,32 @@ const salesData = [
 
 export function RecentSales() {
   return (
-    <Card className='h-full'>
-      <CardHeader>
-        <CardTitle>Recent Sales</CardTitle>
-        <CardDescription>You made 265 sales this month.</CardDescription>
+    <Card className='h-full border-0 shadow-sm'>
+      <CardHeader className='pb-4'>
+        <CardTitle className='text-lg font-semibold'>Recent Sales</CardTitle>
+        <CardDescription className='text-sm text-muted-foreground'>
+          You made 265 sales this month.
+        </CardDescription>
       </CardHeader>
-      <CardContent>
-        <div className='space-y-8'>
-          {salesData.map((sale, index) => (
-            <div key={index} className='flex items-center'>
-              <Avatar className='h-9 w-9'>
-                <AvatarImage src={sale.avatar} alt='Avatar' />
-                <AvatarFallback>{sale.fallback}</AvatarFallback>
-              </Avatar>
-              <div className='ml-4 space-y-1'>
-                <p className='text-sm leading-none font-medium'>{sale.name}</p>
-                <p className='text-muted-foreground text-sm'>{sale.email}</p>
-              </div>
-              <div className='ml-auto font-medium'>{sale.amount}</div>
+      <CardContent className='grid gap-4'>
+        {salesData.map((sale, index) => (
+          <div
+            key={index}
+            className='flex items-center gap-4 rounded-lg p-2 -mx-2 transition-colors hover:bg-muted/50'
+          >
+            <Avatar className='h-10 w-10 ring-2 ring-background shadow-sm'>
+              <AvatarImage src={sale.avatar} alt={sale.name} />
+              <AvatarFallback className='bg-primary/10 text-primary font-medium'>
+                {sale.fallback}
+              </AvatarFallback>
+            </Avatar>
+            <div className='flex-1 min-w-0'>
+              <p className='text-sm font-medium leading-none truncate'>{sale.name}</p>
+              <p className='text-sm text-muted-foreground truncate mt-1'>{sale.email}</p>
             </div>
-          ))}
-        </div>
+            <div className='text-sm font-semibold text-emerald-600'>{sale.amount}</div>
+          </div>
+        ))}
       </CardContent>
     </Card>
   );

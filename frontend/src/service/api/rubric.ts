@@ -77,12 +77,13 @@ export function uploadRubricPDF(
 
 /**
  * Get list of all rubrics
+ * Note: Backend returns plain array, not paginated response
  */
 export function fetchRubricList(params?: {
   page?: number;
   page_size?: number;
-}): Promise<RubricListResponse> {
-  return request<RubricListResponse>({
+}): Promise<RubricListItem[]> {
+  return request<RubricListItem[]>({
     url: '/api/v2/core/rubrics/',
     method: 'GET',
     params

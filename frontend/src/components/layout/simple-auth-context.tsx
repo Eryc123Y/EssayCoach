@@ -95,9 +95,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // Get token from cookie
         const token = readCookie('access_token');
 
-        const response = await fetch('/api/v1/core/users/me/classes/', {
+        const response = await fetch('/api/v2/core/users/me/classes/', {
           headers: {
-            Authorization: `Token ${token}`
+            Authorization: `Bearer ${token}`
           }
         });
 
@@ -147,7 +147,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       currentClass,
       setCurrentClass: (classId: number) => setCurrentClassId(classId),
       logout: async () => {
-        await fetch('/api/auth/logout', { method: 'POST' });
+        await fetch('/api/v2/auth/logout', { method: 'POST' });
         if (typeof window !== 'undefined')
           window.location.href = '/auth/sign-in';
       }

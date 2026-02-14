@@ -60,7 +60,7 @@ export default function RubricsPage() {
     setIsLoading(true);
     try {
       const response = await fetchRubricList();
-      setRubrics(response.results);
+      setRubrics(response);
     } catch (error: any) {
       if (error.message?.includes('401') || error.message?.includes('Unauthorized')) {
         toast.error('Please login to view rubrics');

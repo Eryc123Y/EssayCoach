@@ -14,13 +14,15 @@ export default function OverViewLayout({
   submissions,
   pie_stats,
   bar_stats,
-  area_stats
+  area_stats,
+  sales,
 }: {
   children: React.ReactNode;
   submissions: React.ReactNode;
   pie_stats: React.ReactNode;
   bar_stats: React.ReactNode;
   area_stats: React.ReactNode;
+  sales: React.ReactNode;
 }) {
   return (
     <PageContainer>
@@ -92,6 +94,7 @@ export default function OverViewLayout({
           <div className='col-span-4 md:col-span-3'>{submissions}</div>
           <div className='col-span-4'>{area_stats}</div>
           <div className='col-span-4 md:col-span-3'>{pie_stats}</div>
+          <div className='col-span-4 md:col-span-3'>{sales}</div>
         </div>
       </div>
     </PageContainer>

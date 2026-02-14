@@ -54,33 +54,15 @@ export default function AppSidebar() {
   // Filter nav items based on user role
   const filteredNavItems = React.useMemo(() => {
     if (!user) {
-      console.log('[Sidebar Debug] No user found, returning empty nav items');
       return [];
     }
 
-    console.log('[Sidebar Debug] User found:', JSON.stringify(user));
-    console.log('[Sidebar Debug] User role:', user.role);
-
-    const result = navItems.filter((item) => {
+    return navItems.filter((item) => {
       if (!item.roles) {
-        console.log(
-          `[Sidebar Debug] ${item.title}: No role restriction, visible`
-        );
-        return true; // No role restriction, visible to all
+        return true;
       }
-
-      const isVisible = item.roles.includes(user.role);
-      console.log(
-        `[Sidebar Debug] ${item.title}: Roles=${JSON.stringify(item.roles)}, UserRole=${user.role}, Visible=${isVisible}`
-      );
-      return isVisible;
+      return item.roles.includes(user.role);
     });
-
-    console.log(
-      '[Sidebar Debug] Filtered nav items:',
-      result.map((i) => i.title)
-    );
-    return result;
   }, [user]);
 
   return (
