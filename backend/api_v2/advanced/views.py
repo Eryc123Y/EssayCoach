@@ -14,7 +14,7 @@ from django.db import transaction
 from ninja import Router
 from ninja.errors import HttpError
 
-from api_v1.core.models import (
+from core.models import (
     Class,
     Enrollment,
     MarkingRubric,

@@ -59,10 +59,8 @@ INSTALLED_APPS = [
     "django_filters",
     "drf_spectacular",  # OpenAPI 3.0 schema generation
     "django_extensions",  # Management commands including graph_models for ERD
-    # Custom Apps - API v1 (DRF)
-    "api_v1.core",
-    "api_v1.auth",
-    "api_v1.ai_feedback",
+    # Custom Apps - API v2 (Ninja)
+    "core",
 ]
 
 MIDDLEWARE = [

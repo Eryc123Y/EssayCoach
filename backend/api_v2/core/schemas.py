@@ -8,7 +8,7 @@ from ninja import FilterLookup, FilterSchema, Schema  # FieldLookup replaces Fie
 from ninja.orm import ModelSchema
 from pydantic import Field
 
-from api_v1.core.models import (
+from core.models import (
     Class,
     Enrollment,
     Feedback,

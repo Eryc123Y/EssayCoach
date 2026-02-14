@@ -12,8 +12,8 @@ from django.http import HttpRequest
 from ninja import Router
 from ninja.errors import HttpError
 
-from api_v1.ai_feedback.dify_client import DifyClient
-from api_v1.ai_feedback.exceptions import (
+from ai_feedback.dify_client import DifyClient
+from ai_feedback.exceptions import (
     APIServerError,
     APITimeoutError,
     ConfigurationError,
@@ -21,7 +21,7 @@ from api_v1.ai_feedback.exceptions import (
     RubricError,
     WorkflowError,
 )
-from api_v1.ai_feedback.interfaces import ResponseMode, WorkflowInput
+from ai_feedback.interfaces import ResponseMode, WorkflowInput
 
 from ..utils.auth import TokenAuth
 from .schemas import (

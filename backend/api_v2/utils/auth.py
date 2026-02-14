@@ -14,7 +14,7 @@ from ninja.security import HttpBearer
 from rest_framework.authtoken.models import Token
 
 if TYPE_CHECKING:
-    from api_v1.core.models import User
+    from core.models import User
 else:
     User = get_user_model()
 

@@ -50,7 +50,7 @@ def test_auth_register_endpoint():
 
 @pytest.mark.django_db
 def test_auth_login_endpoint():
-    from api_v1.core.models import User
+    from core.models import User
 
     User.objects.create_user(
         user_email="testlogin@example.com",
@@ -143,7 +143,7 @@ def test_pagination_params_validation():
 @pytest.mark.django_db
 def test_unit_crud_workflow():
     """Test Unit CRUD operations with authenticated user."""
-    from api_v1.core.models import User
+    from core.models import User
 
     _ = User.objects.create_user(
         user_email="admin@example.com",

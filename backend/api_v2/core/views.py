@@ -6,7 +6,7 @@ from ninja import Router
 from ninja.errors import HttpError
 from ninja.files import UploadedFile
 
-from api_v1.core.models import (
+from core.models import (
     Class,
     Enrollment,
     Feedback,
@@ -20,7 +20,7 @@ from api_v1.core.models import (
     Unit,
     User,
 )
-from api_v1.core.models import RubricLevelDesc as RubricLevelDescModel
+from core.models import RubricLevelDesc as RubricLevelDescModel
 
 from ..utils.auth import TokenAuth
 from .schemas import (
@@ -103,6 +103,11 @@ def create_user(request: HttpRequest, data: UserIn):
         is_staff=data.is_staff,
     )
     return user
+
+
+@router.get("/users/me/", response=UserOut)
+def get_current_user(request: HttpRequest):
+    return request.auth
 
 
 @router.get("/users/{user_id}/", response=UserOut)
@@ -291,8 +296,8 @@ def create_rubric(request: HttpRequest, data: MarkingRubricIn):
 
 @router.post("/rubrics/import_from_pdf_with_ai/", response=RubricImportOut)
 def import_rubric_from_pdf_with_ai(request: HttpRequest, file: UploadedFile, rubric_name: str | None = None):
-    from api_v1.ai_feedback.rubric_parser import RubricParseError, SiliconFlowRubricParser
-    from api_v1.core.rubric_manager import RubricImportError, RubricManager
+    from ai_feedback.rubric_parser import RubricParseError, SiliconFlowRubricParser
+    from core.rubric_manager import RubricImportError, RubricManager
 
     if not file:
         raise HttpError(400, "PDF file is required")

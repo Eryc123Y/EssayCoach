@@ -7,7 +7,7 @@ import time
 
 import pytest
 
-from api_v1.core.models import Class, MarkingRubric, Unit, User
+from core.models import Class, MarkingRubric, Unit, User
 
 
 @pytest.fixture
@@ -158,7 +158,7 @@ def test_rubrics_list_performance(create_test_data):
 @pytest.mark.django_db
 def test_filter_performance(create_test_data):
     """Benchmark filter functionality performance."""
-    from api_v1.core.models import Unit
+    from core.models import Unit
     from api_v2.core.schemas import UnitFilterParams
 
     # Create filter params
@@ -183,7 +183,7 @@ def test_filter_performance(create_test_data):
 @pytest.mark.django_db
 def test_modelschema_serialization_performance(create_test_data):
     """Benchmark ModelSchema serialization performance."""
-    from api_v1.core.models import Unit
+    from core.models import Unit
     from api_v2.core.schemas import UnitOut
 
     units = Unit.objects.all()[:50]
@@ -206,7 +206,7 @@ def test_modelschema_serialization_performance(create_test_data):
 @pytest.mark.django_db
 def test_pagination_performance(create_test_data):
     """Benchmark pagination performance."""
-    from api_v1.core.models import Unit
+    from core.models import Unit
     from api_v2.core.schemas import PaginationParams
     from api_v2.core.views import paginate
 

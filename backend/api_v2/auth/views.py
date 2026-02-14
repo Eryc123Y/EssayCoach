@@ -9,7 +9,7 @@ from django.http import HttpRequest
 from ninja import Router
 from ninja.errors import HttpError
 
-from api_v1.core.models import User
+from core.models import User
 
 from ..utils.auth import TokenAuth, delete_user_tokens, get_or_create_token
 from .schemas import (
