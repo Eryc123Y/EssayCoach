@@ -12,7 +12,7 @@ from ninja.errors import HttpError
 from core.models import User
 
 from ..utils.auth import TokenAuth, delete_user_tokens, get_or_create_token
-from ..utils.jwt_auth import create_jwt_pair, refresh_jwt_token, blacklist_jwt_token
+from ..utils.jwt_auth import JWTAuth, blacklist_jwt_token, create_jwt_pair, refresh_jwt_token
 from .schemas import (
     AuthResponse,
     AuthResponseWithRefresh,
@@ -114,6 +114,13 @@ def logout(request: HttpRequest) -> MessageResponse:
 
 @router.get("/me/", response=UserInfoResponse, auth=TokenAuth())
 def get_me(request: HttpRequest) -> UserInfoResponse:
+    user = request.auth
+    return UserInfoResponse(data=_user_to_schema(user))
+
+
+@router.get("/me/jwt/", response=UserInfoResponse, auth=JWTAuth())
+def get_me_jwt(request: HttpRequest) -> UserInfoResponse:
+    """Get current user info using JWT authentication."""
     user = request.auth
     return UserInfoResponse(data=_user_to_schema(user))
 

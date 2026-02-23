@@ -808,7 +808,7 @@ def test_access_protected_resource_with_jwt():
 
     # Access protected endpoint with JWT token
     client.defaults["HTTP_AUTHORIZATION"] = f"Bearer {access_token}"
-    response = client.get("/api/v2/auth/me/")
+    response = client.get("/api/v2/auth/me/jwt/")
 
     assert response.status_code == 200
     data = response.json()
