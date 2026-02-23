@@ -13,7 +13,7 @@ from typing import TYPE_CHECKING
 
 import jwt
 from django.conf import settings
-from rest_framework_simplejwt.tokens import RefreshToken, TokenError
+from ninja.security import HttpBearer
 
 if TYPE_CHECKING:
     from core.models import User
@@ -265,13 +265,13 @@ class JWTAuth:
     def __init__(self, bearer: bool = True):
         self.bearer = bearer
 
-    def authenticate(self, request, token: str) -> User | None:
+    def __call__(self, request, token: str) -> User | None:
         """
         Authenticate using JWT.
 
         Args:
             request: Django request object
-            token: The JWT token string
+            token: The JWT token string (from Bearer header)
 
         Returns:
             User instance if valid, None otherwise
