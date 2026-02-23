@@ -419,9 +419,27 @@ When updating CLAUDE.md:
 | Task model missing 8 fields (title, description, instructions, status, etc.) | Blocks PRD-09 | ~6h + migration |
 | Class model missing 9 fields (class_code, name, description, status, etc.) | Blocks PRD-10 | ~6h + migration |
 | Users CRUD no RBAC | Security risk | ~4h |
-| Cookie httpOnly=false | Security risk | ~1h |
+| Cookie httpOnly=false | Security risk | ~1h (✅ Fixed 2026-02-24) |
 | RevisionChat uses mock data | UX incomplete | ~8h |
-| Navigation links to 404 pages | UX broken | ~2h |
+| Navigation links to 404 pages | UX broken | ~2h (✅ Fixed 2026-02-24) |
+| v2 API Proxy hardcoded (127.0.0.1:8000) | Production config issue | ~1h |
+| Residual empty directories | Code hygiene | ~30min |
+| Documentation conflicts | Misleading info | ~2h |
+
+### Documentation Consistency Issues (Verified 2026-02-24)
+
+| Issue | Description |
+|-------|-------------|
+| Single source of truth | CLAUDE.md claims to be "single source of truth" but docs/ folder has conflicting status documents |
+| API v1 status | CLAUDE.md previously said "pending deletion" but api_v1/ was already deleted |
+| Frontend routes | docs/frontend/current-status.md may reference routes that no longer exist |
+
+### Code Hygiene Issues (Verified 2026-02-24)
+
+| Issue | Location |
+|-------|----------|
+| Residual empty directories | `frontend/src/app/dashboard/rubrics/[id]`, `frontend/src/features/essay-feedback/components` |
+| v2 proxy hardcoded URL | `frontend/src/app/api/v2/[...path]/route.ts:3` |
 
 - **`docs/prd/`**: Product Requirement Documents (14 modules) - **Source of truth for features**
 - **`docs/architecture/`**: System architecture docs
