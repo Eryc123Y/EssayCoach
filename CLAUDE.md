@@ -111,8 +111,8 @@ The `docs/prd/` directory contains an explicit contract for code generation:
 | 06 Rubrics | ⚠️ Partial | Missing: Visibility (public/private), student view, duplicate |
 | 07 Settings | ✅ Implemented | - |
 | 08 Profile | ✅ Implemented | - |
-| 09 Assignments (Tasks) | ❌ Not Started | **Needs full implementation** |
-| 10 Classes | ❌ Not Started | **Needs full implementation** |
+| 09 Assignments (Tasks) | ⚠️ Partial (33%) | Model: missing title, description, instructions, class_id, status (8/12 fields). Endpoints: missing publish/unpublish/submissions. |
+| 10 Classes | ⚠️ Partial (25%) | Model: missing name, description, code (join_code), term, status (9/12 fields). Endpoints: missing join/leave/students. |
 | 11 Social Learning Hub | ❌ Not Started | Planned for post-MVP |
 | 12 Analytics | ❌ Not Started | Planned for post-MVP |
 | 13 Users | ❌ Not Started | Admin user management |
@@ -414,17 +414,20 @@ When updating CLAUDE.md:
 
 ## Technical Debt (Verified 2026-02-24)
 
-| Debt | Impact | Fix Effort |
-|------|--------|------------|
-| Task model missing 8 fields (title, description, instructions, status, etc.) | Blocks PRD-09 | ~6h + migration |
-| Class model missing 9 fields (class_code, name, description, status, etc.) | Blocks PRD-10 | ~6h + migration |
-| Users CRUD no RBAC | Security risk | ~4h |
-| Cookie httpOnly=false | Security risk | ~1h (✅ Fixed 2026-02-24) |
-| RevisionChat uses mock data | UX incomplete | ~8h |
-| Navigation links to 404 pages | UX broken | ~2h (✅ Fixed 2026-02-24) |
-| v2 API Proxy hardcoded (127.0.0.1:8000) | Production config issue | ~1h |
-| Residual empty directories | Code hygiene | ~30min |
-| Documentation conflicts | Misleading info | ~2h |
+| Debt | Impact | Fix Effort | Status |
+|------|--------|------------|--------|
+| Task model missing 8 fields (title, description, instructions, class_id, status, etc.) | Blocks PRD-09 | ~6h + migration | Pending |
+| Class model missing 9 fields (name, description, code/join_code, term, status, etc.) | Blocks PRD-10 | ~6h + migration | Pending |
+| DRF dependencies残留 (djangorestframework in pyproject.toml + settings.py) | Technical debt | ~1h | Pending |
+| Missing publish/unpublish task endpoints | Blocks task workflow | ~2h | Pending |
+| Missing join code feature (student self-enrollment) | Blocks class enrollment | ~3h | Pending |
+| Missing class students CRUD endpoints | Incomplete class management | ~3h | Pending |
+| Missing task submissions endpoint | Incomplete task management | ~2h | Pending |
+| Users CRUD no RBAC | Security risk | ~4h | ✅ Fixed |
+| Cookie httpOnly=false | Security risk | ~1h | ✅ Fixed |
+| Navigation links to 404 pages | UX broken | ~2h | ✅ Fixed |
+| v2 API Proxy hardcoded (127.0.0.1:8000) | Production config issue | ~1h | Pending |
+| Residual empty directories | Code hygiene | ~30min | Pending |
 
 ### Documentation Consistency Issues (Verified 2026-02-24)
 
