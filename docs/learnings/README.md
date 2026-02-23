@@ -52,6 +52,17 @@ What could be done differently in the future.
 
 ## Recent Learnings
 
+### 2026-02-24: JWT Refresh Token Implementation
+
+Implemented complete JWT refresh token mechanism with token rotation for API v2.
+
+- **Developer**: backend-dev
+- **Features**: Token rotation, blacklist, JWT auth class
+- **Endpoints**: /auth/login-with-jwt/, /auth/refresh/, /auth/logout-jwt/
+- **Status**: Complete, 5 tests passing
+
+See: [JWT Refresh Token Implementation](./jwt-refresh-token-implementation.md)
+
 ### 2026-02-24: Codex Security Review
 
 A comprehensive security audit was conducted using OpenAI Codex, identifying 9 critical issues across the codebase.
