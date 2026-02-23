@@ -159,17 +159,40 @@ The `docs/prd/` directory contains an explicit contract for code generation:
 
 ### 🟠 P1 - High Priority (This Week)
 
-4. **Tasks Module (PRD-09)** (~16h)
+4. **Task Model Extension** (~3h + migration) NEW
+   - Add fields: title, description, instructions, class_id, status, allow_late_submission
+   - Location: `backend/core/models.py::Task`
+   - Status: Not started
+
+5. **Task API Endpoints** (~4h) NEW
+   - Add: POST /tasks/{id}/publish/, POST /tasks/{id}/unpublish/
+   - Add: GET /tasks/{id}/submissions/
+   - Location: `backend/api_v2/core/views.py`
+   - Status: Not started
+
+6. **Class Model Extension** (~3h + migration) NEW
+   - Add fields: name, description, code (join_code), term, year, status
+   - Location: `backend/core/models.py::Class`
+   - Status: Not started
+
+7. **Class API Endpoints** (~4h) NEW
+   - Add: POST /classes/join/ (join code)
+   - Add: GET/POST/DELETE /classes/{id}/students/
+   - Add: POST /classes/{id}/archive/
+   - Location: `backend/api_v2/core/views.py`
+   - Status: Not started
+
+8. **Tasks Module (PRD-09)** (~16h)
    - Backend: Task model, endpoints (`/api/v2/core/tasks/`)
    - Frontend: Task list, task editor, submission view
    - Status: Not started
 
-5. **Classes Module (PRD-10)** (~14h)
+9. **Classes Module (PRD-10)** (~14h)
    - Backend: Class model, enrollment, join code
    - Frontend: Class cards, detail view, student roster
    - Status: Not started
 
-6. **PDF Export Feature** (~4h)
+10. **PDF Export Feature** (~4h)
    - Install `@react-pdf/renderer`
    - Create FeedbackPDF component
    - Hook up Export button in essay-analysis page
@@ -218,9 +241,11 @@ The `docs/prd/` directory contains an explicit contract for code generation:
 |------|-----------------|----------|
 | JWT Refresh Token | `api_v2/auth/views.py`, `api_v2/auth/schemas.py`, `useAuthRefresh.ts` | P0 |
 | RevisionChat API | `api_v2/ai_feedback/views.py`, `revision-chat.tsx` | P0 |
-| API v1 Cleanup | Delete `api_v1/`, update `pyproject.toml` | P0 |
-| Tasks Module | New: `core/models.py::Task`, `api_v2/core/tasks.py` | P1 |
-| Classes Module | New: `core/models.py::Class`, `api_v2/core/classes.py` | P1 |
+| API v1 Cleanup | Delete `api_v1/`, update `pyproject.toml` | ✅ Done |
+| Task Model Extension | `core/models.py::Task` (+8 fields) | P1 |
+| Class Model Extension | `core/models.py::Class` (+9 fields) | P1 |
+| Task Publish/Unpublish API | `api_v2/core/views.py` | P1 |
+| Class Join Code API | `api_v2/core/views.py` | P1 |
 
 ### Phase 2: Feature Completion (Week 3-4)
 **Goal**: Complete PRD-defined features
@@ -433,16 +458,16 @@ When updating CLAUDE.md:
 
 | Issue | Description |
 |-------|-------------|
-| Single source of truth | CLAUDE.md claims to be "single source of truth" but docs/ folder has conflicting status documents |
-| API v1 status | CLAUDE.md previously said "pending deletion" but api_v1/ was already deleted |
-| Frontend routes | docs/frontend/current-status.md may reference routes that no longer exist |
+| Single source of truth | CLAUDE.md is now updated with accurate status after security audit |
+| Frontend routes | Navigation links to 404 pages removed 2026-02-24 |
 
 ### Code Hygiene Issues (Verified 2026-02-24)
 
-| Issue | Location |
-|-------|----------|
-| Residual empty directories | `frontend/src/app/dashboard/rubrics/[id]`, `frontend/src/features/essay-feedback/components` |
-| v2 proxy hardcoded URL | `frontend/src/app/api/v2/[...path]/route.ts:3` |
+| Issue | Location | Status |
+|-------|----------|--------|
+| Residual empty directories | `frontend/src/app/dashboard/rubrics/[id]`, `frontend/src/features/essay-feedback/*` | Pending |
+| v2 proxy hardcoded URL | `frontend/src/app/api/v2/[...path]/route.ts:3` | Pending |
+| DRF dependencies残留 | `backend/pyproject.toml`, `backend/essay_coach/settings.py` | Pending |
 
 - **`docs/prd/`**: Product Requirement Documents (14 modules) - **Source of truth for features**
 - **`docs/architecture/`**: System architecture docs
