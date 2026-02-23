@@ -111,7 +111,8 @@ class TestAPIStructure:
 
         schema = get_schema(api_v2)
         auth_paths = [p for p in schema["paths"].keys() if p.startswith("/auth/")]
-        assert len(auth_paths) == 6
+        # Includes: register, login, logout, me, me/jwt, password-change, password-reset, login-with-jwt, refresh, logout-jwt
+        assert len(auth_paths) == 10
 
     def test_ai_feedback_endpoints_registered(self):
         from ninja.openapi.schema import get_schema
