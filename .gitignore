@@ -209,6 +209,10 @@ nitro.json
 /AGENTS.md
 .DS_Store
 
+# Claude Code configuration
+.claude/
+.skills/
+
 # Auto-generated documentation (build-only, not committed)
 docs/api-reference/endpoints.md
 docs/api-reference/endpoints 2.md
