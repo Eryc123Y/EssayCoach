@@ -23,6 +23,7 @@ from core.models import (
 from core.models import RubricLevelDesc as RubricLevelDescModel
 
 from ..utils.auth import TokenAuth
+from ..utils.permissions import IsAdminOrLecturer
 from .schemas import (
     ClassDetailOut,
     ClassFilterParams,
@@ -64,6 +65,7 @@ from .schemas import (
     UserFilterParams,
     UserIn,
     UserOut,
+    UserUpdateIn,
 )
 
 router = Router(tags=["Core"], auth=TokenAuth())
@@ -85,14 +87,27 @@ def paginate(queryset, params: PaginationParams):
 
 
 @router.get("/users/", response=list[UserOut])
-def list_users(request: HttpRequest, filters: UserFilterParams):
+def list_users(request: HttpRequest, filters: UserFilterParams = UserFilterParams()):
+    # Admin and lecturer can list all users
+    # Students can only view themselves
+    user = request.auth
+    if user.user_role == "student":
+        # Students can only see their own record
+        return [user]
+
+    # Admin and lecturer can see all users
     qs = filters.filter(User.objects.all())
     return paginate(qs, PaginationParams())["results"]
 
 
 @router.post("/users/", response=UserOut)
 def create_user(request: HttpRequest, data: UserIn):
-    user = User.objects.create_user(
+    # Only admin and lecturer can create users
+    current_user = request.auth
+    if current_user.user_role not in ["admin", "lecturer"]:
+        raise HttpError(403, "Only admin and lecturer can create users")
+
+    new_user = User.objects.create_user(
         user_email=data.user_email,
         password=data.password,
         user_fname=data.user_fname,
@@ -102,7 +117,7 @@ def create_user(request: HttpRequest, data: UserIn):
         is_active=data.is_active,
         is_staff=data.is_staff,
     )
-    return user
+    return new_user
 
 
 @router.get("/users/me/", response=UserOut)
@@ -112,6 +127,19 @@ def get_current_user(request: HttpRequest):
 
 @router.get("/users/{user_id}/", response=UserOut)
 def get_user(request: HttpRequest, user_id: int):
+    """
+    Get a specific user.
+
+    Permissions:
+    - Admin/Lecturer: Can view any user
+    - Student: Can only view themselves
+    """
+    current_user = request.auth
+
+    # Students can only view their own profile
+    if current_user.user_role == "student" and current_user.user_id != user_id:
+        raise HttpError(403, "You can only view your own profile")
+
     try:
         return User.objects.get(user_id=user_id)
     except User.DoesNotExist:
@@ -119,14 +147,42 @@ def get_user(request: HttpRequest, user_id: int):
 
 
 @router.put("/users/{user_id}/", response=UserOut)
-def update_user(request: HttpRequest, user_id: int, data: UserIn):
+def update_user(request: HttpRequest, user_id: int, data: UserUpdateIn):
+    """
+    Update a user.
+
+    Permissions:
+    - Admin: Can update any user
+    - Lecturer: Can update any user except admins
+    - Student: Can only update themselves
+    """
+    current_user = request.auth
+
+    # Permission check
+    if current_user.user_role == "student":
+        # Students can only update themselves
+        if current_user.user_id != user_id:
+            raise HttpError(403, "You can only update your own profile")
+    elif current_user.user_role == "lecturer":
+        # Lecturers cannot update admins
+        try:
+            target_user = User.objects.get(user_id=user_id)
+            if target_user.user_role == "admin":
+                raise HttpError(403, "Lecturers cannot modify admin accounts")
+        except User.DoesNotExist:
+            raise HttpError(404, "User not found")
+    # Admins can update anyone
+
     try:
         user = User.objects.get(user_id=user_id)
-        for key, value in data.dict().items():
-            if key != "password":
+        # Only update fields that are explicitly provided (not None)
+        update_data = data.dict(exclude_unset=True)
+        for key, value in update_data.items():
+            if key == "password":
+                if value:
+                    user.set_password(value)
+            else:
                 setattr(user, key, value)
-        if data.password:
-            user.set_password(data.password)
         user.save()
         return user
     except User.DoesNotExist:
@@ -135,9 +191,25 @@ def update_user(request: HttpRequest, user_id: int, data: UserIn):
 
 @router.delete("/users/{user_id}/")
 def delete_user(request: HttpRequest, user_id: int):
+    """
+    Delete a user.
+
+    Permissions:
+    - Admin: Can delete any user (except other admins)
+    - Lecturer/Student: Cannot delete users
+    """
+    current_user = request.auth
+
+    # Only admins can delete users
+    if current_user.user_role != "admin":
+        raise HttpError(403, "Only admins can delete users")
+
+    # Admins cannot delete other admins
     try:
-        user = User.objects.get(user_id=user_id)
-        user.delete()
+        target_user = User.objects.get(user_id=user_id)
+        if target_user.user_role == "admin":
+            raise HttpError(403, "Cannot delete admin accounts")
+        target_user.delete()
         return {"success": True}
     except User.DoesNotExist:
         raise HttpError(404, "User not found")

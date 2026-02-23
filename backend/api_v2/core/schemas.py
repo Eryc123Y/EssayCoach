@@ -41,6 +41,19 @@ class UserIn(Schema):
     is_staff: bool = False
 
 
+class UserUpdateIn(Schema):
+    """Input schema for updating users - password is optional."""
+
+    user_email: str | None = None
+    password: str | None = None
+    user_fname: str | None = None
+    user_lname: str | None = None
+    user_role: str | None = None
+    user_status: str | None = None
+    is_active: bool | None = None
+    is_staff: bool | None = None
+
+
 class UserOut(ModelSchema):
     """Output schema for users - auto-generated from User model."""
 

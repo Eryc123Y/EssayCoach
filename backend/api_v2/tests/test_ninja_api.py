@@ -239,3 +239,386 @@ def test_api_imports():
     assert auth_router is not None
     assert core_router is not None
     assert ai_feedback_router is not None
+
+
+# =============================================================================
+# RBAC Permission Tests for Users CRUD
+# =============================================================================
+
+
+@pytest.mark.django_db
+def test_users_list_student_can_only_view_self():
+    """Test that students can only view their own user record."""
+    from core.models import User
+    from rest_framework.authtoken.models import Token
+
+    # Create student user
+    student = User.objects.create_user(
+        user_email="student@example.com",
+        password="StudentPass123!",
+        user_role="student",
+    )
+    student_token = Token.objects.create(user=student)
+
+    # Create another user
+    User.objects.create_user(
+        user_email="other@example.com",
+        password="OtherPass123!",
+        user_role="student",
+    )
+
+    client = Client()
+    client.defaults["HTTP_AUTHORIZATION"] = f"Bearer {student_token.key}"
+
+    # Student listing users should only see themselves
+    response = client.get("/api/v2/core/users/", {"user_role": "student"})
+    assert response.status_code == 200
+    data = response.json()
+    assert len(data) == 1
+    assert data[0]["user_id"] == student.user_id
+
+
+@pytest.mark.django_db
+def test_users_list_lecturer_can_view_all():
+    """Test that lecturers can view all users."""
+    from core.models import User
+    from rest_framework.authtoken.models import Token
+
+    # Create lecturer user
+    lecturer = User.objects.create_user(
+        user_email="lecturer@example.com",
+        password="LecturerPass123!",
+        user_role="lecturer",
+    )
+    lecturer_token = Token.objects.create(user=lecturer)
+
+    # Create some students
+    User.objects.create_user(
+        user_email="student1@example.com",
+        password="StudentPass123!",
+        user_role="student",
+    )
+    User.objects.create_user(
+        user_email="student2@example.com",
+        password="StudentPass123!",
+        user_role="student",
+    )
+
+    client = Client()
+    client.defaults["HTTP_AUTHORIZATION"] = f"Bearer {lecturer_token.key}"
+
+    response = client.get("/api/v2/core/users/", {"user_role": "student"})
+    assert response.status_code == 200
+    data = response.json()
+    # Should see all users (lecturer + 2 students)
+    assert len(data) >= 2
+
+
+@pytest.mark.django_db
+def test_users_list_admin_can_view_all():
+    """Test that admins can view all users."""
+    from core.models import User
+    from rest_framework.authtoken.models import Token
+
+    # Create admin user
+    admin = User.objects.create_user(
+        user_email="admin@example.com",
+        password="AdminPass123!",
+        user_role="admin",
+    )
+    admin_token = Token.objects.create(user=admin)
+
+    # Create some users
+    User.objects.create_user(
+        user_email="lecturer@example.com",
+        password="LecturerPass123!",
+        user_role="lecturer",
+    )
+    User.objects.create_user(
+        user_email="student@example.com",
+        password="StudentPass123!",
+        user_role="student",
+    )
+
+    client = Client()
+    client.defaults["HTTP_AUTHORIZATION"] = f"Bearer {admin_token.key}"
+
+    response = client.get("/api/v2/core/users/", {"user_role": "student"})
+    assert response.status_code == 200
+    data = response.json()
+    # Should see all users
+    assert len(data) >= 2
+
+
+@pytest.mark.django_db
+def test_user_create_student_forbidden():
+    """Test that students cannot create new users."""
+    from core.models import User
+    from rest_framework.authtoken.models import Token
+
+    student = User.objects.create_user(
+        user_email="student@example.com",
+        password="StudentPass123!",
+        user_role="student",
+    )
+    student_token = Token.objects.create(user=student)
+
+    client = Client()
+    client.defaults["HTTP_AUTHORIZATION"] = f"Bearer {student_token.key}"
+
+    response = client.post(
+        "/api/v2/core/users/",
+        {
+            "user_email": "newuser@example.com",
+            "password": "NewPass123!",
+            "user_fname": "New",
+            "user_lname": "User",
+        },
+        content_type="application/json",
+    )
+    assert response.status_code == 403
+
+
+@pytest.mark.django_db
+def test_user_create_lecturer_allowed():
+    """Test that lecturers can create new users."""
+    from core.models import User
+    from rest_framework.authtoken.models import Token
+
+    lecturer = User.objects.create_user(
+        user_email="lecturer@example.com",
+        password="LecturerPass123!",
+        user_role="lecturer",
+    )
+    lecturer_token = Token.objects.create(user=lecturer)
+
+    client = Client()
+    client.defaults["HTTP_AUTHORIZATION"] = f"Bearer {lecturer_token.key}"
+
+    response = client.post(
+        "/api/v2/core/users/",
+        {
+            "user_email": "newuser@example.com",
+            "password": "NewPass123!",
+            "user_fname": "New",
+            "user_lname": "User",
+            "user_role": "student",
+        },
+        content_type="application/json",
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert data["user_email"] == "newuser@example.com"
+
+
+@pytest.mark.django_db
+def test_user_create_admin_allowed():
+    """Test that admins can create new users."""
+    from core.models import User
+    from rest_framework.authtoken.models import Token
+
+    admin = User.objects.create_user(
+        user_email="admin@example.com",
+        password="AdminPass123!",
+        user_role="admin",
+    )
+    admin_token = Token.objects.create(user=admin)
+
+    client = Client()
+    client.defaults["HTTP_AUTHORIZATION"] = f"Bearer {admin_token.key}"
+
+    response = client.post(
+        "/api/v2/core/users/",
+        {
+            "user_email": "newuser@example.com",
+            "password": "NewPass123!",
+            "user_fname": "New",
+            "user_lname": "User",
+            "user_role": "student",
+        },
+        content_type="application/json",
+    )
+    assert response.status_code == 200
+    data = response.json()
+    assert data["user_email"] == "newuser@example.com"
+
+
+@pytest.mark.django_db
+def test_user_get_student_can_only_view_self():
+    """Test that students can only view their own profile."""
+    from core.models import User
+    from rest_framework.authtoken.models import Token
+
+    student = User.objects.create_user(
+        user_email="student@example.com",
+        password="StudentPass123!",
+        user_role="student",
+    )
+    student_token = Token.objects.create(user=student)
+
+    other_user = User.objects.create_user(
+        user_email="other@example.com",
+        password="OtherPass123!",
+        user_role="student",
+    )
+
+    client = Client()
+    client.defaults["HTTP_AUTHORIZATION"] = f"Bearer {student_token.key}"
+
+    # Student trying to view another user - should fail
+    response = client.get(f"/api/v2/core/users/{other_user.user_id}/")
+    assert response.status_code == 403
+
+    # Student viewing themselves - should succeed
+    response = client.get(f"/api/v2/core/users/{student.user_id}/")
+    assert response.status_code == 200
+
+
+@pytest.mark.django_db
+def test_user_update_student_can_only_update_self():
+    """Test that students can only update their own profile."""
+    from core.models import User
+    from rest_framework.authtoken.models import Token
+
+    student = User.objects.create_user(
+        user_email="student@example.com",
+        password="StudentPass123!",
+        user_role="student",
+    )
+    student_token = Token.objects.create(user=student)
+
+    other_user = User.objects.create_user(
+        user_email="other@example.com",
+        password="OtherPass123!",
+        user_role="student",
+    )
+
+    client = Client()
+    client.defaults["HTTP_AUTHORIZATION"] = f"Bearer {student_token.key}"
+
+    # Student trying to update another user - should fail
+    response = client.put(
+        f"/api/v2/core/users/{other_user.user_id}/",
+        {"user_fname": "Updated"},
+        content_type="application/json",
+    )
+    assert response.status_code == 403
+
+    # Student updating themselves - should succeed
+    response = client.put(
+        f"/api/v2/core/users/{student.user_id}/",
+        {"user_fname": "Updated"},
+        content_type="application/json",
+    )
+    assert response.status_code == 200
+
+
+@pytest.mark.django_db
+def test_user_update_lecturer_cannot_update_admin():
+    """Test that lecturers cannot update admin accounts."""
+    from core.models import User
+    from rest_framework.authtoken.models import Token
+
+    lecturer = User.objects.create_user(
+        user_email="lecturer@example.com",
+        password="LecturerPass123!",
+        user_role="lecturer",
+    )
+    lecturer_token = Token.objects.create(user=lecturer)
+
+    admin = User.objects.create_user(
+        user_email="admin@example.com",
+        password="AdminPass123!",
+        user_role="admin",
+    )
+
+    client = Client()
+    client.defaults["HTTP_AUTHORIZATION"] = f"Bearer {lecturer_token.key}"
+
+    # Lecturer trying to update admin - should fail
+    response = client.put(
+        f"/api/v2/core/users/{admin.user_id}/",
+        {"user_fname": "Updated"},
+        content_type="application/json",
+    )
+    assert response.status_code == 403
+
+
+@pytest.mark.django_db
+def test_user_delete_only_admin_can_delete():
+    """Test that only admins can delete users."""
+    from core.models import User
+    from rest_framework.authtoken.models import Token
+
+    # Create users with different roles
+    student = User.objects.create_user(
+        user_email="student@example.com",
+        password="StudentPass123!",
+        user_role="student",
+    )
+    student_token = Token.objects.create(user=student)
+
+    lecturer = User.objects.create_user(
+        user_email="lecturer@example.com",
+        password="LecturerPass123!",
+        user_role="lecturer",
+    )
+    lecturer_token = Token.objects.create(user=lecturer)
+
+    admin = User.objects.create_user(
+        user_email="admin@example.com",
+        password="AdminPass123!",
+        user_role="admin",
+    )
+    admin_token = Token.objects.create(user=admin)
+
+    # Create a target user to delete
+    target_user = User.objects.create_user(
+        user_email="target@example.com",
+        password="TargetPass123!",
+        user_role="student",
+    )
+    target_user_id = target_user.user_id
+
+    # Student trying to delete - should fail
+    client = Client()
+    client.defaults["HTTP_AUTHORIZATION"] = f"Bearer {student_token.key}"
+    response = client.delete(f"/api/v2/core/users/{target_user_id}/")
+    assert response.status_code == 403
+
+    # Lecturer trying to delete - should fail
+    client.defaults["HTTP_AUTHORIZATION"] = f"Bearer {lecturer_token.key}"
+    response = client.delete(f"/api/v2/core/users/{target_user_id}/")
+    assert response.status_code == 403
+
+    # Admin deleting - should succeed
+    client.defaults["HTTP_AUTHORIZATION"] = f"Bearer {admin_token.key}"
+    response = client.delete(f"/api/v2/core/users/{target_user_id}/")
+    assert response.status_code == 200
+
+
+@pytest.mark.django_db
+def test_user_delete_admin_cannot_delete_other_admin():
+    """Test that admins cannot delete other admin accounts."""
+    from core.models import User
+    from rest_framework.authtoken.models import Token
+
+    admin1 = User.objects.create_user(
+        user_email="admin1@example.com",
+        password="AdminPass123!",
+        user_role="admin",
+    )
+    admin1_token = Token.objects.create(user=admin1)
+
+    admin2 = User.objects.create_user(
+        user_email="admin2@example.com",
+        password="AdminPass123!",
+        user_role="admin",
+    )
+
+    client = Client()
+    client.defaults["HTTP_AUTHORIZATION"] = f"Bearer {admin1_token.key}"
+
+    # Admin trying to delete another admin - should fail
+    response = client.delete(f"/api/v2/core/users/{admin2.user_id}/")
+    assert response.status_code == 403

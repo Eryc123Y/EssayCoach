@@ -58,33 +58,39 @@ export async function POST(req: NextRequest) {
     // Set cookie for frontend request.ts to use
     res.cookies.set('access_token', token, {
       httpOnly: true,
-      sameSite: 'lax',
+      sameSite: 'strict',
+      secure: process.env.NODE_ENV === 'production',
       path: '/',
       maxAge: 60 * 60 * 24 // 24 hours
     });
 
-    // Mirror user info in cookies for simple-auth-context.tsx (using normalizedUser for consistency)
+    // Store user info in HttpOnly cookies for security (prevents client-side tampering)
+    // Frontend should read user data from the response body, not cookies
     res.cookies.set('user_email', normalizedUser.email || '', {
-      httpOnly: false,
-      sameSite: 'lax',
+      httpOnly: true,
+      sameSite: 'strict',
+      secure: process.env.NODE_ENV === 'production',
       path: '/',
       maxAge: 60 * 60 * 24
     });
     res.cookies.set('user_first_name', normalizedUser.first_name || '', {
-      httpOnly: false,
-      sameSite: 'lax',
+      httpOnly: true,
+      sameSite: 'strict',
+      secure: process.env.NODE_ENV === 'production',
       path: '/',
       maxAge: 60 * 60 * 24
     });
     res.cookies.set('user_last_name', normalizedUser.last_name || '', {
-      httpOnly: false,
-      sameSite: 'lax',
+      httpOnly: true,
+      sameSite: 'strict',
+      secure: process.env.NODE_ENV === 'production',
       path: '/',
       maxAge: 60 * 60 * 24
     });
     res.cookies.set('user_role', normalizedUser.role, {
-      httpOnly: false,
-      sameSite: 'lax',
+      httpOnly: true,
+      sameSite: 'strict',
+      secure: process.env.NODE_ENV === 'production',
       path: '/',
       maxAge: 60 * 60 * 24
     });
@@ -92,8 +98,9 @@ export async function POST(req: NextRequest) {
       'user_id',
       String(normalizedUser.user_id || normalizedUser.id || ''),
       {
-        httpOnly: false,
-        sameSite: 'lax',
+        httpOnly: true,
+        sameSite: 'strict',
+        secure: process.env.NODE_ENV === 'production',
         path: '/',
         maxAge: 60 * 60 * 24
       }
