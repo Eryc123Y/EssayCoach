@@ -701,7 +701,7 @@ def test_refresh_token_returns_new_tokens():
     assert "expires_at" in refresh_data
 
     # Verify new access token is different from original
-    assert refresh_data["access"] != login_data["data"]["access"]
+    assert refresh_data["access"] != login_data["data"]["token"]
 
     # Verify new refresh token is different from original (token rotation)
     assert refresh_data["refresh"] != refresh_token
@@ -804,7 +804,7 @@ def test_access_protected_resource_with_jwt():
     )
 
     login_data = login_response.json()
-    access_token = login_data["data"]["access"]
+    access_token = login_data["data"]["token"]
 
     # Access protected endpoint with JWT token
     client.defaults["HTTP_AUTHORIZATION"] = f"Bearer {access_token}"

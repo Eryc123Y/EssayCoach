@@ -93,12 +93,13 @@ class RefreshTokenOut(Schema):
     expires_at: str = Field(..., description="Access token expiration time (ISO format)")
 
 
-class AuthDataWithRefresh(AuthData):
+class AuthDataWithRefresh(Schema):
     """Auth response data including refresh token."""
 
+    token: str = Field(..., description="Access token")
     refresh: str = Field(..., description="Refresh token")
     expires_at: str = Field(..., description="Access token expiration time (ISO format)")
-    access: str = Field(..., description="Access token (alias for token)")
+    user: UserOut
 
 
 class AuthResponseWithRefresh(Schema):
