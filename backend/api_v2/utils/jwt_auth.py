@@ -181,9 +181,6 @@ def refresh_jwt_token(refresh_token: str) -> JWTPair | None:
         New JWTPair if refresh is valid, None otherwise
     """
     try:
-        # Use SimpleJWT's refresh mechanism
-        from rest_framework_simplejwt.tokens import RefreshToken
-
         # Get the old JTI before creating new token
         old_payload = jwt.decode(
             refresh_token,
@@ -193,25 +190,36 @@ def refresh_jwt_token(refresh_token: str) -> JWTPair | None:
         )
         old_jti = old_payload.get("jti")
 
-        # Create new tokens
-        refresh = RefreshToken(refresh_token)
+        # Check if already blacklisted
+        if old_jti and _is_token_blacklisted(old_jti):
+            return None
 
-        # Blacklist the old refresh token
+        # Verify the token is valid and get user info
+        from rest_framework_simplejwt.tokens import RefreshToken as SimpleJWTRefreshToken
+
+        old_refresh = SimpleJWTRefreshToken(refresh_token)
+        user_id = old_refresh.get("user_id")
+
+        if not user_id:
+            return None
+
+        # Get user from database
+        from core.models import User
+        try:
+            user = User.objects.get(user_id=user_id)
+        except User.DoesNotExist:
+            return None
+
+        # Create BRAND NEW token pair (this ensures rotation)
+        new_pair = create_jwt_pair(user)
+
+        # Blacklist the old refresh token AFTER generating new ones
         if old_jti:
             _add_to_blacklist(old_jti)
 
-        # Get new access token
-        access = refresh.access_token
-
-        # Calculate expiration
-        expires_at = datetime.fromtimestamp(access["exp"], tz=timezone.utc)
-
-        return JWTPair(
-            access=str(access),
-            refresh=str(refresh),
-            expires_at=expires_at,
-        )
-    except (TokenError, jwt.InvalidTokenError, Exception):
+        return new_pair
+    except (TokenError, jwt.InvalidTokenError, Exception) as e:
+        print(f"Refresh error: {e}")
         return None
 
 
@@ -242,3 +250,46 @@ def blacklist_jwt_token(token: str) -> bool:
         return False
     except (TokenError, jwt.InvalidTokenError, Exception):
         return False
+
+
+class JWTAuth:
+    """
+    JWT-based authentication for Django Ninja.
+
+    Usage:
+        @api.get("/protected", auth=JWTAuth())
+        def protected_endpoint(request):
+            return {"user": request.auth.user_email}
+    """
+
+    def __init__(self, bearer: bool = True):
+        self.bearer = bearer
+
+    def authenticate(self, request, token: str) -> User | None:
+        """
+        Authenticate using JWT.
+
+        Args:
+            request: Django request object
+            token: The JWT token string
+
+        Returns:
+            User instance if valid, None otherwise
+        """
+        payload = verify_jwt_token(token)
+        if payload is None:
+            return None
+
+        # Get user from token payload
+        user_id = payload.get("user_id")
+        if not user_id:
+            return None
+
+        try:
+            from core.models import User
+            user = User.objects.get(user_id=user_id)
+            if not user.is_active:
+                return None
+            return user
+        except User.DoesNotExist:
+            return None
