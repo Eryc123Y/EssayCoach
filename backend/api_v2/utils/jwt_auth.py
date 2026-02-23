@@ -14,6 +14,7 @@ from typing import TYPE_CHECKING
 import jwt
 from django.conf import settings
 from ninja.security import HttpBearer
+from rest_framework_simplejwt.tokens import RefreshToken, TokenError
 
 if TYPE_CHECKING:
     from core.models import User
@@ -252,7 +253,7 @@ def blacklist_jwt_token(token: str) -> bool:
         return False
 
 
-class JWTAuth:
+class JWTAuth(HttpBearer):
     """
     JWT-based authentication for Django Ninja.
 
@@ -262,10 +263,7 @@ class JWTAuth:
             return {"user": request.auth.user_email}
     """
 
-    def __init__(self, bearer: bool = True):
-        self.bearer = bearer
-
-    def __call__(self, request, token: str) -> User | None:
+    def authenticate(self, request, token: str) -> User | None:
         """
         Authenticate using JWT.
 
