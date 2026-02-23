@@ -12,11 +12,15 @@ from ninja.errors import HttpError
 from core.models import User
 
 from ..utils.auth import TokenAuth, delete_user_tokens, get_or_create_token
+from ..utils.jwt_auth import create_jwt_pair, refresh_jwt_token, blacklist_jwt_token
 from .schemas import (
     AuthResponse,
+    AuthResponseWithRefresh,
     MessageResponse,
     PasswordChangeIn,
     PasswordResetIn,
+    RefreshTokenIn,
+    RefreshTokenOut,
     UserInfoResponse,
     UserLoginIn,
     UserOut,
@@ -170,3 +174,70 @@ def password_reset(request: HttpRequest, data: PasswordResetIn) -> MessageRespon
     user.save()
 
     return MessageResponse(message="Password reset successful")
+
+
+@router.post("/login-with-jwt/", response=AuthResponseWithRefresh)
+def login_with_jwt(request: HttpRequest, data: UserLoginIn) -> AuthResponseWithRefresh:
+    """
+    Login and receive JWT access + refresh tokens.
+
+    This endpoint returns both access and refresh tokens for use with JWT authentication.
+    """
+    user = authenticate(request, username=data.email, password=data.password)
+
+    if not user:
+        try:
+            existing_user = User.objects.get(user_email=data.email)
+            if existing_user.check_password(data.password) and not existing_user.is_active:
+                raise HttpError(423, "Account is locked. Please contact administrator.")
+        except User.DoesNotExist:
+            pass
+        raise HttpError(401, "Invalid email or password")
+
+    # Create JWT token pair
+    jwt_pair = create_jwt_pair(user)
+
+    return AuthResponseWithRefresh(
+        data={
+            "token": jwt_pair.access,
+            "refresh": jwt_pair.refresh,
+            "expires_at": jwt_pair.expires_at.isoformat(),
+            "user": _user_to_schema(user),
+        },
+        message="Login successful",
+    )
+
+
+@router.post("/refresh/", response=RefreshTokenOut)
+def refresh_token(request: HttpRequest, data: RefreshTokenIn) -> RefreshTokenOut:
+    """
+    Refresh access token using refresh token.
+
+    This endpoint implements token rotation - a new refresh token is issued
+    each time, and the old one is blacklisted for security.
+    """
+    result = refresh_jwt_token(data.refresh)
+
+    if result is None:
+        raise HttpError(401, "Invalid or expired refresh token")
+
+    return RefreshTokenOut(
+        access=result.access,
+        refresh=result.refresh,
+        expires_at=result.expires_at.isoformat(),
+    )
+
+
+@router.post("/logout-jwt/", response=MessageResponse)
+def logout_jwt(request: HttpRequest, refresh: str) -> MessageResponse:
+    """
+    Logout by blacklisting the refresh token.
+
+    This invalidates the refresh token, preventing further token refreshes.
+    """
+    success = blacklist_jwt_token(refresh)
+    if not success:
+        # Token might already be expired or blacklisted
+        pass
+
+    return MessageResponse(message="Successfully logged out")

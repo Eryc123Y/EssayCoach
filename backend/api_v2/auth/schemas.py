@@ -77,3 +77,33 @@ class MessageResponse(Schema):
 class UserInfoResponse(Schema):
     success: bool = True
     data: UserOut
+
+
+class RefreshTokenIn(Schema):
+    """Input schema for token refresh request."""
+
+    refresh: str = Field(..., description="Refresh token")
+
+
+class RefreshTokenOut(Schema):
+    """Output schema for token refresh response."""
+
+    access: str = Field(..., description="New access token")
+    refresh: str = Field(..., description="New refresh token")
+    expires_at: str = Field(..., description="Access token expiration time (ISO format)")
+
+
+class AuthDataWithRefresh(AuthData):
+    """Auth response data including refresh token."""
+
+    refresh: str = Field(..., description="Refresh token")
+    expires_at: str = Field(..., description="Access token expiration time (ISO format)")
+    access: str = Field(..., description="Access token (alias for token)")
+
+
+class AuthResponseWithRefresh(Schema):
+    """Auth response with refresh token."""
+
+    success: bool = True
+    data: AuthDataWithRefresh
+    message: str | None = None

@@ -622,3 +622,194 @@ def test_user_delete_admin_cannot_delete_other_admin():
     # Admin trying to delete another admin - should fail
     response = client.delete(f"/api/v2/core/users/{admin2.user_id}/")
     assert response.status_code == 403
+
+
+# =============================================================================
+# JWT Authentication Tests
+# =============================================================================
+
+
+@pytest.mark.django_db
+def test_login_with_jwt_returns_tokens():
+    """Test that JWT login returns access and refresh tokens."""
+    from core.models import User
+
+    User.objects.create_user(
+        user_email="jwtuser@example.com",
+        password="JwtPass123!",
+        user_role="student",
+    )
+
+    client = Client()
+    response = client.post(
+        "/api/v2/auth/login-with-jwt/",
+        {
+            "email": "jwtuser@example.com",
+            "password": "JwtPass123!",
+        },
+        content_type="application/json",
+    )
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["success"] is True
+    assert "access" in data["data"]
+    assert "refresh" in data["data"]
+    assert "expires_at" in data["data"]
+    assert "user" in data["data"]
+    assert data["data"]["user"]["email"] == "jwtuser@example.com"
+
+
+@pytest.mark.django_db
+def test_refresh_token_returns_new_tokens():
+    """Test that refresh token endpoint returns new access and refresh tokens."""
+    from core.models import User
+
+    User.objects.create_user(
+        user_email="refreshuser@example.com",
+        password="RefreshPass123!",
+        user_role="student",
+    )
+
+    client = Client()
+
+    # First, login to get tokens
+    login_response = client.post(
+        "/api/v2/auth/login-with-jwt/",
+        {
+            "email": "refreshuser@example.com",
+            "password": "RefreshPass123!",
+        },
+        content_type="application/json",
+    )
+
+    assert login_response.status_code == 200
+    login_data = login_response.json()
+    refresh_token = login_data["data"]["refresh"]
+
+    # Now use refresh token to get new tokens
+    refresh_response = client.post(
+        "/api/v2/auth/refresh/",
+        {"refresh": refresh_token},
+        content_type="application/json",
+    )
+
+    assert refresh_response.status_code == 200
+    refresh_data = refresh_response.json()
+    assert "access" in refresh_data
+    assert "refresh" in refresh_data
+    assert "expires_at" in refresh_data
+
+    # Verify new access token is different from original
+    assert refresh_data["access"] != login_data["data"]["access"]
+
+    # Verify new refresh token is different from original (token rotation)
+    assert refresh_data["refresh"] != refresh_token
+
+
+@pytest.mark.django_db
+def test_refresh_token_invalid_token():
+    """Test that invalid refresh token returns 401."""
+    client = Client()
+
+    response = client.post(
+        "/api/v2/auth/refresh/",
+        {"refresh": "invalid_token_here"},
+        content_type="application/json",
+    )
+
+    assert response.status_code == 401
+    data = response.json()
+    assert "Invalid or expired refresh token" in str(data)
+
+
+@pytest.mark.django_db
+def test_refresh_token_rotation():
+    """Test that refresh token rotation works - old token is invalidated."""
+    from core.models import User
+
+    User.objects.create_user(
+        user_email="rotationuser@example.com",
+        password="RotationPass123!",
+        user_role="student",
+    )
+
+    client = Client()
+
+    # Login to get tokens
+    login_response = client.post(
+        "/api/v2/auth/login-with-jwt/",
+        {
+            "email": "rotationuser@example.com",
+            "password": "RotationPass123!",
+        },
+        content_type="application/json",
+    )
+
+    login_data = login_response.json()
+    original_refresh = login_data["data"]["refresh"]
+
+    # First refresh
+    refresh1_response = client.post(
+        "/api/v2/auth/refresh/",
+        {"refresh": original_refresh},
+        content_type="application/json",
+    )
+
+    assert refresh1_response.status_code == 200
+    refresh1_data = refresh1_response.json()
+    new_refresh = refresh1_data["refresh"]
+
+    # Try to use the old refresh token again - should fail
+    refresh2_response = client.post(
+        "/api/v2/auth/refresh/",
+        {"refresh": original_refresh},
+        content_type="application/json",
+    )
+
+    # Should fail because token rotation blacklists the old token
+    assert refresh2_response.status_code == 401
+
+    # But the new refresh token should work
+    refresh3_response = client.post(
+        "/api/v2/auth/refresh/",
+        {"refresh": new_refresh},
+        content_type="application/json",
+    )
+
+    assert refresh3_response.status_code == 200
+
+
+@pytest.mark.django_db
+def test_access_protected_resource_with_jwt():
+    """Test accessing protected resource with JWT access token."""
+    from core.models import User
+
+    User.objects.create_user(
+        user_email="protecteduser@example.com",
+        password="ProtectedPass123!",
+        user_role="student",
+    )
+
+    client = Client()
+
+    # Login to get JWT tokens
+    login_response = client.post(
+        "/api/v2/auth/login-with-jwt/",
+        {
+            "email": "protecteduser@example.com",
+            "password": "ProtectedPass123!",
+        },
+        content_type="application/json",
+    )
+
+    login_data = login_response.json()
+    access_token = login_data["data"]["access"]
+
+    # Access protected endpoint with JWT token
+    client.defaults["HTTP_AUTHORIZATION"] = f"Bearer {access_token}"
+    response = client.get("/api/v2/auth/me/")
+
+    assert response.status_code == 200
+    data = response.json()
+    assert data["data"]["email"] == "protecteduser@example.com"
