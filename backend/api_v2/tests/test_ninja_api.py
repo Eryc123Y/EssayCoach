@@ -653,7 +653,7 @@ def test_login_with_jwt_returns_tokens():
     assert response.status_code == 200
     data = response.json()
     assert data["success"] is True
-    assert "access" in data["data"]
+    assert "token" in data["data"]  # access token
     assert "refresh" in data["data"]
     assert "expires_at" in data["data"]
     assert "user" in data["data"]
