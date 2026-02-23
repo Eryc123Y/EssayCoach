@@ -18,10 +18,10 @@ dev: db
 	@echo "║  📚 API Docs:    http://127.0.0.1:8000/api/docs/              ║"
 	@echo "║  📚 API v2 Docs: http://127.0.0.1:8000/api/v2/docs/           ║"
 	@echo "╠════════════════════════════════════════════════════════════════╣"
-	@echo "║  👤 Admin Login: admin@example.com / admin                    ║"
-	@echo "║  👨‍🎓 Test Users:  student1@example.com / student1               ║"
-	@echo "║                 student2@example.com / student2               ║"
-	@echo "║                 student3@example.com / student3               ║"
+	@echo "║  👤 Test Accounts:                                              ║"
+	@echo "║     admin@example.com    / admin123    (admin)                 ║"
+	@echo "║     lecturer@example.com / lecturer123 (lecturer)              ║"
+	@echo "║     student@example.com / student123  (student)               ║"
 	@echo "╠════════════════════════════════════════════════════════════════╣"
 	@echo "║  💡 Tip: Press Ctrl+C to stop all services                    ║"
 	@echo "╚════════════════════════════════════════════════════════════════╝"
@@ -76,8 +76,10 @@ seed-db:
 	@cd backend && .venv/bin/python manage.py seed_db
 	@echo ""
 	@echo "✅ Database seeded successfully!"
-	@echo "👤 Admin login: admin@example.com / admin"
-	@echo "👨‍🎓 Student logins: student1@example.com / student1, student2@example.com / student2, student3@example.com / student3"
+	@echo "👤 Test Accounts:"
+	@echo "   admin@example.com    / admin123    (admin)"
+	@echo "   lecturer@example.com / lecturer123 (lecturer)"
+	@echo "   student@example.com  / student123  (student)"
 
 # Testing
 test:
