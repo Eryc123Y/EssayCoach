@@ -32,6 +32,7 @@ import {
 import { UserAvatarProfile } from '@/components/user-avatar-profile';
 import { navItems } from '@/constants/data';
 import { useAuth } from '@/components/layout/simple-auth-context';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   IconBell,
   IconChevronRight,
@@ -64,6 +65,37 @@ export default function AppSidebar() {
       return item.roles.includes(user.role);
     });
   }, [user]);
+
+  // Show skeleton loading state while user data is being fetched
+  if (!user) {
+    return (
+      <Sidebar collapsible='icon'>
+        <SidebarHeader>
+          <Skeleton className='h-12 w-full' />
+        </SidebarHeader>
+        <SidebarContent>
+          <SidebarGroup>
+            <SidebarGroupLabel>
+              <Skeleton className='h-4 w-16' />
+            </SidebarGroupLabel>
+            <SidebarMenu>
+              {[1, 2, 3].map((i) => (
+                <SidebarMenuItem key={i}>
+                  <SidebarMenuButton>
+                    <Skeleton className='h-4 w-4' />
+                    <Skeleton className='h-4 w-24' />
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroup>
+        </SidebarContent>
+        <SidebarFooter>
+          <Skeleton className='h-12 w-full' />
+        </SidebarFooter>
+      </Sidebar>
+    );
+  }
 
   return (
     <Sidebar collapsible='icon'>

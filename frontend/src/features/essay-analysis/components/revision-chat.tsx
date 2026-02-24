@@ -61,7 +61,7 @@ export function RevisionChat() {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
         content: response.message,
-        timestamp: new Date(response.timestamp)
+        timestamp: response.timestamp ? new Date(response.timestamp) : new Date()
       };
 
       // Store conversation ID for follow-up messages
