@@ -7,6 +7,8 @@ import pytest
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import Client
 
+from api_v2.utils.jwt_auth import create_jwt_pair
+
 
 @pytest.mark.django_db
 def test_ai_feedback_workflow_endpoint_requires_auth():
@@ -46,6 +48,8 @@ def test_auth_register_endpoint():
     data = response.json()
     assert data["success"] is True
     assert "token" in data["data"]
+    assert "refresh" in data["data"]
+    assert "expires_at" in data["data"]
 
 
 @pytest.mark.django_db
@@ -72,6 +76,8 @@ def test_auth_login_endpoint():
     data = response.json()
     assert data["success"] is True
     assert "token" in data["data"]
+    assert "refresh" in data["data"]
+    assert "expires_at" in data["data"]
 
 
 @pytest.mark.django_db
@@ -250,7 +256,6 @@ def test_api_imports():
 def test_users_list_student_can_only_view_self():
     """Test that students can only view their own user record."""
     from core.models import User
-    from rest_framework.authtoken.models import Token
 
     # Create student user
     student = User.objects.create_user(
@@ -258,7 +263,8 @@ def test_users_list_student_can_only_view_self():
         password="StudentPass123!",
         user_role="student",
     )
-    student_token = Token.objects.create(user=student)
+    jwt_pair = create_jwt_pair(student)
+    auth_token = jwt_pair.access
 
     # Create another user
     User.objects.create_user(
@@ -268,7 +274,7 @@ def test_users_list_student_can_only_view_self():
     )
 
     client = Client()
-    client.defaults["HTTP_AUTHORIZATION"] = f"Bearer {student_token.key}"
+    client.defaults["HTTP_AUTHORIZATION"] = f"Bearer {auth_token}"
 
     # Student listing users should only see themselves
     response = client.get("/api/v2/core/users/", {"user_role": "student"})
@@ -282,7 +288,6 @@ def test_users_list_student_can_only_view_self():
 def test_users_list_lecturer_can_view_all():
     """Test that lecturers can view all users."""
     from core.models import User
-    from rest_framework.authtoken.models import Token
 
     # Create lecturer user
     lecturer = User.objects.create_user(
@@ -290,7 +295,8 @@ def test_users_list_lecturer_can_view_all():
         password="LecturerPass123!",
         user_role="lecturer",
     )
-    lecturer_token = Token.objects.create(user=lecturer)
+    jwt_pair = create_jwt_pair(lecturer)
+    auth_token = jwt_pair.access
 
     # Create some students
     User.objects.create_user(
@@ -305,7 +311,7 @@ def test_users_list_lecturer_can_view_all():
     )
 
     client = Client()
-    client.defaults["HTTP_AUTHORIZATION"] = f"Bearer {lecturer_token.key}"
+    client.defaults["HTTP_AUTHORIZATION"] = f"Bearer {auth_token}"
 
     response = client.get("/api/v2/core/users/", {"user_role": "student"})
     assert response.status_code == 200
@@ -318,7 +324,6 @@ def test_users_list_lecturer_can_view_all():
 def test_users_list_admin_can_view_all():
     """Test that admins can view all users."""
     from core.models import User
-    from rest_framework.authtoken.models import Token
 
     # Create admin user
     admin = User.objects.create_user(
@@ -326,7 +331,8 @@ def test_users_list_admin_can_view_all():
         password="AdminPass123!",
         user_role="admin",
     )
-    admin_token = Token.objects.create(user=admin)
+    jwt_pair = create_jwt_pair(admin)
+    auth_token = jwt_pair.access
 
     # Create some users
     User.objects.create_user(
@@ -341,7 +347,7 @@ def test_users_list_admin_can_view_all():
     )
 
     client = Client()
-    client.defaults["HTTP_AUTHORIZATION"] = f"Bearer {admin_token.key}"
+    client.defaults["HTTP_AUTHORIZATION"] = f"Bearer {auth_token}"
 
     response = client.get("/api/v2/core/users/", {"user_role": "student"})
     assert response.status_code == 200
@@ -354,17 +360,17 @@ def test_users_list_admin_can_view_all():
 def test_user_create_student_forbidden():
     """Test that students cannot create new users."""
     from core.models import User
-    from rest_framework.authtoken.models import Token
 
     student = User.objects.create_user(
         user_email="student@example.com",
         password="StudentPass123!",
         user_role="student",
     )
-    student_token = Token.objects.create(user=student)
+    jwt_pair = create_jwt_pair(student)
+    auth_token = jwt_pair.access
 
     client = Client()
-    client.defaults["HTTP_AUTHORIZATION"] = f"Bearer {student_token.key}"
+    client.defaults["HTTP_AUTHORIZATION"] = f"Bearer {auth_token}"
 
     response = client.post(
         "/api/v2/core/users/",
@@ -383,17 +389,17 @@ def test_user_create_student_forbidden():
 def test_user_create_lecturer_allowed():
     """Test that lecturers can create new users."""
     from core.models import User
-    from rest_framework.authtoken.models import Token
 
     lecturer = User.objects.create_user(
         user_email="lecturer@example.com",
         password="LecturerPass123!",
         user_role="lecturer",
     )
-    lecturer_token = Token.objects.create(user=lecturer)
+    jwt_pair = create_jwt_pair(lecturer)
+    auth_token = jwt_pair.access
 
     client = Client()
-    client.defaults["HTTP_AUTHORIZATION"] = f"Bearer {lecturer_token.key}"
+    client.defaults["HTTP_AUTHORIZATION"] = f"Bearer {auth_token}"
 
     response = client.post(
         "/api/v2/core/users/",
@@ -415,17 +421,17 @@ def test_user_create_lecturer_allowed():
 def test_user_create_admin_allowed():
     """Test that admins can create new users."""
     from core.models import User
-    from rest_framework.authtoken.models import Token
 
     admin = User.objects.create_user(
         user_email="admin@example.com",
         password="AdminPass123!",
         user_role="admin",
     )
-    admin_token = Token.objects.create(user=admin)
+    jwt_pair = create_jwt_pair(admin)
+    auth_token = jwt_pair.access
 
     client = Client()
-    client.defaults["HTTP_AUTHORIZATION"] = f"Bearer {admin_token.key}"
+    client.defaults["HTTP_AUTHORIZATION"] = f"Bearer {auth_token}"
 
     response = client.post(
         "/api/v2/core/users/",
@@ -447,14 +453,14 @@ def test_user_create_admin_allowed():
 def test_user_get_student_can_only_view_self():
     """Test that students can only view their own profile."""
     from core.models import User
-    from rest_framework.authtoken.models import Token
 
     student = User.objects.create_user(
         user_email="student@example.com",
         password="StudentPass123!",
         user_role="student",
     )
-    student_token = Token.objects.create(user=student)
+    jwt_pair = create_jwt_pair(student)
+    auth_token = jwt_pair.access
 
     other_user = User.objects.create_user(
         user_email="other@example.com",
@@ -463,7 +469,7 @@ def test_user_get_student_can_only_view_self():
     )
 
     client = Client()
-    client.defaults["HTTP_AUTHORIZATION"] = f"Bearer {student_token.key}"
+    client.defaults["HTTP_AUTHORIZATION"] = f"Bearer {auth_token}"
 
     # Student trying to view another user - should fail
     response = client.get(f"/api/v2/core/users/{other_user.user_id}/")
@@ -478,14 +484,14 @@ def test_user_get_student_can_only_view_self():
 def test_user_update_student_can_only_update_self():
     """Test that students can only update their own profile."""
     from core.models import User
-    from rest_framework.authtoken.models import Token
 
     student = User.objects.create_user(
         user_email="student@example.com",
         password="StudentPass123!",
         user_role="student",
     )
-    student_token = Token.objects.create(user=student)
+    jwt_pair = create_jwt_pair(student)
+    auth_token = jwt_pair.access
 
     other_user = User.objects.create_user(
         user_email="other@example.com",
@@ -494,7 +500,7 @@ def test_user_update_student_can_only_update_self():
     )
 
     client = Client()
-    client.defaults["HTTP_AUTHORIZATION"] = f"Bearer {student_token.key}"
+    client.defaults["HTTP_AUTHORIZATION"] = f"Bearer {auth_token}"
 
     # Student trying to update another user - should fail
     response = client.put(
@@ -517,14 +523,14 @@ def test_user_update_student_can_only_update_self():
 def test_user_update_lecturer_cannot_update_admin():
     """Test that lecturers cannot update admin accounts."""
     from core.models import User
-    from rest_framework.authtoken.models import Token
 
     lecturer = User.objects.create_user(
         user_email="lecturer@example.com",
         password="LecturerPass123!",
         user_role="lecturer",
     )
-    lecturer_token = Token.objects.create(user=lecturer)
+    jwt_pair = create_jwt_pair(lecturer)
+    auth_token = jwt_pair.access
 
     admin = User.objects.create_user(
         user_email="admin@example.com",
@@ -533,7 +539,7 @@ def test_user_update_lecturer_cannot_update_admin():
     )
 
     client = Client()
-    client.defaults["HTTP_AUTHORIZATION"] = f"Bearer {lecturer_token.key}"
+    client.defaults["HTTP_AUTHORIZATION"] = f"Bearer {auth_token}"
 
     # Lecturer trying to update admin - should fail
     response = client.put(
@@ -548,7 +554,6 @@ def test_user_update_lecturer_cannot_update_admin():
 def test_user_delete_only_admin_can_delete():
     """Test that only admins can delete users."""
     from core.models import User
-    from rest_framework.authtoken.models import Token
 
     # Create users with different roles
     student = User.objects.create_user(
@@ -556,21 +561,24 @@ def test_user_delete_only_admin_can_delete():
         password="StudentPass123!",
         user_role="student",
     )
-    student_token = Token.objects.create(user=student)
+    student_jwt_pair = create_jwt_pair(student)
+    student_auth_token = student_jwt_pair.access
 
     lecturer = User.objects.create_user(
         user_email="lecturer@example.com",
         password="LecturerPass123!",
         user_role="lecturer",
     )
-    lecturer_token = Token.objects.create(user=lecturer)
+    lecturer_jwt_pair = create_jwt_pair(lecturer)
+    lecturer_auth_token = lecturer_jwt_pair.access
 
     admin = User.objects.create_user(
         user_email="admin@example.com",
         password="AdminPass123!",
         user_role="admin",
     )
-    admin_token = Token.objects.create(user=admin)
+    admin_jwt_pair = create_jwt_pair(admin)
+    admin_auth_token = admin_jwt_pair.access
 
     # Create a target user to delete
     target_user = User.objects.create_user(
@@ -582,17 +590,17 @@ def test_user_delete_only_admin_can_delete():
 
     # Student trying to delete - should fail
     client = Client()
-    client.defaults["HTTP_AUTHORIZATION"] = f"Bearer {student_token.key}"
+    client.defaults["HTTP_AUTHORIZATION"] = f"Bearer {student_auth_token}"
     response = client.delete(f"/api/v2/core/users/{target_user_id}/")
     assert response.status_code == 403
 
     # Lecturer trying to delete - should fail
-    client.defaults["HTTP_AUTHORIZATION"] = f"Bearer {lecturer_token.key}"
+    client.defaults["HTTP_AUTHORIZATION"] = f"Bearer {lecturer_auth_token}"
     response = client.delete(f"/api/v2/core/users/{target_user_id}/")
     assert response.status_code == 403
 
     # Admin deleting - should succeed
-    client.defaults["HTTP_AUTHORIZATION"] = f"Bearer {admin_token.key}"
+    client.defaults["HTTP_AUTHORIZATION"] = f"Bearer {admin_auth_token}"
     response = client.delete(f"/api/v2/core/users/{target_user_id}/")
     assert response.status_code == 200
 
@@ -601,14 +609,14 @@ def test_user_delete_only_admin_can_delete():
 def test_user_delete_admin_cannot_delete_other_admin():
     """Test that admins cannot delete other admin accounts."""
     from core.models import User
-    from rest_framework.authtoken.models import Token
 
     admin1 = User.objects.create_user(
         user_email="admin1@example.com",
         password="AdminPass123!",
         user_role="admin",
     )
-    admin1_token = Token.objects.create(user=admin1)
+    jwt_pair = create_jwt_pair(admin1)
+    auth_token = jwt_pair.access
 
     admin2 = User.objects.create_user(
         user_email="admin2@example.com",
@@ -617,7 +625,7 @@ def test_user_delete_admin_cannot_delete_other_admin():
     )
 
     client = Client()
-    client.defaults["HTTP_AUTHORIZATION"] = f"Bearer {admin1_token.key}"
+    client.defaults["HTTP_AUTHORIZATION"] = f"Bearer {auth_token}"
 
     # Admin trying to delete another admin - should fail
     response = client.delete(f"/api/v2/core/users/{admin2.user_id}/")

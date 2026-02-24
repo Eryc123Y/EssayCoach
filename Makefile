@@ -83,9 +83,6 @@ seed-db:
 
 # Testing
 test:
-	@echo "Running API v1 tests..."
-	@cd backend && .venv/bin/pytest api_v1/ -v --timeout=120
-	@echo ""
 	@echo "Running API v2 tests..."
 	@cd backend && .venv/bin/pytest api_v2/ -v --timeout=120
 	@echo ""

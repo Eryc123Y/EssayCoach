@@ -1,0 +1,2 @@
+- 2026-02-13: Kept `from api_v1.core.rubric_manager import ...` unchanged in `backend/api_v2/core/views.py` because the task only required migrating `api_v1.core.models` and `api_v1.ai_feedback` import paths.
+- 2026-02-13: Kept `backend/core/apps.py` aligned to the requested standard Django pattern (`default_auto_field` + `name`) and moved app registration wiring to `backend/core/__init__.py` via `default_app_config`.

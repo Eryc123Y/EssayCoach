@@ -18,12 +18,12 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Call the real Django backend
+    // Call the real Django backend with JWT endpoint
     // Force 127.0.0.1 to avoid Node.js ipv6 resolution issues
     const apiUrl = (
       process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000'
     ).replace('localhost', '127.0.0.1');
-    const response = await fetch(`${apiUrl}/api/v2/auth/login/`, {
+    const response = await fetch(`${apiUrl}/api/v2/auth/login-with-jwt/`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email, password })
@@ -37,7 +37,7 @@ export async function POST(req: NextRequest) {
     }
 
     const result = await response.json();
-    const { token, user } = result.data;
+    const { token, refresh, expires_at, user } = result.data;
 
     // Normalize user role field - backend may return 'role' or other field names
     const normalizedUser = {
@@ -46,22 +46,29 @@ export async function POST(req: NextRequest) {
       role: user.role || user.user_role || 'student'
     };
 
-    // Debug: Log the user object to see what fields are available
-    console.log(
-      '[Login Debug] Raw user from API:',
-      JSON.stringify(user, null, 2)
-    );
-    console.log('[Login Debug] Normalized user role:', normalizedUser.role);
+    const res = NextResponse.json({
+      access: token,
+      refresh: refresh,
+      expiresAt: expires_at,
+      user: normalizedUser
+    });
 
-    const res = NextResponse.json({ access: token, user: normalizedUser });
-
-    // Set cookie for frontend request.ts to use
+    // Set access token cookie
     res.cookies.set('access_token', token, {
       httpOnly: true,
       sameSite: 'strict',
       secure: process.env.NODE_ENV === 'production',
       path: '/',
-      maxAge: 60 * 60 * 24 // 24 hours
+      maxAge: 60 * 60 // 1 hour
+    });
+
+    // Set refresh token cookie - longer expiry for refresh token
+    res.cookies.set('refresh_token', refresh, {
+      httpOnly: true,
+      sameSite: 'strict',
+      secure: process.env.NODE_ENV === 'production',
+      path: '/',
+      maxAge: 60 * 60 * 24 * 7 // 7 days
     });
 
     // Store user info in HttpOnly cookies for security (prevents client-side tampering)
@@ -108,6 +115,7 @@ export async function POST(req: NextRequest) {
 
     return res;
   } catch (error) {
+    console.error('[Login] Error:', error);
     return NextResponse.json(
       { message: 'Internal server error' },
       { status: 500 }

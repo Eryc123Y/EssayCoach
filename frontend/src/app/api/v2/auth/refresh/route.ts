@@ -1,34 +1,68 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-type RefreshRequestBody = {
-  refresh?: string;
-};
-
 export async function POST(req: NextRequest) {
   try {
-    const body = (await req.json()) as RefreshRequestBody;
-    const { refresh } = body ?? {};
+    // Read refresh token from httpOnly cookie (more secure than request body)
+    const refreshToken = req.cookies.get('refresh_token')?.value;
 
-    if (!refresh) {
+    if (!refreshToken) {
       return NextResponse.json(
         { message: 'refresh token is required' },
         { status: 400 }
       );
     }
 
-    // Mock delay to simulate backend
-    await new Promise((resolve) => setTimeout(resolve, 400));
+    // Call the real Django backend
+    const apiUrl = (
+      process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000'
+    ).replace('localhost', '127.0.0.1');
 
-    const access = 'mock_access_token_refreshed_eyJ0eXAiOiJKV1QiLCJhbGc';
-    const res = NextResponse.json({ access });
+    const response = await fetch(`${apiUrl}/api/v2/auth/refresh/`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ refresh: refreshToken })
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      const message =
+        errorData?.detail || errorData?.message || 'Failed to refresh token';
+      return NextResponse.json({ message }, { status: response.status });
+    }
+
+    const result = await response.json();
+    const { access, refresh: newRefresh, expires_at } = result;
+
+    const res = NextResponse.json({
+      access,
+      refresh: newRefresh,
+      expiresAt: expires_at
+    });
+
+    // Set new access token cookie
     res.cookies.set('access_token', access, {
       httpOnly: true,
-      sameSite: 'lax',
+      sameSite: 'strict',
+      secure: process.env.NODE_ENV === 'production',
       path: '/',
-      maxAge: 60 * 60
+      maxAge: 60 * 60 // 1 hour
     });
+
+    // Set new refresh token cookie (token rotation - new refresh token issued)
+    res.cookies.set('refresh_token', newRefresh, {
+      httpOnly: true,
+      sameSite: 'strict',
+      secure: process.env.NODE_ENV === 'production',
+      path: '/',
+      maxAge: 60 * 60 * 24 * 7 // 7 days
+    });
+
     return res;
-  } catch (_e) {
-    return NextResponse.json({ message: 'Invalid JSON' }, { status: 400 });
+  } catch (error) {
+    console.error('[Refresh] Error:', error);
+    return NextResponse.json(
+      { message: 'Internal server error' },
+      { status: 500 }
+    );
   }
 }

@@ -22,7 +22,7 @@ from core.models import (
 )
 from core.models import RubricLevelDesc as RubricLevelDescModel
 
-from ..utils.auth import TokenAuth
+from ..utils.auth import JWTAuth
 from ..utils.permissions import IsAdminOrLecturer
 from .schemas import (
     ClassDetailOut,
@@ -68,7 +68,7 @@ from .schemas import (
     UserUpdateIn,
 )
 
-router = Router(tags=["Core"], auth=TokenAuth())
+router = Router(tags=["Core"], auth=JWTAuth())
 
 
 def paginate(queryset, params: PaginationParams):

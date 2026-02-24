@@ -1,0 +1,6 @@
+{
+  "setup": [
+    "export OPENCODE_CONFIG_DIR=$HOME/.config/opencode"
+  ],
+  "teardown": []
+}

@@ -1,69 +1,91 @@
-# RevisionChat API 集成学习文档
+# RevisionChat API Integration
 
-**日期**: 2026-02-24
-**作者**: frontend-dev
-**任务**: P0 - RevisionChat 连接真实 API
+**Date**: 2026-02-24
+**Author**: frontend-dev
+**Task**: P0 - RevisionChat Backend Integration
+**Status**: ⚠️ **DEFERRED** - Pending LangGraph Migration
 
 ---
 
-## 概述
+## Overview
 
-将 RevisionChat 组件从 mock 数据连接到后端真实 API 端点 `/api/v2/ai-feedback/chat/`。
+Connect the RevisionChat component from mock data to the real backend API endpoint `/api/v2/ai-feedback/chat/`.
 
-## 后端 API 接口
+**Latest Update (2026-02-24)**:
+
+> **Decision**: Defer real API integration, continue using Mock data.
+>
+> **Reasons**:
+> - Current Dify implementation is temporary
+> - Team plans to migrate to LangChain/LangGraph Agent
+> - Avoid investing time in soon-to-be-deprecated technology
+>
+> **Next Steps**:
+> - Connect to real API after LangGraph Agent implementation
+> - Current priorities: Task Module (PRD-09), Class Module (PRD-10)
+
+---
+
+## Backend API Reference
+
+> Note: API definitions below retained for future LangGraph migration reference
 
 ### Endpoint
 ```
 POST /api/v2/ai-feedback/chat/
 ```
 
-### 请求格式 (ChatMessageIn)
+### Request Format (ChatMessageIn)
 ```typescript
 {
-  message: string;        // 用户消息内容 (1-5000 字符)
-  context?: {             // 可选上下文
+  message: string;        // User message content (1-5000 chars)
+  context?: {             // Optional context
     essay_id?: string;
     essay_question?: string;
     essay_content?: string;
     feedback_summary?: string;
-    conversation_id?: string;  // 用于多轮对话
+    conversation_id?: string;  // For multi-turn conversation
   };
 }
 ```
 
-### 响应格式 (ChatMessageOut)
+### Response Format (ChatMessageOut)
 ```typescript
 {
-  message: string;        // AI 回复内容
+  message: string;        // AI response content
   role: 'assistant' | 'system';
-  timestamp: string;      // ISO 8601 格式
+  timestamp: string;      // ISO 8601 format
 }
 ```
 
 ---
 
-## 前端实现
+## Current Implementation Status
 
-### 1. API 服务层 (`frontend/src/service/api/dify.ts`)
+### Frontend Component (`frontend/src/features/essay-analysis/components/revision-chat.tsx`)
+
+**Currently using Mock data**, key code:
 
 ```typescript
-export interface ChatMessageRequest {
-  message: string;
-  context?: {
-    essay_id?: string;
-    essay_question?: string;
-    essay_content?: string;
-    feedback_summary?: string;
-    conversation_id?: string;
-  };
-}
+// Structure retained for future real API integration
+import { fetchChatMessage } from '@/service/api/dify';
 
-export interface ChatMessageResponse {
-  message: string;
-  role: 'assistant' | 'system';
-  timestamp: string;
-}
+// Mock data - temporary
+const MOCK_RESPONSES = [
+  "Thanks for your question! Let me help you with that...",
+  // ... more mock responses
+];
 
+export function RevisionChat() {
+  const [messages, setMessages] = useState<Message[]>([]);
+  // ... rest of implementation
+}
+```
+
+### API Service Layer (`frontend/src/service/api/dify.ts`)
+
+```typescript
+// Defined but not currently used
 export function fetchChatMessage(data: ChatMessageRequest) {
   return request<ChatMessageResponse>({
     url: '/api/v2/ai-feedback/chat/',
@@ -73,93 +95,61 @@ export function fetchChatMessage(data: ChatMessageRequest) {
 }
 ```
 
-### 2. 组件实现 (`frontend/src/features/essay-analysis/components/revision-chat.tsx`)
-
-**关键改动**:
-
-1. **移除 mock 数据**: 删除 `MOCK_MESSAGES` 常量
-2. **添加状态**: `isLoading` 处理加载状态
-3. **API 调用**: `handleSend` 改为 async 函数
-4. **错误处理**: 使用 toast 显示错误，失败时移除用户消息
-5. **多轮对话**: 使用模块级变量 `conversationId` 保存会话 ID
-6. **用户体验**:
-   - Loading 时显示 spinner
-   - 支持回车键发送
-   - 失败时自动回滚 UI
-
 ---
 
-## 待办事项
+## Pending Tasks (After LangGraph Migration)
 
-### 1. 传递 Essay 上下文
-当前实现中，`getEssayContext()` 返回空上下文。需要从父组件获取：
-- `essay_id`: 当前分析的文章 ID
-- `essay_question`: 文章问题
-- `essay_content`: 文章内容
-- `feedback_summary`: AI 分析反馈摘要
+### 1. Pass Essay Context
+Currently, `getEssayContext()` returns empty context. Need to get from parent component:
+- `essay_id`: Current essay ID
+- `essay_question`: Essay question/prompt
+- `essay_content`: Essay content
+- `feedback_summary`: AI analysis feedback summary
 
-**建议方案**: 通过 props 传递
+**Recommended Approach**: Pass via props
 ```tsx
-// 父组件
+// Parent component
 <RevisionChat
   essayId={essayId}
   essayQuestion={essayData.question}
   essayContent={essayData.content}
+  onChatComplete={handleChatComplete}
 />
 ```
 
-### 2. Conversation ID 管理
-当前使用模块级变量存储 `conversationId`，这不是最佳实践。建议：
-- 使用 Zustand 或其他状态管理工具
-- 或将 conversationId 与 essayId 绑定存储
+### 2. Conversation ID Management
+Currently using module-level variable for `conversationId`, not best practice. Recommend:
+- Use Zustand or other state management
+- Or bind conversationId with essayId
 
-### 3. 流式响应支持
-当前实现使用 blocking 模式，未来可考虑：
-- 支持 SSE 流式响应
-- 实现打字机效果
+### 3. Streaming Response Support
+Current implementation uses blocking mode, future considerations:
+- Support SSE streaming
+- Implement typewriter effect
 
 ---
 
-## 测试建议
+## LangGraph Migration Notes
 
-### 单元测试
-```tsx
-describe('RevisionChat', () => {
-  it('should send message and display response', async () => {
-    // Mock fetchChatMessage
-    // Simulate user input
-    // Assert message appears in chat
-  });
+### Interfaces to Define
 
-  it('should handle API error gracefully', async () => {
-    // Mock API error
-    // Assert toast error message
-    // Assert user message is removed
-  });
-});
+```typescript
+// Abstract Agent interface for easy provider switching
+export interface ChatAgent {
+  sendMessage(message: string, context: ChatContext): Promise<ChatResponse>;
+}
+
+// Dify implementation (current)
+export class DifyAgent implements ChatAgent { ... }
+
+// LangGraph implementation (future)
+export class LangGraphAgent implements ChatAgent { ... }
 ```
 
-### E2E 测试
-1. 提交一篇文章
-2. 等待分析完成
-3. 在 RevisionChat 中发送消息
-4. 验证 AI 响应显示
+### Migration Checklist
 
----
-
-## 相关技术栈
-
-- **Frontend**: Next.js 15, React 19, TypeScript
-- **UI Components**: shadcn/ui
-- **HTTP Client**: native fetch with `credentials: 'include'`
-- **Notifications**: sonner (toast)
-- **Backend**: Django Ninja
-- **AI Provider**: Dify
-
----
-
-## 参考资料
-
-- 后端实现：`backend/api_v2/ai_feedback/views.py:124-171`
-- Schema 定义：`backend/api_v2/ai_feedback/schemas.py:145-157`
-- Dify Chat API: https://docs.dify.ai/api-reference/chat-messages
+- [ ] Define unified ChatAgent interface
+- [ ] Frontend depends on abstract interface, not concrete implementation
+- [ ] Implement LangGraphAgent
+- [ ] Test multi-turn conversation context
+- [ ] Verify essay context passing

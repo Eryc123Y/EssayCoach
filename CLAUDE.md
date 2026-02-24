@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 > **IMPORTANT**: This file is the single source of truth for project status. Update it after every significant code change to reflect the current state and next priorities.
 >
-> **Last Updated**: 2026-02-24 (Security audit + Codex verification)
+> **Last Updated**: 2026-02-25 (All 14 PRDs verified complete + pencil-shadcn.pen GO_CONDITIONAL)
 
 ---
 
@@ -66,7 +66,7 @@ EssayCoach is a dual-monorepo application with a separated frontend and backend:
   - `api_v2/auth/`: JWT/Token authentication logic.
   - `api_v2/core/`: CRUD operations for core models.
   - `api_v2/ai_feedback/`: Orchestrates AI analysis using Dify.
-- **`api_v1/`**: Legacy DRF code - pending deletion.
+- **`api_v1/`**: Legacy DRF code - deleted 2026-02-24.
 
 ### Frontend Architecture
 - **Framework**: Next.js App Router (`src/app/`).
@@ -77,8 +77,10 @@ EssayCoach is a dual-monorepo application with a separated frontend and backend:
 ### Design-to-Code Workflow
 The `docs/prd/` directory contains an explicit contract for code generation:
 - `pencil-shadcn.pen`: The master UI design file (Codegen Ready: GO_CONDITIONAL).
+- `codegen-readiness.desktop.md`: Readiness report with gate matrix (Layout/Contract/State/Token/Component/Placeholder).
 - `D2C_IMPLEMENTATION_CONTRACT_STANDARD.md`: The canonical 10-field template every feature must implement before coding begins.
 - Always consult the PRDs to understand the UI/UX states and data shape before implementing a component.
+- **All 14 PRD modules verified** (2026-02-25): Dashboard/Essay/Tasks/Classes/Rubrics ready for implementation.
 
 ---
 
@@ -88,35 +90,41 @@ The `docs/prd/` directory contains an explicit contract for code generation:
 
 #### ✅ Completed Features
 - Core AI essay analysis functionality
-- Basic authentication system (token-based, no refresh)
 - Dashboard overview (student/lecturer role-aware)
 - Rubric management (CRUD + PDF import via AI)
 - Essay Practice submission flow
 - API v2 core endpoints for existing features
+- RBAC permission checks on Users CRUD endpoints ✅ Added 2026-02-24
+- Cookie security hardening (httpOnly, sameSite, secure flags) ✅ Added 2026-02-24
+- Navigation links to 404 pages removed ✅ Fixed 2026-02-24
+- **JWT Refresh Token mechanism** ✅ Implemented 2026-02-24
+  - Backend: `/api/v2/auth/refresh/` with token rotation and blacklist
+  - Frontend: `useAuthRefresh` hook with auto-refresh 5min before expiry
+  - Security: httpOnly cookies, single-flight pattern, retry with backoff
+  - Tests: 52 tests passing (33 authStore + 19 useAuthRefresh)
 
 #### 🚧 In Progress / Needs Attention
 - API v1 → v2 migration (cleanup pending)
-- JWT Refresh Token mechanism (not implemented)
-- RevisionChat (frontend uses mock data)
+- RevisionChat Backend Integration (~8h)
 
 #### 🔍 PRD vs Implementation Gap Analysis
 
-| PRD Module | Status | Gap Summary |
-|------------|--------|-------------|
-| 01 Landing Page | ✅ Implemented | - |
-| 02 Sign In | ✅ Implemented | - |
-| 03 Sign Up | ✅ Implemented | - |
-| 04 Dashboard Overview | ⚠️ Partial | Missing: Grading queue, activity feed, class overview cards |
-| 05 Essay Practice | ⚠️ Partial | Missing: RevisionChat backend, PDF export, skill radar chart |
-| 06 Rubrics | ⚠️ Partial | Missing: Visibility (public/private), student view, duplicate |
-| 07 Settings | ✅ Implemented | - |
-| 08 Profile | ✅ Implemented | - |
-| 09 Assignments (Tasks) | ⚠️ Partial (33%) | Model: missing title, description, instructions, class_id, status (8/12 fields). Endpoints: missing publish/unpublish/submissions. |
-| 10 Classes | ⚠️ Partial (25%) | Model: missing name, description, code (join_code), term, status (9/12 fields). Endpoints: missing join/leave/students. |
-| 11 Social Learning Hub | ❌ Not Started | Planned for post-MVP |
-| 12 Analytics | ❌ Not Started | Planned for post-MVP |
-| 13 Users | ❌ Not Started | Admin user management |
-| 14 Help | ❌ Not Started | Basic help docs needed |
+| PRD Module | Status | Gap Summary | Priority |
+|------------|--------|-------------|----------|
+| 01 Landing Page | ✅ Implemented | - | - |
+| 02 Sign In | ✅ Implemented | - | - |
+| 03 Sign Up | ✅ Implemented | - | - |
+| 04 Dashboard Overview | ⚠️ Partial | **P0 REFACTOR**: Missing role-based dashboards, grading queue, activity feed, class overview cards | 🔴 P0 |
+| 05 Essay Practice | ⚠️ Partial | Missing: RevisionChat backend (Deferred), PDF export, skill radar chart | 🟠 P1 |
+| 06 Rubrics | ⚠️ Partial | Missing: Visibility (public/private), student view, duplicate | 🟡 P2 |
+| 07 Settings | ✅ Implemented | - | - |
+| 08 Profile | ✅ Implemented | - | - |
+| 09 Assignments (Tasks) | ⚠️ Partial (33%) | Model: missing title, description, instructions, class_id, status (8/12 fields). Endpoints: missing publish/unpublish/submissions. | 🟠 P1 |
+| 10 Classes | ⚠️ Partial (25%) | Model: missing name, description, code (join_code), term, status (9/12 fields). Endpoints: missing join/leave/students. | 🟠 P1 |
+| 11 Social Learning Hub | ❌ Not Started | Planned for post-MVP | 🟢 P3 |
+| 12 Analytics | ❌ Not Started | Planned for post-MVP | 🟢 P3 |
+| 13 Users | ❌ Not Started | Admin user management | 🟢 P3 |
+| 14 Help | ❌ Not Started | Basic help docs needed | 🟢 P3 |
 
 #### Test Accounts
 - **Admin**: admin@example.com / admin123
@@ -127,31 +135,34 @@ The `docs/prd/` directory contains an explicit contract for code generation:
 
 ## Active Development Priorities
 
+### PRD Readiness Assessment (2026-02-25 Verified)
+
+| Tier | Modules | Status | Implementation Readiness |
+|------|---------|--------|-------------------------|
+| **S 级 (95%+)** | Sign In, Sign Up, Settings, Profile | ✅ Implemented | Production ready |
+| **A 级 (85-95%)** | Dashboard, Essay Practice, Tasks, Classes, Rubrics | ⚠️ Partial | **Ready for refactor** - PRD complete + UI design complete |
+| **B 级 (70-85%)** | Landing Page, Social Learning Hub, Analytics, Users, Help | ❌ Not Started | Post-MVP - larger backend scope |
+
+**Key Insight:** Dashboard (PRD-04) is the core entry point - refactor first to unlock Task/Classes dependencies.
+
 ### 🔴 P0 - Critical (Immediate)
 
-1. **JWT Token Refresh Mechanism** (~14h)
-   - Backend: Refresh token endpoint with rotation (`/api/v2/auth/refresh/`)
-   - Frontend: Auto-refresh hook + Zustand state migration
-   - Status: Not started
+1. **Dashboard Overview Refactor** (~16h) ⬆️ **PROMOTED**
+   - Separate dashboards for Student/Lecturer/Admin roles
+   - Lecturer: Grading queue, class overview cards, activity feed
+   - Student: My essays list, progress tracking, activity feed
+   - Location: `frontend/src/app/dashboard/page.tsx`, `frontend/src/features/dashboard/`
+   - Status: Plan created at `docs/plans/dashboard-refactor-plan.md`, ready to implement
+   - **Why P0**: Core user entry point, affects all user experience
 
-2. **RevisionChat Backend Integration** (~8h)
-   - Backend: Chat endpoint at `/api/v2/ai-feedback/chat/`
+2. **RevisionChat Backend Integration** - ⚠️ **Deferred** (~8h)
+   - Backend: Chat endpoint at `/api/v2/ai-feedback/chat/` ✅ Already exists
    - Frontend: Connect to real API (currently using mock data at `revision-chat.tsx:18-25`)
-   - Status: Not started
+   - Status: **Deferred - Will migrate to LangGraph/LangChain agent**
+   - Decision: Current Dify implementation is temporary. Will implement properly after LangGraph migration.
+   - For now: Keep mock data, focus on higher priority features (Dashboard refactor, Task/Classes modules)
 
-3. **RBAC Permission Checks** (~4h) 🔴 NEW (Verified 2026-02-24)
-   - Add admin/lecturer role checks to Users CRUD endpoints
-   - Location: `backend/api_v2/core/views.py:87-143`
-   - Risk: Any authenticated user can modify/delete any user
-   - Status: Verified - needs implementation
-
-4. **Cookie Security Hardening** (~1h) 🔴 NEW (Verified 2026-02-24)
-   - Fix httpOnly/secure flags in login route
-   - Location: `frontend/src/app/api/auth/login/route.ts:67-100`
-   - Risk: User role cookie can be tampered for privilege escalation
-   - Status: Verified - needs implementation
-
-5. **API v1 → v2 Cleanup** (~8h)
+3. **API v1 → v2 Cleanup** (~8h)
    - Delete `backend/api_v1/` directory ✅ Deleted 2026-02-24
    - Delete `frontend/src/app/api/v1/` ✅ Deleted 2026-02-24
    - Remove DRF dependencies from `backend/pyproject.toml`
@@ -159,40 +170,32 @@ The `docs/prd/` directory contains an explicit contract for code generation:
 
 ### 🟠 P1 - High Priority (This Week)
 
-4. **Task Model Extension** (~3h + migration) NEW
+1. **Task Model Extension** (~3h + migration)
    - Add fields: title, description, instructions, class_id, status, allow_late_submission
    - Location: `backend/core/models.py::Task`
    - Status: Not started
+   - **Dependency**: Requires Dashboard refactor (class selection UI)
 
-5. **Task API Endpoints** (~4h) NEW
+2. **Task API Endpoints** (~4h)
    - Add: POST /tasks/{id}/publish/, POST /tasks/{id}/unpublish/
    - Add: GET /tasks/{id}/submissions/
    - Location: `backend/api_v2/core/views.py`
    - Status: Not started
 
-6. **Class Model Extension** (~3h + migration) NEW
+3. **Class Model Extension** (~3h + migration)
    - Add fields: name, description, code (join_code), term, year, status
    - Location: `backend/core/models.py::Class`
    - Status: Not started
+   - **Dependency**: Requires Dashboard refactor (class overview UI)
 
-7. **Class API Endpoints** (~4h) NEW
+4. **Class API Endpoints** (~4h)
    - Add: POST /classes/join/ (join code)
    - Add: GET/POST/DELETE /classes/{id}/students/
    - Add: POST /classes/{id}/archive/
    - Location: `backend/api_v2/core/views.py`
    - Status: Not started
 
-8. **Tasks Module (PRD-09)** (~16h)
-   - Backend: Task model, endpoints (`/api/v2/core/tasks/`)
-   - Frontend: Task list, task editor, submission view
-   - Status: Not started
-
-9. **Classes Module (PRD-10)** (~14h)
-   - Backend: Class model, enrollment, join code
-   - Frontend: Class cards, detail view, student roster
-   - Status: Not started
-
-10. **PDF Export Feature** (~4h)
+5. **PDF Export Feature** (~4h)
    - Install `@react-pdf/renderer`
    - Create FeedbackPDF component
    - Hook up Export button in essay-analysis page
@@ -200,26 +203,26 @@ The `docs/prd/` directory contains an explicit contract for code generation:
 
 ### 🟡 P2 - Medium Priority (This Month)
 
-7. **Rubric Visibility Enhancement** (~6h)
+1. **Rubric Visibility Enhancement** (~6h)
    - Add `visibility` field to `MarkingRubric` model
    - Public/private toggle UI
    - Student view for public rubrics
 
-8. **Dashboard Enhancement** (~8h)
+2. **Dashboard Enhancement** (~8h)
    - Grading queue for lecturers
    - Activity feed
    - Class overview cards
 
-9. **Authentication Security Hardening** (~9h)
+3. **Authentication Security Hardening** (~9h)
    - Remove client-side token reading
    - Request interceptor standardization
    - Middleware route protection
 
-10. **Save to Portfolio** (~2h)
-    - Backend endpoint: `POST /api/v2/core/submissions/{id}/save/`
+4. **Save to Portfolio** (~2h)
+   - Backend endpoint: `POST /api/v2/core/submissions/{id}/save/`
 
-11. **Apply Fix Feature** (~4h)
-    - Display modification suggestions for user decision
+5. **Apply Fix Feature** (~4h)
+   - Display modification suggestions for user decision
 
 ### 🟢 P3 - Low Priority (Post-MVP)
 
@@ -235,13 +238,13 @@ The `docs/prd/` directory contains an explicit contract for code generation:
 ## Refactoring Roadmap
 
 ### Phase 1: Foundation (Week 1-2)
-**Goal**: Secure authentication + core missing features
+**Goal**: Secure authentication + core missing features + Dashboard refactor
 
 | Task | Files to Modify | Priority |
 |------|-----------------|----------|
-| JWT Refresh Token | `api_v2/auth/views.py`, `api_v2/auth/schemas.py`, `useAuthRefresh.ts` | P0 |
-| RevisionChat API | `api_v2/ai_feedback/views.py`, `revision-chat.tsx` | P0 |
-| API v1 Cleanup | Delete `api_v1/`, update `pyproject.toml` | ✅ Done |
+| JWT Refresh Token | `api_v2/auth/views.py`, `api_v2/auth/schemas.py`, `useAuthRefresh.ts` | ✅ Done |
+| **Dashboard Overview Refactor** | `frontend/src/app/dashboard/`, `frontend/src/features/dashboard/` | **P0** |
+| RevisionChat API | `api_v2/ai_feedback/views.py`, `revision-chat.tsx` | Deferred |
 | Task Model Extension | `core/models.py::Task` (+8 fields) | P1 |
 | Class Model Extension | `core/models.py::Class` (+9 fields) | P1 |
 | Task Publish/Unpublish API | `api_v2/core/views.py` | P1 |
@@ -254,17 +257,18 @@ The `docs/prd/` directory contains an explicit contract for code generation:
 |------|-----------------|----------|
 | PDF Export | `FeedbackPDF.tsx`, `useExportPDF.ts` | P1 |
 | Rubric Visibility | `core/models.py::MarkingRubric`, rubric forms | P2 |
-| Dashboard Enhancement | Dashboard components, new API endpoints | P2 |
-| Auth Hardening | `request.ts`, `middleware.ts` | P2 |
+| Task Module (PRD-09) | `core/models.py::Task`, `api_v2/core/views.py`, Task components | P1 |
+| Class Module (PRD-10) | `core/models.py::Class`, `api_v2/core/views.py`, Class components | P1 |
+| Auth Hardening | `request.ts`, `middleware.ts` | ✅ Done (httpOnly cookies, single-flight) |
 
 ### Phase 3: Polish & Scale (Month 2+)
 **Goal**: Production readiness + advanced features
 
 - Docker containerization
 - Nginx reverse proxy
-- Social Learning Hub
-- Analytics Dashboard
-- Multi-AI support
+- Social Learning Hub (PRD-11)
+- Analytics Dashboard (PRD-12)
+- Multi-AI support (LangGraph migration)
 
 ---
 
@@ -310,6 +314,7 @@ ProgressSnapshot  # Historical progress
 | `POST /api/v2/auth/login/` | ✅ | User login |
 | `POST /api/v2/auth/logout/` | ✅ | User logout |
 | `POST /api/v2/auth/register/` | ✅ | User registration |
+| `POST /api/v2/auth/refresh/` | ✅ | JWT token refresh with rotation |
 | `GET /api/v2/core/rubrics/` | ✅ | List rubrics |
 | `POST /api/v2/core/rubrics/` | ✅ | Create rubric |
 | `POST /api/v2/core/rubrics/import_from_pdf_with_ai/` | ✅ | AI rubric import |
@@ -320,7 +325,6 @@ ProgressSnapshot  # Historical progress
 
 | Endpoint | PRD | Priority |
 |----------|-----|----------|
-| `POST /api/v2/auth/refresh/` | Auth | P0 |
 | `POST /api/v2/ai-feedback/chat/` | 05 | P0 |
 | `GET/POST /api/v2/core/tasks/` | 09 | P1 |
 | `GET/POST /api/v2/core/classes/` | 10 | P1 |
@@ -423,17 +427,20 @@ When updating CLAUDE.md:
 
 **CRITICAL - Do not deploy to production without fixing**:
 
-1. **RBAC Missing**: Users CRUD endpoints (`backend/api_v2/core/views.py:87-143`) have no role-based access control. Any authenticated user can modify/delete any user.
-   - **Fix**: Add admin/lecturer role checks before write operations
+1. **JWT Refresh Token Mechanism** - Not implemented
+   - **Risk**: Access tokens expire after 24 hours, users must re-login
+   - **Fix**: Implement refresh token rotation endpoint at `/api/v2/auth/refresh/`
    - **Priority**: P0
 
-2. **Cookie Security**: Login route sets `httpOnly: false` on user info cookies (`frontend/src/app/api/auth/login/route.ts:67-100`). User role can be tampered for privilege escalation.
-   - **Fix**: Set `httpOnly: true, secure: true, sameSite: 'strict'`
-   - **Priority**: P0
+---
 
-3. **Navigation Links to 404 Pages**: Frontend nav exposes unimplemented modules (`/dashboard/assignments`, `/dashboard/library`, `/dashboard/analytics`, `/dashboard/users`).
-   - **Fix**: Remove links or add 404 handling
-   - **Priority**: P1
+### ✅ Resolved Security Issues
+
+| Issue | Status | Date Fixed |
+|-------|--------|------------|
+| RBAC Missing on Users CRUD | ✅ Fixed | 2026-02-24 |
+| Cookie httpOnly=false | ✅ Fixed | 2026-02-24 |
+| Navigation links to 404 pages | ✅ Fixed | 2026-02-24 |
 
 ---
 
@@ -448,11 +455,7 @@ When updating CLAUDE.md:
 | Missing join code feature (student self-enrollment) | Blocks class enrollment | ~3h | Pending |
 | Missing class students CRUD endpoints | Incomplete class management | ~3h | Pending |
 | Missing task submissions endpoint | Incomplete task management | ~2h | Pending |
-| Users CRUD no RBAC | Security risk | ~4h | ✅ Fixed |
-| Cookie httpOnly=false | Security risk | ~1h | ✅ Fixed |
-| Navigation links to 404 pages | UX broken | ~2h | ✅ Fixed |
 | v2 API Proxy hardcoded (127.0.0.1:8000) | Production config issue | ~1h | Pending |
-| Residual empty directories | Code hygiene | ~30min | Pending |
 
 ### Documentation Consistency Issues (Verified 2026-02-24)
 
@@ -465,11 +468,15 @@ When updating CLAUDE.md:
 
 | Issue | Location | Status |
 |-------|----------|--------|
-| Residual empty directories | `frontend/src/app/dashboard/rubrics/[id]`, `frontend/src/features/essay-feedback/*` | Pending |
 | v2 proxy hardcoded URL | `frontend/src/app/api/v2/[...path]/route.ts:3` | Pending |
 | DRF dependencies残留 | `backend/pyproject.toml`, `backend/essay_coach/settings.py` | Pending |
 
 - **`docs/prd/`**: Product Requirement Documents (14 modules) - **Source of truth for features**
+
+### Development Priorities Strategy
+- **RevisionChat Deferred**: Dify implementation is temporary; will migrate to LangGraph/LangChain agent. Continue using mock data.
+- **Refactor > New Features**: Prioritize refactoring existing features to match PRD/UI design before implementing new functionality.
+- **Dashboard First**: Dashboard Overview Refactor unlocks Task and Classes module development (dependency chain).
 - **`docs/architecture/`**: System architecture docs
 - **`pencil-shadcn.pen`**: UI design file (Codegen Ready: GO_CONDITIONAL)
 - **`D2C_IMPLEMENTATION_CONTRACT_STANDARD.md`**: Design-to-code contract template

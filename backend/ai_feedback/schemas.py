@@ -5,19 +5,17 @@ These schemas define the input and output formats that are independent of
 the underlying AI provider (Dify, LangChain, etc.). They provide a consistent
 contract between the frontend and backend.
 
-This module uses drf_pydantic.BaseModel to automatically generate DRF serializers
-for API documentation while maintaining full Pydantic validation capabilities.
+This module uses Pydantic BaseModel for schema validation with Django Ninja.
 """
 
 from __future__ import annotations
 
 from datetime import datetime
 
-from drf_pydantic import BaseModel as DRFBaseModel
-from pydantic import Field, field_validator
+from pydantic import BaseModel, Field, field_validator
 
 
-class EssayAnalysisInput(DRFBaseModel):
+class EssayAnalysisInput(BaseModel):
     """Input for essay analysis."""
 
     essay_question: str = Field(
@@ -51,13 +49,8 @@ class EssayAnalysisInput(DRFBaseModel):
         description="Blocking waits for completion, streaming returns SSE chunks",
     )
 
-    # Enable DRF-Pydantic integration for full validation
-    drf_config = {
-        "validate_pydantic": True,
-    }
 
-
-class FeedbackItem(DRFBaseModel):
+class FeedbackItem(BaseModel):
     """Individual feedback item for a rubric criterion."""
 
     criterion_name: str = Field(..., description="Name of the rubric criterion")
@@ -78,7 +71,7 @@ class FeedbackItem(DRFBaseModel):
     )
 
 
-class EssayAnalysisOutput(DRFBaseModel):
+class EssayAnalysisOutput(BaseModel):
     """Complete output from essay analysis."""
 
     overall_score: float = Field(..., ge=0, description="Total score awarded")
@@ -105,7 +98,7 @@ class EssayAnalysisOutput(DRFBaseModel):
         default_factory=list,
         description="General suggestions for improvement",
     )
-    # Use string type for JSON data to avoid drf_pydantic conversion issues
+    # Use string type for JSON data to avoid conversion issues
     # The field will be serialized/deserialized as JSON string
     analysis_metadata: str = Field(
         default="{}",
@@ -121,7 +114,7 @@ class EssayAnalysisOutput(DRFBaseModel):
     )
 
 
-class WorkflowRunRequest(DRFBaseModel):
+class WorkflowRunRequest(BaseModel):
     """Request to start a workflow run."""
 
     essay_question: str = Field(..., min_length=1, max_length=2000)
@@ -139,20 +132,20 @@ class WorkflowRunRequest(DRFBaseModel):
         return v
 
 
-class WorkflowRunResponse(DRFBaseModel):
+class WorkflowRunResponse(BaseModel):
     """Response from starting a workflow run."""
 
     workflow_run_id: str = Field(..., description="Unique identifier for this run")
     task_id: str = Field(..., description="Task identifier for tracking")
     status: str = Field(..., description="Current status of the workflow")
-    # Use string type for JSON data to avoid drf_pydantic conversion issues
+    # Use string type for JSON data to avoid conversion issues
     data: str = Field(default="{}", description="Additional data as JSON string")
     inputs: str = Field(default="{}", description="Input parameters as JSON string")
     response_mode: str = Field(..., description="Requested response mode")
     created_at: datetime = Field(default_factory=datetime.now)
 
 
-class WorkflowStatusResponse(DRFBaseModel):
+class WorkflowStatusResponse(BaseModel):
     """Response for workflow status check."""
 
     workflow_run_id: str = Field(...)
@@ -161,14 +154,14 @@ class WorkflowStatusResponse(DRFBaseModel):
     outputs: EssayAnalysisOutput | None = Field(default=None)
     error_message: str | None = Field(default=None)
     elapsed_time_seconds: float | None = Field(default=None)
-    # Use string type for JSON data to avoid drf_pydantic conversion issues
+    # Use string type for JSON data to avoid conversion issues
     token_usage: str = Field(default="{}", description="Token usage as JSON string")
     created_at: datetime | None = Field(default=None)
     finished_at: datetime | None = Field(default=None)
     tracing: str = Field(default="{}", description="Tracing data as JSON string")
 
 
-class RubricInfo(DRFBaseModel):
+class RubricInfo(BaseModel):
     """Information about a rubric."""
 
     rubric_id: int = Field(...)
@@ -178,7 +171,7 @@ class RubricInfo(DRFBaseModel):
     is_valid: bool = Field(default=True)
 
 
-class ErrorResponse(DRFBaseModel):
+class ErrorResponse(BaseModel):
     """Standard error response."""
 
     error: str = Field(

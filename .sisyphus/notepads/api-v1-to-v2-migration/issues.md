@@ -1,0 +1,2 @@
+- 2026-02-13: `uv run python manage.py check` fails with `RuntimeError: Model class core.models.Class doesn't declare an explicit app_label and isn't in an application in INSTALLED_APPS` (pre-existing project configuration issue encountered during verification).
+- 2026-02-13: After fixing `core/__init__.py`, `uv run python manage.py check` now fails with `ImproperlyConfigured: Application labels aren't unique, duplicates: core` because both `api_v1.core` and `core` are in `INSTALLED_APPS` with the same default app label.

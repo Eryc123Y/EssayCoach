@@ -23,7 +23,7 @@ from ai_feedback.exceptions import (
 )
 from ai_feedback.interfaces import ResponseMode, WorkflowInput
 
-from ..utils.auth import TokenAuth
+from ..utils.auth import JWTAuth
 from .schemas import (
     ChatMessageIn,
     ChatMessageOut,
@@ -36,7 +36,7 @@ from .schemas import (
 
 logger = logging.getLogger(__name__)
 
-router = Router(tags=["AI Feedback"], auth=TokenAuth())
+router = Router(tags=["AI Feedback"], auth=JWTAuth())
 
 
 @router.post(

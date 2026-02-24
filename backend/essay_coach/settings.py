@@ -54,10 +54,6 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "corsheaders",
-    "rest_framework",
-    "rest_framework.authtoken",  # For token-based authentication
-    "django_filters",
-    "drf_spectacular",  # OpenAPI 3.0 schema generation
     "django_extensions",  # Management commands including graph_models for ERD
     # Custom Apps - API v2 (Ninja)
     "core",
@@ -89,31 +85,6 @@ CSRF_TRUSTED_ORIGINS = [
     "http://127.0.0.1:5100",
     "http://127.0.0.1:3000",
 ]
-
-# Django REST Framework settings (DRF global)
-REST_FRAMEWORK = {
-    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
-    "PAGE_SIZE": 50,
-    "DATETIME_FORMAT": "%Y-%m-%d %H:%M:%S",
-    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
-    "DEFAULT_RENDERER_CLASSES": [
-        "rest_framework.renderers.JSONRenderer",
-        "rest_framework.renderers.BrowsableAPIRenderer",
-    ],
-    "DEFAULT_PARSER_CLASSES": [
-        "rest_framework.parsers.JSONParser",
-        "rest_framework.parsers.FormParser",
-        "rest_framework.parsers.MultiPartParser",
-    ],
-    "DEFAULT_PERMISSION_CLASSES": [
-        "rest_framework.permissions.IsAuthenticated",
-    ],
-    "DEFAULT_AUTHENTICATION_CLASSES": [
-        "rest_framework.authentication.SessionAuthentication",
-        "rest_framework.authentication.TokenAuthentication",
-    ]
-    + (["rest_framework.authentication.BasicAuthentication"] if IS_DEBUGGING else []),
-}
 
 # JWT settings for djangorestframework-simplejwt
 from datetime import timedelta
@@ -149,65 +120,6 @@ JWT_SECRET_KEY = SECRET_KEY
 JWT_ALGORITHM = "HS256"
 JWT_ACCESS_TOKEN_LIFETIME_HOURS = 24
 JWT_REFRESH_TOKEN_LIFETIME_DAYS = 7
-
-# drf-spectacular settings for OpenAPI 3.0 documentation
-SPECTACULAR_SETTINGS = {
-    "TITLE": "EssayCoach API",
-    "DESCRIPTION": (
-        "Comprehensive REST API documentation for EssayCoach - An intelligent "
-        "essay feedback platform that leverages AI to provide students with "
-        "instant, in-depth, multi-dimensional essay feedback."
-    ),
-    "VERSION": "1.0.0",
-    "SERVE_INCLUDE_SCHEMA": False,
-    "COMPONENT_SPLIT_REQUEST": True,
-    "SCHEMA_PATH_PREFIX": "/api/v1",
-    "AUTHENTICATION_WHITELIST": [
-        "rest_framework.authentication.SessionAuthentication",
-        "rest_framework.authentication.TokenAuthentication",
-    ]
-    + (["rest_framework.authentication.BasicAuthentication"] if IS_DEBUGGING else []),
-    "TAGS": [
-        {
-            "name": "Authentication",
-            "description": "User authentication and authorization endpoints",
-        },
-        {"name": "Users", "description": "User management endpoints"},
-        {
-            "name": "Courses",
-            "description": ("Course structure management (Units, Classes, Enrollments, Teaching Assignments)"),
-        },
-        {
-            "name": "Rubrics",
-            "description": (
-                "Rubric configuration and management (Marking Rubrics, Rubric Items, Rubric Level Descriptions)"
-            ),
-        },
-        {"name": "Tasks", "description": "Assignment and task management"},
-        {"name": "Submissions", "description": "Student submission management"},
-        {
-            "name": "Feedback",
-            "description": "Feedback and evaluation management (Feedbacks, Feedback Items)",
-        },
-    ],
-    "SWAGGER_UI_SETTINGS": {
-        "deepLinking": True,
-        "displayOperationId": True,
-        "filter": True,
-        "showExtensions": True,
-        "showCommonExtensions": True,
-    },
-    "REDOC": {
-        "hideHostname": False,
-        "showApiVersion": True,
-    },
-    "POSTPROCESSING_HOOKS": [
-        "drf_spectacular.hooks.postprocess_schema_enums",
-    ],
-    "ENUM_NAME_OVERRIDES": {
-        # Override enum names for better documentation
-    },
-}
 
 ROOT_URLCONF = "essay_coach.urls"
 

@@ -63,6 +63,17 @@ Implemented complete JWT refresh token mechanism with token rotation for API v2.
 
 See: [JWT Refresh Token Implementation](./jwt-refresh-token-implementation.md)
 
+### 2026-02-24: JWT Refresh Security Lessons
+
+Documented critical security vulnerabilities discovered during frontend integration and the correct patterns for secure token handling.
+
+- **Developer**: frontend-integration-team
+- **Key Finding**: Refresh token in request body exposes XSS vulnerability
+- **Solution**: httpOnly cookie storage with server-side reading
+- **Status**: Documented
+
+See: [JWT Refresh Security Lessons](./jwt-refresh-security-lessons.md)
+
 ### 2026-02-24: Codex Security Review
 
 A comprehensive security audit was conducted using OpenAI Codex, identifying 9 critical issues across the codebase.

@@ -1,7 +1,7 @@
 """Shared AI Feedback module for EssayCoach.
 
-This module provides AI-powered essay analysis and feedback generation,
-independent of API version. It can be used by both api_v1 and api_v2.
+This module provides AI-powered essay analysis and feedback generation.
+It is designed for API v2 (Django Ninja).
 """
 
 from __future__ import annotations

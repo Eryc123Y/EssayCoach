@@ -42,7 +42,7 @@ export interface ChatMessageRequest {
 export interface ChatMessageResponse {
   message: string;
   role: 'assistant' | 'system';
-  timestamp: string;
+  timestamp?: string;
 }
 
 export function fetchChatMessage(data: ChatMessageRequest) {

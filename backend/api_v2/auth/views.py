@@ -48,8 +48,8 @@ def _user_to_schema(user: User) -> UserOut:
     )
 
 
-@router.post("/register/", response=AuthResponse)
-def register(request: HttpRequest, data: UserRegistrationIn) -> AuthResponse:
+@router.post("/register/", response=AuthResponseWithRefresh)
+def register(request: HttpRequest, data: UserRegistrationIn) -> AuthResponseWithRefresh:
     if data.password != data.password_confirm:
         raise HttpError(400, "Password fields didn't match")
 
@@ -71,19 +71,21 @@ def register(request: HttpRequest, data: UserRegistrationIn) -> AuthResponse:
         user_status="active",
     )
 
-    token = get_or_create_token(user)
+    jwt_pair = create_jwt_pair(user)
 
-    return AuthResponse(
+    return AuthResponseWithRefresh(
         data={
-            "token": token.key,
+            "token": jwt_pair.access,
+            "refresh": jwt_pair.refresh,
+            "expires_at": jwt_pair.expires_at.isoformat(),
             "user": _user_to_schema(user),
         },
         message="User registered successfully",
     )
 
 
-@router.post("/login/", response=AuthResponse)
-def login(request: HttpRequest, data: UserLoginIn) -> AuthResponse:
+@router.post("/login/", response=AuthResponseWithRefresh)
+def login(request: HttpRequest, data: UserLoginIn) -> AuthResponseWithRefresh:
     user = authenticate(request, username=data.email, password=data.password)
 
     if not user:
@@ -95,13 +97,16 @@ def login(request: HttpRequest, data: UserLoginIn) -> AuthResponse:
             pass
         raise HttpError(401, "Invalid email or password")
 
-    token = get_or_create_token(user)
+    jwt_pair = create_jwt_pair(user)
 
-    return AuthResponse(
+    return AuthResponseWithRefresh(
         data={
-            "token": token.key,
+            "token": jwt_pair.access,
+            "refresh": jwt_pair.refresh,
+            "expires_at": jwt_pair.expires_at.isoformat(),
             "user": _user_to_schema(user),
         },
+        message="Login successful",
     )
 
 

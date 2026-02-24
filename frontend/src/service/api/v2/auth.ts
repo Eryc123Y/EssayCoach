@@ -2,6 +2,7 @@ import { request } from '@/service/request';
 import type {
   LoginRequest,
   LoginResponse,
+  RefreshTokenResponse,
   UserInfo,
   RubricListItem,
   RubricListResponse,
@@ -13,15 +14,31 @@ const BASE_URL = '/api/v2';
 
 export const authService = {
   async login(data: LoginRequest): Promise<LoginResponse> {
-    const response = await request<{ token: string; user: UserInfo }>({
-      url: `${BASE_URL}/auth/login/`,
+    const response = await request<{ token: string; refresh: string; expires_at: string; user: UserInfo }>({
+      url: `${BASE_URL}/auth/login-with-jwt/`,
       method: 'POST',
       data,
     });
 
     return {
       access: response.token,
+      refresh: response.refresh,
+      expiresAt: response.expires_at,
       user: response.user,
+    };
+  },
+
+  async refreshToken(refreshToken: string): Promise<RefreshTokenResponse> {
+    const response = await request<RefreshTokenResponse>({
+      url: `${BASE_URL}/auth/refresh/`,
+      method: 'POST',
+      data: { refresh: refreshToken },
+    });
+
+    return {
+      access: response.access,
+      refresh: response.refresh,
+      expiresAt: response.expiresAt,
     };
   },
 
@@ -32,9 +49,13 @@ export const authService = {
     });
   },
 
-  async logout(): Promise<void> {
+  async logout(refreshToken?: string): Promise<void> {
+    const url = refreshToken
+      ? `${BASE_URL}/auth/logout-jwt/?refresh=${encodeURIComponent(refreshToken)}`
+      : `${BASE_URL}/auth/logout/`;
+
     await request({
-      url: `${BASE_URL}/auth/logout/`,
+      url,
       method: 'POST',
     });
   },

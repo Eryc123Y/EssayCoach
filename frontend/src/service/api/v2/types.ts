@@ -5,7 +5,15 @@ export interface LoginRequest {
 
 export interface LoginResponse {
   access: string;
+  refresh?: string;
+  expiresAt?: string;
   user: UserInfo;
+}
+
+export interface RefreshTokenResponse {
+  access: string;
+  refresh: string;
+  expiresAt: string;
 }
 
 export interface UserInfo {
