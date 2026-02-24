@@ -30,8 +30,8 @@ export default function UserAuthForm() {
   const [loading] = useState(false);
   const router = useRouter();
   const defaultValues = {
-    email: 'admin@example.com',
-    password: 'admin'
+    email: 'student@example.com',
+    password: 'student123'
   };
   const form = useForm<UserFormValue>({
     resolver: zodResolver(formSchema),
@@ -115,7 +115,7 @@ export default function UserAuthForm() {
 
           <Button
             disabled={loading}
-            className="h-11 w-full bg-blue-600 text-sm font-medium text-white shadow-lg shadow-blue-600/25 transition-all duration-200 hover:bg-blue-700 hover:shadow-xl hover:shadow-blue-600/30 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-slate-950"
+            className="h-11 w-full bg-blue-600 text-sm font-medium text-white shadow-lg shadow-blue-600/25 transition-all duration-200 hover:bg-blue-700 hover:shadow-xl hover:shadow-blue-600/30 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-2"
             type="submit"
           >
             {loading ? (
@@ -132,7 +132,54 @@ export default function UserAuthForm() {
           </Button>
         </form>
       </Form>
-      <p className="mt-6 text-center text-sm text-slate-500">
+
+      {/* Quick-fill test accounts for debugging */}
+      <div className="mt-6 space-y-3">
+        <div className="text-center text-xs text-slate-400">— Quick Test Accounts —</div>
+        <div className="grid grid-cols-3 gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              form.setValue('email', 'student@example.com');
+              form.setValue('password', 'student123');
+              toast.success('Student account loaded');
+            }}
+            className="text-xs"
+          >
+            Student
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              form.setValue('email', 'lecturer@example.com');
+              form.setValue('password', 'lecturer123');
+              toast.success('Lecturer account loaded');
+            }}
+            className="text-xs"
+          >
+            Lecturer
+          </Button>
+          <Button
+            type="button"
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              form.setValue('email', 'admin@example.com');
+              form.setValue('password', 'admin123');
+              toast.success('Admin account loaded');
+            }}
+            className="text-xs"
+          >
+            Admin
+          </Button>
+        </div>
+      </div>
+
+      <p className="mt-4 text-center text-sm text-slate-500">
         Don&apos;t have an account?{" "}
         <Link
           href="/auth/sign-up"
