@@ -464,6 +464,35 @@ When updating CLAUDE.md:
 - **Test Accounts**: Created by `make seed-db` command, not by migrations
 - **Port Conflicts**: Backend runs on port 8000, frontend on 5100 - ensure these are available
 - **Docker Required**: PostgreSQL runs in Docker - run `make db` before starting backend
+- **Parallel Routes**: Dashboard uses Next.js parallel routes (`@bar_stats`, `@pie_stats`, etc.) - all must be included in layout
+- **Role Routing**: Dashboard role routing decodes JWT from httpOnly cookie server-side (`/app/dashboard/page.tsx`)
+
+---
+
+## Agent Team Workflow (2026-02-25)
+
+**Dashboard Phase 2 Implementation Pattern:**
+
+```
+Orchestrator (multi-agent-coordinator)
+├── Fullstack Developer → Implement components
+├── UI Designer → Design compliance review (pencil-shadcn.pen)
+├── Code Reviewer → Security + quality audit
+└── Test Automator → Write tests (vitest + react-testing-library)
+```
+
+**Learnings:**
+1. **Parallel routes require all slots** - Missing `@sales` slot caused build failure
+2. **Icon imports** - Use `@tabler/icons-react` directly, not wrapper components
+3. **Design compliance** - Check typography scale (design: 32px/600, not Tailwind defaults)
+4. **Security first** - JWT parsing needs signature verification, CSRF tokens required
+5. **Test early** - 201 tests created, caught rendering issues early
+
+**Documentation locations:**
+- Implementation: `docs/learnings/dashboard-frontend-implementation.md`
+- UI Review: `docs/learnings/dashboard-ui-design-review.md`
+- Code Review: `docs/learnings/dashboard-frontend-phase2-code-review.md`
+- Testing: `docs/learnings/dashboard-testing-implementation.md`
 
 ---
 
