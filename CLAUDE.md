@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 > **IMPORTANT**: This file is the single source of truth for project status. Update it after every significant code change to reflect the current state and next priorities.
 >
-> **Last Updated**: 2026-02-25 (All 14 PRDs verified complete + pencil-shadcn.pen GO_CONDITIONAL)
+> **Last Updated**: 2026-02-25 (Dashboard Phase 2 Complete + Security Review + Sidebar Fix)
 
 ---
 
@@ -98,10 +98,40 @@ The `docs/prd/` directory contains an explicit contract for code generation:
 - Cookie security hardening (httpOnly, sameSite, secure flags) ✅ Added 2026-02-24
 - Navigation links to 404 pages removed ✅ Fixed 2026-02-24
 - **JWT Refresh Token mechanism** ✅ Implemented 2026-02-24
+- **Dashboard API endpoint** ✅ Implemented 2026-02-25 (`/api/v2/core/dashboard/`)
+- **Comprehensive test coverage** ✅ Added 2026-02-25
+  - Backend: 50+ dashboard API tests (pytest)
+  - Frontend: Dashboard page + component tests (vitest)
+  - Integration tests for full workflows
   - Backend: `/api/v2/auth/refresh/` with token rotation and blacklist
   - Frontend: `useAuthRefresh` hook with auto-refresh 5min before expiry
   - Security: httpOnly cookies, single-flight pattern, retry with backoff
   - Tests: 52 tests passing (33 authStore + 19 useAuthRefresh)
+- **Dashboard Backend API (Phase 1)** ✅ Implemented 2026-02-25
+  - Endpoints: `/api/v2/core/dashboard/lecturer/`, `/api/v2/core/dashboard/student/`, `/api/v2/core/dashboard/admin/`
+  - Schemas: Role-specific response schemas (LecturerDashboardOut, StudentDashboardOut, AdminDashboardOut)
+  - Frontend: API client (`dashboardService`), TypeScript types, useDashboard hook
+  - Documentation: `docs/learnings/dashboard-refactor-phase1-backend.md`
+- **Dashboard Performance Optimization** ✅ Complete 2026-02-25
+  - Database indexes added: 11 new indexes on Submission, Feedback, Enrollment, FeedbackItem, Class tables
+  - Artificial delays removed from all dashboard slot pages (+3s TTI improvement)
+  - Documentation: `docs/learnings/dashboard-performance-optimization.md`
+- **Dashboard Frontend (Phase 2)** ✅ Complete 2026-02-25
+  - Role-based routing: `/dashboard/student`, `/dashboard/lecturer`, `/dashboard/admin`
+  - Components: 5 implemented (`DashboardHeader`, `ActivityFeed`, `LecturerDashboard`, `StudentDashboard`, `AdminDashboard`)
+  - Location: `frontend/src/features/dashboard/`, `frontend/src/app/dashboard/[role]/page.tsx`
+  - Documentation: `docs/learnings/dashboard-frontend-implementation.md`
+  - UI Designer Review: ✅ Complete (70% compliance score)
+  - Testing: ✅ Complete (201 tests created)
+  - Code Review: ✅ Complete (28 findings, 3 High priority security)
+- **Sidebar Fix** ✅ Complete 2026-02-25
+  - Added skeleton loading state during auth initialization
+  - Added placeholder UI when no classes available
+  - Fixed icon mismatches (`IconBook`, `IconChevronsDown`)
+  - Documentation: `docs/learnings/sidebar-fix-implementation.md`
+- **Test Account Quick-Fill** ✅ Complete 2026-02-25
+  - Added Student/Lecturer/Admin quick-fill buttons on login page
+  - Documentation: `docs/learnings/test-account-quick-fill.md`
 
 #### 🚧 In Progress / Needs Attention
 - API v1 → v2 migration (cleanup pending)
@@ -114,7 +144,7 @@ The `docs/prd/` directory contains an explicit contract for code generation:
 | 01 Landing Page | ✅ Implemented | - | - |
 | 02 Sign In | ✅ Implemented | - | - |
 | 03 Sign Up | ✅ Implemented | - | - |
-| 04 Dashboard Overview | ⚠️ Partial | **P0 REFACTOR**: Missing role-based dashboards, grading queue, activity feed, class overview cards | 🔴 P0 |
+| 04 Dashboard Overview | ⚠️ Phase 2 Complete | Frontend components implemented. UI review (70%), Code review (28 findings), 201 tests. Fix phase pending. | 🟡 P0 |
 | 05 Essay Practice | ⚠️ Partial | Missing: RevisionChat backend (Deferred), PDF export, skill radar chart | 🟠 P1 |
 | 06 Rubrics | ⚠️ Partial | Missing: Visibility (public/private), student view, duplicate | 🟡 P2 |
 | 07 Settings | ✅ Implemented | - | - |
@@ -147,13 +177,23 @@ The `docs/prd/` directory contains an explicit contract for code generation:
 
 ### 🔴 P0 - Critical (Immediate)
 
-1. **Dashboard Overview Refactor** (~16h) ⬆️ **PROMOTED**
-   - Separate dashboards for Student/Lecturer/Admin roles
-   - Lecturer: Grading queue, class overview cards, activity feed
-   - Student: My essays list, progress tracking, activity feed
-   - Location: `frontend/src/app/dashboard/page.tsx`, `frontend/src/features/dashboard/`
-   - Status: Plan created at `docs/plans/dashboard-refactor-plan.md`, ready to implement
+1. **Dashboard Overview Refactor** (~16h) ✅ **PHASE 2 COMPLETE**
+   - Separate dashboards for Student/Lecturer/Admin roles ✅ Implemented
+   - Lecturer: Grading queue, class overview cards, activity feed ✅ Done
+   - Student: My essays list, progress tracking, activity feed ✅ Done
+   - Admin: Platform stats, system health, user metrics ✅ Done
+   - Location: `frontend/src/features/dashboard/`, `frontend/src/app/dashboard/[role]/page.tsx`
+   - Status: **Phase 2 Frontend Complete** ✅ (2026-02-25)
+   - **Phase 3**: UI compliance fixes (typography, action buttons, filters) - ~3h
+   - **Phase 4**: Security remediation (JWT verification, CSRF) - ~2h
    - **Why P0**: Core user entry point, affects all user experience
+
+2. **Dashboard Security Remediation** (~2h) 🔒 **NEW**
+   - Fix JWT parsing with signature verification (`page.tsx:8-23`)
+   - Add CSRF token handling in API client
+   - Fix direct cookie access vulnerability
+   - Add focus indicators for keyboard navigation
+   - See: `docs/learnings/dashboard-frontend-phase2-code-review.md`
 
 2. **RevisionChat Backend Integration** - ⚠️ **Deferred** (~8h)
    - Backend: Chat endpoint at `/api/v2/ai-feedback/chat/` ✅ Already exists
@@ -315,11 +355,15 @@ ProgressSnapshot  # Historical progress
 | `POST /api/v2/auth/logout/` | ✅ | User logout |
 | `POST /api/v2/auth/register/` | ✅ | User registration |
 | `POST /api/v2/auth/refresh/` | ✅ | JWT token refresh with rotation |
+| `GET /api/v2/core/dashboard/` | ✅ | Role-aware dashboard data |
+| `GET /api/v2/core/users/me/` | ✅ | Get current user |
+| `GET /api/v2/core/users/me/classes/` | ✅ | Get user's classes |
 | `GET /api/v2/core/rubrics/` | ✅ | List rubrics |
 | `POST /api/v2/core/rubrics/` | ✅ | Create rubric |
 | `POST /api/v2/core/rubrics/import_from_pdf_with_ai/` | ✅ | AI rubric import |
 | `GET /api/v2/core/submissions/` | ✅ | List submissions |
 | `POST /api/v2/ai-feedback/analyze/` | ✅ | AI essay analysis |
+| `POST /api/v2/ai-feedback/chat/` | ✅ | AI chat (mock) |
 
 ### Missing Endpoints
 
@@ -423,21 +467,34 @@ When updating CLAUDE.md:
 
 ---
 
-## 🚨 Security Warnings (Verified 2026-02-24)
+## 🔍 Security Findings (2026-02-25 Code Review)
 
-**CRITICAL - Do not deploy to production without fixing**:
+**Dashboard Phase 2 Code Review - 28 findings total**
 
-1. **JWT Refresh Token Mechanism** - Not implemented
-   - **Risk**: Access tokens expire after 24 hours, users must re-login
-   - **Fix**: Implement refresh token rotation endpoint at `/api/v2/auth/refresh/`
-   - **Priority**: P0
+| Severity | Count | Issues |
+|----------|-------|--------|
+| 🔴 High | 5 | JWT parsing without signature verification, CSRF handling missing, direct cookie access, missing focus indicators, button links without aria-labels |
+| 🟠 Medium | 8 | TypeScript strictness, re-render optimization, color contrast |
+| 🟢 Low | 15 | Minor accessibility, code style |
+
+**Immediate Actions Required:**
+1. Add JWT signature verification in `/app/dashboard/page.tsx`
+2. Implement CSRF token handling in API client
+3. Fix direct cookie access to use secure HTTP-only pattern
+4. Add keyboard focus indicators
+5. Add unique aria-labels to icon buttons
+
+**Full report**: `docs/learnings/dashboard-frontend-phase2-code-review.md`
 
 ---
 
-### ✅ Resolved Security Issues
+## 🚨 Security Warnings (Archive)
+
+**Resolved Issues:**
 
 | Issue | Status | Date Fixed |
 |-------|--------|------------|
+| JWT Refresh Token Mechanism | ✅ Implemented | 2026-02-24 |
 | RBAC Missing on Users CRUD | ✅ Fixed | 2026-02-24 |
 | Cookie httpOnly=false | ✅ Fixed | 2026-02-24 |
 | Navigation links to 404 pages | ✅ Fixed | 2026-02-24 |
