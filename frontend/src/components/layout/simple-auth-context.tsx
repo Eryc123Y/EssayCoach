@@ -8,7 +8,7 @@ import React, {
   useState
 } from 'react';
 
-type UserRole = 'student' | 'lecturer' | 'admin';
+export type UserRole = 'student' | 'lecturer' | 'admin';
 
 type SimpleUser = {
   id: string;

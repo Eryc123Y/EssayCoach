@@ -98,12 +98,12 @@ export default function ProfileViewPage() {
       <ProfileStats stats={stats} badgeCount={badges.length} />
 
       {/* Tab Navigation */}
-      <TabNavigation activeTab={activeTab} onTabChange={setActiveTab} />
+      <TabNavigation activeTab={activeTab} onTabChange={setActiveTab} userRole={user?.role} />
 
       {/* Tab Content */}
       <div className="mt-4">
         {activeTab === 'essays' && <ProfileEssaysTab stats={stats} />}
-        {activeTab === 'achievements' && (
+        {activeTab === 'achievements' && user?.role === 'student' && (
           <ProfileAchievementsTab badges={badges} />
         )}
         {activeTab === 'progress' && <ProfileProgressTab progress={progress} />}

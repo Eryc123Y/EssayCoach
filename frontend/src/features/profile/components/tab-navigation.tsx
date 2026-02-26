@@ -1,6 +1,7 @@
 'use client';
 
 import { cn } from '@/lib/utils';
+import type { UserRole } from '@/components/layout/simple-auth-context';
 
 export type TabId = 'essays' | 'achievements' | 'progress';
 
@@ -12,20 +13,16 @@ export interface Tab {
 interface TabNavigationProps {
   activeTab: TabId;
   onTabChange: (tab: TabId) => void;
+  userRole?: UserRole;
 }
 
-const TABS: Tab[] = [
-  { id: 'essays', label: 'Essays' },
-  { id: 'achievements', label: 'Achievements' },
-  { id: 'progress', label: 'Progress' },
-];
+export function TabNavigation({ activeTab, onTabChange, userRole }: TabNavigationProps) {
+  const TABS: Tab[] = [
+    { id: 'essays', label: 'Activity' },
+    ...(userRole === 'student' ? [{ id: 'achievements', label: 'Achievements' } as Tab] : []),
+    { id: 'progress', label: 'Progress' },
+  ];
 
-/**
- * Profile Tab Navigation Component
- *
- * Allows users to switch between different profile views
- */
-export function TabNavigation({ activeTab, onTabChange }: TabNavigationProps) {
   return (
     <div className="border-b border-slate-200 dark:border-slate-700">
       <nav className="flex gap-6" aria-label="Profile tabs">
