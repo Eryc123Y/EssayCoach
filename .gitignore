@@ -230,3 +230,4 @@ docs/backend/models/models.md
 .env
 backend/api_v1/
 .claude/settings.json
+.worktrees/
