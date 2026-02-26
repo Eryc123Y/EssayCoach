@@ -43,7 +43,8 @@ export interface RubricListItem {
   rubric_id: number;
   rubric_desc: string;
   rubric_create_time: string;
-  user_id: number;
+  user_id_user: number;
+  visibility?: 'public' | 'private';
 }
 
 export interface RubricDetail {
@@ -51,6 +52,7 @@ export interface RubricDetail {
   rubric_desc: string;
   rubric_create_time: string;
   rubric_items: RubricItem[];
+  visibility?: 'public' | 'private';
 }
 
 export interface RubricImportResponse {

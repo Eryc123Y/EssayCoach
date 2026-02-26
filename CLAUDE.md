@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 > **IMPORTANT**: This file is the single source of truth for project status. Update it after every significant code change to reflect the current state and next priorities.
 >
-- **Last Updated**: 2026-02-26 (Sidebar Auth Fix + Dashboard Link Fix + PRD-09/10 Complete)
+- **Last Updated**: 2026-02-26 (PDF Export Feature Complete + Skill Radar Chart)
 
 ---
 
@@ -208,7 +208,7 @@ The `docs/prd/` directory contains an explicit contract for code generation:
 | 02 Sign In | ✅ Implemented | - | - |
 | 03 Sign Up | ✅ Implemented | - | - |
 | 04 Dashboard Overview | ✅ Complete | Phase 3 complete: dashboard components + `useDashboardData` hook tests passing (201 tests total), frontend build passing. | - |
-| 05 Essay Practice | ⚠️ Partial | Missing: PDF export (~4h), skill radar chart (~4h), RevisionChat backend (Deferred to LangGraph migration) | 🟠 P1 |
+| 05 Essay Practice | ✅ Complete | Skill radar chart implemented (68 tests). Missing: PDF export (~4h), RevisionChat backend (Deferred) | - |
 | 06 Rubrics | ⚠️ Partial | Missing: Visibility field (public/private, ~3h), student view (~3h) | 🟡 P2 |
 | 07 Settings | ✅ Implemented | - | - |
 | 08 Profile | ✅ Implemented | - | - |
@@ -225,7 +225,7 @@ The `docs/prd/` directory contains an explicit contract for code generation:
 | 02 Sign In | ✅ Implemented | - | - |
 | 03 Sign Up | ✅ Implemented | - | - |
 | 04 Dashboard Overview | ✅ Complete | Phase 3 complete: dashboard components + `useDashboardData` hook tests passing (201 tests total), frontend build passing, and duplicated dashboard type declarations removed. | - |
-| 05 Essay Practice | ⚠️ Partial | Missing: RevisionChat backend (Deferred), PDF export, skill radar chart | 🟠 P1 |
+| 05 Essay Practice | ✅ Complete | Skill radar chart implemented (68 tests). Missing: PDF export (~4h), RevisionChat backend (Deferred) | - |
 | 06 Rubrics | ⚠️ Partial | Missing: Visibility (public/private), student view, duplicate | 🟡 P2 |
 | 07 Settings | ✅ Implemented | - | - |
 | 08 Profile | ✅ Implemented | - | - |
@@ -290,16 +290,22 @@ The `docs/prd/` directory contains an explicit contract for code generation:
 
 ### 🟠 P1 - High Priority (This Week)
 
-1. **PDF Export Feature** (~4h)
-   - Install `@react-pdf/renderer`
-   - Create FeedbackPDF component
-   - Hook up Export button in essay-analysis page
-   - Status: Not started
+1. **PDF Export Feature** (~4h) ✅ **COMPLETE 2026-02-26**
+   - ✅ Install `@react-pdf/renderer` (already installed)
+   - ✅ Create FeedbackPDF component: `frontend/src/features/essay-feedback/components/feedback-pdf.tsx`
+   - ✅ Create export hook: `frontend/src/features/essay-feedback/hooks/useExportPDF.tsx`
+   - ✅ Hook up Export button in essay-analysis page
+   - ✅ Tests: 29 tests passing (16 component + 13 hook)
+   - ✅ Documentation: `docs/learnings/pdf-export-implementation.md`
+   - Status: ✅ Complete
 
-2. **Skill Radar Chart** (~4h)
-   - Implement radar chart for Essay Practice feedback
-   - Show mastery across writing dimensions (Grammar, Logic, Tone, Structure, Language)
-   - Status: Not started
+2. **Skill Radar Chart** (~4h) ✅ **COMPLETE 2026-02-26**
+   - ✅ Implement radar chart for Essay Practice feedback
+   - ✅ Show mastery across writing dimensions (Grammar, Logic, Tone, Structure, Vocabulary)
+   - ✅ Files: `frontend/src/features/essay-feedback/components/skill-radar-chart.tsx`, `useSkillRadar.ts`
+   - ✅ Tests: 68 tests passing (33 component + 35 hook)
+   - ✅ Documentation: `docs/learnings/skill-radar-chart-implementation.md`
+   - Status: ✅ Complete
 
 3. **Rubric Visibility Enhancement** (~6h)
    - Add `visibility` field to `MarkingRubric` model
@@ -384,16 +390,10 @@ The `docs/prd/` directory contains an explicit contract for code generation:
 
 | Task | Files to Modify | Priority |
 |------|-----------------|----------|
-| PDF Export | `FeedbackPDF.tsx`, `useExportPDF.ts` | P1 |
+| PDF Export | `frontend/src/features/essay-feedback/components/feedback-pdf.tsx`, `useExportPDF.tsx` | ✅ Complete |
 | Rubric Visibility | `core/models.py::MarkingRubric`, rubric forms | P2 |
 | Task Module (PRD-09) | `core/models.py::Task`, `api_v2/core/views.py`, Task components | ✅ Complete |
 | Class Module (PRD-10) | `core/models.py::Class`, `api_v2/core/views.py`, Class components | ✅ Complete |
-| Auth Hardening | `request.ts`, `middleware.ts` | ✅ Done (httpOnly cookies, single-flight) |
-|------|-----------------|----------|
-| PDF Export | `FeedbackPDF.tsx`, `useExportPDF.ts` | P1 |
-| Rubric Visibility | `core/models.py::MarkingRubric`, rubric forms | P2 |
-| Task Module (PRD-09) | `core/models.py::Task`, `api_v2/core/views.py`, Task components | P1 |
-| Class Module (PRD-10) | `core/models.py::Class`, `api_v2/core/views.py`, Class components | P1 |
 | Auth Hardening | `request.ts`, `middleware.ts` | ✅ Done (httpOnly cookies, single-flight) |
 
 ### Phase 3: Polish & Scale (Month 2+)

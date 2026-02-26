@@ -129,4 +129,26 @@ export const rubricService = {
       data: formData,
     });
   },
+
+  async fetchPublicRubrics(params?: {
+    page?: number;
+    page_size?: number;
+  }): Promise<RubricListResponse> {
+    return request<RubricListResponse>({
+      url: `${BASE_URL}/core/rubrics/public/`,
+      method: 'GET',
+      params,
+    });
+  },
+
+  async toggleRubricVisibility(
+    rubricId: number,
+    visibility: 'public' | 'private'
+  ): Promise<RubricListItem> {
+    return request<RubricListItem>({
+      url: `${BASE_URL}/core/rubrics/${rubricId}/visibility/`,
+      method: 'PATCH',
+      data: { visibility },
+    });
+  },
 };

@@ -78,6 +78,7 @@
     "@radix-ui/react-use-layout-effect": "^1.1.1",
     "@radix-ui/react-use-size": "^1.1.1",
     "@radix-ui/react-visually-hidden": "^1.2.4",
+    "@react-pdf/renderer": "^4.3.2",
     "@sentry/nextjs": "^9.19.0",
     "@tabler/icons-react": "^3.31.0",
     "@tailwindcss/postcss": "^4.0.0",

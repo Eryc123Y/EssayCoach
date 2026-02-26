@@ -140,11 +140,20 @@ class MarkingRubric(models.Model):
     user_id_user = models.ForeignKey("User", models.CASCADE, db_column="user_id_user")
     rubric_create_time = models.DateTimeField(auto_now_add=True, db_comment="timestamp when the rubirc is created")
     rubric_desc = models.CharField(max_length=100, blank=True, null=True, db_comment="description to the rubrics")
+    visibility = models.CharField(
+        max_length=10,
+        choices=[("public", "Public"), ("private", "Private")],
+        default="private",
+        db_comment="Whether this rubric is visible to all users (public) or only the creator (private)",
+    )
 
     class Meta:
         managed = True
         db_table = "marking_rubric"
         db_table_comment = "entity for a marking rubric. A marking rubric has many items."
+        indexes = [
+            models.Index(fields=["visibility"], name="marking_rubric_visibility_idx"),
+        ]
 
 
 class RubricItem(models.Model):

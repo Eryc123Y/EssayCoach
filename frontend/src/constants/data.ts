@@ -26,7 +26,7 @@ export const navItems: NavItem[] = [
     items: [],
     roles: ['student', 'lecturer', 'admin']
   },
-  // Rubrics - only lecturer and admin
+  // Rubrics - visible to all roles (students can view public rubrics)
   {
     title: 'Rubrics',
     url: '/dashboard/rubrics',
@@ -34,7 +34,7 @@ export const navItems: NavItem[] = [
     shortcut: ['r', 'r'],
     isActive: false,
     items: [],
-    roles: ['lecturer', 'admin']
+    roles: ['student', 'lecturer', 'admin']
   },
   // Tasks (Assignments) - PRD-09
   {

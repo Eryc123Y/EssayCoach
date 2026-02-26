@@ -178,14 +178,22 @@ class MarkingRubricIn(Schema):
     """Input schema for creating marking rubrics with validation."""
 
     rubric_desc: str | None = Field(None, max_length=100)
+    visibility: str = "private"
 
 
-class MarkingRubricOut(ModelSchema):
-    """Output schema for marking rubrics - auto-generated from MarkingRubric model."""
+class MarkingRubricOut(Schema):
+    """Output schema for marking rubrics."""
+    rubric_id: int
+    user_id_user: int
+    rubric_create_time: datetime
+    rubric_desc: str | None = None
+    visibility: str = "private"
 
-    class Meta:
-        model = MarkingRubric
-        fields = ["rubric_id", "user_id_user", "rubric_create_time", "rubric_desc"]
+
+class RubricVisibilityUpdate(Schema):
+    """Input schema for toggling rubric visibility."""
+
+    visibility: str = Field(..., description="Visibility status: 'public' or 'private'")
 
 
 # =============================================================================
@@ -461,7 +469,8 @@ class EnrollmentFilterParams(FilterSchema):
 class RubricFilterParams(FilterSchema):
     """Filter parameters for MarkingRubric list endpoint."""
 
-    user_id_user: int | None = None
+    user_id_user: int | None = Field(None, description="Filter by user ID")
+    visibility: str | None = Field(None, description="Filter by visibility (public/private)")
     rubric_desc: Annotated[str | None, FilterLookup(q="rubric_desc__icontains")] = None
 
 

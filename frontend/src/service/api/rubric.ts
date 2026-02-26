@@ -23,13 +23,15 @@ export interface RubricDetail {
   rubric_desc: string;
   rubric_create_time: string;
   rubric_items: RubricItem[];
+  visibility?: 'public' | 'private';
 }
 
 export interface RubricListItem {
   rubric_id: number;
   rubric_desc: string;
   rubric_create_time: string;
-  user_id: number;
+  user_id_user: number;
+  visibility?: 'public' | 'private';
 }
 
 export interface RubricImportResponse {
@@ -113,5 +115,33 @@ export function deleteRubric(rubricId: number): Promise<void> {
   return request<void>({
     url: `/api/v2/core/rubrics/${rubricId}/`,
     method: 'DELETE'
+  });
+}
+
+/**
+ * Get list of public rubrics (available to all users)
+ */
+export function fetchPublicRubrics(params?: {
+  page?: number;
+  page_size?: number;
+}): Promise<RubricListItem[]> {
+  return request<RubricListItem[]>({
+    url: '/api/v2/core/rubrics/public/',
+    method: 'GET',
+    params
+  });
+}
+
+/**
+ * Toggle rubric visibility (public/private)
+ */
+export function toggleRubricVisibility(
+  rubricId: number,
+  visibility: 'public' | 'private'
+): Promise<{ rubric_id: number; visibility: 'public' | 'private' }> {
+  return request<{ rubric_id: number; visibility: 'public' | 'private' }>({
+    url: `/api/v2/core/rubrics/${rubricId}/visibility/`,
+    method: 'PATCH',
+    data: { visibility }
   });
 }
