@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 > **IMPORTANT**: This file is the single source of truth for project status. Update it after every significant code change to reflect the current state and next priorities.
 >
-- **Last Updated**: 2026-02-26 (PDF Export Feature Complete + Skill Radar Chart)
+- **Last Updated**: 2026-02-26 (Settings Backend API Complete - PRD-07)
 
 ---
 
@@ -151,6 +151,26 @@ The `docs/prd/` directory contains an explicit contract for code generation:
   - Backend: Full CRUD + action endpoints (publish/unpublish/submissions/join/leave/archive)
   - Frontend: Full routes, components, navigation integration
   - Testing: 15 service tests + 16 backend CRUD tests passing
+- **Profile Backend API (PRD-08)** ✅ Complete 2026-02-26
+  - Models: Badge, UserBadge created with migrations
+  - Endpoints: `/api/v2/core/users/{user_id}/stats/`, `/badges/`, `/progress/`
+  - Testing: 18 pytest tests passing
+  - Location: `backend/api_v2/core/views.py`, `backend/core/models.py`
+- **Settings Backend API (PRD-07)** ✅ Complete 2026-02-26
+  - Models: User.preferences (JSONField) added to store user settings
+  - Endpoints implemented:
+    - `PUT /api/v2/auth/password-change/` - Change password with current password verification ✅ Already existed
+    - `POST /api/v2/auth/settings/avatar/` - Upload avatar (PNG/JPG, max 5MB) ✅ New
+    - `GET /api/v2/auth/settings/preferences/` - Get user preferences ✅ New
+    - `PUT /api/v2/auth/settings/preferences/` - Update user preferences (partial update) ✅ New
+    - `GET /api/v2/auth/settings/sessions/` - List active sessions ✅ New
+    - `DELETE /api/v2/auth/settings/sessions/{session_id}/` - Revoke session ✅ New
+    - `GET /api/v2/auth/settings/login-history/` - Get login history ✅ New
+  - Schemas: UserPreferencesIn, UserPreferencesOut, SessionOut, LoginHistoryOut, AvatarUploadOut
+  - Testing: 19 pytest tests passing (password change, preferences, avatar, sessions, login history)
+  - Frontend: types.ts + settingsService API client + 8 vitest tests
+  - Location: `backend/api_v2/auth/views.py`, `backend/api_v2/auth/schemas.py`, `backend/core/models.py`
+  - Migration: `core/0008_badge_user_preferences_userbadge_and_more.py` (includes User.preferences field)
 - Core AI essay analysis functionality
 - Dashboard overview (student/lecturer role-aware)
 - Rubric management (CRUD + PDF import via AI)

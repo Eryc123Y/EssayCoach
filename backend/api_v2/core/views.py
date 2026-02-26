@@ -1,13 +1,16 @@
 from __future__ import annotations
 
 from django.conf import settings
+from django.db import models
 from django.db.models import Q
 from django.http import HttpRequest
+from django.utils import timezone
 from ninja import Router
 from ninja.errors import HttpError
 from ninja.files import UploadedFile
 
 from core.models import (
+    Badge,
     Class,
     Enrollment,
     Feedback,
@@ -20,12 +23,14 @@ from core.models import (
     TeachingAssn,
     Unit,
     User,
+    UserBadge,
 )
 from core.models import RubricLevelDesc as RubricLevelDescModel
 
 from ..utils.auth import JWTAuth
 from ..utils.permissions import IsAdminOrLecturer
 from .schemas import (
+    BadgeOut,
     ClassDetailOut,
     ClassFilterParams,
     ClassIn,
@@ -42,6 +47,7 @@ from .schemas import (
     MarkingRubricIn,
     MarkingRubricOut,
     PaginationParams,
+    ProgressEntryOut,
     RubricDetailOut,
     RubricFilterParams,
     RubricImportOut,
@@ -67,6 +73,8 @@ from .schemas import (
     UserFilterParams,
     UserIn,
     UserOut,
+    UserProgressOut,
+    UserStatsOut,
     UserUpdateIn,
 )
 
@@ -220,6 +228,216 @@ def delete_user(request: HttpRequest, user_id: int):
         return {"success": True}
     except User.DoesNotExist:
         raise HttpError(404, "User not found")
+
+
+# =============================================================================
+# Profile Endpoints
+# =============================================================================
+
+
+@router.get("/users/{user_id}/stats/", response=UserStatsOut)
+def get_user_stats(request: HttpRequest, user_id: int):
+    """
+    Get user statistics including essay count, average score, and activity.
+
+    Permissions:
+    - Any authenticated user can view their own stats
+    - Lecturers/Admins can view any user's stats
+    """
+    current_user = request.auth
+
+    # Permission check: students can only view their own stats
+    if current_user.user_role == "student" and current_user.user_id != user_id:
+        raise HttpError(403, "You can only view your own statistics")
+
+    # Check if user exists
+    try:
+        User.objects.get(user_id=user_id)
+    except User.DoesNotExist:
+        raise HttpError(404, "User not found")
+
+    # Get user's submissions
+    submissions = Submission.objects.filter(user_id_user_id=user_id)
+    total_submissions = submissions.count()
+
+    # Get feedback items for scoring
+    submission_ids = list(submissions.values_list("submission_id", flat=True))
+    feedback_items = FeedbackItem.objects.filter(
+        feedback_id_feedback__submission_id_submission__in=submission_ids
+    )
+
+    # Calculate average score from feedback items
+    avg_score_data = feedback_items.aggregate(
+        avg_score=models.Avg("feedback_item_score")
+    )
+    average_score = float(avg_score_data["avg_score"]) if avg_score_data["avg_score"] else None
+
+    # Get last activity (most recent submission time)
+    last_submission = submissions.order_by("-submission_time").first()
+    last_activity = last_submission.submission_time if last_submission else None
+
+    return UserStatsOut(
+        total_essays=total_submissions,
+        average_score=average_score,
+        total_submissions=total_submissions,
+        last_activity=last_activity,
+    )
+
+
+@router.get("/users/{user_id}/badges/", response=list[BadgeOut])
+def get_user_badges(request: HttpRequest, user_id: int):
+    """
+    Get user's earned badges.
+
+    Permissions:
+    - Any authenticated user can view their own badges
+    - Lecturers/Admins can view any user's badges
+    - Students can view other students' badges (for social learning)
+    """
+    current_user = request.auth
+
+    # Check if user exists first
+    try:
+        target_user = User.objects.get(user_id=user_id)
+    except User.DoesNotExist:
+        raise HttpError(404, "User not found")
+
+    # Permission check: students cannot view lecturer/admin badges
+    if current_user.user_role == "student":
+        if target_user.user_role in ["lecturer", "admin"]:
+            raise HttpError(403, "Students cannot view lecturer/admin badges")
+
+    # Get user's earned badges
+    user_badges = UserBadge.objects.filter(
+        user_id_user_id=user_id
+    ).select_related("badge_id_badge").order_by("-earned_at")
+
+    return [
+        BadgeOut(
+            id=ub.badge_id_badge.badge_id,
+            name=ub.badge_id_badge.name,
+            description=ub.badge_id_badge.description,
+            icon=ub.badge_id_badge.icon,
+            earned_at=ub.earned_at,
+        )
+        for ub in user_badges
+    ]
+
+
+@router.get("/users/{user_id}/progress/", response=UserProgressOut)
+def get_user_progress(request: HttpRequest, user_id: int, period: str = "month"):
+    """
+    Get user's progress over time (weekly or monthly aggregation).
+
+    Query params:
+    - period: 'week' or 'month' (default: 'month')
+
+    Returns time-series data with essay count and average score per period.
+
+    Permissions:
+    - Any authenticated user can view their own progress
+    - Lecturers/Admins can view any user's progress
+    """
+    from datetime import timedelta
+
+    current_user = request.auth
+
+    # Permission check: students can only view their own progress
+    if current_user.user_role == "student" and current_user.user_id != user_id:
+        raise HttpError(403, "You can only view your own progress")
+
+    # Check if user exists
+    try:
+        User.objects.get(user_id=user_id)
+    except User.DoesNotExist:
+        raise HttpError(404, "User not found")
+
+    # Get date range (last 6 months or last 12 weeks)
+    now = timezone.now()
+    if period == "week":
+        start_date = now - timedelta(weeks=12)
+    else:
+        start_date = now - timedelta(days=180)  # ~6 months
+
+    # Get submissions in date range
+    submissions = Submission.objects.filter(
+        user_id_user_id=user_id,
+        submission_time__gte=start_date
+    ).order_by("submission_time")
+
+    # Group by period and calculate stats
+    if period == "week":
+        # Group by week
+        from collections import defaultdict
+        weekly_data = defaultdict(lambda: {"scores": [], "count": 0})
+
+        for sub in submissions:
+            # Get week start (Monday)
+            week_start = sub.submission_time - timedelta(days=sub.submission_time.weekday())
+            week_key = week_start.replace(hour=0, minute=0, second=0, microsecond=0)
+
+            weekly_data[week_key]["count"] += 1
+
+            # Get score for this submission
+            try:
+                feedback = Feedback.objects.get(submission_id_submission=sub)
+                scores = FeedbackItem.objects.filter(
+                    feedback_id_feedback=feedback
+                ).aggregate(avg=models.Avg("feedback_item_score"))["avg"]
+                if scores:
+                    weekly_data[week_key]["scores"].append(scores)
+            except Feedback.DoesNotExist:
+                pass
+
+        entries = []
+        for week_start in sorted(weekly_data.keys()):
+            data = weekly_data[week_start]
+            avg_score = sum(data["scores"]) / len(data["scores"]) if data["scores"] else None
+            entries.append(
+                ProgressEntryOut(
+                    date=week_start,
+                    essay_count=data["count"],
+                    average_score=float(avg_score) if avg_score else None,
+                )
+            )
+
+    else:
+        # Group by month
+        from collections import defaultdict
+        monthly_data = defaultdict(lambda: {"scores": [], "count": 0})
+
+        for sub in submissions:
+            month_key = sub.submission_time.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
+
+            monthly_data[month_key]["count"] += 1
+
+            # Get score for this submission
+            try:
+                feedback = Feedback.objects.get(submission_id_submission=sub)
+                scores = FeedbackItem.objects.filter(
+                    feedback_id_feedback=feedback
+                ).aggregate(avg=models.Avg("feedback_item_score"))["avg"]
+                if scores:
+                    monthly_data[month_key]["scores"].append(scores)
+            except Feedback.DoesNotExist:
+                pass
+
+        entries = []
+        for month_start in sorted(monthly_data.keys()):
+            data = monthly_data[month_start]
+            avg_score = sum(data["scores"]) / len(data["scores"]) if data["scores"] else None
+            entries.append(
+                ProgressEntryOut(
+                    date=month_start,
+                    essay_count=data["count"],
+                    average_score=float(avg_score) if avg_score else None,
+                )
+            )
+
+    return UserProgressOut(
+        user_id=user_id,
+        entries=entries,
+    )
 
 
 # =============================================================================

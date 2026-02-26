@@ -8,6 +8,15 @@ import type {
   RubricListResponse,
   RubricDetail,
   RubricImportResponse,
+  // Settings types
+  UserPreferences,
+  UserPreferencesInput,
+  UserPreferencesResponse,
+  AvatarUploadResponse,
+  SessionListResponse,
+  LoginHistoryResponse,
+  PasswordChangeRequest,
+  MessageResponse,
 } from './types';
 
 const BASE_URL = '/api/v2';
@@ -149,6 +158,67 @@ export const rubricService = {
       url: `${BASE_URL}/core/rubrics/${rubricId}/visibility/`,
       method: 'PATCH',
       data: { visibility },
+    });
+  },
+};
+
+// =============================================================================
+// Settings Service (PRD-07)
+// =============================================================================
+
+export const settingsService = {
+  async getPreferences(): Promise<UserPreferencesResponse> {
+    return request<UserPreferencesResponse>({
+      url: `${BASE_URL}/auth/settings/preferences/`,
+      method: 'GET',
+    });
+  },
+
+  async updatePreferences(data: UserPreferencesInput): Promise<UserPreferencesResponse> {
+    return request<UserPreferencesResponse>({
+      url: `${BASE_URL}/auth/settings/preferences/`,
+      method: 'PUT',
+      data,
+    });
+  },
+
+  async uploadAvatar(file: File): Promise<AvatarUploadResponse> {
+    const formData = new FormData();
+    formData.append('avatar', file);
+
+    return request<AvatarUploadResponse>({
+      url: `${BASE_URL}/auth/settings/avatar/`,
+      method: 'POST',
+      data: formData,
+    });
+  },
+
+  async getSessions(): Promise<SessionListResponse> {
+    return request<SessionListResponse>({
+      url: `${BASE_URL}/auth/settings/sessions/`,
+      method: 'GET',
+    });
+  },
+
+  async revokeSession(sessionKey: string): Promise<MessageResponse> {
+    return request<MessageResponse>({
+      url: `${BASE_URL}/auth/settings/sessions/${sessionKey}/`,
+      method: 'DELETE',
+    });
+  },
+
+  async getLoginHistory(): Promise<LoginHistoryResponse> {
+    return request<LoginHistoryResponse>({
+      url: `${BASE_URL}/auth/settings/login-history/`,
+      method: 'GET',
+    });
+  },
+
+  async changePassword(data: PasswordChangeRequest): Promise<MessageResponse> {
+    return request<MessageResponse>({
+      url: `${BASE_URL}/auth/password-change/`,
+      method: 'POST',
+      data,
     });
   },
 };

@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+from datetime import datetime
+from typing import Literal
+
 from ninja import Schema
 from pydantic import Field, field_validator
 
@@ -38,6 +41,85 @@ class UserOut(Schema):
     role: str
     status: str
     date_joined: str
+
+
+# =============================================================================
+# Settings Schemas
+# =============================================================================
+
+
+class UserPreferencesIn(Schema):
+    """Input schema for updating user preferences."""
+
+    email_notifications: bool | None = None
+    in_app_notifications: bool | None = None
+    submission_alerts: bool | None = None
+    grading_alerts: bool | None = None
+    weekly_digest: bool | None = None
+    language: str | None = None
+    theme: Literal["light", "dark", "system"] | None = None
+
+
+class UserPreferencesOut(Schema):
+    """Output schema for user preferences."""
+
+    email_notifications: bool = True
+    in_app_notifications: bool = True
+    submission_alerts: bool = True
+    grading_alerts: bool = False
+    weekly_digest: bool = False
+    language: str = "en"
+    theme: Literal["light", "dark", "system"] = "system"
+
+
+class UserPreferencesResponse(Schema):
+    """Response schema for user preferences endpoint."""
+
+    success: bool = True
+    data: UserPreferencesOut
+    message: str | None = None
+
+
+class AvatarUploadOut(Schema):
+    """Output schema for avatar upload response."""
+
+    success: bool = True
+    avatar_url: str
+    message: str = "Avatar uploaded successfully"
+
+
+class SessionOut(Schema):
+    """Output schema for session information."""
+
+    session_key: str
+    device: str
+    ip_address: str | None
+    created_at: datetime
+    last_activity: datetime
+    is_current: bool = False
+
+
+class SessionListOut(Schema):
+    """Output schema for session list response."""
+
+    success: bool = True
+    data: list[SessionOut]
+
+
+class LoginHistoryOut(Schema):
+    """Output schema for login history entry."""
+
+    login_time: datetime
+    ip_address: str | None
+    device: str
+    success: bool
+
+
+class LoginHistoryListOut(Schema):
+    """Output schema for login history list response."""
+
+    success: bool = True
+    data: list[LoginHistoryOut]
 
 
 class AuthResponse(Schema):

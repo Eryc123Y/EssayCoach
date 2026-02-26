@@ -1,13 +1,19 @@
 from __future__ import annotations
 
 import logging
+import os
+from pathlib import Path
 
+from django.conf import settings
 from django.contrib.auth import authenticate
 from django.contrib.auth.password_validation import validate_password
+from django.contrib.sessions.models import Session
 from django.core.exceptions import ValidationError
+from django.db.models import Q
 from django.http import HttpRequest
 from ninja import Router
 from ninja.errors import HttpError
+from ninja.files import UploadedFile
 
 from core.models import User
 
@@ -16,14 +22,22 @@ from ..utils.jwt_auth import JWTAuth, blacklist_jwt_token, create_jwt_pair, refr
 from .schemas import (
     AuthResponse,
     AuthResponseWithRefresh,
+    AvatarUploadOut,
+    LoginHistoryListOut,
+    LoginHistoryOut,
     MessageResponse,
     PasswordChangeIn,
     PasswordResetIn,
     RefreshTokenIn,
     RefreshTokenOut,
+    SessionListOut,
+    SessionOut,
     UserInfoResponse,
     UserLoginIn,
     UserOut,
+    UserPreferencesIn,
+    UserPreferencesOut,
+    UserPreferencesResponse,
     UserRegistrationIn,
     UserUpdateIn,
 )
@@ -301,3 +315,269 @@ def logout_jwt(request: HttpRequest, refresh: str) -> MessageResponse:
         pass
 
     return MessageResponse(message="Successfully logged out")
+
+
+# =============================================================================
+# Settings Endpoints
+# =============================================================================
+
+
+def _get_default_preferences() -> dict:
+    """Return default user preferences."""
+    return {
+        "email_notifications": True,
+        "in_app_notifications": True,
+        "submission_alerts": True,
+        "grading_alerts": False,
+        "weekly_digest": False,
+        "language": "en",
+        "theme": "system",
+    }
+
+
+def _get_user_preferences(user: User) -> dict:
+    """Get user preferences with defaults for missing keys."""
+    defaults = _get_default_preferences()
+    user_prefs = user.preferences or {}
+    # Merge with defaults
+    return {**defaults, **user_prefs}
+
+
+def _detect_device(user_agent: str | None) -> str:
+    """Detect device type from user agent string."""
+    if not user_agent:
+        return "Unknown"
+    user_agent_lower = user_agent.lower()
+    if "mobile" in user_agent_lower or "android" in user_agent_lower or "iphone" in user_agent_lower:
+        return "Mobile"
+    elif "tablet" in user_agent_lower or "ipad" in user_agent_lower:
+        return "Tablet"
+    else:
+        return "Desktop"
+
+
+@router.get("/settings/preferences/", response=UserPreferencesResponse, auth=JWTAuth())
+def get_preferences(request: HttpRequest) -> UserPreferencesResponse:
+    """
+    Get current user's preferences.
+
+    Returns user preferences with defaults for any missing keys.
+    """
+    user = request.auth
+    preferences = _get_user_preferences(user)
+    return UserPreferencesResponse(
+        success=True,
+        data=UserPreferencesOut(**preferences),
+    )
+
+
+@router.put("/settings/preferences/", response=UserPreferencesResponse, auth=JWTAuth())
+def update_preferences(request: HttpRequest, data: UserPreferencesIn) -> UserPreferencesResponse:
+    """
+    Update current user's preferences.
+
+    Only provided fields will be updated. Other preferences remain unchanged.
+    """
+    user = request.auth
+
+    # Get current preferences or initialize with defaults
+    current_prefs = _get_user_preferences(user)
+
+    # Update only provided fields
+    update_data = data.dict(exclude_unset=True)
+    for key, value in update_data.items():
+        if value is not None:
+            current_prefs[key] = value
+
+    # Save updated preferences
+    user.preferences = current_prefs
+    user.save(update_fields=["preferences"])
+
+    return UserPreferencesResponse(
+        success=True,
+        data=UserPreferencesOut(**_get_user_preferences(user)),
+        message="Preferences updated successfully",
+    )
+
+
+@router.post("/settings/avatar/", response=AvatarUploadOut, auth=JWTAuth())
+def upload_avatar(request: HttpRequest, avatar: UploadedFile) -> AvatarUploadOut:
+    """
+    Upload user avatar.
+
+    Accepts image files (PNG, JPG, JPEG). Max size: 5MB.
+    Avatar is stored in MEDIA_ROOT/avatars/<user_id>_<filename>
+    """
+    user = request.auth
+
+    # Validate file type
+    allowed_types = ["image/png", "image/jpeg", "image/jpg"]
+    if avatar.content_type not in allowed_types:
+        raise HttpError(400, "Only PNG and JPG images are allowed")
+
+    # Validate file size (5MB max)
+    max_size = 5 * 1024 * 1024  # 5MB
+    if avatar.size > max_size:
+        raise HttpError(400, "File size must be less than 5MB")
+
+    # Create avatars directory if it doesn't exist
+    avatars_dir = Path(settings.MEDIA_ROOT) / "avatars" if hasattr(settings, "MEDIA_ROOT") else Path("media") / "avatars"
+    avatars_dir.mkdir(parents=True, exist_ok=True)
+
+    # Generate unique filename
+    import uuid
+    file_extension = avatar.name.split(".")[-1] if "." in avatar.name else "png"
+    filename = f"{user.user_id}_{uuid.uuid4().hex}.{file_extension}"
+    file_path = avatars_dir / filename
+
+    # Save file
+    with open(file_path, "wb") as f:
+        for chunk in avatar.chunks():
+            f.write(chunk)
+
+    # Generate avatar URL
+    avatar_url = f"/media/avatars/{filename}"
+
+    return AvatarUploadOut(
+        success=True,
+        avatar_url=avatar_url,
+        message="Avatar uploaded successfully",
+    )
+
+
+@router.get("/settings/sessions/", response=SessionListOut, auth=JWTAuth())
+def get_sessions(request: HttpRequest) -> SessionListOut:
+    """
+    Get list of active sessions for current user.
+
+    Returns all active Django sessions with device and IP information.
+    """
+    from django.utils import timezone
+
+    user = request.auth
+    current_session_key = request.session.session_key if request.session else None
+
+    # Get all active sessions
+    now = timezone.now()
+    active_sessions = Session.objects.filter(expire_date__gt=now)
+
+    sessions_data = []
+    for session in active_sessions:
+        # Get session data
+        session_data = session.get_decoded()
+        user_id = session_data.get("_auth_user_id")
+
+        # Only include sessions for current user
+        if user_id != user.user_id:
+            continue
+
+        # Get session metadata
+        auth_hash = session_data.get("_auth_user_hash", "")
+        ip_address = session_data.get("_auth_user_ip", None)
+        backend = session_data.get("_auth_user_backend", "")
+
+        # Detect device from session data or default to Desktop
+        device = session_data.get("device", "Desktop")
+
+        # Get last activity from expiry date (approximation)
+        last_activity = session.expire_date
+
+        # Determine if this is the current session
+        is_current = session.session_key == current_session_key
+
+        sessions_data.append(
+            SessionOut(
+                session_key=session.session_key,
+                device=device,
+                ip_address=ip_address,
+                created_at=now,  # Django Session model doesn't track created_at
+                last_activity=last_activity,
+                is_current=is_current,
+            )
+        )
+
+    # Sort by last activity, most recent first
+    sessions_data.sort(key=lambda s: s.last_activity, reverse=True)
+
+    return SessionListOut(success=True, data=sessions_data)
+
+
+@router.delete("/settings/sessions/{session_id}/", response=MessageResponse, auth=JWTAuth())
+def revoke_session(request: HttpRequest, session_id: str) -> MessageResponse:
+    """
+    Revoke a specific session.
+
+    This will log out the user from that session/device.
+    Cannot revoke the current session.
+    """
+    user = request.auth
+    current_session_key = request.session.session_key if request.session else None
+
+    # Cannot revoke current session
+    if session_id == current_session_key:
+        raise HttpError(400, "Cannot revoke current session. Use logout instead.")
+
+    # Get the session
+    try:
+        session = Session.objects.get(session_key=session_id)
+    except Session.DoesNotExist:
+        raise HttpError(404, "Session not found")
+
+    # Verify session belongs to user
+    session_data = session.get_decoded()
+    if session_data.get("_auth_user_id") != user.user_id:
+        raise HttpError(403, "Cannot revoke session that doesn't belong to you")
+
+    # Delete the session
+    session.delete()
+
+    return MessageResponse(success=True, message="Session revoked successfully")
+
+
+@router.get("/settings/login-history/", response=LoginHistoryListOut, auth=JWTAuth())
+def get_login_history(request: HttpRequest) -> LoginHistoryListOut:
+    """
+    Get login history for current user.
+
+    Returns recent login attempts (success and failed) from Django session data.
+    Note: This is a basic implementation. For production, consider using
+    django-axes or similar for comprehensive login tracking.
+    """
+    from django.utils import timezone
+
+    user = request.auth
+
+    # Get all sessions (expired and active) for login history
+    # Note: Django doesn't track login history by default, so we'll return
+    # session-based activity as a proxy
+
+    # Get recent sessions (last 30 days)
+    thirty_days_ago = timezone.now() - timezone.timedelta(days=30)
+    recent_sessions = Session.objects.filter(expire_date__gt=thirty_days_ago)
+
+    login_history = []
+    for session in recent_sessions:
+        session_data = session.get_decoded()
+        user_id = session_data.get("_auth_user_id")
+
+        if user_id != user.user_id:
+            continue
+
+        ip_address = session_data.get("_auth_user_ip", None)
+        device = session_data.get("device", "Desktop")
+
+        # Use expire_date as proxy for last activity
+        login_history.append(
+            LoginHistoryOut(
+                login_time=session.expire_date - timezone.timedelta(hours=2),  # Approximate
+                ip_address=ip_address,
+                device=device,
+                success=True,
+            )
+        )
+
+    # Sort by login time, most recent first
+    login_history.sort(key=lambda h: h.login_time, reverse=True)
+
+    # Return last 20 entries
+    return LoginHistoryListOut(success=True, data=login_history[:20])

@@ -370,3 +370,112 @@ export interface LeaveClassResponse {
   success: boolean;
   message: string;
 }
+
+// =============================================================================
+// Settings Types (PRD-07)
+// =============================================================================
+
+export interface UserPreferences {
+  email_notifications: boolean;
+  in_app_notifications: boolean;
+  submission_alerts: boolean;
+  grading_alerts: boolean;
+  weekly_digest: boolean;
+  language: string;
+  theme: 'light' | 'dark' | 'system';
+}
+
+export interface UserPreferencesInput {
+  email_notifications?: boolean;
+  in_app_notifications?: boolean;
+  submission_alerts?: boolean;
+  grading_alerts?: boolean;
+  weekly_digest?: boolean;
+  language?: string;
+  theme?: 'light' | 'dark' | 'system';
+}
+
+export interface UserPreferencesResponse {
+  success: boolean;
+  data: UserPreferences;
+  message?: string;
+}
+
+export interface AvatarUploadResponse {
+  success: boolean;
+  avatar_url: string;
+  message: string;
+}
+
+export interface SessionInfo {
+  session_key: string;
+  device: string;
+  ip_address: string | null;
+  created_at: string;
+  last_activity: string;
+  is_current: boolean;
+}
+
+export interface SessionListResponse {
+  success: boolean;
+  data: SessionInfo[];
+}
+
+export interface LoginHistoryItem {
+  login_time: string;
+  ip_address: string | null;
+  device: string;
+  success: boolean;
+}
+
+export interface LoginHistoryResponse {
+  success: boolean;
+  data: LoginHistoryItem[];
+}
+
+export interface PasswordChangeRequest {
+  current_password: string;
+  new_password: string;
+  new_password_confirm: string;
+}
+
+export interface MessageResponse {
+  success: boolean;
+  message: string;
+  data?: Record<string, unknown>;
+}
+
+// =============================================================================
+// Profile Types (PRD-08)
+// =============================================================================
+
+export interface UserStats {
+  total_essays: number;
+  average_score: number | null;
+  total_submissions: number;
+  last_activity: string | null;
+}
+
+export interface Badge {
+  id: number;
+  name: string;
+  description: string;
+  icon: string;
+  earned_at: string | null;
+}
+
+export interface ProgressEntry {
+  date: string;
+  essay_count: number;
+  average_score: number | null;
+}
+
+export interface UserProgress {
+  user_id: number;
+  entries: ProgressEntry[];
+}
+
+export interface ProfileTab {
+  id: 'essays' | 'achievements' | 'progress';
+  label: string;
+}

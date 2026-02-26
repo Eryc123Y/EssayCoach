@@ -318,12 +318,36 @@ class User(AbstractBaseUser, PermissionsMixin):
     is_active: models.BooleanField = models.BooleanField(default=True)
     is_staff: models.BooleanField = models.BooleanField(default=False)
     date_joined: models.DateTimeField = models.DateTimeField(auto_now_add=True)
+    preferences: models.JSONField = models.JSONField(
+        default=dict,
+        blank=True,
+        db_comment="User preferences: email_notifications, in_app_notifications, submission_alerts, grading_alerts, weekly_digest, language, theme",
+    )
 
     objects = CoreUserManager()
 
     USERNAME_FIELD = "user_email"
     EMAIL_FIELD = "user_email"
     REQUIRED_FIELDS = []
+
+    def save(self, *args, **kwargs):
+        """Initialize preferences if not set."""
+        if not self.preferences:
+            self.preferences = self.get_default_preferences()
+        super().save(*args, **kwargs)
+
+    @staticmethod
+    def get_default_preferences() -> dict:
+        """Return default user preferences."""
+        return {
+            "email_notifications": True,
+            "in_app_notifications": True,
+            "submission_alerts": True,
+            "grading_alerts": False,
+            "weekly_digest": False,
+            "language": "en",
+            "theme": "system",
+        }
 
     class Meta:
         db_table = "user"
@@ -350,3 +374,50 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     def get_short_name(self):
         return self.user_fname or self.user_email
+
+
+class Badge(models.Model):
+    """Badge/Achievement model for user accomplishments."""
+
+    badge_id = models.AutoField(primary_key=True, db_comment="Unique identifier for badge")
+    name = models.CharField(max_length=100, db_comment="Badge name")
+    description = models.CharField(max_length=200, db_comment="Badge description")
+    icon = models.CharField(max_length=50, db_comment="Icon name for display")
+    criteria = models.JSONField(default=dict, db_comment="Criteria to earn this badge")
+    created_at = models.DateTimeField(auto_now_add=True, db_comment="Badge creation time")
+
+    class Meta:
+        managed = True
+        db_table = "badge"
+        db_table_comment = "Achievement badges for users"
+        verbose_name = "badge"
+        verbose_name_plural = "badges"
+
+    def __str__(self):
+        return self.name
+
+
+class UserBadge(models.Model):
+    """UserBadge model linking users to earned badges."""
+
+    user_badge_id = models.AutoField(primary_key=True, db_comment="Unique identifier for user badge")
+    user_id_user = models.ForeignKey("User", models.CASCADE, db_column="user_id_user")
+    badge_id_badge = models.ForeignKey("Badge", models.CASCADE, db_column="badge_id_badge")
+    earned_at = models.DateTimeField(auto_now_add=True, db_comment="Time when badge was earned")
+
+    class Meta:
+        managed = True
+        db_table = "user_badge"
+        db_table_comment = "User earned badges"
+        constraints = [
+            UniqueConstraint(
+                fields=["user_id_user", "badge_id_badge"],
+                name="user_badge_unique",
+            )
+        ]
+        indexes = [
+            models.Index(fields=["user_id_user"], name="user_badge_user_idx"),
+        ]
+
+    def __str__(self):
+        return f"{self.user_id_user} - {self.badge_id_badge}"

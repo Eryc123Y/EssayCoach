@@ -9,6 +9,7 @@ from ninja.orm import ModelSchema
 from pydantic import Field
 
 from core.models import (
+    Badge,
     Class,
     Enrollment,
     Feedback,
@@ -21,6 +22,7 @@ from core.models import (
     TeachingAssn,
     Unit,
     User,
+    UserBadge,
 )
 
 # =============================================================================
@@ -543,3 +545,42 @@ class UserFilterParams(FilterSchema):
     user_role: str | None = None
     user_status: str | None = None
     search: Annotated[str | None, FilterLookup(q=["user_email", "user_fname", "user_lname"])] = None
+
+
+# =============================================================================
+# Profile Schemas
+# =============================================================================
+
+
+class UserStatsOut(Schema):
+    """Output schema for user statistics."""
+
+    total_essays: int
+    average_score: float | None
+    total_submissions: int
+    last_activity: datetime | None
+
+
+class BadgeOut(Schema):
+    """Output schema for user badges."""
+
+    id: int
+    name: str
+    description: str
+    icon: str
+    earned_at: datetime | None
+
+
+class ProgressEntryOut(Schema):
+    """Output schema for progress timeline entry."""
+
+    date: datetime
+    essay_count: int
+    average_score: float | None
+
+
+class UserProgressOut(Schema):
+    """Output schema for user progress over time."""
+
+    user_id: int
+    entries: list[ProgressEntryOut]

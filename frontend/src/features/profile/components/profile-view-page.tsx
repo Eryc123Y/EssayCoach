@@ -1,146 +1,112 @@
 'use client';
 
+import { useState } from 'react';
 import { useAuth } from '@/components/layout/simple-auth-context';
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription
-} from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { User, Mail, Shield, Calendar, Building } from 'lucide-react';
+import { useProfile } from '../hooks/useProfile';
+import { ProfileHeader } from './profile-header';
+import { ProfileStats } from './profile-stats';
+import { TabNavigation, type TabId } from './tab-navigation';
+import { ProfileEssaysTab } from './profile-essays-tab';
+import { ProfileAchievementsTab } from './profile-achievements-tab';
+import { ProfileProgressTab } from './profile-progress-tab';
 
+/**
+ * Profile View Container Component
+ *
+ * Main container that orchestrates all profile sub-components:
+ * - Profile Header (avatar, name, role, bio)
+ * - Stats Cards (total essays, avg score, badges)
+ * - Tab Navigation (Essays, Achievements, Progress)
+ * - Tab Content Panels
+ */
 export default function ProfileViewPage() {
   const { user } = useAuth();
+  const [activeTab, setActiveTab] = useState<TabId>('essays');
 
-  const formatDate = (date: string | undefined) => {
-    if (!date) return 'N/A';
-    return new Date(date).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
-  };
+  // Fetch profile data using the useProfile hook
+  const { stats, badges, progress, loading, error } = useProfile(
+    user?.id ? parseInt(user.id, 10) : 0,
+    { enabled: !!user?.id }
+  );
+
+  // Loading state
+  if (loading) {
+    return (
+      <div className="mx-auto flex w-full max-w-5xl flex-col gap-8 p-6 md:p-8">
+        {/* Header Skeleton */}
+        <div className="flex flex-col gap-2 rounded-3xl border border-slate-200 bg-slate-50 p-8 md:p-12 dark:border-slate-800 dark:bg-slate-900/50">
+          <div className="h-10 w-48 animate-pulse rounded bg-slate-200 dark:bg-slate-700" />
+          <div className="h-5 w-96 animate-pulse rounded bg-slate-200 dark:bg-slate-700" />
+        </div>
+
+        {/* Stats Skeleton */}
+        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          {[1, 2, 3].map((i) => (
+            <div
+              key={i}
+              className="h-28 animate-pulse rounded-xl border border-slate-200 bg-slate-100 dark:border-slate-700 dark:bg-slate-800"
+            />
+          ))}
+        </div>
+
+        {/* Tabs Skeleton */}
+        <div className="h-12 animate-pulse rounded bg-slate-100 dark:bg-slate-800" />
+
+        {/* Content Skeleton */}
+        <div className="space-y-4">
+          {[1, 2, 3].map((i) => (
+            <div
+              key={i}
+              className="h-24 animate-pulse rounded-lg border border-slate-200 bg-slate-50 dark:border-slate-700 dark:bg-slate-800"
+            />
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="mx-auto flex w-full max-w-5xl flex-col gap-8 p-6 md:p-8">
+        <div className="rounded-lg border border-red-200 bg-red-50 p-6 text-red-700 dark:border-red-800 dark:bg-red-900/20 dark:text-red-400">
+          <h2 className="text-lg font-semibold mb-2">Failed to load profile</h2>
+          <p>{error.message}</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className='mx-auto flex w-full max-w-5xl flex-col gap-8 p-6 md:p-8'>
-      <div className='flex flex-col gap-2 rounded-3xl border border-slate-200 bg-slate-50 p-8 md:p-12 dark:border-slate-800 dark:bg-slate-900/50'>
-        <h1 className='text-foreground text-4xl font-bold tracking-tight'>
-          Account Profile
-        </h1>
-        <p className='text-muted-foreground max-w-2xl text-lg'>
-          Manage your institutional identity and account preferences.
-        </p>
-      </div>
+    <div className="mx-auto flex w-full max-w-5xl flex-col gap-8 p-6 md:p-8">
+      {/* Profile Header */}
+      {user && (
+        <ProfileHeader
+          user={{
+            user_id: user.id ? parseInt(user.id, 10) : 0,
+            user_email: user.email,
+            user_fname: user.firstName,
+            user_lname: user.lastName,
+            user_role: user.role,
+            is_active: true,
+          }}
+          avatarUrl={null}
+        />
+      )}
 
-      <div className='grid gap-6 md:grid-cols-3'>
-        <Card className='bg-card overflow-hidden border-slate-200 shadow-sm transition-all duration-300 hover:shadow-md md:col-span-2 dark:border-slate-800'>
-          <CardHeader>
-            <div className='flex items-center gap-3'>
-              <div className='rounded-xl bg-indigo-50 p-2.5 text-indigo-600 dark:bg-indigo-950/30 dark:text-indigo-400'>
-                <User className='h-5 w-5' />
-              </div>
-              <div>
-                <CardTitle>Personal Details</CardTitle>
-                <CardDescription>Your personal information</CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className='space-y-6'>
-            <div className='grid gap-6 sm:grid-cols-2'>
-              <div className='space-y-1.5'>
-                <label className='text-muted-foreground text-xs font-medium tracking-wider uppercase'>
-                  First Name
-                </label>
-                <div className='text-foreground text-base font-medium'>
-                  {user?.firstName || 'Not set'}
-                </div>
-              </div>
-              <div className='space-y-1.5'>
-                <label className='text-muted-foreground text-xs font-medium tracking-wider uppercase'>
-                  Last Name
-                </label>
-                <div className='text-foreground text-base font-medium'>
-                  {user?.lastName || 'Not set'}
-                </div>
-              </div>
-              <div className='space-y-1.5 sm:col-span-2'>
-                <label className='text-muted-foreground text-xs font-medium tracking-wider uppercase'>
-                  Email Address
-                </label>
-                <div className='text-foreground flex items-center gap-2 text-base font-medium'>
-                  <Mail className='text-muted-foreground h-4 w-4' />
-                  {user?.email}
-                </div>
-              </div>
-              <div className='space-y-1.5'>
-                <label className='text-muted-foreground text-xs font-medium tracking-wider uppercase'>
-                  Institution
-                </label>
-                <div className='text-foreground flex items-center gap-2 text-base font-medium'>
-                  <Building className='text-muted-foreground h-4 w-4' />
-                  EssayCoach Academy
-                </div>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+      {/* Stats Cards */}
+      <ProfileStats stats={stats} badgeCount={badges.length} />
 
-        <Card className='border-border/50 bg-background/60 overflow-hidden shadow-sm backdrop-blur-xl transition-all duration-300 hover:shadow-md md:col-span-1'>
-          <CardHeader>
-            <div className='flex items-center gap-3'>
-              <div className='rounded-xl bg-teal-50 p-2.5 text-teal-600 dark:bg-teal-950/30 dark:text-teal-400'>
-                <Shield className='h-5 w-5' />
-              </div>
-              <div>
-                <CardTitle>Account Status</CardTitle>
-                <CardDescription>Membership & Security</CardDescription>
-              </div>
-            </div>
-          </CardHeader>
-          <CardContent className='space-y-6'>
-            <div className='space-y-3'>
-              <div className='flex items-center justify-between'>
-                <span className='text-muted-foreground text-sm font-medium'>
-                  Status
-                </span>
-                <Badge
-                  variant='outline'
-                  className='border-green-200 bg-green-50 text-green-700 dark:border-green-800 dark:bg-green-900/20 dark:text-green-400'
-                >
-                  Active
-                </Badge>
-              </div>
-              <div className='flex items-center justify-between'>
-                <span className='text-muted-foreground text-sm font-medium'>
-                  Role
-                </span>
-                <Badge variant='secondary' className='font-medium'>
-                  Educator
-                </Badge>
-              </div>
-              <div className='flex items-center justify-between'>
-                <span className='text-muted-foreground text-sm font-medium'>
-                  Plan
-                </span>
-                <Badge
-                  variant='outline'
-                  className='border-indigo-200 bg-indigo-50 text-indigo-700 dark:border-indigo-800 dark:bg-indigo-900/20 dark:text-indigo-400'
-                >
-                  Pro
-                </Badge>
-              </div>
-            </div>
+      {/* Tab Navigation */}
+      <TabNavigation activeTab={activeTab} onTabChange={setActiveTab} />
 
-            <div className='border-border/50 border-t pt-4'>
-              <div className='text-muted-foreground flex items-center gap-2 text-xs'>
-                <Calendar className='h-3.5 w-3.5' />
-                <span>Member since {formatDate(new Date().toISOString())}</span>
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+      {/* Tab Content */}
+      <div className="mt-4">
+        {activeTab === 'essays' && <ProfileEssaysTab stats={stats} />}
+        {activeTab === 'achievements' && (
+          <ProfileAchievementsTab badges={badges} />
+        )}
+        {activeTab === 'progress' && <ProfileProgressTab progress={progress} />}
       </div>
     </div>
   );
