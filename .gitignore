@@ -213,6 +213,15 @@ nitro.json
 .claude/
 .skills/
 
+# Test screenshots
+*.png
+!frontend/src/**/*.png
+
+# Temporary folders
+tasks/
+temp/
+tmp/
+
 # Auto-generated documentation (build-only, not committed)
 docs/api-reference/endpoints.md
 docs/api-reference/endpoints 2.md
