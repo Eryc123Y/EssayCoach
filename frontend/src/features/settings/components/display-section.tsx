@@ -18,6 +18,7 @@ import {
   IconDeviceLaptop,
 } from '@tabler/icons-react';
 import type { UserPreferences } from '@/service/api/v2/types';
+import { toast } from 'sonner';
 
 interface DisplaySectionProps {
   preferences: UserPreferences | null;
@@ -83,9 +84,15 @@ export function DisplaySection({
   };
 
   const handleSave = async () => {
-    await onUpdatePreferences(localPrefs);
-    setLocalPrefs({});
-    setHasChanges(false);
+    try {
+      await onUpdatePreferences(localPrefs);
+      setLocalPrefs({});
+      setHasChanges(false);
+      toast.success('Display preferences updated successfully');
+    } catch (error) {
+      console.error('Failed to update preferences:', error);
+      toast.error('Failed to update display preferences');
+    }
   };
 
   const handleReset = () => {

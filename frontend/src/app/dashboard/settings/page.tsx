@@ -34,6 +34,7 @@ export default function SettingsPage() {
     updatePreferences,
     revokeSession,
     fetchUserInfo,
+    updateUser,
     uploadAvatar,
     changePassword,
   } = useSettings();
@@ -74,8 +75,19 @@ export default function SettingsPage() {
     user_lname: string;
     user_email: string;
   }) => {
-    // TODO: Implement when backend endpoint is available
-    console.log('Saving user data:', data);
+    await updateUser(data);
+    // Refresh user info after update
+    const updatedUser = await fetchUserInfo();
+    if (updatedUser) {
+      setUser(updatedUser);
+      localStorage.setItem('user_data', JSON.stringify({
+        id: updatedUser.user_id,
+        email: updatedUser.user_email,
+        firstName: updatedUser.user_fname,
+        lastName: updatedUser.user_lname,
+        role: updatedUser.user_role,
+      }));
+    }
   };
 
   const renderSection = () => {

@@ -13,6 +13,8 @@ import {
   IconCalendar,
 } from '@tabler/icons-react';
 import type { UserPreferences } from '@/service/api/v2/types';
+import { toast } from 'sonner';
+
 
 interface NotificationsSectionProps {
   preferences: UserPreferences | null;
@@ -63,9 +65,15 @@ export function NotificationsSection({
   };
 
   const handleSave = async () => {
-    await onUpdatePreferences(localPrefs);
-    setLocalPrefs({});
-    setHasChanges(false);
+    try {
+      await onUpdatePreferences(localPrefs);
+      setLocalPrefs({});
+      setHasChanges(false);
+      toast.success('Notification preferences updated successfully');
+    } catch (error) {
+      console.error('Failed to update preferences:', error);
+      toast.error('Failed to update notification preferences');
+    }
   };
 
   const handleReset = () => {

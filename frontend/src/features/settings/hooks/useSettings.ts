@@ -76,6 +76,22 @@ export function useSettings() {
     []
   );
 
+  // Update current user info
+  const updateUser = useCallback(
+    async (data: { user_fname: string; user_lname: string }): Promise<void> => {
+      try {
+        await authService.updateUser({
+          first_name: data.user_fname,
+          last_name: data.user_lname,
+        });
+      } catch (error) {
+        console.error('Failed to update user info:', error);
+        throw error;
+      }
+    },
+    []
+  );
+
   return {
     // State
     preferences,
@@ -93,6 +109,7 @@ export function useSettings() {
     revokeSession,
     fetchLoginHistory,
     fetchUserInfo,
+    updateUser,
     uploadAvatar,
     changePassword,
   };

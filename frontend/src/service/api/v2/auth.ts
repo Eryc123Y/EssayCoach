@@ -58,6 +58,15 @@ export const authService = {
     });
   },
 
+  async updateUser(data: { first_name?: string; last_name?: string }): Promise<UserInfo> {
+    const response = await request<{ success: boolean; data: { token: string; user: UserInfo } }>({
+      url: `${BASE_URL}/auth/me/`,
+      method: 'PUT',
+      data,
+    });
+    return response.data.user;
+  },
+
   async logout(refreshToken?: string): Promise<void> {
     const url = refreshToken
       ? `${BASE_URL}/auth/logout-jwt/?refresh=${encodeURIComponent(refreshToken)}`
