@@ -1,7 +1,7 @@
 # 前端现状分析报告 (Frontend Current Status Report)
 
-> **文档更新日期**: 2026-01-13  
-> **分析版本**: Next.js 15.3.2 / React 19 / TypeScript 5.7
+> **文档更新日期**: 2026-02-26  
+> **分析版本**: Next.js 15.2.8 / React 19 / TypeScript 5.7.2
 
 ---
 
@@ -11,16 +11,16 @@
 > **Deprecation Notice**: The legacy `dashboard/essay` page and `essay-feedback` feature folder are deprecated.
 > All new development should focus on the `Essay Analysis` module (`/dashboard/essay-analysis`), which provides a superior AI-driven experience.
 
-当前前端基于 **next-shadcn-dashboard-starter** 模板搭建，拥有完整的技术基础设施，但 **EssayCoach 特定功能尚未实现**。前端处于"脚手架完成、业务待开发"阶段。
+当前前端最初基于 **next-shadcn-dashboard-starter** 模板搭建，现已完成核心业务模块落地（认证、仪表盘、作文分析、Rubrics、Tasks、Classes）。当前处于“持续迭代与体验优化”阶段。
 
 | 维度 | 状态 | 说明 |
 |------|------|------|
 | 技术栈 | ✅ 现代化 | Next.js 15 + React 19 + TypeScript 5.7 + Tailwind v4 |
 | UI 组件库 | ✅ 完备 | 50+ shadcn/ui 组件可用 |
-| 认证框架 | ✅ 已对接 | 使用 `simple-auth-context.tsx` 实现基础认证对接 |
-| EssayCoach 页面 | ⚠️ 部分实现 | 已实现 `Essay Analysis` (作文分析) 核心页面 |
-| 状态管理 | ⚠️ 基础实现 | 使用 React State 和 Context，Zustand 待进一步深度集成 |
-| API 集成 | ⚠️ 部分对接 | 已对接 `Dify` 工作流运行接口 |
+| 认证框架 | ✅ 已对接 | 已对接 Django API，基于 JWT Cookie 和刷新机制 |
+| EssayCoach 页面 | ✅ 核心已实现 | 已覆盖 Essay Analysis、Rubrics、Tasks、Classes、Profile、Settings |
+| 状态管理 | ⚠️ 基础实现 | 已有 Zustand `authStore`，业务域 store 仍可继续拆分 |
+| API 集成 | ✅ 持续完善 | 已启用 `/api/v2` 代理与版本切换配置，覆盖认证与核心业务接口 |
 
 ---
 
@@ -72,8 +72,10 @@ frontend/src/
 │   │   │   ├── @bar_stats/         # 柱状图统计插槽
 │   │   │   ├── @area_stats/        # 面积图统计插槽
 │   │   │   └── @sales/             # 销售数据插槽 (模板遗留)
-│   │   ├── product/                # 产品管理 (模板遗留，非 EssayCoach)
-│   │   ├── kanban/                 # 看板页面 (模板遗留)
+│   │   ├── essay-analysis/         # 作文分析主流程
+│   │   ├── rubrics/                # 评分标准管理
+│   │   ├── tasks/                  # 作业任务管理
+│   │   ├── classes/                # 班级管理
 │   │   └── profile/                # 用户资料
 │   └── api/auth/                   # API Routes (认证)
 │
@@ -95,12 +97,15 @@ frontend/src/
 │
 ├── service/
 │   └── api/                        # API 服务层
-│       ├── auth.ts                 # 认证 API (通用，未对接 Django)
+│       ├── auth.ts                 # 认证 API (已对接 Django v2)
 │       └── route.ts                # 路由 API
 │
 ├── hooks/                          # 自定义 Hooks
 │   ├── use-sidebar.tsx
 │   └── ...
+│
+├── stores/                         # 状态管理
+│   └── authStore.ts                # JWT token 状态与自动刷新
 │
 ├── lib/                            # 工具函数
 │   └── utils.ts                    # cn() 等工具
@@ -116,75 +121,40 @@ frontend/src/
 
 ## ⚠️ 现状问题 (Current Issues)
 
-### 1. 模板品牌未清理
+### 1. 模板品牌清理进行中
 
-多处仍保留原模板信息：
+`app/layout.tsx` 与 `app/dashboard/layout.tsx` 的 metadata 已更新为 EssayCoach 品牌文案。
 
-```tsx
-// app/layout.tsx - Line 19-22
-export const metadata: Metadata = {
-  title: 'Next Shadcn',  // ❌ 应改为 EssayCoach
-  description: 'Basic dashboard with Next.js and Shadcn'
-};
+仍可继续清理的模板遗留项：
+- `frontend/package.json` 项目名仍为 `next-shadcn-dashboard-starter`
+- 部分示例文案与演示数据仍带模板语义
 
-// app/dashboard/layout.tsx - Line 19
-title: 'Next Shadcn Dashboard Starter'  // ❌ 应改为 EssayCoach Dashboard
-```
+### 2. API v2 代理默认地址兜底值曾存在拼写错误（已修复）
 
-### 2. 导航项为模板默认值
+此前 `frontend/src/app/api/v2/[...path]/route.ts` 的兜底地址写成 `127.0.0.0.1`，在 `NEXT_PUBLIC_API_URL` 缺失时会导致 URL 解析失败。现已修正为 `127.0.0.1`，并增加无效 URL 配置保护。
 
-```typescript
-// constants/data.ts
-export const navItems: NavItem[] = [
-  { title: 'Dashboard', url: '/dashboard/overview' },
-  { title: 'Product', url: '/dashboard/product' },    // ❌ 模板遗留
-  { title: 'Kanban', url: '/dashboard/kanban' },      // ❌ 模板遗留
-  // 缺失: Essays, Feedback, Rubrics, Analytics 等
-];
-```
+### 3. 导航与业务页面仍有增量空间
 
-### 3. API 层未对接 Django 后端
+当前导航已不再是模板默认值，已对接 EssayCoach 业务入口（Dashboard、Essay Analysis、Rubrics、Tasks、Classes）。
 
-当前 `service/api/auth.ts` 使用通用端点：
+仍待补充/完善：
+- `Analytics` 与部分管理模块页面
+- 更细粒度的角色差异化导航策略
 
-```typescript
-// service/api/auth.ts
-export const fetchLogin = (data: LoginParams) => {
-  return request.post<AuthResponse>('/auth/login', data);  // ❌ 应为 /api/auth/login/
-};
-```
+### 4. Zustand 状态管理已落地基础能力
 
-Django 后端实际端点 (参考 `backend/core/views.py`):
-- `POST /api/auth/login/` - 登录
-- `POST /api/auth/register/` - 注册
-- `GET /api/essays/` - 获取作文列表
-- `POST /api/essays/` - 提交作文
-
-### 4. Zustand Stores 未实现
-
-尽管 `zustand` 已安装，但项目中无任何 store 实现：
-
-```bash
-$ find frontend/src -name "*store*" -o -name "*state*" | wc -l
-0
-```
-
-需要创建的 stores:
-- `useAuthStore` - 认证状态
-- `useEssayStore` - 作文数据
-- `useFeedbackStore` - AI 反馈
-- `useRubricStore` - 评分标准
+项目已实现 `authStore`（JWT token 状态、自动刷新、并发刷新保护），但 essay/rubric/feedback 等业务域 store 仍可按模块继续拆分。
 
 ### 5. EssayCoach 核心页面实现情况
 
 | 页面 | 状态 | 关键组件 |
 |-----------|---------|-------|
 | `/dashboard/essay-analysis` | ✅ 已实现 | `EssaySubmissionForm`, `FeedbackDashboard`, `RevisionChat` |
-| `/dashboard/essays` | ❌ 不存在 | - |
-| `/dashboard/essays/[id]` | ❌ 不存在 | - |
-| `/dashboard/feedback/[id]` | ❌ 不存在 | - |
-| `/dashboard/rubrics` | ❌ 不存在 | - |
-| `/dashboard/analytics` | ❌ 不存在 | - |
+| `/dashboard/essay` | ✅ 已实现（Legacy） | `EssayForm`, `FeedbackViewer`, `RevisionChat` |
+| `/dashboard/rubrics` | ✅ 已实现 | `rubric-list`, `RubricsClient` |
+| `/dashboard/tasks` | ✅ 已实现 | `task-list`, `task-form` |
+| `/dashboard/classes` | ✅ 已实现 | `class-list`, `join-class-dialog` |
+| `/dashboard/analytics` | ❌ 待实现 | - |
 
 #### Essay Analysis 特色功能
 - **多维度评分可视化**: 使用 `Recharts` 展示作文的各项得分。
@@ -247,15 +217,16 @@ export function middleware(request: NextRequest) {
    - [ ] 移除无关页面 (product, kanban)
 
 2. **API 层重构**
-   - [ ] 创建 `frontend/src/lib/api-client.ts` - Axios 实例配置
-   - [ ] 实现 `services/auth.service.ts` - 对接 Django auth 端点
-   - [ ] 实现 `services/essay.service.ts` - 对接 Django essay 端点
-   - [ ] 配置环境变量 `NEXT_PUBLIC_API_URL`
+   - [x] 提供统一请求封装与 `/api/v2` 代理路由
+   - [x] 实现 `frontend/src/service/api/auth.ts` 并对接 Django auth 端点
+   - [x] 配置环境变量 `NEXT_PUBLIC_API_URL`
+   - [ ] 继续补齐更细粒度的业务 service 抽象（按模块）
 
 3. **状态管理**
-   - [ ] 创建 `stores/auth-store.ts` - 认证状态
+   - [x] 创建 `stores/authStore.ts` - 认证状态
    - [ ] 创建 `stores/essay-store.ts` - 作文状态
-   - [ ] 实现持久化 (localStorage/cookies)
+   - [ ] 创建 `stores/rubric-store.ts` - Rubric 状态
+   - [ ] 实现业务域状态持久化策略 (localStorage/cookies)
 
 ### Phase 2: 核心功能 (P0 - 2-3 周)
 
@@ -272,8 +243,8 @@ export function middleware(request: NextRequest) {
 ### Phase 3: 进阶功能 (P1 - 2-3 周)
 
 6. **评分标准管理**
-   - [ ] `/dashboard/rubrics/page.tsx` - 评分标准列表
-   - [ ] `/dashboard/rubrics/[id]/page.tsx` - 标准详情/编辑
+   - [x] `/dashboard/rubrics/page.tsx` - 评分标准列表
+   - [x] `/dashboard/rubrics/[id]/page.tsx` - 标准详情/编辑
 
 7. **数据分析**
    - [ ] `/dashboard/analytics/page.tsx` - 分析仪表盘

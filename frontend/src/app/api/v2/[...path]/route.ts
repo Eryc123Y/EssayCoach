@@ -1,21 +1,34 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const DJANGO_API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.0.1:8000';
+const DEFAULT_DJANGO_API_URL = 'http://127.0.0.1:8000';
+const DJANGO_API_URL =
+  process.env.NEXT_PUBLIC_API_URL || DEFAULT_DJANGO_API_URL;
 
 async function proxy(
   req: NextRequest,
   { params }: { params: Promise<{ path: string[] }> }
 ) {
+  let backendUrl: URL;
+  try {
+    backendUrl = new URL(DJANGO_API_URL);
+  } catch {
+    return NextResponse.json(
+      { error: 'Invalid backend API URL configuration' },
+      { status: 500 }
+    );
+  }
+
   const { path } = await params;
   const pathString = path.join('/');
+  const queryString = req.nextUrl.searchParams.toString();
+  const querySuffix = queryString ? `?${queryString}` : '';
 
-  const targetUrl = `${DJANGO_API_URL}/api/v2/${pathString}/?${req.nextUrl.searchParams.toString()}`;
+  const targetUrl = `${backendUrl.origin}/api/v2/${pathString}/${querySuffix}`;
 
   const token = req.cookies.get('access_token')?.value;
   const headers = new Headers(req.headers);
 
   // Set Host header based on environment URL
-  const backendUrl = new URL(DJANGO_API_URL);
   headers.set('Host', backendUrl.host);
 
   if (token) {
