@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 > **IMPORTANT**: This file is the single source of truth for project status. Update it after every significant code change to reflect the current state and next priorities.
 >
-- **Last Updated**: 2026-02-26 (Settings Backend API Complete - PRD-07)
+- **Last Updated**: 2026-02-27 (Profile & Settings Functional Sync Complete)
 
 ---
 
@@ -90,6 +90,11 @@ The `docs/prd/` directory contains an explicit contract for code generation:
 ### Version: v2.0.0 (v2-only migration target)
 
 #### ✅ Completed Features
+- **Profile & Settings Sync (Phase 2)** ✅ Complete 2026-02-27
+  - Settings: Role-based sidebar rendering (Organization/API keys hidden for non-admins)
+  - Settings: Forms integrated with backend hooks (toast notifications added)
+  - Profile: Role-based tabs (Achievements hidden for non-students)
+  - Tests: 3 new feature-specific tests added and passing
 - Core AI essay analysis functionality
 - Dashboard overview (student/lecturer role-aware)
 - Rubric management (CRUD + PDF import via AI)
@@ -230,8 +235,8 @@ The `docs/prd/` directory contains an explicit contract for code generation:
 | 04 Dashboard Overview | ✅ Complete | Phase 3 complete: dashboard components + `useDashboardData` hook tests passing (201 tests total), frontend build passing. | - |
 | 05 Essay Practice | ✅ Complete | Skill radar chart implemented (68 tests). Missing: PDF export (~4h), RevisionChat backend (Deferred) | - |
 | 06 Rubrics | ⚠️ Partial | Missing: Visibility field (public/private, ~3h), student view (~3h) | 🟡 P2 |
-| 07 Settings | ✅ Implemented | - | - |
-| 08 Profile | ✅ Implemented | - | - |
+| 07 Settings | ✅ Implemented | Phase 2 Functional sync complete (role-based rendering, form hooks integrated, 3 tests passing) | - |
+| 08 Profile | ✅ Implemented | Phase 2 Functional sync complete (role-based tabs, Student/Lecturer/Admin specific views, 1 test passing) | - |
 | 09 Assignments (Tasks) | ✅ Complete | Backend: Full CRUD + action endpoints. Frontend: Full components, routes, navigation. Tests: 17 passing. | - |
 | 10 Classes | ✅ Complete | Backend: Full CRUD + action endpoints. Frontend: Full components, routes, navigation. Tests: 14 passing. | - |
 | 11 Social Learning Hub | ❌ Not Started | Planned for post-MVP | 🟢 P3 |
@@ -247,8 +252,8 @@ The `docs/prd/` directory contains an explicit contract for code generation:
 | 04 Dashboard Overview | ✅ Complete | Phase 3 complete: dashboard components + `useDashboardData` hook tests passing (201 tests total), frontend build passing, and duplicated dashboard type declarations removed. | - |
 | 05 Essay Practice | ✅ Complete | Skill radar chart implemented (68 tests). Missing: PDF export (~4h), RevisionChat backend (Deferred) | - |
 | 06 Rubrics | ⚠️ Partial | Missing: Visibility (public/private), student view, duplicate | 🟡 P2 |
-| 07 Settings | ✅ Implemented | - | - |
-| 08 Profile | ✅ Implemented | - | - |
+| 07 Settings | ✅ Implemented | Phase 2 Functional sync complete (role-based rendering, form hooks integrated, 3 tests passing) | - |
+| 08 Profile | ✅ Implemented | Phase 2 Functional sync complete (role-based tabs, Student/Lecturer/Admin specific views, 1 test passing) | - |
 | 09 Assignments (Tasks) | ✅ Complete | Backend: Model fields, schemas, CRUD + publish/unpublish/submissions endpoints complete with 10 tests. Frontend: Full components (list, card, form, submissions), routes (/dashboard/tasks/*), navigation, and 7 service tests. Build passes. | - |
 | 10 Classes | ✅ Complete | Backend: Model fields, schemas, CRUD + join/leave/students/archive endpoints complete with 6 tests. Frontend: Full components (list, card, form, detail, roster, join dialog), routes (/dashboard/classes/*), navigation, and 8 service tests. Build passes. | - |
 | 11 Social Learning Hub | ❌ Not Started | Planned for post-MVP | 🟢 P3 |
