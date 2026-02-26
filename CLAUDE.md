@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 > **IMPORTANT**: This file is the single source of truth for project status. Update it after every significant code change to reflect the current state and next priorities.
 >
-> **Last Updated**: 2026-02-25 (Dashboard Phase 2 Complete + Security Review + Sidebar Fix)
+- **Last Updated**: 2026-02-26 (Sidebar Auth Fix + Dashboard Link Fix + PRD-09/10 Complete)
 
 ---
 
@@ -25,7 +25,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **All Tests**: `make test` (runs both api_v1 and api_v2 tests)
 - **Backend Tests (API v2 only)**: `cd backend && uv run pytest api_v2/ -v`
 - **Frontend Tests**: `cd frontend && pnpm test`
-- **Single Backend Test**: `cd backend && uv run pytest api_v2/tests/test_specific.py::TestClass::test_method -v`
+- **Targeted Frontend Tests**: `cd frontend && pnpm exec vitest run src/features/<path>/<file>.test.ts`
+  > **Note**: `pnpm test -- <path>` may still run broad suites; `pnpm exec vitest run <file>` is more precise for single-file runs.
 
 > **Note**: `make test` includes legacy api_v1 tests. For api_v2-only testing, use the command above. Tests require `.env` at project root and have a 60s timeout per test.
 
@@ -124,6 +125,67 @@ The `docs/prd/` directory contains an explicit contract for code generation:
   - UI Designer Review: ✅ Complete (70% compliance score)
   - Testing: ✅ Complete (201 tests created)
   - Code Review: ✅ Complete (28 findings, 3 High priority security)
+- **Dashboard UI Compliance (Phase 3)** ✅ Complete 2026-02-25
+  - Updated role dashboard components to align with current UI/test expectations
+  - Dashboard component + hook tests passing: 201/201
+  - Frontend build passes (`pnpm build`)
+  - Type cleanup complete: removed duplicate dashboard interfaces in `frontend/src/service/api/v2/types.ts`
+- **Sidebar Fix** ✅ Complete 2026-02-25
+  - Added skeleton loading state during auth initialization
+  - Added placeholder UI when no classes available
+  - Fixed icon mismatches (`IconBook`, `IconChevronsDown`)
+  - Documentation: `docs/learnings/sidebar-fix-implementation.md`
+- **Test Account Quick-Fill** ✅ Complete 2026-02-25
+  - Added Student/Lecturer/Admin quick-fill buttons on login page
+  - Documentation: `docs/learnings/test-account-quick-fill.md`
+- **Code Hygiene (Phase 1)** ✅ Complete 2026-02-25
+  - Deleted 5 orphaned v1 auth route files
+  - Fixed hardcoded API URLs to use `NEXT_PUBLIC_API_URL` env var
+- **Task + Class Model Extension (Phase 2)** ✅ Complete 2026-02-25
+  - Task model: +6 fields (title, description, instructions, class_id, status, allow_late)
+  - Class model: +7 fields (name, description, join_code, term, year, status, archived_at)
+  - Migrations created and applied
+  - API endpoints: publish/unpublish/submissions, join/students/archive
+  - Tests: 21 pytest tests passing
+- **Tasks + Classes Module (PRD-09/10)** ✅ Complete 2026-02-26
+  - Backend: Full CRUD + action endpoints (publish/unpublish/submissions/join/leave/archive)
+  - Frontend: Full routes, components, navigation integration
+  - Testing: 15 service tests + 16 backend CRUD tests passing
+- Core AI essay analysis functionality
+- Dashboard overview (student/lecturer role-aware)
+- Rubric management (CRUD + PDF import via AI)
+- Essay Practice submission flow
+- API v2 core endpoints for existing features
+- RBAC permission checks on Users CRUD endpoints ✅ Added 2026-02-24
+- Cookie security hardening (httpOnly, sameSite, secure flags) ✅ Added 2026-02-24
+- Navigation links to 404 pages removed ✅ Fixed 2026-02-24
+- **JWT Refresh Token mechanism** ✅ Implemented 2026-02-24
+- **Dashboard API endpoint** ✅ Implemented 2026-02-25 (`/api/v2/core/dashboard/`)
+- **Comprehensive test coverage** ✅ Added 2026-02-25
+  - Backend: 50+ dashboard API tests (pytest)
+  - Frontend: Dashboard page + component tests (vitest)
+  - Integration tests for full workflows
+  - Backend: `/api/v2/auth/refresh/` with token rotation and blacklist
+  - Frontend: `useAuthRefresh` hook with auto-refresh 5min before expiry
+  - Security: httpOnly cookies, single-flight pattern, retry with backoff
+  - Tests: 52 tests passing (33 authStore + 19 useAuthRefresh)
+- **Dashboard Backend API (Phase 1)** ✅ Implemented 2026-02-25
+  - Endpoints: `/api/v2/core/dashboard/lecturer/`, `/api/v2/core/dashboard/student/`, `/api/v2/core/dashboard/admin/`
+  - Schemas: Role-specific response schemas (LecturerDashboardOut, StudentDashboardOut, AdminDashboardOut)
+  - Frontend: API client (`dashboardService`), TypeScript types, useDashboard hook
+  - Documentation: `docs/learnings/dashboard-refactor-phase1-backend.md`
+- **Dashboard Performance Optimization** ✅ Complete 2026-02-25
+  - Database indexes added: 11 new indexes on Submission, Feedback, Enrollment, FeedbackItem, Class tables
+  - Artificial delays removed from all dashboard slot pages (+3s TTI improvement)
+  - Documentation: `docs/learnings/dashboard-performance-optimization.md`
+- **Dashboard Frontend (Phase 2)** ✅ Complete 2026-02-25
+  - Role-based routing: `/dashboard/student`, `/dashboard/lecturer`, `/dashboard/admin`
+  - Components: 5 implemented (`DashboardHeader`, `ActivityFeed`, `LecturerDashboard`, `StudentDashboard`, `AdminDashboard`)
+  - Location: `frontend/src/features/dashboard/`, `frontend/src/app/dashboard/[role]/page.tsx`
+  - Documentation: `docs/learnings/dashboard-frontend-implementation.md`
+  - UI Designer Review: ✅ Complete (70% compliance score)
+  - Testing: ✅ Complete (201 tests created)
+  - Code Review: ✅ Complete (28 findings, 3 High priority security)
 - **Sidebar Fix** ✅ Complete 2026-02-25
   - Added skeleton loading state during auth initialization
   - Added placeholder UI when no classes available
@@ -134,6 +196,7 @@ The `docs/prd/` directory contains an explicit contract for code generation:
   - Documentation: `docs/learnings/test-account-quick-fill.md`
 
 #### 🚧 In Progress / Needs Attention
+- RevisionChat Backend Integration (~8h) - **Deferred to LangGraph migration**
 - API v1 → v2 migration (cleanup pending)
 - RevisionChat Backend Integration (~8h)
 
@@ -144,13 +207,30 @@ The `docs/prd/` directory contains an explicit contract for code generation:
 | 01 Landing Page | ✅ Implemented | - | - |
 | 02 Sign In | ✅ Implemented | - | - |
 | 03 Sign Up | ✅ Implemented | - | - |
-| 04 Dashboard Overview | ⚠️ Phase 2 Complete | Frontend components implemented. UI review (70%), Code review (28 findings), 201 tests. Fix phase pending. | 🟡 P0 |
+| 04 Dashboard Overview | ✅ Complete | Phase 3 complete: dashboard components + `useDashboardData` hook tests passing (201 tests total), frontend build passing. | - |
+| 05 Essay Practice | ⚠️ Partial | Missing: PDF export (~4h), skill radar chart (~4h), RevisionChat backend (Deferred to LangGraph migration) | 🟠 P1 |
+| 06 Rubrics | ⚠️ Partial | Missing: Visibility field (public/private, ~3h), student view (~3h) | 🟡 P2 |
+| 07 Settings | ✅ Implemented | - | - |
+| 08 Profile | ✅ Implemented | - | - |
+| 09 Assignments (Tasks) | ✅ Complete | Backend: Full CRUD + action endpoints. Frontend: Full components, routes, navigation. Tests: 17 passing. | - |
+| 10 Classes | ✅ Complete | Backend: Full CRUD + action endpoints. Frontend: Full components, routes, navigation. Tests: 14 passing. | - |
+| 11 Social Learning Hub | ❌ Not Started | Planned for post-MVP | 🟢 P3 |
+| 12 Analytics | ❌ Not Started | Planned for post-MVP | 🟢 P3 |
+| 13 Users | ❌ Not Started | Admin user management | 🟢 P3 |
+| 14 Help | ❌ Not Started | Basic help docs needed | 🟢 P3 |
+
+| PRD Module | Status | Gap Summary | Priority |
+|------------|--------|-------------|----------|
+| 01 Landing Page | ✅ Implemented | - | - |
+| 02 Sign In | ✅ Implemented | - | - |
+| 03 Sign Up | ✅ Implemented | - | - |
+| 04 Dashboard Overview | ✅ Complete | Phase 3 complete: dashboard components + `useDashboardData` hook tests passing (201 tests total), frontend build passing, and duplicated dashboard type declarations removed. | - |
 | 05 Essay Practice | ⚠️ Partial | Missing: RevisionChat backend (Deferred), PDF export, skill radar chart | 🟠 P1 |
 | 06 Rubrics | ⚠️ Partial | Missing: Visibility (public/private), student view, duplicate | 🟡 P2 |
 | 07 Settings | ✅ Implemented | - | - |
 | 08 Profile | ✅ Implemented | - | - |
-| 09 Assignments (Tasks) | ⚠️ Partial (33%) | Model: missing title, description, instructions, class_id, status (8/12 fields). Endpoints: missing publish/unpublish/submissions. | 🟠 P1 |
-| 10 Classes | ⚠️ Partial (25%) | Model: missing name, description, code (join_code), term, status (9/12 fields). Endpoints: missing join/leave/students. | 🟠 P1 |
+| 09 Assignments (Tasks) | ✅ Complete | Backend: Model fields, schemas, CRUD + publish/unpublish/submissions endpoints complete with 10 tests. Frontend: Full components (list, card, form, submissions), routes (/dashboard/tasks/*), navigation, and 7 service tests. Build passes. | - |
+| 10 Classes | ✅ Complete | Backend: Model fields, schemas, CRUD + join/leave/students/archive endpoints complete with 6 tests. Frontend: Full components (list, card, form, detail, roster, join dialog), routes (/dashboard/classes/*), navigation, and 8 service tests. Build passes. | - |
 | 11 Social Learning Hub | ❌ Not Started | Planned for post-MVP | 🟢 P3 |
 | 12 Analytics | ❌ Not Started | Planned for post-MVP | 🟢 P3 |
 | 13 Users | ❌ Not Started | Admin user management | 🟢 P3 |
@@ -184,15 +264,15 @@ The `docs/prd/` directory contains an explicit contract for code generation:
    - Admin: Platform stats, system health, user metrics ✅ Done
    - Location: `frontend/src/features/dashboard/`, `frontend/src/app/dashboard/[role]/page.tsx`
    - Status: **Phase 2 Frontend Complete** ✅ (2026-02-25)
-   - **Phase 3**: UI compliance fixes (typography, action buttons, filters) - ~3h
+  - **Phase 3**: UI compliance fixes (typography, action buttons, filters) - ✅ complete (components + hooks stabilized)
    - **Phase 4**: Security remediation (JWT verification, CSRF) - ~2h
    - **Why P0**: Core user entry point, affects all user experience
 
-2. **Dashboard Security Remediation** (~2h) 🔒 **NEW**
-   - Fix JWT parsing with signature verification (`page.tsx:8-23`)
-   - Add CSRF token handling in API client
-   - Fix direct cookie access vulnerability
-   - Add focus indicators for keyboard navigation
+2. **Dashboard Security Remediation** (~2h) 🔒 **COMPLETE 2026-02-25**
+   - ✅ Fix JWT parsing with signature verification (`page.tsx:8-23`)
+   - ✅ Add CSRF token handling in API client
+   - ✅ Fix direct cookie access vulnerability
+   - Add focus indicators for keyboard navigation (A11Y, optional)
    - See: `docs/learnings/dashboard-frontend-phase2-code-review.md`
 
 2. **RevisionChat Backend Integration** - ⚠️ **Deferred** (~8h)
@@ -205,42 +285,43 @@ The `docs/prd/` directory contains an explicit contract for code generation:
 3. **API v1 → v2 Cleanup** (~8h)
    - Delete `backend/api_v1/` directory ✅ Deleted 2026-02-24
    - Delete `frontend/src/app/api/v1/` ✅ Deleted 2026-02-24
-   - Remove DRF dependencies from `backend/pyproject.toml`
-   - Status: In progress
+   - Remove DRF dependencies from `backend/pyproject.toml` ✅ Clarified 2026-02-25 - DRF is required by simplejwt, not removable
+   - Status: ✅ Complete
 
 ### 🟠 P1 - High Priority (This Week)
 
-1. **Task Model Extension** (~3h + migration)
-   - Add fields: title, description, instructions, class_id, status, allow_late_submission
-   - Location: `backend/core/models.py::Task`
-   - Status: Not started
-   - **Dependency**: Requires Dashboard refactor (class selection UI)
-
-2. **Task API Endpoints** (~4h)
-   - Add: POST /tasks/{id}/publish/, POST /tasks/{id}/unpublish/
-   - Add: GET /tasks/{id}/submissions/
-   - Location: `backend/api_v2/core/views.py`
-   - Status: Not started
-
-3. **Class Model Extension** (~3h + migration)
-   - Add fields: name, description, code (join_code), term, year, status
-   - Location: `backend/core/models.py::Class`
-   - Status: Not started
-   - **Dependency**: Requires Dashboard refactor (class overview UI)
-
-4. **Class API Endpoints** (~4h)
-   - Add: POST /classes/join/ (join code)
-   - Add: GET/POST/DELETE /classes/{id}/students/
-   - Add: POST /classes/{id}/archive/
-   - Location: `backend/api_v2/core/views.py`
-   - Status: Not started
-
-5. **PDF Export Feature** (~4h)
+1. **PDF Export Feature** (~4h)
    - Install `@react-pdf/renderer`
    - Create FeedbackPDF component
    - Hook up Export button in essay-analysis page
    - Status: Not started
 
+2. **Skill Radar Chart** (~4h)
+   - Implement radar chart for Essay Practice feedback
+   - Show mastery across writing dimensions (Grammar, Logic, Tone, Structure, Language)
+   - Status: Not started
+
+3. **Rubric Visibility Enhancement** (~6h)
+   - Add `visibility` field to `MarkingRubric` model
+   - Public/private toggle UI
+   - Student view for public rubrics
+   - Status: Not started
+
+### 🟡 P2 - Medium Priority (This Month)
+
+1. **Dashboard Enhancement** (~8h)
+   - Grading queue for lecturers
+   - Activity feed
+   - Class overview cards
+   - Status: Not started
+
+2. **Save to Portfolio** (~2h)
+   - Backend endpoint: `POST /api/v2/core/submissions/{id}/save/`
+   - Status: Not started
+
+3. **Apply Fix Feature** (~4h)
+   - Display modification suggestions for user decision
+   - Status: Not started
 ### 🟡 P2 - Medium Priority (This Month)
 
 1. **Rubric Visibility Enhancement** (~6h)
@@ -283,10 +364,18 @@ The `docs/prd/` directory contains an explicit contract for code generation:
 | Task | Files to Modify | Priority |
 |------|-----------------|----------|
 | JWT Refresh Token | `api_v2/auth/views.py`, `api_v2/auth/schemas.py`, `useAuthRefresh.ts` | ✅ Done |
+| **Dashboard Overview Refactor** | `frontend/src/app/dashboard/`, `frontend/src/features/dashboard/` | **P0** ✅ Done |
+| RevisionChat API | `api_v2/ai_feedback/views.py`, `revision-chat.tsx` | Deferred |
+| Task Model Extension | `core/models.py::Task` (+8 fields) | ✅ Completed 2026-02-26 |
+| Class Model Extension | `core/models.py::Class` (+7 fields) | ✅ Completed 2026-02-26 |
+| Task Publish/Unpublish API | `api_v2/core/views.py` | ✅ Completed 2026-02-26 |
+| Class Join Code API | `api_v2/core/views.py` | ✅ Completed 2026-02-26 |
+|------|-----------------|----------|
+| JWT Refresh Token | `api_v2/auth/views.py`, `api_v2/auth/schemas.py`, `useAuthRefresh.ts` | ✅ Done |
 | **Dashboard Overview Refactor** | `frontend/src/app/dashboard/`, `frontend/src/features/dashboard/` | **P0** |
 | RevisionChat API | `api_v2/ai_feedback/views.py`, `revision-chat.tsx` | Deferred |
 | Task Model Extension | `core/models.py::Task` (+8 fields) | P1 |
-| Class Model Extension | `core/models.py::Class` (+9 fields) | P1 |
+| Class Model Extension | `core/models.py::Class` (+7 fields added; migration pending) | P1 |
 | Task Publish/Unpublish API | `api_v2/core/views.py` | P1 |
 | Class Join Code API | `api_v2/core/views.py` | P1 |
 
@@ -294,6 +383,12 @@ The `docs/prd/` directory contains an explicit contract for code generation:
 **Goal**: Complete PRD-defined features
 
 | Task | Files to Modify | Priority |
+|------|-----------------|----------|
+| PDF Export | `FeedbackPDF.tsx`, `useExportPDF.ts` | P1 |
+| Rubric Visibility | `core/models.py::MarkingRubric`, rubric forms | P2 |
+| Task Module (PRD-09) | `core/models.py::Task`, `api_v2/core/views.py`, Task components | ✅ Complete |
+| Class Module (PRD-10) | `core/models.py::Class`, `api_v2/core/views.py`, Class components | ✅ Complete |
+| Auth Hardening | `request.ts`, `middleware.ts` | ✅ Done (httpOnly cookies, single-flight) |
 |------|-----------------|----------|
 | PDF Export | `FeedbackPDF.tsx`, `useExportPDF.ts` | P1 |
 | Rubric Visibility | `core/models.py::MarkingRubric`, rubric forms | P2 |
@@ -451,21 +546,85 @@ When updating CLAUDE.md:
 | `backend/essay_coach/middleware.py` | Custom middleware (auth, logging) |
 | `frontend/src/app/layout.tsx` | Root layout with providers |
 | `frontend/src/lib/request.ts` | API request utilities |
+| `frontend/src/lib/auth.ts` | JWT validation utilities |
+| `Makefile` | Centralized development commands |
+|------|---------|
+| `backend/manage.py` | Django management entry point |
+| `backend/core/models.py` | Single source of truth for database schema |
+| `backend/api_v2/api.py` | API v2 router configuration |
+| `backend/essay_coach/settings.py` | Django settings (DB, CORS, Ninja config) |
+| `backend/essay_coach/middleware.py` | Custom middleware (auth, logging) |
+| `frontend/src/app/layout.tsx` | Root layout with providers |
+| `frontend/src/lib/request.ts` | API request utilities |
 | `Makefile` | Centralized development commands |
 
 ---
 
-## Gotchas
-
-- **Virtual Environment**: Backend uses `uv` for dependency management. Virtual environment is at `backend/.venv`, not root `.venv`
-- **.env Location**: Backend loads `.env` from project ROOT (via `manage.py`), not from `backend/` directory
-- **API v1 Status**: Deleted 2026-02-24. All NEW development targets API v2.
-- **Dependency Groups**: Backend uses uv's new `dependency-groups` format (PEP 735), not `[optional-dependencies]`
-- **Test Accounts**: Created by `make seed-db` command, not by migrations
-- **Port Conflicts**: Backend runs on port 8000, frontend on 5100 - ensure these are available
 - **Docker Required**: PostgreSQL runs in Docker - run `make db` before starting backend
 - **Parallel Routes**: Dashboard uses Next.js parallel routes (`@bar_stats`, `@pie_stats`, etc.) - all must be included in layout
 - **Role Routing**: Dashboard role routing decodes JWT from httpOnly cookie server-side (`/app/dashboard/page.tsx`)
+- **Duplicate Interface Declarations**: TypeScript allows duplicate interface names (merging); LSP won't flag these. Use `grep` to find duplicates before declaring types clean.
+- **Build Warnings**: `pnpm build` passes with pre-existing warnings (console statements, unused vars). These are non-blocking; focus on errors only.
+- **DRF Dependency**: `djangorestframework` is required by `djangorestframework-simplejwt` for JWT token handling. Project does NOT use DRF's API framework (views, serializers, routers) — only uses simplejwt for token generation/blacklist/rotation. Do not remove unless migrating to pure `pyjwt`.
+- **Authentication Pattern**: Hybrid approach - httpOnly cookies for tokens (secure), localStorage for user data (client access)
+- **Login Flow**: After login, MUST store user data to localStorage OR auth context fails to initialize
+- **Server vs Client Auth**: Server components (`/dashboard/page.tsx`) strictly validate JWT cookies; client components use localStorage (more forgiving)
+- **Cookie Propagation**: Setting cookie in one request doesn't guarantee availability in next server component (race condition)
+- **Edit Tool Risk**: Can create duplicate code blocks; use `write` instead of `edit` for large rewrites (>50% change)
+- **Test Accounts**: Created by `make seed-db` (admin/lecturer/student@example.com). Login page has Student/Lecturer/Admin quick-fill buttons for fast testing
+- **Parallel Routes**: Dashboard uses Next.js parallel routes (`@bar_stats`, `@pie_stats`, etc.) - all must be included in layout
+- **Role Routing**: Dashboard role routing decodes JWT from httpOnly cookie server-side (`/app/dashboard/page.tsx`)
+- **Duplicate Interface Declarations**: TypeScript allows duplicate interface names (merging); LSP won't flag these. Use `grep` to find duplicates before declaring types clean.
+- **Build Warnings**: `pnpm build` passes with pre-existing warnings (console statements, unused vars). These are non-blocking; focus on errors only.
+- **DRF Dependency**: `djangorestframework` is required by `djangorestframework-simplejwt` for JWT token handling. Project does NOT use DRF's API framework (views, serializers, routers) — only uses simplejwt for token generation/blacklist/rotation. Do not remove unless migrating to pure `pyjwt`.
+
+---
+
+## Security Patterns
+
+### JWT Validation (Server Components)
+- Use `jose` library: `jwtVerify(token, new TextEncoder().encode(JWT_SECRET))`
+- Never use manual `atob(token.split('.')[1])` parsing - vulnerable to tampering
+- Location: `frontend/src/lib/auth.ts`
+
+### Hybrid Authentication Pattern
+- **httpOnly cookies**: Store sensitive tokens (access_token, refresh_token)
+- **localStorage**: Store non-sensitive user data (id, email, name, role)
+- **Login**: Set both cookie + localStorage, then navigate
+- **Logout**: Clear both cookie + localStorage
+- **Why**: httpOnly cookies can't be read by JS, but client components need user data
+
+### CSRF Protection (API Client)
+- Use `jose` library: `jwtVerify(token, new TextEncoder().encode(JWT_SECRET))`
+- Never use manual `atob(token.split('.')[1])` parsing - vulnerable to tampering
+- Location: `frontend/src/lib/auth.ts`
+
+### CSRF Protection (API Client)
+- Read Django `csrftoken` cookie: `document.cookie.match(/csrftoken=([^;]+)/)`
+- Add to headers: `headers['X-CSRFToken'] = csrfToken` for POST/PATCH/DELETE
+- Include `credentials: 'include'` for cookie-based auth
+
+### Edit vs Write Tool
+- Large `edit` operations may append instead of replace, causing duplicate content
+- Use `write` when completely rewriting files (>50% content change)
+- Verify with `read` after edits if build shows duplicate identifier errors
+
+---
+
+## Frontend Test Patterns
+
+### Hook Testing with Fake Timers
+- **Scope fake timers** to specific `describe` blocks using `vi.useFakeTimers()` / `vi.useRealTimers()` in `beforeEach`/`afterEach`
+- **Avoid global fake timers** — they interfere with async state updates in other tests
+- **Behavior-based assertions** > exact call counts for retry/refresh logic (timing can vary)
+- **Wrap async refreshes** in `act(async () => { await refresh() })` to suppress React warnings
+
+### Component Test Patterns
+- Mock shadcn/ui components with `data-testid` attributes for reliable queries
+- Use `@testing-library/react` `screen.getByText()` over container queries
+- Skeleton loading states should have `animate-pulse` class for test assertions
+
+
 
 ---
 
@@ -506,7 +665,12 @@ Orchestrator (multi-agent-coordinator)
 | 🟠 Medium | 8 | TypeScript strictness, re-render optimization, color contrast |
 | 🟢 Low | 15 | Minor accessibility, code style |
 
-**Immediate Actions Required:**
+**Immediate Actions Required**:
+1. ✅ Add JWT signature verification in `/app/dashboard/page.tsx` - **DONE 2026-02-25**
+2. ✅ Implement CSRF token handling in API client - **DONE 2026-02-25**
+3. ✅ Fix direct cookie access to use secure HTTP-only pattern - **DONE 2026-02-25**
+4. Add keyboard focus indicators (A11Y - optional)
+5. Add unique aria-labels to icon buttons (A11Y - optional)
 1. Add JWT signature verification in `/app/dashboard/page.tsx`
 2. Implement CSRF token handling in API client
 3. Fix direct cookie access to use secure HTTP-only pattern
@@ -527,21 +691,42 @@ Orchestrator (multi-agent-coordinator)
 | RBAC Missing on Users CRUD | ✅ Fixed | 2026-02-24 |
 | Cookie httpOnly=false | ✅ Fixed | 2026-02-24 |
 | Navigation links to 404 pages | ✅ Fixed | 2026-02-24 |
+| **Dashboard JWT Validation** | ✅ Fixed | 2026-02-25 |
+| **Dashboard CSRF Protection** | ✅ Fixed | 2026-02-25 |
+|-------|--------|------------|
+| JWT Refresh Token Mechanism | ✅ Implemented | 2026-02-24 |
+| RBAC Missing on Users CRUD | ✅ Fixed | 2026-02-24 |
+| Cookie httpOnly=false | ✅ Fixed | 2026-02-24 |
+| Navigation links to 404 pages | ✅ Fixed | 2026-02-24 |
 
 ---
 
-## Technical Debt (Verified 2026-02-24)
+## Technical Debt
+
+| Debt | Impact | Fix Effort | Status |
+|------|--------|------------|--------|
+| Task model missing 8 fields (title, description, instructions, class_id, status, etc.) | Blocks PRD-09 | ~6h + migration | ✅ Completed 2026-02-26 |
+| Class model missing 9 fields (name, description, code/join_code, term, status, etc.) | Blocks PRD-10 | ~6h + migration | ✅ Completed 2026-02-26 |
+| DRF dependencies 残留 (djangorestframework in pyproject.toml + settings.py) | Technical debt | ~1h | ✅ Resolved 2026-02-25 - DRF is required by simplejwt for JWT handling, not removable |
+
+### Documentation Consistency Issues
+
+| Issue | Description |
+|-------|-------------|
+| Single source of truth | CLAUDE.md updated with accurate status after security audit |
+| Frontend routes | Navigation links to 404 pages removed 2026-02-24 |
+
+### Code Hygiene Issues
+
+| Issue | Location | Status |
+|-------|----------|--------|
+| v2 proxy hardcoded URL | `frontend/src/app/api/v2/[...path]/route.ts:3` | Pending |
 
 | Debt | Impact | Fix Effort | Status |
 |------|--------|------------|--------|
 | Task model missing 8 fields (title, description, instructions, class_id, status, etc.) | Blocks PRD-09 | ~6h + migration | Pending |
 | Class model missing 9 fields (name, description, code/join_code, term, status, etc.) | Blocks PRD-10 | ~6h + migration | Pending |
-| DRF dependencies残留 (djangorestframework in pyproject.toml + settings.py) | Technical debt | ~1h | Pending |
-| Missing publish/unpublish task endpoints | Blocks task workflow | ~2h | Pending |
-| Missing join code feature (student self-enrollment) | Blocks class enrollment | ~3h | Pending |
-| Missing class students CRUD endpoints | Incomplete class management | ~3h | Pending |
-| Missing task submissions endpoint | Incomplete task management | ~2h | Pending |
-| v2 API Proxy hardcoded (127.0.0.1:8000) | Production config issue | ~1h | Pending |
+| DRF dependencies 残留 (djangorestframework in pyproject.toml + settings.py) | Technical debt | ~1h | ✅ Resolved 2026-02-25 - DRF is required by simplejwt for JWT handling, not removable |
 
 ### Documentation Consistency Issues (Verified 2026-02-24)
 
@@ -555,7 +740,7 @@ Orchestrator (multi-agent-coordinator)
 | Issue | Location | Status |
 |-------|----------|--------|
 | v2 proxy hardcoded URL | `frontend/src/app/api/v2/[...path]/route.ts:3` | Pending |
-| DRF dependencies残留 | `backend/pyproject.toml`, `backend/essay_coach/settings.py` | Pending |
+| DRF dependencies 残留 | `backend/pyproject.toml`, `backend/essay_coach/settings.py` | ✅ Clarified 2026-02-25 - DRF is simplejwt dependency, not directly used |
 
 - **`docs/prd/`**: Product Requirement Documents (14 modules) - **Source of truth for features**
 

@@ -1,18 +1,18 @@
-# This is an auto-generated Django model module.
-# You'll have to do the following manually to clean this up:
-#   * Rearrange models' order
-#   * Make sure each model has one field with primary_key=True
-#   * Make sure each ForeignKey and OneToOneField has `on_delete` set to the desired behavior
-#   * Remove `managed = False` lines if you wish to allow Django to create, modify, and delete the table
-# Feel free to rename the models, but don't rename db_table values or field names.
 from __future__ import annotations
 
+from datetime import datetime
 from typing import TYPE_CHECKING, Any
 
 from django.contrib.auth.base_user import AbstractBaseUser, BaseUserManager
 from django.contrib.auth.models import PermissionsMixin
 from django.db import models
 from django.db.models import CheckConstraint, Q, UniqueConstraint
+
+
+def get_current_year() -> int:
+    """Return current year for use as default in model fields."""
+    return datetime.now().year
+
 
 if TYPE_CHECKING:
     pass
@@ -21,6 +21,37 @@ if TYPE_CHECKING:
 class Class(models.Model):
     class_id = models.SmallAutoField(primary_key=True, db_comment="Unique identifier for a class under a unit")
     unit_id_unit = models.ForeignKey("Unit", models.CASCADE, db_column="unit_id_unit")
+    class_name = models.CharField(
+        max_length=100, blank=False, default="", db_comment="Class name (e.g., CS101 Class A)"
+    )
+    class_desc = models.TextField(blank=True, null=True, db_comment="Class description")
+    class_join_code = models.CharField(
+        max_length=10,
+        unique=True,
+        blank=False,
+        default="",
+        db_comment="Student self-enrollment code",
+    )
+    class_term = models.CharField(
+        max_length=20,
+        choices=[
+            ("semester1", "Semester 1"),
+            ("semester2", "Semester 2"),
+            ("term1", "Term 1"),
+            ("term2", "Term 2"),
+            ("full_year", "Full Year"),
+        ],
+        default="full_year",
+        db_comment="Academic term",
+    )
+    class_year = models.PositiveSmallIntegerField(default=get_current_year, db_comment="Academic year")
+    class_status = models.CharField(
+        max_length=20,
+        choices=[("active", "Active"), ("archived", "Archived")],
+        default="active",
+        db_comment="Class status",
+    )
+    class_archived_at = models.DateTimeField(null=True, blank=True, db_comment="Archive timestamp")
     class_size = models.SmallIntegerField(default=0, db_comment="current number of students in the class")
 
     class Meta:
@@ -29,7 +60,15 @@ class Class(models.Model):
         db_table_comment = "A table for class entity"
         verbose_name = "class"
         verbose_name_plural = "classes"
-        constraints = [CheckConstraint(check=Q(class_size__gte=0), name="class_size_ck")]
+        constraints = [
+            CheckConstraint(check=Q(class_size__gte=0), name="class_size_ck"),
+            CheckConstraint(check=Q(class_status__in=["active", "archived"]), name="class_status_ck"),
+            CheckConstraint(check=Q(class_year__gte=2000) & Q(class_year__lte=2100), name="class_year_range_ck"),
+        ]
+        indexes = [
+            models.Index(fields=["unit_id_unit"], name="class_unit_idx"),
+            models.Index(fields=["class_join_code"], name="class_join_code_idx"),
+        ]
 
 
 class Enrollment(models.Model):
@@ -169,7 +208,7 @@ class Submission(models.Model):
     class Meta:
         managed = True
         db_table = "submission"
-        db_table_comment = "A weal entity for task submissions."
+        db_table_comment = "A weak entity for task submissions."
 
 
 class Task(models.Model):
@@ -178,6 +217,22 @@ class Task(models.Model):
     rubric_id_marking_rubric = models.ForeignKey(MarkingRubric, models.CASCADE, db_column="rubric_id_marking_rubric")
     task_publish_datetime = models.DateTimeField(auto_now_add=True, db_comment="time/date when the task is published")
     task_due_datetime = models.DateTimeField(db_comment="time/date when the task is due")
+    task_title = models.CharField(max_length=200, blank=False, db_comment="Task title")
+    task_desc = models.TextField(blank=True, null=True, db_comment="Short description")
+    task_instructions = models.TextField(blank=False, db_comment="Submission instructions")
+    class_id_class = models.ForeignKey("Class", models.CASCADE, db_column="class_id_class", db_comment="Link to class", blank=True, null=True)
+    task_status = models.CharField(
+        max_length=20,
+        choices=[
+            ("draft", "Draft"),
+            ("published", "Published"),
+            ("unpublished", "Unpublished"),
+            ("archived", "Archived"),
+        ],
+        default="draft",
+        db_comment="Task status",
+    )
+    task_allow_late_submission = models.BooleanField(default=False, db_comment="Allow late submissions")
 
     class Meta:
         managed = True
@@ -187,7 +242,11 @@ class Task(models.Model):
             CheckConstraint(
                 check=Q(task_publish_datetime__lt=models.F("task_due_datetime")),
                 name="task_publish_time_task_due_time_ck",
-            )
+            ),
+            CheckConstraint(
+                check=Q(task_status__in=["draft", "published", "unpublished", "archived"]),
+                name="task_status_ck",
+            ),
         ]
 
 

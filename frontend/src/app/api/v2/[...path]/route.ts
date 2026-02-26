@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 
-const DJANGO_API_URL = 'http://127.0.0.1:8000';
+const DJANGO_API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.0.1:8000';
 
 async function proxy(
   req: NextRequest,
@@ -14,7 +14,9 @@ async function proxy(
   const token = req.cookies.get('access_token')?.value;
   const headers = new Headers(req.headers);
 
-  headers.set('Host', '127.0.0.1:8000');
+  // Set Host header based on environment URL
+  const backendUrl = new URL(DJANGO_API_URL);
+  headers.set('Host', backendUrl.host);
 
   if (token) {
     headers.set('Authorization', `Bearer ${token}`);

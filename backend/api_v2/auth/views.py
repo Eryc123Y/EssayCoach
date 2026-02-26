@@ -240,6 +240,54 @@ def refresh_token(request: HttpRequest, data: RefreshTokenIn) -> RefreshTokenOut
     )
 
 
+@router.get("/getUserInfo")
+def get_user_info(request: HttpRequest) -> UserInfoResponse:
+    """
+    Get current user info.
+    Used by frontend to check authentication status.
+    """
+    from ..utils.jwt_auth import verify_jwt_token
+    
+    # Extract token from Authorization header or cookie
+    auth_header = request.headers.get("Authorization")
+    token = None
+    
+    if auth_header and auth_header.startswith("Bearer "):
+        token = auth_header[7:]
+    else:
+        # Try to get token from cookie
+        token = request.COOKIES.get("access_token")
+    
+    if not token:
+        raise HttpError(401, "No token provided")
+    
+    # Verify token and get payload
+    try:
+        payload = verify_jwt_token(token)
+    except Exception as e:
+        raise HttpError(401, f"Invalid token: {str(e)}")
+    
+    if not payload:
+        raise HttpError(401, "Invalid or expired token")
+
+    
+    # Get user from payload
+    user_id = payload.get("user_id")
+    if not user_id:
+        raise HttpError(401, "Invalid token payload")
+    
+    try:
+        user = User.objects.get(user_id=user_id)
+    except User.DoesNotExist:
+        raise HttpError(401, "User not found")
+    
+    return UserInfoResponse(
+        success=True,
+        data=_user_to_schema(user),
+    )
+
+
+
 @router.post("/logout-jwt/", response=MessageResponse)
 def logout_jwt(request: HttpRequest, refresh: str) -> MessageResponse:
     """

@@ -1,7 +1,6 @@
-import { delay } from '@/lib/utils';
 import { RecentSubmissions } from '@/features/overview/components/recent-submissions';
 
 export default async function SubmissionsPage() {
-  await delay(1000);
+  // Artificial delay removed for production performance
   return <RecentSubmissions />;
 }

@@ -102,6 +102,11 @@ class ClassIn(Schema):
     """Input schema for creating classes."""
 
     unit_id_unit: str
+    class_name: str
+    class_desc: str | None = None
+    class_join_code: str | None = None
+    class_term: str = "full_year"
+    class_year: int | None = None
     class_size: int = 0
 
 
@@ -110,7 +115,18 @@ class ClassOut(ModelSchema):
 
     class Meta:
         model = Class
-        fields = ["class_id", "unit_id_unit", "class_size"]
+        fields = [
+            "class_id",
+            "unit_id_unit",
+            "class_name",
+            "class_desc",
+            "class_join_code",
+            "class_term",
+            "class_year",
+            "class_status",
+            "class_archived_at",
+            "class_size",
+        ]
 
 
 class ClassDetailOut(Schema):
@@ -118,8 +134,12 @@ class ClassDetailOut(Schema):
 
     class_id: int
     unit_id_unit: str
-    class_size: int
-    unit_name: str | None = None
+    class_name: str | None = None
+    class_desc: str | None = None
+    class_join_code: str | None = None
+    class_term: str | None = None
+    class_year: int | None = None
+    class_status: str | None = None
 
 
 # =============================================================================
@@ -233,6 +253,12 @@ class TaskIn(Schema):
     unit_id_unit: str
     rubric_id_marking_rubric: int
     task_due_datetime: datetime
+    task_title: str
+    task_desc: str | None = None
+    task_instructions: str
+    class_id_class: int | None = None
+    task_status: str = "draft"
+    task_allow_late_submission: bool = False
 
 
 class TaskOut(ModelSchema):
@@ -246,6 +272,12 @@ class TaskOut(ModelSchema):
             "rubric_id_marking_rubric",
             "task_publish_datetime",
             "task_due_datetime",
+            "task_title",
+            "task_desc",
+            "task_instructions",
+            "class_id_class",
+            "task_status",
+            "task_allow_late_submission",
         ]
 
 
@@ -414,6 +446,8 @@ class ClassFilterParams(FilterSchema):
     unit_id_unit: str | None = None
     class_size__gte: int | None = None
     class_size__lte: int | None = None
+    class_status: str | None = None
+    class_name: Annotated[str | None, FilterLookup(q="class_name__icontains")] = None
 
 
 class EnrollmentFilterParams(FilterSchema):
@@ -453,7 +487,9 @@ class TaskFilterParams(FilterSchema):
     rubric_id_marking_rubric: int | None = None
     task_due_datetime__gte: datetime | None = None
     task_due_datetime__lte: datetime | None = None
-
+    class_id_class: int | None = None
+    task_status: str | None = None
+    task_title: Annotated[str | None, FilterLookup(q="task_title__icontains")] = None
 
 class SubmissionFilterParams(FilterSchema):
     """Filter parameters for Submission list endpoint."""

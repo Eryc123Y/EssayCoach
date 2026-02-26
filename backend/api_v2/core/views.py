@@ -276,8 +276,43 @@ def list_classes(request: HttpRequest, filters: ClassFilterParams = ClassFilterP
 @router.post("/classes/", response=ClassOut)
 def create_class(request: HttpRequest, data: ClassIn):
     unit = Unit.objects.get(unit_id=data.unit_id_unit)
-    class_obj = Class.objects.create(unit_id_unit=unit, class_size=data.class_size)
+    class_obj = Class.objects.create(
+        unit_id_unit=unit,
+        class_size=data.class_size,
+        class_name=data.class_name,
+        class_desc=data.class_desc,
+        class_join_code=data.class_join_code,
+        class_term=data.class_term,
+        class_year=data.class_year,
+    )
     return class_obj
+
+
+@router.post("/classes/join/", response=ClassOut)
+def join_class_by_code(request: HttpRequest, join_code: str):
+    """Student joins a class using join code."""
+    user = request.auth
+    try:
+        class_obj = Class.objects.get(class_join_code=join_code.upper())
+        
+        # Check if already enrolled
+        if Enrollment.objects.filter(user_id_user=user, class_id_class=class_obj).exists():
+            raise HttpError(400, "Already enrolled in this class")
+        
+        # Create enrollment
+        Enrollment.objects.create(
+            user_id_user=user,
+            class_id_class=class_obj,
+            unit_id_unit=class_obj.unit_id_unit,
+        )
+        
+        # Update class size
+        class_obj.class_size = Enrollment.objects.filter(class_id_class=class_obj).count()
+        class_obj.save()
+        
+        return class_obj
+    except Class.DoesNotExist:
+        raise HttpError(404, "Class not found with this join code")
 
 
 @router.get("/classes/{class_id}/", response=ClassOut)
@@ -294,6 +329,16 @@ def update_class(request: HttpRequest, class_id: int, data: ClassIn):
         class_obj = Class.objects.get(class_id=class_id)
         if data.unit_id_unit:
             class_obj.unit_id_unit = Unit.objects.get(unit_id=data.unit_id_unit)
+        if data.class_name:
+            class_obj.class_name = data.class_name
+        if data.class_desc is not None:
+            class_obj.class_desc = data.class_desc
+        if data.class_join_code is not None:
+            class_obj.class_join_code = data.class_join_code
+        if data.class_term:
+            class_obj.class_term = data.class_term
+        if data.class_year is not None:
+            class_obj.class_year = data.class_year
         class_obj.class_size = data.class_size
         class_obj.save()
         return class_obj
@@ -603,6 +648,12 @@ def create_task(request: HttpRequest, data: TaskIn):
         unit_id_unit=unit,
         rubric_id_marking_rubric=rubric,
         task_due_datetime=data.task_due_datetime,
+        task_title=data.task_title,
+        task_desc=data.task_desc,
+        task_instructions=data.task_instructions,
+        class_id_class_id=data.class_id_class,
+        task_status=data.task_status,
+        task_allow_late_submission=data.task_allow_late_submission,
     )
     return task
 
@@ -624,6 +675,13 @@ def update_task(request: HttpRequest, task_id: int, data: TaskIn):
         if data.rubric_id_marking_rubric:
             task.rubric_id_marking_rubric = MarkingRubric.objects.get(rubric_id=data.rubric_id_marking_rubric)
         task.task_due_datetime = data.task_due_datetime
+        task.task_title = data.task_title
+        task.task_desc = data.task_desc
+        task.task_instructions = data.task_instructions
+        if data.class_id_class is not None:
+            task.class_id_class_id = data.class_id_class
+        task.task_status = data.task_status
+        task.task_allow_late_submission = data.task_allow_late_submission
         task.save()
         return task
     except Task.DoesNotExist:
@@ -638,6 +696,55 @@ def delete_task(request: HttpRequest, task_id: int):
         return {"success": True}
     except Task.DoesNotExist:
         raise HttpError(404, "Task not found")
+
+# =============================================================================
+# Task Actions
+# =============================================================================
+
+@router.post("/tasks/{task_id}/publish/", response=TaskOut)
+def publish_task(request: HttpRequest, task_id: int):
+    """Publish a task (lecturer/admin only)."""
+    user = request.auth
+    if user.user_role not in ["lecturer", "admin"]:
+        raise HttpError(403, "Only lecturers or admins can publish tasks")
+    try:
+        task = Task.objects.get(task_id=task_id)
+        task.task_status = "published"
+        task.save()
+        return task
+    except Task.DoesNotExist:
+        raise HttpError(404, "Task not found")
+
+
+@router.post("/tasks/{task_id}/unpublish/", response=TaskOut)
+def unpublish_task(request: HttpRequest, task_id: int):
+    """Unpublish a task (lecturer/admin only)."""
+    user = request.auth
+    if user.user_role not in ["lecturer", "admin"]:
+        raise HttpError(403, "Only lecturers or admins can unpublish tasks")
+    try:
+        task = Task.objects.get(task_id=task_id)
+        task.task_status = "unpublished"
+        task.save()
+        return task
+    except Task.DoesNotExist:
+        raise HttpError(404, "Task not found")
+
+
+@router.get("/tasks/{task_id}/submissions/", response=list[SubmissionOut])
+def get_task_submissions(request: HttpRequest, task_id: int):
+    """Get all submissions for a task."""
+    user = request.auth
+    try:
+        task = Task.objects.get(task_id=task_id)
+        # Students can only see their own submissions
+        if user.user_role == "student":
+            return Submission.objects.filter(task_id_task=task, user_id_user=user)
+        # Lecturers/admins can see all submissions
+        return Submission.objects.filter(task_id_task=task)
+    except Task.DoesNotExist:
+        raise HttpError(404, "Task not found")
+
 
 
 # =============================================================================
@@ -855,6 +962,114 @@ def get_my_classes(request):
                 unit_id_unit=class_obj.unit_id_unit_id,
                 class_size=class_obj.class_size,
                 unit_name=class_obj.unit_id_unit.unit_name if class_obj.unit_id_unit else None,
+                class_name=class_obj.class_name,
+                class_desc=class_obj.class_desc,
+                class_join_code=class_obj.class_join_code,
+                class_term=class_obj.class_term,
+                class_year=class_obj.class_year,
+                class_status=class_obj.class_status,
             )
         )
     return result
+
+
+# =============================================================================
+# Class Actions
+# =============================================================================
+
+@router.get("/classes/{class_id}/students/", response=list[UserOut])
+def get_class_students(request: HttpRequest, class_id: int):
+    """Get all students in a class."""
+    try:
+        class_obj = Class.objects.get(class_id=class_id)
+        student_ids = Enrollment.objects.filter(class_id_class=class_obj).values_list("user_id_user", flat=True)
+        return User.objects.filter(user_id__in=student_ids)
+    except Class.DoesNotExist:
+        raise HttpError(404, "Class not found")
+
+
+@router.post("/classes/{class_id}/students/", response=UserOut)
+def add_student_to_class(request: HttpRequest, class_id: int, user_id: int):
+    """Add a student to a class (admin/lecturer only)."""
+    user = request.auth
+    try:
+        class_obj = Class.objects.get(class_id=class_id)
+        student = User.objects.get(user_id=user_id)
+        
+        if Enrollment.objects.filter(user_id_user=student, class_id_class=class_obj).exists():
+            raise HttpError(400, "Student already enrolled")
+        
+        Enrollment.objects.create(
+            user_id_user=student,
+            class_id_class=class_obj,
+            unit_id_unit=class_obj.unit_id_unit,
+        )
+        
+        class_obj.class_size = Enrollment.objects.filter(class_id_class=class_obj).count()
+        class_obj.save()
+        
+        return student
+    except Class.DoesNotExist:
+        raise HttpError(404, "Class not found")
+    except User.DoesNotExist:
+        raise HttpError(404, "Student not found")
+
+
+@router.delete("/classes/{class_id}/students/{user_id}/")
+def remove_student_from_class(request: HttpRequest, class_id: int, user_id: int):
+    """Remove a student from a class (admin/lecturer only)."""
+    try:
+        class_obj = Class.objects.get(class_id=class_id)
+        enrollment = Enrollment.objects.get(user_id_user_id=user_id, class_id_class=class_obj)
+        enrollment.delete()
+        
+        class_obj.class_size = Enrollment.objects.filter(class_id_class=class_obj).count()
+        class_obj.save()
+        
+        return {"success": True}
+    except Class.DoesNotExist:
+        raise HttpError(404, "Class not found")
+    except Enrollment.DoesNotExist:
+        raise HttpError(404, "Student not enrolled in this class")
+
+
+@router.post("/classes/{class_id}/archive/", response=ClassOut)
+def archive_class(request: HttpRequest, class_id: int):
+    """Archive a class."""
+    from datetime import datetime
+    user = request.auth
+    if user.user_role not in ["lecturer", "admin"]:
+        raise HttpError(403, "Only lecturers or admins can archive classes")
+    try:
+        class_obj = Class.objects.get(class_id=class_id)
+        class_obj.class_status = "archived"
+        class_obj.class_archived_at = datetime.now()
+        class_obj.save()
+        return class_obj
+    except Class.DoesNotExist:
+        raise HttpError(404, "Class not found")
+@router.delete("/classes/{class_id}/leave/")
+def leave_class(request: HttpRequest, class_id: int):
+    """Student leaves a class."""
+    user = request.auth
+    if user.user_role != "student":
+        raise HttpError(403, "Only students can leave a class")
+    
+    try:
+        class_obj = Class.objects.get(class_id=class_id)
+        
+        # Check if enrolled
+        enrollment = Enrollment.objects.filter(user_id_user=user, class_id_class=class_obj).first()
+        if not enrollment:
+            raise HttpError(400, "Not enrolled in this class")
+        
+        # Delete enrollment
+        enrollment.delete()
+        
+        # Update class size
+        class_obj.class_size = Enrollment.objects.filter(class_id_class=class_obj).count()
+        class_obj.save()
+        
+        return {"success": True, "message": "Successfully left the class"}
+    except Class.DoesNotExist:
+        raise HttpError(404, "Class not found")

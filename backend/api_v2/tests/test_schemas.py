@@ -130,7 +130,7 @@ class TestAPIStructure:
 
         schema = get_schema(api_v2)
         core_paths = [p for p in schema["paths"].keys() if p.startswith("/core/")]
-        assert len(core_paths) == 29
+        assert len(core_paths) == 30  # Updated for dashboard endpoint
 
     def test_advanced_endpoints_registered(self):
         from ninja.openapi.schema import get_schema

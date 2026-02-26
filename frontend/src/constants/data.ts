@@ -5,16 +5,17 @@ import { NavItem } from '@/types';
 // If roles is undefined, the item is visible to all
 // NOTE: Some items link to pages that are not yet implemented - marked with TODO
 export const navItems: NavItem[] = [
-  // Dashboard - visible to all
+  // Dashboard - visible to all (redirects to role-specific dashboard)
   {
     title: 'Dashboard',
-    url: '/dashboard/overview',
+    url: '/dashboard',
     icon: 'dashboard',
     isActive: false,
     shortcut: ['d', 'd'],
     items: [],
     roles: ['student', 'lecturer', 'admin']
   },
+
   // Essay Analysis - visible to all
   {
     title: 'Essay Analysis',
@@ -29,11 +30,31 @@ export const navItems: NavItem[] = [
   {
     title: 'Rubrics',
     url: '/dashboard/rubrics',
-    icon: 'book', // Using 'book' icon for rubrics (different from 'clipboard' used by Assignments)
+    icon: 'book',
     shortcut: ['r', 'r'],
     isActive: false,
     items: [],
     roles: ['lecturer', 'admin']
+  },
+  // Tasks (Assignments) - PRD-09
+  {
+    title: 'Tasks',
+    url: '/dashboard/tasks',
+    icon: 'clipboard',
+    shortcut: ['a', 'a'],
+    isActive: false,
+    items: [],
+    roles: ['student', 'lecturer', 'admin']
+  },
+  // Classes - PRD-10
+  {
+    title: 'Classes',
+    url: '/dashboard/classes',
+    icon: 'users',
+    shortcut: ['c', 'c'],
+    isActive: false,
+    items: [],
+    roles: ['student', 'lecturer', 'admin']
   }
   // TODO: Assignments - PRD-09 Not implemented yet
   // {

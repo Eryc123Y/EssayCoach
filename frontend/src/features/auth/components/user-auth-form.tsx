@@ -49,6 +49,22 @@ export default function UserAuthForm() {
         const err = await response.json().catch(() => ({}));
         throw new Error(err?.message || 'Request failed');
       }
+      
+      // Get the response data including user info
+      const result = await response.json();
+      
+      // Store user data in localStorage for auth context
+      if (result.user) {
+        const userData = {
+          id: String(result.user.id || result.user.user_id),
+          email: result.user.email || result.user.user_email,
+          firstName: result.user.first_name || result.user.user_fname || '',
+          lastName: result.user.last_name || result.user.user_lname || '',
+          role: (result.user.role || result.user.user_role || 'student') as 'student' | 'lecturer' | 'admin'
+        };
+        localStorage.setItem('user_data', JSON.stringify(userData));
+      }
+      
       toast.success('Signed in successfully');
       const target = callbackUrl || '/dashboard/overview';
       router.push(target);
@@ -57,6 +73,7 @@ export default function UserAuthForm() {
       toast.error(`Sign in failed: ${message}`);
     }
   };
+
 
   return (
     <>
