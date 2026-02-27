@@ -1,8 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getServerApiUrl } from '@/lib/server-api';
 
-const DEFAULT_DJANGO_API_URL = 'http://127.0.0.1:8000';
-const DJANGO_API_URL =
-  process.env.NEXT_PUBLIC_API_URL || DEFAULT_DJANGO_API_URL;
+const DJANGO_API_URL = getServerApiUrl();
 
 async function proxy(
   req: NextRequest,

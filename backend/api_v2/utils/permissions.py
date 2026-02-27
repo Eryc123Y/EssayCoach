@@ -12,6 +12,7 @@ from ninja.errors import HttpError
 
 if TYPE_CHECKING:
     from django.http import HttpRequest
+
     from core.models import User
 
 

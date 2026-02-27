@@ -11,7 +11,8 @@ scripts/
 ├── dev/
 │   ├── start-all.sh          # Start all services
 │   ├── start-backend.sh      # Start backend only
-│   └── start-frontend.sh     # Start frontend only
+│   ├── start-frontend.sh     # Start frontend only
+│   └── health-check.sh       # Check and auto-recover backend/frontend
 └── README.md                 # This file
 ```
 
@@ -50,6 +51,12 @@ Use the PostgreSQL manager to control the database:
 
 # Start frontend only
 ./scripts/dev/start-frontend.sh
+
+# Check service health and auto-recover if needed
+./scripts/dev/health-check.sh
+
+# Check only (no restart)
+./scripts/dev/health-check.sh --check-only
 ```
 
 ## Alternative: Use Makefile
@@ -66,6 +73,8 @@ make db-reset        # Reset database
 make dev-backend     # Start backend only
 make dev-frontend    # Start frontend only
 make dev             # Start all services (database + backend + frontend)
+make health          # Check and auto-recover backend/frontend
+make health-check    # Check only (no restart)
 
 make install         # Install dependencies
 make test            # Run tests

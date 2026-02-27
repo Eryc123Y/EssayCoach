@@ -1,4 +1,5 @@
 import { request } from '@/service/request';
+import { normalizeUserInfo } from '@/lib/user-normalization';
 import type {
   LoginRequest,
   LoginResponse,
@@ -9,7 +10,6 @@ import type {
   RubricDetail,
   RubricImportResponse,
   // Settings types
-  UserPreferences,
   UserPreferencesInput,
   UserPreferencesResponse,
   AvatarUploadResponse,
@@ -21,60 +21,92 @@ import type {
 
 const BASE_URL = '/api/v2';
 
+type AnyRecord = Record<string, any>;
+
+function unwrapData<T extends AnyRecord>(response: AnyRecord): T {
+  if (response && typeof response === 'object' && response.data && typeof response.data === 'object') {
+    return response.data as T;
+  }
+  return response as T;
+}
+
 export const authService = {
   async login(data: LoginRequest): Promise<LoginResponse> {
-    const response = await request<{ token: string; refresh: string; expires_at: string; user: UserInfo }>({
+    const response = await request<AnyRecord>({
       url: `${BASE_URL}/auth/login-with-jwt/`,
       method: 'POST',
       data,
     });
 
+    const payload = unwrapData<AnyRecord>(response);
+    const access = payload.access ?? payload.token;
+    const refresh = payload.refresh;
+    const expiresAt = payload.expiresAt ?? payload.expires_at;
+    const rawUser = payload.user ?? response.user ?? payload;
+
+    if (!access) {
+      throw new Error('Invalid login response');
+    }
+
     return {
-      access: response.token,
-      refresh: response.refresh,
-      expiresAt: response.expires_at,
-      user: response.user,
+      access,
+      refresh,
+      expiresAt,
+      user: normalizeUserInfo(rawUser),
     };
   },
 
   async refreshToken(refreshToken: string): Promise<RefreshTokenResponse> {
-    const response = await request<RefreshTokenResponse>({
+    const response = await request<AnyRecord>({
       url: `${BASE_URL}/auth/refresh/`,
       method: 'POST',
       data: { refresh: refreshToken },
     });
 
+    const payload = unwrapData<AnyRecord>(response);
+    const access = payload.access ?? payload.token;
+    const refresh = payload.refresh;
+    const expiresAt = payload.expiresAt ?? payload.expires_at;
+
+    if (!access || !refresh || !expiresAt) {
+      throw new Error('Invalid refresh response');
+    }
+
     return {
-      access: response.access,
-      refresh: response.refresh,
-      expiresAt: response.expiresAt,
+      access,
+      refresh,
+      expiresAt,
     };
   },
 
   async getUserInfo(): Promise<UserInfo> {
-    return request<UserInfo>({
+    const response = await request<AnyRecord>({
       url: `${BASE_URL}/auth/me/`,
       method: 'GET',
     });
+
+    const payload = unwrapData<AnyRecord>(response);
+    const rawUser = payload.user ?? payload;
+    return normalizeUserInfo(rawUser);
   },
 
   async updateUser(data: { first_name?: string; last_name?: string }): Promise<UserInfo> {
-    const response = await request<{ success: boolean; data: { token: string; user: UserInfo } }>({
+    const response = await request<AnyRecord>({
       url: `${BASE_URL}/auth/me/`,
-      method: 'PUT',
+      method: 'PATCH',
       data,
     });
-    return response.data.user;
+
+    const payload = unwrapData<AnyRecord>(response);
+    const rawUser = payload.user ?? payload;
+    return normalizeUserInfo(rawUser);
   },
 
   async logout(refreshToken?: string): Promise<void> {
-    const url = refreshToken
-      ? `${BASE_URL}/auth/logout-jwt/?refresh=${encodeURIComponent(refreshToken)}`
-      : `${BASE_URL}/auth/logout/`;
-
     await request({
-      url,
+      url: `${BASE_URL}/auth/logout/`,
       method: 'POST',
+      data: refreshToken ? { refresh: refreshToken } : undefined,
     });
   },
 };

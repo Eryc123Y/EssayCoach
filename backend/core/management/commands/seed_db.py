@@ -1,6 +1,7 @@
-from django.core.management.base import BaseCommand
 from django.contrib.auth import get_user_model
-from core.models import Unit, Class, Enrollment
+from django.core.management.base import BaseCommand
+
+from core.models import Class, Enrollment, Unit
 
 User = get_user_model()
 

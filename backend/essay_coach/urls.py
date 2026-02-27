@@ -16,7 +16,7 @@ Including another URLconf
 """
 
 from django.contrib import admin
-from django.urls import include, path
+from django.urls import path
 
 # Import Ninja API v2
 from api_v2.api import api_v2

@@ -11,10 +11,8 @@ Tests cover:
 
 import json
 import tempfile
-from pathlib import Path
 
 import pytest
-from django.conf import settings
 from django.contrib.auth import authenticate
 from django.core.files.uploadedfile import SimpleUploadedFile
 from django.test import Client, override_settings

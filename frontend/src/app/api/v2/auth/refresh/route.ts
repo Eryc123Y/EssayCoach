@@ -1,9 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getServerApiUrl } from '@/lib/server-api';
 
 export async function POST(req: NextRequest) {
   try {
-    // Read refresh token from httpOnly cookie (more secure than request body)
-    const refreshToken = req.cookies.get('refresh_token')?.value;
+    // Prefer refresh token from HttpOnly cookie; fall back to request body for compatibility.
+    const body = await req.json().catch(() => ({}));
+    const refreshToken =
+      req.cookies.get('refresh_token')?.value || body?.refresh;
 
     if (!refreshToken) {
       return NextResponse.json(
@@ -13,9 +16,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Call the real Django backend
-    const apiUrl = (
-      process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000'
-    ).replace('localhost', '127.0.0.1');
+    const apiUrl = getServerApiUrl();
 
     const response = await fetch(`${apiUrl}/api/v2/auth/refresh/`, {
       method: 'POST',
@@ -31,7 +32,8 @@ export async function POST(req: NextRequest) {
     }
 
     const result = await response.json();
-    const { access, refresh: newRefresh, expires_at } = result;
+    const payload = result?.data ?? result;
+    const { access, refresh: newRefresh, expires_at } = payload;
 
     const res = NextResponse.json({
       access,
@@ -59,7 +61,7 @@ export async function POST(req: NextRequest) {
 
     return res;
   } catch (error) {
-    console.error('[Refresh] Error:', error);
+    console.error('[Refresh] Failed:', error instanceof Error ? error.message : 'Unknown error');
     return NextResponse.json(
       { message: 'Internal server error' },
       { status: 500 }

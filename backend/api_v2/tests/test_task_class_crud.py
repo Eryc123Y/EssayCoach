@@ -3,12 +3,13 @@ CRUD tests for Tasks and Classes with new fields.
 Tests cover create/read/update/delete operations with the extended field sets.
 """
 
-import pytest
 from datetime import timedelta
-from django.utils import timezone
-from core.models import Task, Class, Unit, MarkingRubric, Enrollment, User
-from api_v2.utils.jwt_auth import create_jwt_pair
 
+import pytest
+from django.utils import timezone
+
+from api_v2.utils.jwt_auth import create_jwt_pair
+from core.models import Class, Enrollment, MarkingRubric, Task, Unit, User
 
 # =============================================================================
 # Fixtures
@@ -57,8 +58,8 @@ def student_token(student):
 @pytest.mark.django_db
 def test_create_task_with_all_fields(client, admin_token, admin_user):
     """Admin can create task with all new fields."""
-    unit = Unit.objects.create(unit_id="TEST001", unit_name="Test Unit")
-    rubric = MarkingRubric.objects.create(
+    Unit.objects.create(unit_id="TEST001", unit_name="Test Unit")
+    MarkingRubric.objects.create(
         rubric_id=1, user_id_user=admin_user, rubric_desc="Description"
     )
 
@@ -84,7 +85,7 @@ def test_create_task_with_all_fields(client, admin_token, admin_user):
     assert data["task_desc"] == "Write a 500-word essay"
     assert data["task_instructions"] == "Use APA format"
     assert data["task_status"] == "draft"
-    assert data["task_allow_late_submission"] == True
+    assert data["task_allow_late_submission"] is True
 
     Task.objects.filter(task_title="Test Essay").delete()
 
@@ -233,7 +234,7 @@ def test_delete_task_admin(client, admin_token, admin_user):
 @pytest.mark.django_db
 def test_create_class_with_all_fields(client, admin_token):
     """Admin can create class with all new fields."""
-    unit = Unit.objects.create(unit_id="UNIT001", unit_name="Test Unit")
+    Unit.objects.create(unit_id="UNIT001", unit_name="Test Unit")
 
     payload = {
         "unit_id_unit": "UNIT001",

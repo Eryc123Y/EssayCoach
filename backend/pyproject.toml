@@ -69,6 +69,7 @@ select = ["E", "F", "I", "N", "W", "UP"]
 [tool.ruff.lint.per-file-ignores]
 "**/migrations/*.py" = ["E501"]
 "conftest.py" = ["E402"]  # pytest-django requires django.setup() after env vars
+"api_v2/core/schemas.py" = ["N815"]
 
 [tool.pyright]
 pythonVersion = "3.12"

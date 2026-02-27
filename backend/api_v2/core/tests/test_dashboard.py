@@ -11,15 +11,14 @@ Tests for the role-based dashboard endpoints covering:
 Run with: uv run pytest api_v2/core/tests/test_dashboard.py -v
 """
 
+from datetime import datetime, timedelta
+
 import pytest
-from datetime import datetime, timedelta, timezone
-from decimal import Decimal
 from django.test import Client
 from django.utils import timezone as django_timezone
 
 from api_v2.utils.jwt_auth import create_jwt_pair
-from core.models import User, Class, Enrollment, Task, Submission, Feedback, MarkingRubric, TeachingAssn, Unit
-
+from core.models import Class, Enrollment, Feedback, MarkingRubric, Submission, Task, TeachingAssn, Unit, User
 
 # =============================================================================
 # Test Fixtures

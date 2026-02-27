@@ -69,7 +69,6 @@ def test_model_schemas():
         "UserOut",
         "UnitOut",
         "ClassOut",
-        "MarkingRubricOut",
         "RubricItemOut",
         "TaskOut",
         "SubmissionOut",

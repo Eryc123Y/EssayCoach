@@ -9,12 +9,10 @@ from ninja.orm import ModelSchema
 from pydantic import Field
 
 from core.models import (
-    Badge,
     Class,
     Enrollment,
     Feedback,
     FeedbackItem,
-    MarkingRubric,
     RubricItem,
     RubricLevelDesc,
     Submission,
@@ -22,7 +20,6 @@ from core.models import (
     TeachingAssn,
     Unit,
     User,
-    UserBadge,
 )
 
 # =============================================================================
@@ -265,7 +262,7 @@ class TaskIn(Schema):
     task_due_datetime: datetime
     task_title: str
     task_desc: str | None = None
-    task_instructions: str
+    task_instructions: str = ""
     class_id_class: int | None = None
     task_status: str = "draft"
     task_allow_late_submission: bool = False
@@ -402,13 +399,13 @@ class RubricLevelDescDetailOut(RubricLevelDescOut):
 class RubricItemDetailOut(RubricItemOut):
     """Extended rubric item with nested level descriptions."""
 
-    level_descriptions: list[RubricLevelDescDetailOut] = []
+    level_descriptions: list[RubricLevelDescDetailOut] = Field(default_factory=list)
 
 
 class RubricDetailOut(MarkingRubricOut):
     """Extended rubric with nested rubric items and level descriptions."""
 
-    rubric_items: list[RubricItemDetailOut] = []
+    rubric_items: list[RubricItemDetailOut] = Field(default_factory=list)
 
 
 # =============================================================================
@@ -584,3 +581,141 @@ class UserProgressOut(Schema):
 
     user_id: int
     entries: list[ProgressEntryOut]
+
+
+# =============================================================================
+# Dashboard Schemas
+# =============================================================================
+
+
+class DashboardUserInfoOut(Schema):
+    """Common user identity payload for dashboard responses."""
+
+    id: int
+    name: str
+    role: str
+    email: str
+
+
+class DashboardActivityItemOut(Schema):
+    """Recent activity item shown on all dashboard variants."""
+
+    id: int
+    type: str
+    title: str
+    description: str
+    timestamp: datetime
+    icon: str
+
+
+class DashboardStatsOut(Schema):
+    """Base stats shared across all roles."""
+
+    totalEssays: int
+    averageScore: float | None
+    pendingGrading: int
+
+
+class LecturerStatsOut(DashboardStatsOut):
+    """Lecturer specific dashboard metrics."""
+
+    essaysReviewedToday: int
+    pendingReviews: int
+    activeClasses: int
+    avgGradingTime: float | None
+
+
+class StudentStatsOut(DashboardStatsOut):
+    """Student specific dashboard metrics."""
+
+    essaysSubmitted: int
+    avgScore: float | None
+    improvementTrend: str
+    feedbackReceived: int
+
+
+class AdminStatsOut(DashboardStatsOut):
+    """Admin specific dashboard metrics."""
+
+    totalUsers: int
+    activeStudents: int
+    activeLecturers: int
+    totalClasses: int
+    systemHealth: str
+
+
+class ClassOverviewOut(Schema):
+    """Class overview card data for lecturer dashboard."""
+
+    id: int
+    name: str
+    unitName: str | None
+    studentCount: int
+    essayCount: int
+    avgScore: float | None
+    pendingReviews: int
+
+
+class GradingQueueItemOut(Schema):
+    """Pending grading queue item for lecturer dashboard."""
+
+    submissionId: int
+    studentName: str
+    essayTitle: str
+    submittedAt: datetime
+    dueDate: datetime | None = None
+    status: str | None = None
+    aiScore: float | None = None
+
+
+class StudentEssayOut(Schema):
+    """Student essay list item."""
+
+    id: int
+    title: str
+    status: str
+    submittedAt: datetime
+    score: float | None
+    unitName: str | None
+    taskTitle: str | None
+
+
+class SystemStatusOut(Schema):
+    """Admin system health summary."""
+
+    database: str
+    submissionsLast24h: int
+    feedbacksLast24h: int
+    activeUsers: int
+
+
+class LecturerDashboardOut(Schema):
+    """Complete lecturer dashboard response."""
+
+    user: DashboardUserInfoOut
+    stats: LecturerStatsOut
+    classes: list[ClassOverviewOut]
+    gradingQueue: list[GradingQueueItemOut]
+    recentActivity: list[DashboardActivityItemOut]
+
+
+class StudentDashboardOut(Schema):
+    """Complete student dashboard response."""
+
+    user: DashboardUserInfoOut
+    stats: StudentStatsOut
+    myEssays: list[StudentEssayOut]
+    recentActivity: list[DashboardActivityItemOut]
+
+
+class AdminDashboardOut(Schema):
+    """Complete admin dashboard response."""
+
+    user: DashboardUserInfoOut
+    stats: AdminStatsOut
+    recentActivity: list[DashboardActivityItemOut]
+    systemStatus: SystemStatusOut
+
+
+# Backward-compatible alias used by integration tests.
+DashboardResponse = LecturerDashboardOut | StudentDashboardOut | AdminDashboardOut

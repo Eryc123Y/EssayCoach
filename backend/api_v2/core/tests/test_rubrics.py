@@ -13,8 +13,7 @@ import pytest
 from django.test import Client
 
 from api_v2.utils.jwt_auth import create_jwt_pair
-from core.models import User, MarkingRubric
-
+from core.models import MarkingRubric, User
 
 # =============================================================================
 # Test Fixtures

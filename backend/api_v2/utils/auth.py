@@ -8,9 +8,10 @@ It integrates with JWT-based authentication.
 from __future__ import annotations
 
 from ninja.security import HttpBearer
+
 from core.models import User
 
-from .jwt_auth import JWTPair, JWTAuth, blacklist_jwt_token, create_jwt_pair
+from .jwt_auth import JWTAuth, JWTPair, blacklist_jwt_token, create_jwt_pair
 
 
 class OptionalTokenAuth(HttpBearer):

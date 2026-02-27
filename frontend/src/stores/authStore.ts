@@ -147,12 +147,13 @@ export const createAuthStore = (
             const data = await response.json();
 
             // New tokens received - update store
-            const { access, refresh, expiresAt } = data;
+            const { access, refresh, expiresAt, expires_at } = data;
+            const normalizedExpiresAt = expiresAt ?? expires_at;
 
             // Parse expiry from ISO string or fall back to JWT decoding
             let newExpiry: number | null = null;
-            if (expiresAt) {
-              const expiryDate = new Date(expiresAt);
+            if (normalizedExpiresAt) {
+              const expiryDate = new Date(normalizedExpiresAt);
               if (!isNaN(expiryDate.getTime())) {
                 newExpiry = expiryDate.getTime();
               }

@@ -1,4 +1,4 @@
-.PHONY: install dev dev-backend dev-frontend test lint clean db docs docs-generate docs-erd
+.PHONY: install dev dev-backend dev-frontend health health-check test lint clean db docs docs-generate docs-erd
 
 # Install all dependencies
 install:
@@ -39,6 +39,13 @@ dev-backend:
 dev-frontend:
 	@echo "Starting Next.js frontend on port 5100..."
 	@cd frontend && pnpm dev
+
+# Check and self-heal local dev services
+health:
+	@./scripts/dev/health-check.sh
+
+health-check:
+	@./scripts/dev/health-check.sh --check-only
 
 # Database management (Docker Compose)
 db:

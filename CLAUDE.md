@@ -4,7 +4,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 > **IMPORTANT**: This file is the single source of truth for project status. Update it after every significant code change to reflect the current state and next priorities.
 >
-- **Last Updated**: 2026-02-27 (Profile & Settings Functional Sync Complete)
+- **Last Updated**: 2026-02-27 (Backend Python type-system refactor plan added)
+- **Incremental Update**: 2026-02-27 (Dashboard Overview route fix + Task/Class backend hardening + Rubrics SSR URL fix + health-check workflow + real Chrome DevTools validation + typed-architecture roadmap)
 
 ---
 
@@ -16,6 +17,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Frontend Only**: `make dev-frontend`
 - **Database (Docker)**: `make db` (starts Postgres), `make db-stop`
 - **Seed Database**: `make seed-db` (creates test accounts)
+
+### Dev Health & Self-Healing (Added 2026-02-27)
+- **Health Check + Auto Recover**: `make health` (checks backend/frontend, restarts unhealthy service)
+- **Health Check Only**: `make health-check` (checks only, no restart)
+- **Script Direct**: `./scripts/dev/health-check.sh`, `./scripts/dev/health-check.sh --check-only`
 
 ### Dependency Management
 - **Install All**: `make install` (uses `uv` for Python, `pnpm` for Node)
@@ -90,6 +96,26 @@ The `docs/prd/` directory contains an explicit contract for code generation:
 ### Version: v2.0.0 (v2-only migration target)
 
 #### ✅ Completed Features
+- **Dashboard Overview Route Hardening (PRD-04 follow-up)** ✅ Complete 2026-02-27
+  - Added missing route page: `frontend/src/app/dashboard/overview/page.tsx`
+  - Fixed layout composition to render overview page correctly: `frontend/src/app/dashboard/overview/layout.tsx`
+  - Updated page container to support extension styles: `frontend/src/components/layout/page-container.tsx` (`className` support)
+  - Updated breadcrumbs route mapping for current dashboard routes: `frontend/src/hooks/use-breadcrumbs.tsx`
+  - Validation: overview frontend test passing (`38/38`)
+- **Task/Class Backend Hardening (PRD-09/10 follow-up)** ✅ Complete 2026-02-27
+  - Fixed query parsing for list filters/pagination (`Query(...)`) in `backend/api_v2/core/views.py`
+  - Added `IsAdminOrLecturer` permission enforcement for task/class create endpoints
+  - Added defensive 400 handling for missing related entities instead of server errors
+  - `TaskIn.task_instructions` default set to empty string in `backend/api_v2/core/schemas.py`
+  - `Class` join code normalization/auto-generation added in `backend/core/models.py`
+  - Validation: backend suites passing (`test_task_class_crud.py` + `test_task_class_actions.py`)
+- **Rubrics SSR Fetch Fix** ✅ Complete 2026-02-27
+  - Server component now uses backend absolute URL + cookie token flow (fixes relative URL/Invalid URL issues in SSR)
+  - File: `frontend/src/app/dashboard/rubrics/page.tsx`
+- **Auth Proxy/Service Consolidation (v2)** ✅ Complete 2026-02-27
+  - Added/updated auth proxy endpoints under `frontend/src/app/api/v2/auth/`
+  - Updated API service/store integration: `frontend/src/service/api/v2/auth.ts`, `frontend/src/stores/authStore.ts`
+  - Added test coverage updates: `frontend/src/stores/__tests__/authStore.test.ts`
 - **Profile & Settings Sync (Phase 2)** ✅ Complete 2026-02-27
   - Settings: Role-based sidebar rendering (Organization/API keys hidden for non-admins)
   - Settings: Forms integrated with backend hooks (toast notifications added)
@@ -726,6 +752,32 @@ Orchestrator (multi-agent-coordinator)
 
 ---
 
+## Latest Validation Snapshot (2026-02-27)
+
+### Automated Validation
+- Frontend targeted test: `cd frontend && pnpm test src/app/dashboard/overview/page.test.tsx` -> **PASS (38/38)**
+- Backend task/class CRUD: `cd backend && uv run pytest api_v2/tests/test_task_class_crud.py -q` -> **PASS (16 passed)**
+- Backend task/class actions: `cd backend && uv run pytest api_v2/tests/test_task_class_actions.py -q` -> **PASS (21 passed)**
+- Health check command: `make health-check` -> **PASS (backend OK, frontend OK)**
+
+### Real Browser Validation (Chrome DevTools)
+- URL: `http://127.0.0.1:5100/auth/sign-in/`
+- Login with seeded student account succeeded
+- Verified redirect to `/dashboard/overview/`
+- Verified navigation and rendering:
+  - `View Rubrics` -> `/dashboard/rubrics/`
+  - `Submit New Essay` -> `/dashboard/essay/`
+
+### Website Unreachable Runbook (Local Dev)
+- Common symptom: random `ENOENT` or missing `/_next/static/*` leading to blank page/500/404 loops
+- Fast fix:
+  1. `make health` (auto-check + restart unhealthy services)
+  2. If frontend still unhealthy: `find frontend/.next -mindepth 1 -delete`
+  3. Restart frontend: `make dev-frontend`
+  4. Confirm: `make health-check`
+
+---
+
 ## Technical Debt
 
 | Debt | Impact | Fix Effort | Status |
@@ -776,3 +828,176 @@ Orchestrator (multi-agent-coordinator)
 - **`docs/architecture/`**: System architecture docs
 - **`pencil-shadcn.pen`**: UI design file (Codegen Ready: GO_CONDITIONAL)
 - **`D2C_IMPLEMENTATION_CONTRACT_STANDARD.md`**: Design-to-code contract template
+
+---
+
+## Backend Python Type System Refactor Plan (2026-02-27)
+
+This section defines the canonical plan for rebuilding backend typing quality and preparing API contracts for unimplemented PRDs (11/12/13/14).
+
+### Why This Plan Exists
+
+- API v2 has strong schema adoption, but contract consistency is uneven (some handlers return raw dicts while annotated as schemas).
+- Domain constraints exist in Django models but are not fully represented in schema-layer types.
+- Static checking is not strict enough for safe expansion into Social Hub / Analytics / Users(Admin) / Help Center.
+- PRD requirements for planned modules include endpoint families that are currently not present in typed backend modules.
+
+### Current Assessment (Type Safety Baseline)
+
+| Dimension | Current State | Risk | Target |
+|-----------|---------------|------|--------|
+| API contract consistency | Partial (mixed schema + raw dict returns) | High | Contract-first on all public handlers |
+| Domain constrained fields | Partial (`str` used where enum/literal should be used) | High | Enum/Literal single source |
+| Shared type reuse | Partial (base schema exists but repeated patterns remain) | Medium | One canonical base + aliases |
+| Static checker rigor | Basic mode with key checks relaxed | High | Incremental strict mode in CI |
+| PRD-11~14 readiness | Low (no dedicated typed modules/contracts) | High | Typed contracts before business rollout |
+
+### Source Evidence (Key Files)
+
+- API router boundary: `backend/api_v2/api.py`
+- Shared schema base: `backend/api_v2/schemas/base.py`
+- Core contracts/views: `backend/api_v2/core/schemas.py`, `backend/api_v2/core/views.py`
+- Auth contracts/views: `backend/api_v2/auth/schemas.py`, `backend/api_v2/auth/views.py`
+- AI contracts/views: `backend/api_v2/ai_feedback/schemas.py`, `backend/api_v2/ai_feedback/views.py`
+- AI domain schemas/interfaces: `backend/ai_feedback/schemas.py`, `backend/ai_feedback/interfaces.py`
+- Stale service typing risk: `backend/core/services.py`
+- Type-check config: `backend/pyrightconfig.json`, `backend/pyproject.toml`
+- Planned PRDs: `docs/prd/11-social-learning-hub.md`, `docs/prd/12-analytics.md`, `docs/prd/13-users.md`, `docs/prd/14-help.md`
+
+### Type-System North Star (Target Architecture)
+
+1. **Type-First Development**
+   - Define schema/DTO/protocol first, then implement handler/service.
+   - No new endpoint without explicit request/response types.
+
+2. **Single Source of Truth for Domain Primitives**
+   - Consolidate role/status/source/visibility states into centralized enum/literal definitions.
+   - Enforce consistent use in schemas, services, and validation.
+
+3. **Layered Typing Model**
+   - `Domain Types` (enums, IDs, value objects)
+   - `API Contracts` (Ninja/Pydantic schemas)
+   - `Service Protocols` (business contracts, structural typing)
+   - `Persistence Adapters` (ORM mapping + conversion)
+
+4. **Strict-by-Default Governance**
+   - Gradually move pyright from `basic` to strict policy with module-based rollout.
+   - CI must fail on contract drift and type regressions.
+
+### Refactor & Initialization Roadmap
+
+#### Phase 0 — Stabilization (Week 1)
+Goal: remove blocking type debt in existing modules.
+
+- Fix all current pyright errors in:
+  - `backend/api_v2/core/views.py`
+  - `backend/api_v2/auth/views.py`
+  - `backend/api_v2/utils/jwt_auth.py`
+  - `backend/core/services.py`
+- Remove stale schema references and undefined type names in `backend/core/services.py`.
+- Ensure high-traffic routes declare `response=...` contracts (no implicit response shape).
+- Replace mutable defaults in schemas (e.g. list/dict defaults) with `Field(default_factory=...)`.
+
+Exit criteria:
+- `pyright api_v2 ai_feedback core` returns 0 errors.
+- No stale V3 type names remain in active services.
+
+#### Phase 1 — Domain Typing Core (Week 2)
+Goal: establish reusable primitives for current and future PRDs.
+
+- Create centralized type primitives (new module namespace):
+  - `backend/api_v2/types/ids.py`
+  - `backend/api_v2/types/enums.py`
+  - `backend/api_v2/types/common.py`
+- Introduce typed IDs (`NewType`) for core entities:
+  - `UserId`, `ClassId`, `TaskId`, `SubmissionId`, `FeedbackId`, `RubricId`
+- Migrate constrained fields to enum/literal-backed types:
+  - `user_role`, `user_status`, `task_status`, `class_status`, `feedback_source`, `visibility`
+- Remove duplicated pagination/response patterns and align with `backend/api_v2/schemas/base.py`.
+
+Exit criteria:
+- Constrained fields in schemas no longer use unconstrained free-form `str`.
+- Shared base response/pagination types are reused across modules.
+
+#### Phase 2 — Contract Unification (Week 3)
+Goal: eliminate schema drift in existing feature modules.
+
+- Unify AI schema source-of-truth:
+  - Reconcile `backend/api_v2/ai_feedback/schemas.py` and `backend/ai_feedback/schemas.py`.
+  - Align `analysis_metadata`, `token_usage`, `tracing` field types.
+- Normalize dashboard payload construction:
+  - Return concrete schema objects instead of dicts for typed handlers.
+- Standardize handler signatures and return annotations across `api_v2`.
+
+Exit criteria:
+- No semantic duplication for the same API payload across modules.
+- Dashboard/auth/ai handlers are type-consistent end-to-end.
+
+#### Phase 3 — PRD-09/10 Contract Completion (Week 4)
+Goal: complete typed contracts for remaining Tasks/Classes requirements.
+
+- Add typed endpoint contracts and handlers for:
+  - Task duplicate: `POST /api/v2/core/tasks/{task_id}/duplicate`
+  - Task deadline extension: `POST /api/v2/core/tasks/{task_id}/extend`
+  - Batch enroll: `POST /api/v2/admin/classes/batch-enroll/`
+  - Invite lecturer: `POST /api/v2/admin/users/invite-lecturer/`
+- Use explicit request/response schemas even when business implementation is staged.
+
+Exit criteria:
+- PRD-09/10 endpoint list has typed API contracts aligned with docs.
+
+#### Phase 4 — PRD-11/12 Type-System Initialization (Weeks 5-6)
+Goal: bootstrap Social Hub + Analytics with contract-first modules.
+
+- Create dedicated typed modules (no dumping into `core/views.py`):
+  - `backend/api_v2/social/` (schemas, views, service_protocols)
+  - `backend/api_v2/analytics/` (schemas, views, service_protocols)
+- Define domain enums/literals before implementation:
+  - Social: visibility, interaction type, moderation action, report status
+  - Analytics: metric name, granularity, scope (student/class/institution)
+- Add minimal stubs where needed (feature-flag or 501) but keep schema stable.
+
+Exit criteria:
+- PRD-11/12 have stable typed API surfaces and OpenAPI visibility.
+
+#### Phase 5 — PRD-13/14 Type-System Initialization (Weeks 7-8)
+Goal: bootstrap Users(Admin) + Help Center with strict contracts.
+
+- Add typed modules:
+  - `backend/api_v2/users_admin/`
+  - `backend/api_v2/help/`
+- Define typed workflows:
+  - Users: disable/enable/reset-password/activity-log action contracts
+  - Help: article/category/search/feedback/ticket contracts
+- Ensure all new action endpoints use explicit response envelopes and error types.
+
+Exit criteria:
+- PRD-13/14 planned endpoint families exist with typed contract baselines.
+
+### CI & Governance Policy
+
+- Stage 1 (immediate):
+  - Keep pyright on required modules in CI (`api_v2`, `core`, `ai_feedback`).
+  - Fail CI on any new type error.
+- Stage 2 (after Phase 2):
+  - Enable stricter pyright checks module-by-module.
+  - Disallow untyped public handlers in `api_v2`.
+- Stage 3 (after Phase 5):
+  - Strict policy becomes default for backend feature modules.
+
+### Definition of Done (Type-System Program)
+
+- Pyright: zero errors on active backend modules.
+- 100% public API routes have explicit typed request/response contracts.
+- Constrained domain states are represented by centralized enum/literal types.
+- AI/schema duplication removed; one source of truth per payload family.
+- PRD-11/12/13/14 each has initialized typed API modules and contract baselines before full feature coding.
+
+### Execution Notes
+
+- Follow type-first workflow for all new backend work:
+  1. Define contracts and primitives
+  2. Define service protocol
+  3. Implement adapters/handlers
+  4. Run type-check + tests
+- Do not introduce new feature endpoints that bypass schema contracts.

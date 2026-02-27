@@ -1,4 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { normalizeUserInfo } from '@/lib/user-normalization';
+import { getServerApiUrl } from '@/lib/server-api';
+
 
 export async function GET(req: NextRequest) {
   try {
@@ -13,11 +16,9 @@ export async function GET(req: NextRequest) {
     }
 
     // Call Django backend
-    const apiUrl = (
-      process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000'
-    ).replace('localhost', '127.0.0.1');
+    const apiUrl = getServerApiUrl();
 
-    const response = await fetch(`${apiUrl}/api/v2/auth/getUserInfo`, {
+    const response = await fetch(`${apiUrl}/api/v2/core/users/me/`, {
       method: 'GET',
       headers: {
         Authorization: `Bearer ${token}`,
@@ -35,13 +36,13 @@ export async function GET(req: NextRequest) {
     }
 
     const result = await response.json();
-
-    // Normalize response format to match frontend expectations
-    // Django returns { success: true, data: {...} }
-    // Frontend expects the same format
-    return NextResponse.json(result);
+    const normalizedUser = normalizeUserInfo(result);
+    return NextResponse.json({
+      success: true,
+      data: normalizedUser
+    });
   } catch (error) {
-    console.error('[getUserInfo] Error:', error);
+    console.error('[getUserInfo] Error:', error instanceof Error ? error.message : 'Unknown error');
     return NextResponse.json(
       { message: 'Internal server error' },
       { status: 500 }

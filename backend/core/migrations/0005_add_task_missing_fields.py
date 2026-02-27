@@ -1,7 +1,7 @@
 # Generated manually for missing Task fields
 
-from django.db import migrations, models
 import django.db.models.deletion
+from django.db import migrations, models
 
 
 class Migration(migrations.Migration):

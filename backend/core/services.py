@@ -7,33 +7,28 @@ that are shared across the application.
 
 from __future__ import annotations
 
-from datetime import datetime, timedelta, timezone
+from datetime import timedelta
 from typing import TYPE_CHECKING
 
-from django.db.models import Avg, Count, Q, When, Case, FloatField
+from django.db.models import Avg, Count
 from django.utils import timezone as django_timezone
 
-from core.models import Class, Enrollment, Feedback, FeedbackItem, Submission, Task, TeachingAssn, User
+from core.models import Class, Feedback, FeedbackItem, Submission, Task, TeachingAssn, User
 
 if TYPE_CHECKING:
     from api_v2.core.schemas import (
-        LecturerDashboardOutV3,
-        StudentDashboardOutV3,
-        AdminDashboardOutV3,
-        PendingEssayOut,
-        ClassMetricsOut,
-        ActivityItemOut,
-        EssaySubmissionOut,
-        ScoreTrendOut,
+        AdminDashboardOut,
+        ClassOverviewOut,
+        DashboardActivityItemOut,
         DashboardStatsOut,
-        LecturerStats,
-        StudentStats,
-        AdminStats,
-        ClassOverview,
-        StudentEssay,
-        DashboardActivityItem,
-        GradingQueueItem,
-        UserInfo,
+        DashboardUserInfoOut,
+        GradingQueueItemOut,
+        LecturerDashboardOut,
+        LecturerStatsOut,
+        ProgressEntryOut,
+        StudentDashboardOut,
+        StudentEssayOut,
+        StudentStatsOut,
     )
 
 
@@ -45,11 +40,11 @@ class DashboardService:
     """
 
     @staticmethod
-    def get_user_info(user: User) -> UserInfo:
+    def get_user_info(user: User) -> DashboardUserInfoOut:
         """Get basic user information for dashboard."""
-        from api_v2.core.schemas import UserInfo
+        from api_v2.core.schemas import DashboardUserInfoOut
 
-        return UserInfo(
+        return DashboardUserInfoOut(
             id=user.user_id,
             name=user.get_full_name() or user.user_email,
             role=user.user_role or "student",
@@ -81,7 +76,7 @@ class DashboardService:
         )
 
     @classmethod
-    def get_lecturer_dashboard(cls, user: User) -> LecturerDashboardOutV3:
+    def get_lecturer_dashboard(cls, user: User) -> LecturerDashboardOut:
         """
         Get complete dashboard data for lecturer role.
 
@@ -92,8 +87,7 @@ class DashboardService:
         - Summary statistics
         """
         from api_v2.core.schemas import (
-            LecturerDashboardOutV3,
-            LecturerStats,
+            LecturerDashboardOut,
         )
 
         # Get classes this lecturer teaches
@@ -128,7 +122,7 @@ class DashboardService:
         )
 
     @classmethod
-    def get_student_dashboard(cls, user: User) -> StudentDashboardOutV3:
+    def get_student_dashboard(cls, user: User) -> StudentDashboardOut:
         """
         Get complete dashboard data for student role.
 
@@ -138,7 +132,6 @@ class DashboardService:
         - Recent activity feed
         - Summary statistics
         """
-        from api_v2.core.schemas import StudentStats
 
         # Get student's essays
         my_essays = cls.get_student_essays(user, limit=10)
@@ -167,7 +160,7 @@ class DashboardService:
         )
 
     @classmethod
-    def get_admin_dashboard(cls, user: User) -> AdminDashboardOutV3:
+    def get_admin_dashboard(cls, user: User) -> AdminDashboardOut:
         """
         Get complete dashboard data for admin role.
 
@@ -177,7 +170,7 @@ class DashboardService:
         - User metrics
         - Recent activity
         """
-        from api_v2.core.schemas import AdminStats
+        from api_v2.core.schemas import AdminStatsOut
 
         # Get platform stats
         total_users = User.objects.count()
@@ -185,7 +178,7 @@ class DashboardService:
         active_lecturers = User.objects.filter(user_role="lecturer", is_active=True).count()
         total_classes = Class.objects.count()
 
-        stats = AdminStats(
+        stats = AdminStatsOut(
             totalUsers=total_users,
             activeStudents=active_students,
             activeLecturers=active_lecturers,
@@ -213,9 +206,9 @@ class DashboardService:
         )
 
     @staticmethod
-    def get_lecturer_stats(user: User, taught_class_ids: list[int]) -> LecturerStats:
+    def get_lecturer_stats(user: User, taught_class_ids: list[int]) -> LecturerStatsOut:
         """Calculate lecturer statistics."""
-        from api_v2.core.schemas import LecturerStats
+        from api_v2.core.schemas import LecturerStatsOut
 
         today_start = django_timezone.now().replace(
             hour=0, minute=0, second=0, microsecond=0
@@ -253,7 +246,7 @@ class DashboardService:
         # Average grading time (placeholder - would need timestamp tracking)
         avg_grading_time = None
 
-        return LecturerStats(
+        return LecturerStatsOut(
             essaysReviewedToday=essays_reviewed_today,
             pendingReviews=pending_reviews,
             activeClasses=active_classes,
@@ -261,10 +254,11 @@ class DashboardService:
         )
 
     @staticmethod
-    def get_student_stats(user: User) -> StudentStats:
+    def get_student_stats(user: User) -> StudentStatsOut:
         """Calculate student statistics."""
-        from api_v2.core.schemas import StudentStats
         from django.db.models import Avg
+
+        from api_v2.core.schemas import StudentStatsOut
 
         # Essays submitted
         essays_submitted = Submission.objects.filter(user_id_user=user).count()
@@ -314,7 +308,7 @@ class DashboardService:
         # Feedback received count
         feedback_received = feedbacks.count()
 
-        return StudentStats(
+        return StudentStatsOut(
             essaysSubmitted=essays_submitted,
             avgScore=avg_score,
             improvementTrend=improvement_trend,
@@ -322,13 +316,13 @@ class DashboardService:
         )
 
     @staticmethod
-    def get_grading_queue(user: User, limit: int = 10) -> list[PendingEssayOut]:
+    def get_grading_queue(user: User, limit: int = 10) -> list[GradingQueueItemOut]:
         """
         Get essays pending review for lecturer.
 
         Returns submissions that have been AI-graded but not yet reviewed by lecturer.
         """
-        from api_v2.core.schemas import PendingEssayOut
+        from api_v2.core.schemas import GradingQueueItemOut
 
         # Get classes this lecturer teaches
         taught_class_ids = TeachingAssn.objects.filter(
@@ -361,7 +355,7 @@ class DashboardService:
             is_overdue = due_date and now > due_date
 
             result.append(
-                PendingEssayOut(
+                GradingQueueItemOut(
                     submission_id=submission.submission_id,
                     essay_title=f"Submission #{submission.submission_id}",
                     student_name=submission.user_id_user.get_full_name() or submission.user_id_user.user_email,
@@ -377,7 +371,7 @@ class DashboardService:
         return result
 
     @staticmethod
-    def get_class_metrics_for_classes(class_ids: list[int], limit: int = 5) -> list[ClassMetricsOut]:
+    def get_class_metrics_for_classes(class_ids: list[int], limit: int = 5) -> list[ClassOverviewOut]:
         """
         Get performance metrics for multiple classes.
 
@@ -386,9 +380,9 @@ class DashboardService:
             limit: Maximum number of classes to return
 
         Returns:
-            List of ClassMetricsOut with aggregated metrics
+            List of ClassOverviewOut with aggregated metrics
         """
-        from api_v2.core.schemas import ClassMetricsOut
+        from api_v2.core.schemas import ClassOverviewOut
 
         if not class_ids:
             return []
@@ -425,7 +419,7 @@ class DashboardService:
                 completion_rate = min(100.0, (cls.essay_count / (cls.student_count * 3)) * 100)
 
             result.append(
-                ClassMetricsOut(
+                ClassOverviewOut(
                     class_id=cls.class_id,
                     class_name=f"Class {cls.class_id}",  # Would need name field
                     unit_name=cls.unit_id_unit.unit_name if cls.unit_id_unit else None,
@@ -440,9 +434,9 @@ class DashboardService:
         return result
 
     @staticmethod
-    def get_activity_feed_for_lecturer(user: User, limit: int = 10) -> list[ActivityItemOut]:
+    def get_activity_feed_for_lecturer(user: User, limit: int = 10) -> list[DashboardActivityItemOut]:
         """Get recent activity feed for lecturer."""
-        from api_v2.core.schemas import ActivityItemOut
+        from api_v2.core.schemas import DashboardActivityItemOut
 
         # Get classes this lecturer teaches
         taught_class_ids = TeachingAssn.objects.filter(
@@ -459,7 +453,7 @@ class DashboardService:
         result = []
         for sub in submissions:
             result.append(
-                ActivityItemOut(
+                DashboardActivityItemOut(
                     id=sub.submission_id,
                     type="submission",
                     title="New Submission",
@@ -475,9 +469,9 @@ class DashboardService:
         return result
 
     @staticmethod
-    def get_activity_feed_for_student(user: User, limit: int = 10) -> list[ActivityItemOut]:
+    def get_activity_feed_for_student(user: User, limit: int = 10) -> list[DashboardActivityItemOut]:
         """Get recent activity feed for student."""
-        from api_v2.core.schemas import ActivityItemOut
+        from api_v2.core.schemas import DashboardActivityItemOut
 
         # Get user's recent submissions
         submissions = Submission.objects.filter(
@@ -488,7 +482,7 @@ class DashboardService:
         for sub in submissions:
             has_feedback = hasattr(sub, 'feedback') and sub.feedback is not None
             result.append(
-                ActivityItemOut(
+                DashboardActivityItemOut(
                     id=sub.submission_id,
                     type="feedback" if has_feedback else "submission",
                     title="Feedback Received" if has_feedback else "Essay Submitted",
@@ -504,9 +498,9 @@ class DashboardService:
         return result
 
     @staticmethod
-    def get_activity_feed_for_admin(limit: int = 15) -> list[ActivityItemOut]:
+    def get_activity_feed_for_admin(limit: int = 15) -> list[DashboardActivityItemOut]:
         """Get platform-wide activity feed for admin."""
-        from api_v2.core.schemas import ActivityItemOut
+        from api_v2.core.schemas import DashboardActivityItemOut
 
         # Get recent submissions platform-wide
         submissions = Submission.objects.all().select_related(
@@ -516,7 +510,7 @@ class DashboardService:
         result = []
         for sub in submissions:
             result.append(
-                ActivityItemOut(
+                DashboardActivityItemOut(
                     id=sub.submission_id,
                     type="submission",
                     title="New Platform Submission",
@@ -532,9 +526,9 @@ class DashboardService:
         return result
 
     @staticmethod
-    def get_student_essays(user: User, limit: int = 10) -> list[StudentEssay]:
+    def get_student_essays(user: User, limit: int = 10) -> list[StudentEssayOut]:
         """Get student's recent essay submissions."""
-        from api_v2.core.schemas import StudentEssay
+        from api_v2.core.schemas import StudentEssayOut
 
         submissions = Submission.objects.filter(
             user_id_user=user
@@ -553,7 +547,7 @@ class DashboardService:
                 status = "ai_graded"
 
             result.append(
-                StudentEssay(
+                StudentEssayOut(
                     id=sub.submission_id,
                     title=f"Submission #{sub.submission_id}",
                     status=status,
@@ -567,13 +561,13 @@ class DashboardService:
         return result
 
     @staticmethod
-    def get_score_trend(user: User, limit: int = 8) -> list[ScoreTrendOut]:
+    def get_score_trend(user: User, limit: int = 8) -> list[ProgressEntryOut]:
         """
         Get student's score trend over time.
 
         Returns chronological list of submission scores for progress tracking.
         """
-        from api_v2.core.schemas import ScoreTrendOut
+        from api_v2.core.schemas import ProgressEntryOut
 
         # Get submissions with feedback, ordered by time
         submissions = Submission.objects.filter(
@@ -604,7 +598,7 @@ class DashboardService:
                 improvement = avg_score - prev_score
 
             result.append(
-                ScoreTrendOut(
+                ProgressEntryOut(
                     submission_id=sub.submission_id,
                     essay_title=f"Submission #{sub.submission_id}",
                     score=avg_score,

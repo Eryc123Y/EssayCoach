@@ -1,4 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { normalizeUserInfo } from '@/lib/user-normalization';
+import { getServerApiUrl } from '@/lib/server-api';
 
 type LoginRequestBody = {
   email?: string;
@@ -20,9 +22,7 @@ export async function POST(req: NextRequest) {
 
     // Call the real Django backend with JWT endpoint
     // Force 127.0.0.1 to avoid Node.js ipv6 resolution issues
-    const apiUrl = (
-      process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000'
-    ).replace('localhost', '127.0.0.1');
+    const apiUrl = getServerApiUrl();
     const response = await fetch(`${apiUrl}/api/v2/auth/login-with-jwt/`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -37,18 +37,15 @@ export async function POST(req: NextRequest) {
     }
 
     const result = await response.json();
-    const { token, refresh, expires_at, user } = result.data;
+    const payload = result?.data ?? result;
+    const { token, refresh, expires_at, user } = payload;
 
     // Normalize user role field - backend may return 'role' or other field names
-    const normalizedUser = {
-      ...user,
-      // Ensure role field is consistent
-      role: user.role || user.user_role || 'student'
-    };
+    const normalizedUser = normalizeUserInfo(user);
 
     const res = NextResponse.json({
       access: token,
-      refresh: refresh,
+      refresh,
       expiresAt: expires_at,
       user: normalizedUser
     });
@@ -73,28 +70,28 @@ export async function POST(req: NextRequest) {
 
     // Store user info in HttpOnly cookies for security (prevents client-side tampering)
     // Frontend should read user data from the response body, not cookies
-    res.cookies.set('user_email', normalizedUser.email || '', {
+    res.cookies.set('user_email', normalizedUser.user_email || '', {
       httpOnly: true,
       sameSite: 'strict',
       secure: process.env.NODE_ENV === 'production',
       path: '/',
       maxAge: 60 * 60 * 24
     });
-    res.cookies.set('user_first_name', normalizedUser.first_name || '', {
+    res.cookies.set('user_first_name', normalizedUser.user_fname || '', {
       httpOnly: true,
       sameSite: 'strict',
       secure: process.env.NODE_ENV === 'production',
       path: '/',
       maxAge: 60 * 60 * 24
     });
-    res.cookies.set('user_last_name', normalizedUser.last_name || '', {
+    res.cookies.set('user_last_name', normalizedUser.user_lname || '', {
       httpOnly: true,
       sameSite: 'strict',
       secure: process.env.NODE_ENV === 'production',
       path: '/',
       maxAge: 60 * 60 * 24
     });
-    res.cookies.set('user_role', normalizedUser.role, {
+    res.cookies.set('user_role', normalizedUser.user_role, {
       httpOnly: true,
       sameSite: 'strict',
       secure: process.env.NODE_ENV === 'production',
@@ -103,7 +100,7 @@ export async function POST(req: NextRequest) {
     });
     res.cookies.set(
       'user_id',
-      String(normalizedUser.user_id || normalizedUser.id || ''),
+      String(normalizedUser.user_id || ''),
       {
         httpOnly: true,
         sameSite: 'strict',
@@ -115,7 +112,7 @@ export async function POST(req: NextRequest) {
 
     return res;
   } catch (error) {
-    console.error('[Login] Error:', error);
+    console.error('[Login] Failed:', error instanceof Error ? error.message : 'Unknown error');
     return NextResponse.json(
       { message: 'Internal server error' },
       { status: 500 }

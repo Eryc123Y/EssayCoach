@@ -1,15 +1,36 @@
 import { RubricsClient } from '@/features/rubrics/components/rubric-list';
-import { rubricService, authService } from '@/service/api/v2/auth';
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
+import { getServerApiUrl } from '@/lib/server-api';
 
 async function getRubrics() {
   try {
-    // The API handles role-based filtering automatically
-    const response = await rubricService.fetchRubricList();
-    return response.results || [];
+    const cookieStore = await cookies();
+    const access = cookieStore.get('access_token')?.value;
+
+    if (!access) {
+      redirect('/auth/sign-in');
+    }
+
+    const apiUrl = getServerApiUrl();
+
+    const response = await fetch(`${apiUrl}/api/v2/core/rubrics/`, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${access}`,
+        'Content-Type': 'application/json',
+      },
+      cache: 'no-store',
+    });
+
+    if (!response.ok) {
+      return [];
+    }
+
+    const payload = await response.json();
+    return Array.isArray(payload) ? payload : payload?.results || [];
   } catch (error) {
-    console.error('Failed to fetch rubrics:', error);
+    console.error('[getRubrics] Failed:', error instanceof Error ? error.message : 'Unknown error');
     return [];
   }
 }
@@ -23,14 +44,28 @@ async function getCurrentUser() {
       redirect('/auth/sign-in');
     }
 
-    // Fetch full user info including role
-    const userInfo = await authService.getUserInfo();
+    const apiUrl = getServerApiUrl();
+
+    const response = await fetch(`${apiUrl}/api/v2/core/users/me/`, {
+      method: 'GET',
+      headers: {
+        Authorization: `Bearer ${access}`,
+        'Content-Type': 'application/json',
+      },
+      cache: 'no-store',
+    });
+
+    if (!response.ok) {
+      redirect('/auth/sign-in');
+    }
+
+    const userInfo = await response.json();
     return {
       userId: userInfo.user_id,
       role: (userInfo.user_role === 'teacher' ? 'lecturer' : userInfo.user_role) as 'student' | 'lecturer' | 'admin'
     };
   } catch (error) {
-    console.error('Failed to get current user:', error);
+    console.error('[getCurrentUser] Failed:', error instanceof Error ? error.message : 'Unknown error');
     redirect('/auth/sign-in');
   }
 }

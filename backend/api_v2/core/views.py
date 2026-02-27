@@ -1,16 +1,17 @@
 from __future__ import annotations
 
+from datetime import datetime, timedelta
+
 from django.conf import settings
 from django.db import models
 from django.db.models import Q
 from django.http import HttpRequest
 from django.utils import timezone
-from ninja import Router
+from ninja import Query, Router
 from ninja.errors import HttpError
 from ninja.files import UploadedFile
 
 from core.models import (
-    Badge,
     Class,
     Enrollment,
     Feedback,
@@ -30,11 +31,16 @@ from core.models import RubricLevelDesc as RubricLevelDescModel
 from ..utils.auth import JWTAuth
 from ..utils.permissions import IsAdminOrLecturer
 from .schemas import (
+    AdminDashboardOut,
+    AdminStatsOut,
     BadgeOut,
     ClassDetailOut,
     ClassFilterParams,
     ClassIn,
     ClassOut,
+    ClassOverviewOut,
+    DashboardActivityItemOut,
+    DashboardUserInfoOut,
     EnrollmentFilterParams,
     EnrollmentIn,
     EnrollmentOut,
@@ -44,6 +50,8 @@ from .schemas import (
     FeedbackItemIn,
     FeedbackItemOut,
     FeedbackOut,
+    LecturerDashboardOut,
+    LecturerStatsOut,
     MarkingRubricIn,
     MarkingRubricOut,
     PaginationParams,
@@ -59,9 +67,12 @@ from .schemas import (
     RubricLevelDescIn,
     RubricLevelDescOut,
     RubricVisibilityUpdate,
+    StudentDashboardOut,
+    StudentStatsOut,
     SubmissionFilterParams,
     SubmissionIn,
     SubmissionOut,
+    SystemStatusOut,
     TaskFilterParams,
     TaskIn,
     TaskOut,
@@ -94,6 +105,448 @@ def paginate(queryset, params: PaginationParams):
         start = (params.page - 1) * params.page_size
         end = start + params.page_size
         return {"count": total, "results": list(queryset[start:end])}
+
+
+# =============================================================================
+# Dashboard
+# =============================================================================
+
+
+def _to_float(value) -> float | None:
+    return float(value) if value is not None else None
+
+
+def _build_dashboard_user_info(user: User) -> DashboardUserInfoOut:
+    full_name = f"{user.user_fname or ''} {user.user_lname or ''}".strip()
+    return DashboardUserInfoOut(
+        id=user.user_id,
+        name=full_name or user.user_email,
+        role=user.user_role or "student",
+        email=user.user_email,
+    )
+
+
+def _make_activity_item(
+    item_id: int,
+    activity_type: str,
+    title: str,
+    description: str,
+    timestamp,
+    icon: str,
+) -> DashboardActivityItemOut:
+    return DashboardActivityItemOut(
+        id=item_id,
+        type=activity_type,
+        title=title,
+        description=description,
+        timestamp=timestamp,
+        icon=icon,
+    )
+
+
+def _score_map_for_submissions(submission_ids: list[int]) -> dict[int, float]:
+    if not submission_ids:
+        return {}
+
+    rows = (
+        FeedbackItem.objects.filter(
+            feedback_id_feedback__submission_id_submission_id__in=submission_ids
+        )
+        .values("feedback_id_feedback__submission_id_submission_id")
+        .annotate(avg_score=models.Avg("feedback_item_score"))
+    )
+    return {
+        row["feedback_id_feedback__submission_id_submission_id"]: float(row["avg_score"])
+        for row in rows
+        if row["avg_score"] is not None
+    }
+
+
+def _average_feedback_score(submission_ids: list[int] | None = None) -> float | None:
+    qs = FeedbackItem.objects.all()
+    if submission_ids is not None:
+        if not submission_ids:
+            return None
+        qs = qs.filter(feedback_id_feedback__submission_id_submission_id__in=submission_ids)
+
+    avg_score = qs.aggregate(avg=models.Avg("feedback_item_score"))["avg"]
+    return _to_float(avg_score)
+
+
+def _build_class_overview_item(class_obj: Class) -> ClassOverviewOut:
+    class_submissions = Submission.objects.filter(task_id_task__class_id_class=class_obj)
+    class_submission_ids = list(class_submissions.values_list("submission_id", flat=True))
+
+    student_count = Enrollment.objects.filter(class_id_class=class_obj).count()
+    pending_reviews = class_submissions.filter(feedback__isnull=True).count()
+
+    return ClassOverviewOut(
+        id=class_obj.class_id,
+        name=class_obj.class_name or f"Class {class_obj.class_id}",
+        unitName=class_obj.unit_id_unit.unit_name if class_obj.unit_id_unit else None,
+        studentCount=student_count,
+        essayCount=len(class_submission_ids),
+        avgScore=_average_feedback_score(class_submission_ids),
+        pendingReviews=pending_reviews,
+    )
+
+
+def _build_student_dashboard_payload(user: User) -> StudentDashboardOut:
+    submissions = list(
+        Submission.objects.filter(user_id_user=user)
+        .select_related("task_id_task__unit_id_unit")
+        .order_by("-submission_time")
+    )
+    submission_ids = [submission.submission_id for submission in submissions]
+    score_map = _score_map_for_submissions(submission_ids)
+    feedback_submission_ids = set(
+        Feedback.objects.filter(submission_id_submission_id__in=submission_ids).values_list(
+            "submission_id_submission_id", flat=True
+        )
+    )
+
+    my_essays = []
+    for submission in submissions:
+        task = submission.task_id_task
+        task_title = task.task_title or f"Essay #{submission.submission_id}"
+        has_feedback = submission.submission_id in feedback_submission_ids
+        my_essays.append(
+            {
+                "id": submission.submission_id,
+                "title": task_title,
+                "status": "returned" if has_feedback else "submitted",
+                "submittedAt": submission.submission_time,
+                "score": score_map.get(submission.submission_id),
+                "unitName": task.unit_id_unit.unit_name if task.unit_id_unit else None,
+                "taskTitle": task.task_title or None,
+            }
+        )
+
+    scored_submissions = [
+        (submission.submission_time, score_map[submission.submission_id])
+        for submission in submissions
+        if submission.submission_id in score_map
+    ]
+    scored_submissions.sort(key=lambda item: item[0])
+
+    improvement_trend = "stable"
+    if len(scored_submissions) >= 2:
+        prev_score = scored_submissions[-2][1]
+        latest_score = scored_submissions[-1][1]
+        if latest_score > prev_score:
+            improvement_trend = "up"
+        elif latest_score < prev_score:
+            improvement_trend = "down"
+
+    activities = []
+    for submission in submissions[:6]:
+        task = submission.task_id_task
+        activities.append(
+            _make_activity_item(
+                item_id=submission.submission_id,
+                activity_type="submission",
+                title=f"Submitted: {task.task_title or 'Essay'}",
+                description=f"Submitted to {task.unit_id_unit.unit_name if task.unit_id_unit else 'a class'}",
+                timestamp=submission.submission_time,
+                icon="file",
+            )
+        )
+
+    recent_feedbacks = list(
+        Feedback.objects.filter(submission_id_submission_id__in=submission_ids)
+        .select_related("submission_id_submission__task_id_task__unit_id_unit")
+        .order_by("-submission_id_submission__submission_time")[:6]
+    )
+    for feedback in recent_feedbacks:
+        submission = feedback.submission_id_submission
+        task = submission.task_id_task
+        activities.append(
+            _make_activity_item(
+                item_id=feedback.feedback_id,
+                activity_type="feedback",
+                title=f"Feedback received: {task.task_title or 'Essay'}",
+                description=(
+                    f"New feedback for "
+                    f"{task.unit_id_unit.unit_name if task.unit_id_unit else 'your submission'}"
+                ),
+                timestamp=submission.submission_time,
+                icon="message",
+            )
+        )
+
+    activities.sort(key=lambda item: item.timestamp, reverse=True)
+
+    total_essays = len(submissions)
+    average_score = _average_feedback_score(submission_ids)
+    pending_grading = sum(
+        1 for submission in submissions if submission.submission_id not in feedback_submission_ids
+    )
+
+    return StudentDashboardOut(
+        user=_build_dashboard_user_info(user),
+        stats=StudentStatsOut(
+            totalEssays=total_essays,
+            averageScore=average_score,
+            pendingGrading=pending_grading,
+            essaysSubmitted=total_essays,
+            avgScore=average_score,
+            improvementTrend=improvement_trend,
+            feedbackReceived=len(feedback_submission_ids),
+        ),
+        myEssays=my_essays,
+        recentActivity=activities[:10],
+    )
+
+
+def _build_lecturer_dashboard_payload(user: User) -> LecturerDashboardOut:
+    assigned_classes = list(
+        Class.objects.filter(
+            class_id__in=TeachingAssn.objects.filter(user_id_user=user).values_list(
+                "class_id_class_id", flat=True
+            )
+        ).select_related("unit_id_unit")
+    )
+    assigned_class_ids = [class_obj.class_id for class_obj in assigned_classes]
+    taught_unit_ids = [class_obj.unit_id_unit_id for class_obj in assigned_classes if class_obj.unit_id_unit_id]
+
+    submission_scope = Q(task_id_task__class_id_class_id__in=assigned_class_ids)
+    if taught_unit_ids:
+        submission_scope |= Q(
+            task_id_task__class_id_class__isnull=True,
+            task_id_task__unit_id_unit_id__in=taught_unit_ids,
+        )
+
+    relevant_submissions_qs = Submission.objects.none()
+    if assigned_class_ids or taught_unit_ids:
+        relevant_submissions_qs = (
+            Submission.objects.filter(submission_scope)
+            .select_related("task_id_task__unit_id_unit", "user_id_user")
+            .order_by("-submission_time")
+        )
+
+    relevant_submissions = list(relevant_submissions_qs)
+    relevant_submission_ids = [submission.submission_id for submission in relevant_submissions]
+
+    feedback_submission_ids = set(
+        Feedback.objects.filter(submission_id_submission_id__in=relevant_submission_ids)
+        .values_list('submission_id_submission_id', flat=True)
+    )
+
+    pending_submissions = [
+        submission for submission in relevant_submissions
+        if submission.submission_id not in feedback_submission_ids
+    ]
+
+    classes = [_build_class_overview_item(class_obj) for class_obj in assigned_classes]
+
+    grading_queue = []
+    for submission in pending_submissions[:20]:
+        task = submission.task_id_task
+        student_name = submission.user_id_user.get_full_name() or submission.user_id_user.user_email
+        grading_queue.append(
+            {
+                "submissionId": submission.submission_id,
+                "studentName": student_name,
+                "essayTitle": task.task_title or f"Essay #{submission.submission_id}",
+                "submittedAt": submission.submission_time,
+                "dueDate": task.task_due_datetime,
+                "status": "pending_review",
+                "aiScore": None,
+            }
+        )
+
+    activities = []
+    for submission in relevant_submissions[:6]:
+        task = submission.task_id_task
+        activities.append(
+            _make_activity_item(
+                item_id=submission.submission_id,
+                activity_type="submission",
+                title=f"New submission: {task.task_title or 'Essay'}",
+                description=f"{submission.user_id_user.get_short_name()} submitted an essay",
+                timestamp=submission.submission_time,
+                icon="file",
+            )
+        )
+
+    recent_feedbacks = list(
+        Feedback.objects.filter(user_id_user=user)
+        .select_related("submission_id_submission__task_id_task")
+        .order_by("-submission_id_submission__submission_time")[:6]
+    )
+    for feedback in recent_feedbacks:
+        submission = feedback.submission_id_submission
+        task = submission.task_id_task
+        activities.append(
+            _make_activity_item(
+                item_id=feedback.feedback_id,
+                activity_type="grade",
+                title=f"Reviewed: {task.task_title or 'Essay'}",
+                description=f"Provided feedback for submission #{submission.submission_id}",
+                timestamp=submission.submission_time,
+                icon="check",
+            )
+        )
+
+    activities.sort(key=lambda item: item.timestamp, reverse=True)
+
+    avg_score = _average_feedback_score(relevant_submission_ids)
+    today = timezone.now().date()
+    reviewed_today = Feedback.objects.filter(
+        user_id_user=user,
+        submission_id_submission__submission_time__date=today,
+    ).count()
+
+    return LecturerDashboardOut(
+        user=_build_dashboard_user_info(user),
+        stats=LecturerStatsOut(
+            totalEssays=len(relevant_submissions),
+            averageScore=avg_score,
+            pendingGrading=len(pending_submissions),
+            essaysReviewedToday=reviewed_today,
+            pendingReviews=len(pending_submissions),
+            activeClasses=sum(1 for class_obj in assigned_classes if class_obj.class_status == "active"),
+            avgGradingTime=None,
+        ),
+        classes=classes,
+        gradingQueue=grading_queue,
+        recentActivity=activities[:10],
+    )
+
+
+def _build_admin_dashboard_payload(user: User) -> AdminDashboardOut:
+    total_submissions = Submission.objects.count()
+    pending_grading = Submission.objects.filter(feedback__isnull=True).count()
+
+    recent_submissions = list(
+        Submission.objects.select_related("task_id_task__unit_id_unit", "user_id_user")
+        .order_by("-submission_time")[:100]
+    )
+
+    total_users = User.objects.count()
+    active_students = User.objects.filter(user_role="student", is_active=True).count()
+    active_lecturers = User.objects.filter(user_role="lecturer", is_active=True).count()
+    total_classes = Class.objects.count()
+    average_score = _average_feedback_score(None)
+
+    db_status = "healthy"
+    try:
+        User.objects.exists()
+    except Exception:
+        db_status = "critical"
+
+    system_health = "healthy" if db_status == "healthy" else "critical"
+
+    activities = []
+    for submission in recent_submissions[:8]:
+        task = submission.task_id_task
+        student_name = submission.user_id_user.get_short_name() or submission.user_id_user.user_email
+        activities.append(
+            _make_activity_item(
+                item_id=submission.submission_id,
+                activity_type="submission",
+                title=f"{student_name} submitted {task.task_title or 'an essay'}",
+                description=f"Unit: {task.unit_id_unit.unit_name if task.unit_id_unit else 'N/A'}",
+                timestamp=submission.submission_time,
+                icon="file",
+            )
+        )
+
+    recent_feedbacks = list(
+        Feedback.objects.select_related("submission_id_submission__task_id_task")
+        .order_by("-submission_id_submission__submission_time")[:8]
+    )
+    for feedback in recent_feedbacks:
+        submission = feedback.submission_id_submission
+        task = submission.task_id_task
+        activities.append(
+            _make_activity_item(
+                item_id=feedback.feedback_id,
+                activity_type="grade",
+                title=f"Feedback completed: {task.task_title or 'Essay'}",
+                description=f"Submission #{submission.submission_id} was reviewed",
+                timestamp=submission.submission_time,
+                icon="check",
+            )
+        )
+    activities.sort(key=lambda item: item.timestamp, reverse=True)
+
+    last_24h = timezone.now() - timedelta(hours=24)
+    feedbacks_last_24h = Feedback.objects.filter(
+        submission_id_submission__submission_time__gte=last_24h
+    ).count()
+
+    system_status = SystemStatusOut(
+        database=db_status,
+        submissionsLast24h=Submission.objects.filter(submission_time__gte=last_24h).count(),
+        feedbacksLast24h=feedbacks_last_24h,
+        activeUsers=User.objects.filter(is_active=True).count(),
+    )
+
+    return AdminDashboardOut(
+        user=_build_dashboard_user_info(user),
+        stats=AdminStatsOut(
+            totalEssays=total_submissions,
+            averageScore=average_score,
+            pendingGrading=pending_grading,
+            totalUsers=total_users,
+            activeStudents=active_students,
+            activeLecturers=active_lecturers,
+            totalClasses=total_classes,
+            systemHealth=system_health,
+        ),
+        recentActivity=activities[:12],
+        systemStatus=system_status,
+    )
+
+
+@router.get("/dashboard/student/", response=StudentDashboardOut)
+def get_student_dashboard(request: HttpRequest):
+    current_user = request.auth
+    if current_user.user_role != "student":
+        raise HttpError(403, "Only students can access the student dashboard")
+    return _build_student_dashboard_payload(current_user)
+
+
+@router.get("/dashboard/lecturer/", response=LecturerDashboardOut)
+def get_lecturer_dashboard(request: HttpRequest):
+    current_user = request.auth
+    if current_user.user_role not in ["lecturer", "admin"]:
+        raise HttpError(403, "Only lecturers and admins can access the lecturer dashboard")
+    return _build_lecturer_dashboard_payload(current_user)
+
+
+@router.get("/dashboard/admin/", response=AdminDashboardOut)
+def get_admin_dashboard(request: HttpRequest):
+    current_user = request.auth
+    if current_user.user_role != "admin":
+        raise HttpError(403, "Only admins can access the admin dashboard")
+    return _build_admin_dashboard_payload(current_user)
+
+
+@router.get("/dashboard/")
+def get_dashboard_legacy(request: HttpRequest):
+    """Legacy role-aware dashboard endpoint used by existing tests/clients."""
+    current_user = request.auth
+    user_role = current_user.user_role or "student"
+
+    if user_role == "admin":
+        payload = _build_admin_dashboard_payload(current_user)
+        # Using dict() to add the 'classes' attribute properly for legacy compat
+        payload_dict = payload.dict()
+        payload_dict["classes"] = [
+            _build_class_overview_item(class_obj).dict()
+            for class_obj in Class.objects.all().select_related("unit_id_unit")
+        ]
+        return payload_dict
+
+    if user_role == "lecturer":
+        return _build_lecturer_dashboard_payload(current_user)
+
+    payload = _build_student_dashboard_payload(current_user)
+    payload_dict = payload.dict()
+    payload_dict["classes"] = []
+    return payload_dict
 
 
 # =============================================================================
@@ -369,14 +822,17 @@ def get_user_progress(request: HttpRequest, user_id: int, period: str = "month")
     if period == "week":
         # Group by week
         from collections import defaultdict
-        weekly_data = defaultdict(lambda: {"scores": [], "count": 0})
+        weekly_data: dict[datetime, dict[str, int | list[float]]] = defaultdict(lambda: {"scores": [], "count": 0})
 
         for sub in submissions:
             # Get week start (Monday)
             week_start = sub.submission_time - timedelta(days=sub.submission_time.weekday())
             week_key = week_start.replace(hour=0, minute=0, second=0, microsecond=0)
 
-            weekly_data[week_key]["count"] += 1
+            # Need to carefully handle the types due to the union
+            current_count = weekly_data[week_key]["count"]
+            if isinstance(current_count, int):
+                weekly_data[week_key]["count"] = current_count + 1
 
             # Get score for this submission
             try:
@@ -385,31 +841,38 @@ def get_user_progress(request: HttpRequest, user_id: int, period: str = "month")
                     feedback_id_feedback=feedback
                 ).aggregate(avg=models.Avg("feedback_item_score"))["avg"]
                 if scores:
-                    weekly_data[week_key]["scores"].append(scores)
+                    current_scores = weekly_data[week_key]["scores"]
+                    if isinstance(current_scores, list):
+                        current_scores.append(float(scores))
             except Feedback.DoesNotExist:
                 pass
 
         entries = []
         for week_start in sorted(weekly_data.keys()):
             data = weekly_data[week_start]
-            avg_score = sum(data["scores"]) / len(data["scores"]) if data["scores"] else None
-            entries.append(
-                ProgressEntryOut(
-                    date=week_start,
-                    essay_count=data["count"],
-                    average_score=float(avg_score) if avg_score else None,
+            scores_list = data["scores"]
+            count = data["count"]
+            if isinstance(scores_list, list) and isinstance(count, int):
+                avg_score = sum(scores_list) / len(scores_list) if scores_list else None
+                entries.append(
+                    ProgressEntryOut(
+                        date=week_start,
+                        essay_count=count,
+                        average_score=float(avg_score) if avg_score else None,
+                    )
                 )
-            )
 
     else:
         # Group by month
         from collections import defaultdict
-        monthly_data = defaultdict(lambda: {"scores": [], "count": 0})
+        monthly_data: dict[datetime, dict[str, int | list[float]]] = defaultdict(lambda: {"scores": [], "count": 0})
 
         for sub in submissions:
             month_key = sub.submission_time.replace(day=1, hour=0, minute=0, second=0, microsecond=0)
 
-            monthly_data[month_key]["count"] += 1
+            current_count = monthly_data[month_key]["count"]
+            if isinstance(current_count, int):
+                monthly_data[month_key]["count"] = current_count + 1
 
             # Get score for this submission
             try:
@@ -418,21 +881,26 @@ def get_user_progress(request: HttpRequest, user_id: int, period: str = "month")
                     feedback_id_feedback=feedback
                 ).aggregate(avg=models.Avg("feedback_item_score"))["avg"]
                 if scores:
-                    monthly_data[month_key]["scores"].append(scores)
+                    current_scores = monthly_data[month_key]["scores"]
+                    if isinstance(current_scores, list):
+                        current_scores.append(float(scores))
             except Feedback.DoesNotExist:
                 pass
 
         entries = []
         for month_start in sorted(monthly_data.keys()):
             data = monthly_data[month_start]
-            avg_score = sum(data["scores"]) / len(data["scores"]) if data["scores"] else None
-            entries.append(
-                ProgressEntryOut(
-                    date=month_start,
-                    essay_count=data["count"],
-                    average_score=float(avg_score) if avg_score else None,
+            scores_list = data["scores"]
+            count = data["count"]
+            if isinstance(scores_list, list) and isinstance(count, int):
+                avg_score = sum(scores_list) / len(scores_list) if scores_list else None
+                entries.append(
+                    ProgressEntryOut(
+                        date=month_start,
+                        essay_count=count,
+                        average_score=float(avg_score) if avg_score else None,
+                    )
                 )
-            )
 
     return UserProgressOut(
         user_id=user_id,
@@ -493,14 +961,23 @@ def delete_unit(request: HttpRequest, unit_id: str):
 
 
 @router.get("/classes/", response=list[ClassOut])
-def list_classes(request: HttpRequest, filters: ClassFilterParams = ClassFilterParams()):
+def list_classes(
+    request: HttpRequest,
+    filters: ClassFilterParams = Query(...),
+    pagination: PaginationParams = Query(...),
+):
     qs = filters.filter(Class.objects.all())
-    return paginate(qs, PaginationParams())["results"]
+    return paginate(qs, pagination)["results"]
 
 
 @router.post("/classes/", response=ClassOut)
 def create_class(request: HttpRequest, data: ClassIn):
-    unit = Unit.objects.get(unit_id=data.unit_id_unit)
+    IsAdminOrLecturer().check(request)
+    try:
+        unit = Unit.objects.get(unit_id=data.unit_id_unit)
+    except Unit.DoesNotExist:
+        raise HttpError(400, "Unit not found")
+
     class_obj = Class.objects.create(
         unit_id_unit=unit,
         class_size=data.class_size,
@@ -519,22 +996,22 @@ def join_class_by_code(request: HttpRequest, join_code: str):
     user = request.auth
     try:
         class_obj = Class.objects.get(class_join_code=join_code.upper())
-        
+
         # Check if already enrolled
         if Enrollment.objects.filter(user_id_user=user, class_id_class=class_obj).exists():
             raise HttpError(400, "Already enrolled in this class")
-        
+
         # Create enrollment
         Enrollment.objects.create(
             user_id_user=user,
             class_id_class=class_obj,
             unit_id_unit=class_obj.unit_id_unit,
         )
-        
+
         # Update class size
         class_obj.class_size = Enrollment.objects.filter(class_id_class=class_obj).count()
         class_obj.save()
-        
+
         return class_obj
     except Class.DoesNotExist:
         raise HttpError(404, "Class not found with this join code")
@@ -1089,23 +1566,44 @@ def delete_rubric_level(request: HttpRequest, level_id: int):
 
 
 @router.get("/tasks/", response=list[TaskOut])
-def list_tasks(request: HttpRequest, filters: TaskFilterParams = TaskFilterParams()):
+def list_tasks(
+    request: HttpRequest,
+    filters: TaskFilterParams = Query(...),
+    pagination: PaginationParams = Query(...),
+):
     qs = filters.filter(Task.objects.all())
-    return paginate(qs, PaginationParams())["results"]
+    return paginate(qs, pagination)["results"]
 
 
 @router.post("/tasks/", response=TaskOut)
 def create_task(request: HttpRequest, data: TaskIn):
-    unit = Unit.objects.get(unit_id=data.unit_id_unit)
-    rubric = MarkingRubric.objects.get(rubric_id=data.rubric_id_marking_rubric)
+    IsAdminOrLecturer().check(request)
+
+    try:
+        unit = Unit.objects.get(unit_id=data.unit_id_unit)
+    except Unit.DoesNotExist:
+        raise HttpError(400, "Unit not found")
+
+    try:
+        rubric = MarkingRubric.objects.get(rubric_id=data.rubric_id_marking_rubric)
+    except MarkingRubric.DoesNotExist:
+        raise HttpError(400, "Rubric not found")
+
+    class_obj = None
+    if data.class_id_class is not None:
+        try:
+            class_obj = Class.objects.get(class_id=data.class_id_class)
+        except Class.DoesNotExist:
+            raise HttpError(400, "Class not found")
+
     task = Task.objects.create(
         unit_id_unit=unit,
         rubric_id_marking_rubric=rubric,
         task_due_datetime=data.task_due_datetime,
         task_title=data.task_title,
         task_desc=data.task_desc,
-        task_instructions=data.task_instructions,
-        class_id_class_id=data.class_id_class,
+        task_instructions=data.task_instructions or "",
+        class_id_class=class_obj,
         task_status=data.task_status,
         task_allow_late_submission=data.task_allow_late_submission,
     )
@@ -1445,23 +1943,22 @@ def get_class_students(request: HttpRequest, class_id: int):
 @router.post("/classes/{class_id}/students/", response=UserOut)
 def add_student_to_class(request: HttpRequest, class_id: int, user_id: int):
     """Add a student to a class (admin/lecturer only)."""
-    user = request.auth
     try:
         class_obj = Class.objects.get(class_id=class_id)
         student = User.objects.get(user_id=user_id)
-        
+
         if Enrollment.objects.filter(user_id_user=student, class_id_class=class_obj).exists():
             raise HttpError(400, "Student already enrolled")
-        
+
         Enrollment.objects.create(
             user_id_user=student,
             class_id_class=class_obj,
             unit_id_unit=class_obj.unit_id_unit,
         )
-        
+
         class_obj.class_size = Enrollment.objects.filter(class_id_class=class_obj).count()
         class_obj.save()
-        
+
         return student
     except Class.DoesNotExist:
         raise HttpError(404, "Class not found")
@@ -1476,10 +1973,10 @@ def remove_student_from_class(request: HttpRequest, class_id: int, user_id: int)
         class_obj = Class.objects.get(class_id=class_id)
         enrollment = Enrollment.objects.get(user_id_user_id=user_id, class_id_class=class_obj)
         enrollment.delete()
-        
+
         class_obj.class_size = Enrollment.objects.filter(class_id_class=class_obj).count()
         class_obj.save()
-        
+
         return {"success": True}
     except Class.DoesNotExist:
         raise HttpError(404, "Class not found")
@@ -1508,22 +2005,22 @@ def leave_class(request: HttpRequest, class_id: int):
     user = request.auth
     if user.user_role != "student":
         raise HttpError(403, "Only students can leave a class")
-    
+
     try:
         class_obj = Class.objects.get(class_id=class_id)
-        
+
         # Check if enrolled
         enrollment = Enrollment.objects.filter(user_id_user=user, class_id_class=class_obj).first()
         if not enrollment:
             raise HttpError(400, "Not enrolled in this class")
-        
+
         # Delete enrollment
         enrollment.delete()
-        
+
         # Update class size
         class_obj.class_size = Enrollment.objects.filter(class_id_class=class_obj).count()
         class_obj.save()
-        
+
         return {"success": True, "message": "Successfully left the class"}
     except Class.DoesNotExist:
         raise HttpError(404, "Class not found")

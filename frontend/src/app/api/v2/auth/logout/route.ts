@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getServerApiUrl } from '@/lib/server-api';
 
 export async function POST(req: NextRequest) {
   // Call Django backend to invalidate token
-  const apiUrl = (process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000').replace('localhost', '127.0.0.1');
+  const apiUrl = getServerApiUrl();
   const token = req.cookies.get('access_token')?.value;
   
   if (token) {
@@ -16,7 +17,7 @@ export async function POST(req: NextRequest) {
       });
     } catch (error) {
       // Continue with cookie clearing even if backend call fails
-      console.error('Logout backend call failed:', error);
+      console.error('[Logout] Backend call failed:', error instanceof Error ? error.message : 'Unknown error');
     }
   }
 
@@ -38,5 +39,7 @@ export async function POST(req: NextRequest) {
     path: '/',
     maxAge: 0
   });
+  res.cookies.set('user_role', '', { httpOnly: true, path: '/', maxAge: 0 });
+  res.cookies.set('user_id', '', { httpOnly: true, path: '/', maxAge: 0 });
   return res;
 }

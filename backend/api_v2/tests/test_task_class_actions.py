@@ -3,13 +3,13 @@ Test Task and Class action endpoints.
 Run with: uv run pytest api_v2/tests/test_task_class_actions.py -v
 """
 
-import pytest
 from datetime import datetime, timedelta
+
+import pytest
 from django.test import Client
 
 from api_v2.utils.jwt_auth import create_jwt_pair
-from core.models import User, Class, Unit, Task, MarkingRubric, Submission, Enrollment
-
+from core.models import Class, Enrollment, MarkingRubric, Submission, Task, Unit, User
 
 # =============================================================================
 # Fixtures
@@ -136,11 +136,10 @@ def test_publish_task_lecturer_can_publish(lecturer, task_draft):
     response = client.post(f"/api/v2/core/tasks/{task_draft.task_id}/publish/")
 
     assert response.status_code == 200
-    data = response.json()
-    #KX|    # Verify task was published by checking database
-#KX|    task_draft.refresh_from_db()
-#KX|    assert task_draft.task_status == "published"
-#WX|
+
+    # Verify task was published by checking database
+    task_draft.refresh_from_db()
+    assert task_draft.task_status == "published"
 
 
 @pytest.mark.django_db

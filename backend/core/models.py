@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import secrets
+import string
 from datetime import datetime
 from typing import TYPE_CHECKING, Any
 
@@ -69,6 +71,24 @@ class Class(models.Model):
             models.Index(fields=["unit_id_unit"], name="class_unit_idx"),
             models.Index(fields=["class_join_code"], name="class_join_code_idx"),
         ]
+
+    @classmethod
+    def _generate_unique_join_code(cls, length: int = 6) -> str:
+        """Generate a unique alphanumeric join code."""
+        alphabet = string.ascii_uppercase + string.digits
+        for _ in range(20):
+            code = "".join(secrets.choice(alphabet) for _ in range(length))
+            if not cls.objects.filter(class_join_code=code).exists():
+                return code
+        raise ValueError("Unable to generate a unique class join code")
+
+    def save(self, *args, **kwargs):
+        # Normalize provided codes and ensure a unique code always exists.
+        if self.class_join_code:
+            self.class_join_code = self.class_join_code.strip().upper()
+        if not self.class_join_code:
+            self.class_join_code = self._generate_unique_join_code()
+        super().save(*args, **kwargs)
 
 
 class Enrollment(models.Model):

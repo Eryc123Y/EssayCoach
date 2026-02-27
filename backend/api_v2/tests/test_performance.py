@@ -93,7 +93,7 @@ def test_classes_list_performance(create_test_data):
     """Benchmark classes list endpoint performance."""
     from django.http import HttpRequest
 
-    from api_v2.core.schemas import ClassFilterParams
+    from api_v2.core.schemas import ClassFilterParams, PaginationParams
     from api_v2.core.views import list_classes
 
     request = HttpRequest()
@@ -101,16 +101,17 @@ def test_classes_list_performance(create_test_data):
 
     # Create filter params (updated for FilterSchema)
     filters = ClassFilterParams()
+    pagination = PaginationParams(page=1, page_size=50)
 
     # Warm up
-    list_classes(request, filters)
+    list_classes(request, filters, pagination)
 
     # Benchmark
     start_time = time.time()
     iterations = 100
 
     for _ in range(iterations):
-        list_classes(request, filters)
+        list_classes(request, filters, pagination)
 
     elapsed = time.time() - start_time
     avg_time = elapsed / iterations * 1000
@@ -158,8 +159,8 @@ def test_rubrics_list_performance(create_test_data):
 @pytest.mark.django_db
 def test_filter_performance(create_test_data):
     """Benchmark filter functionality performance."""
-    from core.models import Unit
     from api_v2.core.schemas import UnitFilterParams
+    from core.models import Unit
 
     # Create filter params
     filters = UnitFilterParams(unit_name="Test")
@@ -183,8 +184,8 @@ def test_filter_performance(create_test_data):
 @pytest.mark.django_db
 def test_modelschema_serialization_performance(create_test_data):
     """Benchmark ModelSchema serialization performance."""
-    from core.models import Unit
     from api_v2.core.schemas import UnitOut
+    from core.models import Unit
 
     units = Unit.objects.all()[:50]
 
@@ -206,9 +207,9 @@ def test_modelschema_serialization_performance(create_test_data):
 @pytest.mark.django_db
 def test_pagination_performance(create_test_data):
     """Benchmark pagination performance."""
-    from core.models import Unit
     from api_v2.core.schemas import PaginationParams
     from api_v2.core.views import paginate
+    from core.models import Unit
 
     qs = Unit.objects.all()
 

@@ -331,10 +331,9 @@ describe('authStore', () => {
         const state = store.getState();
         expect(state.tokenExpiry).toBeDefined();
         if (state.tokenExpiry) {
-          // The expiry should come from the JWT token (1 hour) since we fall back to JWT decoding
-          // when the response doesn't have a proper expires_at that overrides it
-          const expectedExpiryFromJwt = Date.now() + 3600 * 1000;
-          expect(Math.abs(state.tokenExpiry - expectedExpiryFromJwt)).toBeLessThan(10000);
+          // Prefer ISO expiry from response when available.
+          const expectedExpiryFromIso = new Date(expiresAt).getTime();
+          expect(Math.abs(state.tokenExpiry - expectedExpiryFromIso)).toBeLessThan(10000);
         }
       });
 

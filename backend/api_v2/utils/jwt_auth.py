@@ -7,18 +7,21 @@ It uses djangorestframework-simplejwt for JWT handling.
 
 from __future__ import annotations
 
-import hashlib
-from datetime import datetime, timedelta, timezone
+import logging
+from datetime import UTC, datetime, timedelta
 from typing import TYPE_CHECKING
 
 import jwt
 from django.conf import settings
 from ninja.security import HttpBearer
-from rest_framework_simplejwt.tokens import RefreshToken, TokenError
+from rest_framework_simplejwt.exceptions import TokenError
+from rest_framework_simplejwt.tokens import RefreshToken
 
 if TYPE_CHECKING:
     from core.models import User
 
+
+logger = logging.getLogger(__name__)
 
 # In-memory token blacklist (for single-instance deployments)
 # In production, use Redis or database-backed storage
@@ -90,7 +93,7 @@ def create_jwt_pair(user: User) -> JWTPair:
     access = refresh.access_token
 
     # Calculate expiration
-    expires_at = datetime.fromtimestamp(access["exp"], tz=timezone.utc)
+    expires_at = datetime.fromtimestamp(access["exp"], tz=UTC)
 
     return JWTPair(
         access=str(access),
@@ -219,8 +222,8 @@ def refresh_jwt_token(refresh_token: str) -> JWTPair | None:
             _add_to_blacklist(old_jti)
 
         return new_pair
-    except (TokenError, jwt.InvalidTokenError, Exception) as e:
-        print(f"Refresh error: {e}")
+    except (TokenError, jwt.InvalidTokenError, Exception):
+        logger.warning("JWT refresh failed", exc_info=True)
         return None
 
 

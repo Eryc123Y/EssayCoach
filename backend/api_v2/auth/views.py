@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import logging
-import os
 from pathlib import Path
 
 from django.conf import settings
@@ -9,7 +8,6 @@ from django.contrib.auth import authenticate
 from django.contrib.auth.password_validation import validate_password
 from django.contrib.sessions.models import Session
 from django.core.exceptions import ValidationError
-from django.db.models import Q
 from django.http import HttpRequest
 from ninja import Router
 from ninja.errors import HttpError
@@ -17,7 +15,7 @@ from ninja.files import UploadedFile
 
 from core.models import User
 
-from ..utils.auth import TokenAuth, delete_user_tokens, get_or_create_token
+from ..utils.auth import TokenAuth, delete_user_tokens
 from ..utils.jwt_auth import JWTAuth, blacklist_jwt_token, create_jwt_pair, refresh_jwt_token
 from .schemas import (
     AuthResponse,
@@ -261,40 +259,41 @@ def get_user_info(request: HttpRequest) -> UserInfoResponse:
     Used by frontend to check authentication status.
     """
     from ..utils.jwt_auth import verify_jwt_token
-    
+
     # Extract token from Authorization header or cookie
     auth_header = request.headers.get("Authorization")
     token = None
-    
+
     if auth_header and auth_header.startswith("Bearer "):
         token = auth_header[7:]
     else:
         # Try to get token from cookie
         token = request.COOKIES.get("access_token")
-    
+
     if not token:
         raise HttpError(401, "No token provided")
-    
+
     # Verify token and get payload
     try:
         payload = verify_jwt_token(token)
-    except Exception as e:
-        raise HttpError(401, f"Invalid token: {str(e)}")
-    
+    except Exception:
+        logger.warning("Token verification failed", exc_info=True)
+        raise HttpError(401, "Invalid token")
+
     if not payload:
         raise HttpError(401, "Invalid or expired token")
 
-    
+
     # Get user from payload
     user_id = payload.get("user_id")
     if not user_id:
         raise HttpError(401, "Invalid token payload")
-    
+
     try:
         user = User.objects.get(user_id=user_id)
     except User.DoesNotExist:
         raise HttpError(401, "User not found")
-    
+
     return UserInfoResponse(
         success=True,
         data=_user_to_schema(user),
@@ -417,7 +416,7 @@ def upload_avatar(request: HttpRequest, avatar: UploadedFile) -> AvatarUploadOut
 
     # Validate file size (5MB max)
     max_size = 5 * 1024 * 1024  # 5MB
-    if avatar.size > max_size:
+    if avatar.size is None or avatar.size > max_size:
         raise HttpError(400, "File size must be less than 5MB")
 
     # Create avatars directory if it doesn't exist
@@ -426,7 +425,10 @@ def upload_avatar(request: HttpRequest, avatar: UploadedFile) -> AvatarUploadOut
 
     # Generate unique filename
     import uuid
-    file_extension = avatar.name.split(".")[-1] if "." in avatar.name else "png"
+
+    # Safely handle avatar.name being None
+    avatar_name = avatar.name or "avatar.png"
+    file_extension = avatar_name.split(".")[-1] if "." in avatar_name else "png"
     filename = f"{user.user_id}_{uuid.uuid4().hex}.{file_extension}"
     file_path = avatars_dir / filename
 
@@ -472,9 +474,7 @@ def get_sessions(request: HttpRequest) -> SessionListOut:
             continue
 
         # Get session metadata
-        auth_hash = session_data.get("_auth_user_hash", "")
         ip_address = session_data.get("_auth_user_ip", None)
-        backend = session_data.get("_auth_user_backend", "")
 
         # Detect device from session data or default to Desktop
         device = session_data.get("device", "Desktop")

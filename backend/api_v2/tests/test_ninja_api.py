@@ -196,6 +196,7 @@ def test_task_schema_validation():
         unit_id_unit="CS101",
         rubric_id_marking_rubric=1,
         task_due_datetime=due_date,
+        task_title="Test Task"
     )
     assert task_in.unit_id_unit == "CS101"
 

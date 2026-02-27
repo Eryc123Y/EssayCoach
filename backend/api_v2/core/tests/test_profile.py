@@ -9,14 +9,14 @@ Tests cover:
 Run with: uv run pytest api_v2/core/tests/test_profile.py -v
 """
 
+from datetime import timedelta
+
 import pytest
 from django.test import Client
 from django.utils import timezone
-from datetime import timedelta
 
 from api_v2.utils.jwt_auth import create_jwt_pair
-from core.models import User, Submission, Feedback, FeedbackItem, Badge, UserBadge, Task, Unit, MarkingRubric
-
+from core.models import Badge, Feedback, FeedbackItem, MarkingRubric, Submission, Task, Unit, User, UserBadge
 
 # =============================================================================
 # Test Fixtures
