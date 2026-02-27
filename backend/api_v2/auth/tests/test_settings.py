@@ -40,11 +40,13 @@ class TestPasswordChange:
         response = client.post(
             "/api/v2/auth/password-change/",
             content_type="application/json",
-            data=json.dumps({
-                "current_password": "OldPassword123!",
-                "new_password": "NewPassword456!",
-                "new_password_confirm": "NewPassword456!",
-            }),
+            data=json.dumps(
+                {
+                    "current_password": "OldPassword123!",
+                    "new_password": "NewPassword456!",
+                    "new_password_confirm": "NewPassword456!",
+                }
+            ),
         )
 
         assert response.status_code == 200
@@ -71,11 +73,13 @@ class TestPasswordChange:
         response = client.post(
             "/api/v2/auth/password-change/",
             content_type="application/json",
-            data=json.dumps({
-                "current_password": "WrongPassword!",
-                "new_password": "NewPassword456!",
-                "new_password_confirm": "NewPassword456!",
-            }),
+            data=json.dumps(
+                {
+                    "current_password": "WrongPassword!",
+                    "new_password": "NewPassword456!",
+                    "new_password_confirm": "NewPassword456!",
+                }
+            ),
         )
 
         assert response.status_code == 400
@@ -97,11 +101,13 @@ class TestPasswordChange:
         response = client.post(
             "/api/v2/auth/password-change/",
             content_type="application/json",
-            data=json.dumps({
-                "current_password": "OldPassword123!",
-                "new_password": "NewPassword456!",
-                "new_password_confirm": "DifferentPassword789!",
-            }),
+            data=json.dumps(
+                {
+                    "current_password": "OldPassword123!",
+                    "new_password": "NewPassword456!",
+                    "new_password_confirm": "DifferentPassword789!",
+                }
+            ),
         )
 
         assert response.status_code == 400
@@ -121,11 +127,13 @@ class TestPasswordChange:
         response = client.post(
             "/api/v2/auth/password-change/",
             content_type="application/json",
-            data=json.dumps({
-                "current_password": "OldPassword123!",
-                "new_password": "123",
-                "new_password_confirm": "123",
-            }),
+            data=json.dumps(
+                {
+                    "current_password": "OldPassword123!",
+                    "new_password": "123",
+                    "new_password_confirm": "123",
+                }
+            ),
         )
 
         # Validation error returns 422 (Unprocessable Content)
@@ -177,10 +185,12 @@ class TestUserPreferences:
         response = client.put(
             "/api/v2/auth/settings/preferences/",
             content_type="application/json",
-            data=json.dumps({
-                "email_notifications": False,
-                "theme": "dark",
-            }),
+            data=json.dumps(
+                {
+                    "email_notifications": False,
+                    "theme": "dark",
+                }
+            ),
         )
 
         assert response.status_code == 200
@@ -208,9 +218,11 @@ class TestUserPreferences:
         response = client.put(
             "/api/v2/auth/settings/preferences/",
             content_type="application/json",
-            data=json.dumps({
-                "theme": "invalid_theme",
-            }),
+            data=json.dumps(
+                {
+                    "theme": "invalid_theme",
+                }
+            ),
         )
 
         assert response.status_code == 422  # Validation error
@@ -231,11 +243,13 @@ class TestUserPreferences:
         client.put(
             "/api/v2/auth/settings/preferences/",
             content_type="application/json",
-            data=json.dumps({
-                "email_notifications": False,
-                "weekly_digest": True,
-                "language": "zh",
-            }),
+            data=json.dumps(
+                {
+                    "email_notifications": False,
+                    "weekly_digest": True,
+                    "language": "zh",
+                }
+            ),
         )
 
         # Get preferences again
@@ -266,17 +280,77 @@ class TestAvatarUpload:
 
         # Create a simple PNG file (1x1 pixel)
         # Minimal valid PNG
-        png_data = bytes([
-            0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A,  # PNG signature
-            0x00, 0x00, 0x00, 0x0D, 0x49, 0x48, 0x44, 0x52,  # IHDR chunk
-            0x00, 0x00, 0x00, 0x01, 0x00, 0x00, 0x00, 0x01,  # 1x1
-            0x08, 0x06, 0x00, 0x00, 0x00, 0x1F, 0x15, 0xC4,
-            0x89, 0x00, 0x00, 0x00, 0x0A, 0x49, 0x44, 0x41,  # IDAT chunk
-            0x54, 0x78, 0x9C, 0x63, 0x00, 0x01, 0x00, 0x00,
-            0x05, 0x00, 0x01, 0x0D, 0x0A, 0x2D, 0xB4, 0x00,
-            0x00, 0x00, 0x00, 0x49, 0x45, 0x4E, 0x44, 0xAE,  # IEND chunk
-            0x42, 0x60, 0x82,
-        ])
+        png_data = bytes(
+            [
+                0x89,
+                0x50,
+                0x4E,
+                0x47,
+                0x0D,
+                0x0A,
+                0x1A,
+                0x0A,  # PNG signature
+                0x00,
+                0x00,
+                0x00,
+                0x0D,
+                0x49,
+                0x48,
+                0x44,
+                0x52,  # IHDR chunk
+                0x00,
+                0x00,
+                0x00,
+                0x01,
+                0x00,
+                0x00,
+                0x00,
+                0x01,  # 1x1
+                0x08,
+                0x06,
+                0x00,
+                0x00,
+                0x00,
+                0x1F,
+                0x15,
+                0xC4,
+                0x89,
+                0x00,
+                0x00,
+                0x00,
+                0x0A,
+                0x49,
+                0x44,
+                0x41,  # IDAT chunk
+                0x54,
+                0x78,
+                0x9C,
+                0x63,
+                0x00,
+                0x01,
+                0x00,
+                0x00,
+                0x05,
+                0x00,
+                0x01,
+                0x0D,
+                0x0A,
+                0x2D,
+                0xB4,
+                0x00,
+                0x00,
+                0x00,
+                0x00,
+                0x49,
+                0x45,
+                0x4E,
+                0x44,
+                0xAE,  # IEND chunk
+                0x42,
+                0x60,
+                0x82,
+            ]
+        )
 
         avatar_file = SimpleUploadedFile(
             "test_avatar.png",
@@ -310,12 +384,32 @@ class TestAvatarUpload:
         client.defaults["HTTP_AUTHORIZATION"] = f"Bearer {jwt_pair.access}"
 
         # Minimal JPEG file
-        jpg_data = bytes([
-            0xFF, 0xD8, 0xFF, 0xE0,  # SOI marker
-            0x00, 0x10, 0x4A, 0x46, 0x49, 0x46, 0x00, 0x01,
-            0x01, 0x00, 0x00, 0x01, 0x00, 0x01, 0x00, 0x00,
-            0xFF, 0xD9,  # EOI marker
-        ])
+        jpg_data = bytes(
+            [
+                0xFF,
+                0xD8,
+                0xFF,
+                0xE0,  # SOI marker
+                0x00,
+                0x10,
+                0x4A,
+                0x46,
+                0x49,
+                0x46,
+                0x00,
+                0x01,
+                0x01,
+                0x00,
+                0x00,
+                0x01,
+                0x00,
+                0x01,
+                0x00,
+                0x00,
+                0xFF,
+                0xD9,  # EOI marker
+            ]
+        )
 
         avatar_file = SimpleUploadedFile(
             "test_avatar.jpg",

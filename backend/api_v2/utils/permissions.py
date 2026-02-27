@@ -55,9 +55,7 @@ def check_role(request: HttpRequest, roles: list[str | UserRole]) -> None:
     """
     user = getattr(request, "auth", None)
     if not has_role(user, roles):
-        raise PermissionDenied(
-            f"This action requires one of the following roles: {', '.join(str(r) for r in roles)}"
-        )
+        raise PermissionDenied(f"This action requires one of the following roles: {', '.join(str(r) for r in roles)}")
 
 
 class IsAdminOrLecturer:

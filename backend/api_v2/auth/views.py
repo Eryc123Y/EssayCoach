@@ -283,7 +283,6 @@ def get_user_info(request: HttpRequest) -> UserInfoResponse:
     if not payload:
         raise HttpError(401, "Invalid or expired token")
 
-
     # Get user from payload
     user_id = payload.get("user_id")
     if not user_id:
@@ -298,7 +297,6 @@ def get_user_info(request: HttpRequest) -> UserInfoResponse:
         success=True,
         data=_user_to_schema(user),
     )
-
 
 
 @router.post("/logout-jwt/", response=MessageResponse)
@@ -420,7 +418,9 @@ def upload_avatar(request: HttpRequest, avatar: UploadedFile) -> AvatarUploadOut
         raise HttpError(400, "File size must be less than 5MB")
 
     # Create avatars directory if it doesn't exist
-    avatars_dir = Path(settings.MEDIA_ROOT) / "avatars" if hasattr(settings, "MEDIA_ROOT") else Path("media") / "avatars"
+    avatars_dir = (
+        Path(settings.MEDIA_ROOT) / "avatars" if hasattr(settings, "MEDIA_ROOT") else Path("media") / "avatars"
+    )
     avatars_dir.mkdir(parents=True, exist_ok=True)
 
     # Generate unique filename

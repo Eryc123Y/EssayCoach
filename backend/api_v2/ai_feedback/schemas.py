@@ -7,16 +7,16 @@ They are compatible with the existing Pydantic schemas in ai_feedback/schemas.py
 
 from __future__ import annotations
 
-from api_v2.types.ids import (
-    UserId, ClassId, TaskId, SubmissionId, FeedbackId, RubricId, RubricItemId, EnrollmentId, UnitId
-)
-from datetime import datetime
+from datetime import UTC, datetime
 from typing import Literal
-from api_v2.types.enums import ResponseMode, WorkflowStatus
-
 
 from ninja import Schema
 from pydantic import Field, field_validator
+
+from api_v2.types.enums import ResponseMode, WorkflowStatus
+from api_v2.types.ids import (
+    RubricId,
+)
 
 
 class WorkflowRunIn(Schema):
@@ -159,4 +159,4 @@ class ChatMessageOut(Schema):
 
     message: str
     role: Literal["assistant", "system"] = "assistant"
-    timestamp: datetime = Field(default_factory=datetime.now)
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))

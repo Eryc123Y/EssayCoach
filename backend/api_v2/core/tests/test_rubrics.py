@@ -113,7 +113,9 @@ class TestRubricVisibilityFiltering:
         assert data[0]["rubric_id"] == public_rubric.rubric_id
         assert data[0]["visibility"] == "public"
 
-    def test_list_rubrics_lecturer_sees_own_and_public(self, lecturer_user, student_user, public_rubric, private_rubric):
+    def test_list_rubrics_lecturer_sees_own_and_public(
+        self, lecturer_user, student_user, public_rubric, private_rubric
+    ):
         """Lecturers see their own private rubrics + all public rubrics."""
         # Create another lecturer's private rubric
         other_lecturer = User.objects.create_user(

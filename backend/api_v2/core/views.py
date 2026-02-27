@@ -1,8 +1,5 @@
 from __future__ import annotations
 
-from api_v2.types.ids import (
-    UserId, ClassId, TaskId, SubmissionId, FeedbackId, RubricId, RubricItemId, EnrollmentId, UnitId
-)
 from datetime import datetime, timedelta
 
 from django.conf import settings
@@ -14,6 +11,18 @@ from ninja import Query, Router
 from ninja.errors import HttpError
 from ninja.files import UploadedFile
 
+from api_v2.schemas.base import PaginationParams, SuccessResponse
+from api_v2.types.ids import (
+    ClassId,
+    EnrollmentId,
+    FeedbackId,
+    RubricId,
+    RubricItemId,
+    SubmissionId,
+    TaskId,
+    UnitId,
+    UserId,
+)
 from core.models import (
     Class,
     Enrollment,
@@ -37,6 +46,7 @@ from .schemas import (
     AdminDashboardOut,
     AdminStatsOut,
     BadgeOut,
+    BatchEnrollIn,
     ClassDetailOut,
     ClassFilterParams,
     ClassIn,
@@ -53,11 +63,11 @@ from .schemas import (
     FeedbackItemIn,
     FeedbackItemOut,
     FeedbackOut,
+    InviteLecturerIn,
     LecturerDashboardOut,
     LecturerStatsOut,
     MarkingRubricIn,
     MarkingRubricOut,
-    PaginationParams,
     ProgressEntryOut,
     RubricDetailOut,
     RubricFilterParams,
@@ -76,6 +86,8 @@ from .schemas import (
     SubmissionIn,
     SubmissionOut,
     SystemStatusOut,
+    TaskDuplicateIn,
+    TaskExtendIn,
     TaskFilterParams,
     TaskIn,
     TaskOut,
@@ -152,9 +164,7 @@ def _score_map_for_submissions(submission_ids: list[int]) -> dict[int, float]:
         return {}
 
     rows = (
-        FeedbackItem.objects.filter(
-            feedback_id_feedback__submission_id_submission_id__in=submission_ids
-        )
+        FeedbackItem.objects.filter(feedback_id_feedback__submission_id_submission_id__in=submission_ids)
         .values("feedback_id_feedback__submission_id_submission_id")
         .annotate(avg_score=models.Avg("feedback_item_score"))
     )
@@ -269,8 +279,7 @@ def _build_student_dashboard_payload(user: User) -> StudentDashboardOut:
                 activity_type="feedback",
                 title=f"Feedback received: {task.task_title or 'Essay'}",
                 description=(
-                    f"New feedback for "
-                    f"{task.unit_id_unit.unit_name if task.unit_id_unit else 'your submission'}"
+                    f"New feedback for {task.unit_id_unit.unit_name if task.unit_id_unit else 'your submission'}"
                 ),
                 timestamp=submission.submission_time,
                 icon="message",
@@ -281,9 +290,7 @@ def _build_student_dashboard_payload(user: User) -> StudentDashboardOut:
 
     total_essays = len(submissions)
     average_score = _average_feedback_score(submission_ids)
-    pending_grading = sum(
-        1 for submission in submissions if submission.submission_id not in feedback_submission_ids
-    )
+    pending_grading = sum(1 for submission in submissions if submission.submission_id not in feedback_submission_ids)
 
     return StudentDashboardOut(
         user=_build_dashboard_user_info(user),
@@ -304,9 +311,7 @@ def _build_student_dashboard_payload(user: User) -> StudentDashboardOut:
 def _build_lecturer_dashboard_payload(user: User) -> LecturerDashboardOut:
     assigned_classes = list(
         Class.objects.filter(
-            class_id__in=TeachingAssn.objects.filter(user_id_user=user).values_list(
-                "class_id_class_id", flat=True
-            )
+            class_id__in=TeachingAssn.objects.filter(user_id_user=user).values_list("class_id_class_id", flat=True)
         ).select_related("unit_id_unit")
     )
     assigned_class_ids = [class_obj.class_id for class_obj in assigned_classes]
@@ -331,13 +336,13 @@ def _build_lecturer_dashboard_payload(user: User) -> LecturerDashboardOut:
     relevant_submission_ids = [submission.submission_id for submission in relevant_submissions]
 
     feedback_submission_ids = set(
-        Feedback.objects.filter(submission_id_submission_id__in=relevant_submission_ids)
-        .values_list('submission_id_submission_id', flat=True)
+        Feedback.objects.filter(submission_id_submission_id__in=relevant_submission_ids).values_list(
+            "submission_id_submission_id", flat=True
+        )
     )
 
     pending_submissions = [
-        submission for submission in relevant_submissions
-        if submission.submission_id not in feedback_submission_ids
+        submission for submission in relevant_submissions if submission.submission_id not in feedback_submission_ids
     ]
 
     classes = [_build_class_overview_item(class_obj) for class_obj in assigned_classes]
@@ -422,8 +427,9 @@ def _build_admin_dashboard_payload(user: User) -> AdminDashboardOut:
     pending_grading = Submission.objects.filter(feedback__isnull=True).count()
 
     recent_submissions = list(
-        Submission.objects.select_related("task_id_task__unit_id_unit", "user_id_user")
-        .order_by("-submission_time")[:100]
+        Submission.objects.select_related("task_id_task__unit_id_unit", "user_id_user").order_by("-submission_time")[
+            :100
+        ]
     )
 
     total_users = User.objects.count()
@@ -456,8 +462,9 @@ def _build_admin_dashboard_payload(user: User) -> AdminDashboardOut:
         )
 
     recent_feedbacks = list(
-        Feedback.objects.select_related("submission_id_submission__task_id_task")
-        .order_by("-submission_id_submission__submission_time")[:8]
+        Feedback.objects.select_related("submission_id_submission__task_id_task").order_by(
+            "-submission_id_submission__submission_time"
+        )[:8]
     )
     for feedback in recent_feedbacks:
         submission = feedback.submission_id_submission
@@ -475,9 +482,7 @@ def _build_admin_dashboard_payload(user: User) -> AdminDashboardOut:
     activities.sort(key=lambda item: item.timestamp, reverse=True)
 
     last_24h = timezone.now() - timedelta(hours=24)
-    feedbacks_last_24h = Feedback.objects.filter(
-        submission_id_submission__submission_time__gte=last_24h
-    ).count()
+    feedbacks_last_24h = Feedback.objects.filter(submission_id_submission__submission_time__gte=last_24h).count()
 
     system_status = SystemStatusOut(
         database=db_status,
@@ -504,7 +509,7 @@ def _build_admin_dashboard_payload(user: User) -> AdminDashboardOut:
 
 
 @router.get("/dashboard/student/", response=StudentDashboardOut)
-def get_student_dashboard(request: HttpRequest):
+def get_student_dashboard(request: HttpRequest) -> StudentDashboardOut:
     current_user = request.auth
     if current_user.user_role != "student":
         raise HttpError(403, "Only students can access the student dashboard")
@@ -512,7 +517,7 @@ def get_student_dashboard(request: HttpRequest):
 
 
 @router.get("/dashboard/lecturer/", response=LecturerDashboardOut)
-def get_lecturer_dashboard(request: HttpRequest):
+def get_lecturer_dashboard(request: HttpRequest) -> LecturerDashboardOut:
     current_user = request.auth
     if current_user.user_role not in ["lecturer", "admin"]:
         raise HttpError(403, "Only lecturers and admins can access the lecturer dashboard")
@@ -520,36 +525,32 @@ def get_lecturer_dashboard(request: HttpRequest):
 
 
 @router.get("/dashboard/admin/", response=AdminDashboardOut)
-def get_admin_dashboard(request: HttpRequest):
+def get_admin_dashboard(request: HttpRequest) -> AdminDashboardOut:
     current_user = request.auth
     if current_user.user_role != "admin":
         raise HttpError(403, "Only admins can access the admin dashboard")
     return _build_admin_dashboard_payload(current_user)
 
 
-@router.get("/dashboard/")
-def get_dashboard_legacy(request: HttpRequest):
+@router.get("/dashboard/", response=StudentDashboardOut | LecturerDashboardOut | AdminDashboardOut)
+def get_dashboard_legacy(request: HttpRequest) -> StudentDashboardOut | LecturerDashboardOut | AdminDashboardOut:
     """Legacy role-aware dashboard endpoint used by existing tests/clients."""
     current_user = request.auth
     user_role = current_user.user_role or "student"
 
     if user_role == "admin":
         payload = _build_admin_dashboard_payload(current_user)
-        # Using dict() to add the 'classes' attribute properly for legacy compat
-        payload_dict = payload.dict()
-        payload_dict["classes"] = [
-            _build_class_overview_item(class_obj).dict()
-            for class_obj in Class.objects.all().select_related("unit_id_unit")
+        payload.classes = [
+            _build_class_overview_item(class_obj) for class_obj in Class.objects.all().select_related("unit_id_unit")
         ]
-        return payload_dict
+        return payload
 
     if user_role == "lecturer":
         return _build_lecturer_dashboard_payload(current_user)
 
     payload = _build_student_dashboard_payload(current_user)
-    payload_dict = payload.dict()
-    payload_dict["classes"] = []
-    return payload_dict
+    payload.classes = []
+    return payload
 
 
 # =============================================================================
@@ -660,8 +661,8 @@ def update_user(request: HttpRequest, user_id: UserId, data: UserUpdateIn):
         raise HttpError(404, "User not found")
 
 
-@router.delete("/users/{user_id}/", response=dict)
-def delete_user(request: HttpRequest, user_id: UserId):
+@router.delete("/users/{user_id}/", response=SuccessResponse)
+def delete_user(request: HttpRequest, user_id: UserId) -> SuccessResponse:
     """
     Delete a user.
 
@@ -681,7 +682,7 @@ def delete_user(request: HttpRequest, user_id: UserId):
         if target_user.user_role == "admin":
             raise HttpError(403, "Cannot delete admin accounts")
         target_user.delete()
-        return {"success": True}
+        return SuccessResponse(success=True)
     except User.DoesNotExist:
         raise HttpError(404, "User not found")
 
@@ -718,14 +719,10 @@ def get_user_stats(request: HttpRequest, user_id: UserId):
 
     # Get feedback items for scoring
     submission_ids = list(submissions.values_list("submission_id", flat=True))
-    feedback_items = FeedbackItem.objects.filter(
-        feedback_id_feedback__submission_id_submission__in=submission_ids
-    )
+    feedback_items = FeedbackItem.objects.filter(feedback_id_feedback__submission_id_submission__in=submission_ids)
 
     # Calculate average score from feedback items
-    avg_score_data = feedback_items.aggregate(
-        avg_score=models.Avg("feedback_item_score")
-    )
+    avg_score_data = feedback_items.aggregate(avg_score=models.Avg("feedback_item_score"))
     average_score = float(avg_score_data["avg_score"]) if avg_score_data["avg_score"] else None
 
     # Get last activity (most recent submission time)
@@ -764,9 +761,9 @@ def get_user_badges(request: HttpRequest, user_id: UserId):
             raise HttpError(403, "Students cannot view lecturer/admin badges")
 
     # Get user's earned badges
-    user_badges = UserBadge.objects.filter(
-        user_id_user_id=user_id
-    ).select_related("badge_id_badge").order_by("-earned_at")
+    user_badges = (
+        UserBadge.objects.filter(user_id_user_id=user_id).select_related("badge_id_badge").order_by("-earned_at")
+    )
 
     return [
         BadgeOut(
@@ -816,15 +813,15 @@ def get_user_progress(request: HttpRequest, user_id: UserId, period: str = "mont
         start_date = now - timedelta(days=180)  # ~6 months
 
     # Get submissions in date range
-    submissions = Submission.objects.filter(
-        user_id_user_id=user_id,
-        submission_time__gte=start_date
-    ).order_by("submission_time")
+    submissions = Submission.objects.filter(user_id_user_id=user_id, submission_time__gte=start_date).order_by(
+        "submission_time"
+    )
 
     # Group by period and calculate stats
     if period == "week":
         # Group by week
         from collections import defaultdict
+
         weekly_data: dict[datetime, dict[str, int | list[float]]] = defaultdict(lambda: {"scores": [], "count": 0})
 
         for sub in submissions:
@@ -840,9 +837,9 @@ def get_user_progress(request: HttpRequest, user_id: UserId, period: str = "mont
             # Get score for this submission
             try:
                 feedback = Feedback.objects.get(submission_id_submission=sub)
-                scores = FeedbackItem.objects.filter(
-                    feedback_id_feedback=feedback
-                ).aggregate(avg=models.Avg("feedback_item_score"))["avg"]
+                scores = FeedbackItem.objects.filter(feedback_id_feedback=feedback).aggregate(
+                    avg=models.Avg("feedback_item_score")
+                )["avg"]
                 if scores:
                     current_scores = weekly_data[week_key]["scores"]
                     if isinstance(current_scores, list):
@@ -868,6 +865,7 @@ def get_user_progress(request: HttpRequest, user_id: UserId, period: str = "mont
     else:
         # Group by month
         from collections import defaultdict
+
         monthly_data: dict[datetime, dict[str, int | list[float]]] = defaultdict(lambda: {"scores": [], "count": 0})
 
         for sub in submissions:
@@ -880,9 +878,9 @@ def get_user_progress(request: HttpRequest, user_id: UserId, period: str = "mont
             # Get score for this submission
             try:
                 feedback = Feedback.objects.get(submission_id_submission=sub)
-                scores = FeedbackItem.objects.filter(
-                    feedback_id_feedback=feedback
-                ).aggregate(avg=models.Avg("feedback_item_score"))["avg"]
+                scores = FeedbackItem.objects.filter(feedback_id_feedback=feedback).aggregate(
+                    avg=models.Avg("feedback_item_score")
+                )["avg"]
                 if scores:
                     current_scores = monthly_data[month_key]["scores"]
                     if isinstance(current_scores, list):
@@ -948,12 +946,12 @@ def update_unit(request: HttpRequest, unit_id: UnitId, data: UnitIn):
         raise HttpError(404, "Unit not found")
 
 
-@router.delete("/units/{unit_id}/", response=dict)
-def delete_unit(request: HttpRequest, unit_id: UnitId):
+@router.delete("/units/{unit_id}/", response=SuccessResponse)
+def delete_unit(request: HttpRequest, unit_id: UnitId) -> SuccessResponse:
     try:
         unit = Unit.objects.get(unit_id=unit_id)
         unit.delete()
-        return {"success": True}
+        return SuccessResponse(success=True)
     except Unit.DoesNotExist:
         raise HttpError(404, "Unit not found")
 
@@ -1051,12 +1049,12 @@ def update_class(request: HttpRequest, class_id: ClassId, data: ClassIn):
         raise HttpError(404, "Class not found")
 
 
-@router.delete("/classes/{class_id}/", response=dict)
-def delete_class(request: HttpRequest, class_id: ClassId):
+@router.delete("/classes/{class_id}/", response=SuccessResponse)
+def delete_class(request: HttpRequest, class_id: ClassId) -> SuccessResponse:
     try:
         class_obj = Class.objects.get(class_id=class_id)
         class_obj.delete()
-        return {"success": True}
+        return SuccessResponse(success=True)
     except Class.DoesNotExist:
         raise HttpError(404, "Class not found")
 
@@ -1086,12 +1084,12 @@ def get_enrollment(request: HttpRequest, enrollment_id: EnrollmentId):
         raise HttpError(404, "Enrollment not found")
 
 
-@router.delete("/enrollments/{enrollment_id}/", response=dict)
-def delete_enrollment(request: HttpRequest, enrollment_id: EnrollmentId):
+@router.delete("/enrollments/{enrollment_id}/", response=SuccessResponse)
+def delete_enrollment(request: HttpRequest, enrollment_id: EnrollmentId) -> SuccessResponse:
     try:
         enrollment = Enrollment.objects.get(enrollment_id=enrollment_id)
         enrollment.delete()
-        return {"success": True}
+        return SuccessResponse(success=True)
     except Enrollment.DoesNotExist:
         raise HttpError(404, "Enrollment not found")
 
@@ -1128,9 +1126,7 @@ def list_rubrics(request: HttpRequest, filters: RubricFilterParams = RubricFilte
         qs = MarkingRubric.objects.all()
     else:
         # Lecturers see their own private rubrics + all public rubrics
-        qs = MarkingRubric.objects.filter(
-            Q(visibility="public") | Q(user_id_user=user)
-        )
+        qs = MarkingRubric.objects.filter(Q(visibility="public") | Q(user_id_user=user))
 
     # If visibility filter is explicitly provided, apply it on top
     # This allows admins/lecturers to filter by specific visibility
@@ -1156,13 +1152,7 @@ def list_rubrics(request: HttpRequest, filters: RubricFilterParams = RubricFilte
         qs = qs.filter(rubric_desc__icontains=filters.rubric_desc)
 
     # Convert queryset to list of dicts for Schema validation
-    result = list(qs.values(
-        "rubric_id",
-        "user_id_user",
-        "rubric_create_time",
-        "rubric_desc",
-        "visibility"
-    ))
+    result = list(qs.values("rubric_id", "user_id_user", "rubric_create_time", "rubric_desc", "visibility"))
 
     return paginate(result, PaginationParams())["results"]
 
@@ -1434,8 +1424,8 @@ def update_rubric_visibility(request: HttpRequest, rubric_id: RubricId, data: Ru
         raise HttpError(404, "Rubric not found")
 
 
-@router.delete("/rubrics/{rubric_id}/", response=dict)
-def delete_rubric(request: HttpRequest, rubric_id: RubricId):
+@router.delete("/rubrics/{rubric_id}/", response=SuccessResponse)
+def delete_rubric(request: HttpRequest, rubric_id: RubricId) -> SuccessResponse:
     """
     Delete a rubric.
 
@@ -1452,7 +1442,7 @@ def delete_rubric(request: HttpRequest, rubric_id: RubricId):
             raise HttpError(403, "You do not have permission to delete this rubric")
 
         rubric.delete()
-        return {"success": True}
+        return SuccessResponse(success=True)
     except MarkingRubric.DoesNotExist:
         raise HttpError(404, "Rubric not found")
 
@@ -1499,12 +1489,12 @@ def update_rubric_item(request: HttpRequest, item_id: RubricItemId, data: Rubric
         raise HttpError(404, "Rubric item not found")
 
 
-@router.delete("/rubric-items/{item_id}/", response=dict)
-def delete_rubric_item(request: HttpRequest, item_id: RubricItemId):
+@router.delete("/rubric-items/{item_id}/", response=SuccessResponse)
+def delete_rubric_item(request: HttpRequest, item_id: RubricItemId) -> SuccessResponse:
     try:
         item = RubricItem.objects.get(rubric_item_id=item_id)
         item.delete()
-        return {"success": True}
+        return SuccessResponse(success=True)
     except RubricItem.DoesNotExist:
         raise HttpError(404, "Rubric item not found")
 
@@ -1553,12 +1543,12 @@ def update_rubric_level(request: HttpRequest, level_id: int, data: RubricLevelDe
         raise HttpError(404, "Rubric level not found")
 
 
-@router.delete("/rubric-levels/{level_id}/", response=dict)
-def delete_rubric_level(request: HttpRequest, level_id: int):
+@router.delete("/rubric-levels/{level_id}/", response=SuccessResponse)
+def delete_rubric_level(request: HttpRequest, level_id: int) -> SuccessResponse:
     try:
         level = RubricLevelDesc.objects.get(level_desc_id=level_id)
         level.delete()
-        return {"success": True}
+        return SuccessResponse(success=True)
     except RubricLevelDesc.DoesNotExist:
         raise HttpError(404, "Rubric level not found")
 
@@ -1624,7 +1614,7 @@ def get_task(request: HttpRequest, task_id: TaskId):
 @router.put("/tasks/{task_id}/", response=TaskOut)
 def update_task(request: HttpRequest, task_id: TaskId, data: TaskIn):
     try:
-        task = Task.objects.get(task_id=task_id)
+        Task.objects.get(task_id=task_id)
         if data.unit_id_unit:
             task.unit_id_unit = Unit.objects.get(unit_id=data.unit_id_unit)
         if data.rubric_id_marking_rubric:
@@ -1643,18 +1633,20 @@ def update_task(request: HttpRequest, task_id: TaskId, data: TaskIn):
         raise HttpError(404, "Task not found")
 
 
-@router.delete("/tasks/{task_id}/", response=dict)
-def delete_task(request: HttpRequest, task_id: TaskId):
+@router.delete("/tasks/{task_id}/", response=SuccessResponse)
+def delete_task(request: HttpRequest, task_id: TaskId) -> SuccessResponse:
     try:
-        task = Task.objects.get(task_id=task_id)
+        Task.objects.get(task_id=task_id)
         task.delete()
-        return {"success": True}
+        return SuccessResponse(success=True)
     except Task.DoesNotExist:
         raise HttpError(404, "Task not found")
+
 
 # =============================================================================
 # Task Actions
 # =============================================================================
+
 
 @router.post("/tasks/{task_id}/publish/", response=TaskOut)
 def publish_task(request: HttpRequest, task_id: TaskId):
@@ -1663,7 +1655,7 @@ def publish_task(request: HttpRequest, task_id: TaskId):
     if user.user_role not in ["lecturer", "admin"]:
         raise HttpError(403, "Only lecturers or admins can publish tasks")
     try:
-        task = Task.objects.get(task_id=task_id)
+        Task.objects.get(task_id=task_id)
         task.task_status = "published"
         task.save()
         return task
@@ -1678,7 +1670,7 @@ def unpublish_task(request: HttpRequest, task_id: TaskId):
     if user.user_role not in ["lecturer", "admin"]:
         raise HttpError(403, "Only lecturers or admins can unpublish tasks")
     try:
-        task = Task.objects.get(task_id=task_id)
+        Task.objects.get(task_id=task_id)
         task.task_status = "unpublished"
         task.save()
         return task
@@ -1691,7 +1683,7 @@ def get_task_submissions(request: HttpRequest, task_id: TaskId):
     """Get all submissions for a task."""
     user = request.auth
     try:
-        task = Task.objects.get(task_id=task_id)
+        Task.objects.get(task_id=task_id)
         # Students can only see their own submissions
         if user.user_role == "student":
             return Submission.objects.filter(task_id_task=task, user_id_user=user)
@@ -1699,7 +1691,6 @@ def get_task_submissions(request: HttpRequest, task_id: TaskId):
         return Submission.objects.filter(task_id_task=task)
     except Task.DoesNotExist:
         raise HttpError(404, "Task not found")
-
 
 
 # =============================================================================
@@ -1744,12 +1735,12 @@ def update_submission(request: HttpRequest, submission_id: SubmissionId, data: S
         raise HttpError(404, "Submission not found")
 
 
-@router.delete("/submissions/{submission_id}/", response=dict)
-def delete_submission(request: HttpRequest, submission_id: SubmissionId):
+@router.delete("/submissions/{submission_id}/", response=SuccessResponse)
+def delete_submission(request: HttpRequest, submission_id: SubmissionId) -> SuccessResponse:
     try:
         submission = Submission.objects.get(submission_id=submission_id)
         submission.delete()
-        return {"success": True}
+        return SuccessResponse(success=True)
     except Submission.DoesNotExist:
         raise HttpError(404, "Submission not found")
 
@@ -1784,12 +1775,12 @@ def get_feedback(request: HttpRequest, feedback_id: FeedbackId):
         raise HttpError(404, "Feedback not found")
 
 
-@router.delete("/feedbacks/{feedback_id}/", response=dict)
-def delete_feedback(request: HttpRequest, feedback_id: FeedbackId):
+@router.delete("/feedbacks/{feedback_id}/", response=SuccessResponse)
+def delete_feedback(request: HttpRequest, feedback_id: FeedbackId) -> SuccessResponse:
     try:
         feedback = Feedback.objects.get(feedback_id=feedback_id)
         feedback.delete()
-        return {"success": True}
+        return SuccessResponse(success=True)
     except Feedback.DoesNotExist:
         raise HttpError(404, "Feedback not found")
 
@@ -1840,12 +1831,12 @@ def update_feedback_item(request: HttpRequest, item_id: RubricItemId, data: Feed
         raise HttpError(404, "Feedback item not found")
 
 
-@router.delete("/feedback-items/{item_id}/", response=dict)
-def delete_feedback_item(request: HttpRequest, item_id: RubricItemId):
+@router.delete("/feedback-items/{item_id}/", response=SuccessResponse)
+def delete_feedback_item(request: HttpRequest, item_id: RubricItemId) -> SuccessResponse:
     try:
         item = FeedbackItem.objects.get(feedback_item_id=item_id)
         item.delete()
-        return {"success": True}
+        return SuccessResponse(success=True)
     except FeedbackItem.DoesNotExist:
         raise HttpError(404, "Feedback item not found")
 
@@ -1880,12 +1871,12 @@ def get_teaching_assignment(request: HttpRequest, assignment_id: int):
         raise HttpError(404, "Teaching assignment not found")
 
 
-@router.delete("/teaching-assignments/{assignment_id}/", response=dict)
-def delete_teaching_assignment(request: HttpRequest, assignment_id: int):
+@router.delete("/teaching-assignments/{assignment_id}/", response=SuccessResponse)
+def delete_teaching_assignment(request: HttpRequest, assignment_id: int) -> SuccessResponse:
     try:
         assignment = TeachingAssn.objects.get(teaching_assn_id=assignment_id)
         assignment.delete()
-        return {"success": True}
+        return SuccessResponse(success=True)
     except TeachingAssn.DoesNotExist:
         raise HttpError(404, "Teaching assignment not found")
 
@@ -1932,6 +1923,7 @@ def get_my_classes(request):
 # Class Actions
 # =============================================================================
 
+
 @router.get("/classes/{class_id}/students/", response=list[UserOut])
 def get_class_students(request: HttpRequest, class_id: ClassId):
     """Get all students in a class."""
@@ -1969,8 +1961,8 @@ def add_student_to_class(request: HttpRequest, class_id: ClassId, user_id: UserI
         raise HttpError(404, "Student not found")
 
 
-@router.delete("/classes/{class_id}/students/{user_id}/", response=dict)
-def remove_student_from_class(request: HttpRequest, class_id: ClassId, user_id: UserId):
+@router.delete("/classes/{class_id}/students/{user_id}/", response=SuccessResponse)
+def remove_student_from_class(request: HttpRequest, class_id: ClassId, user_id: UserId) -> SuccessResponse:
     """Remove a student from a class (admin/lecturer only)."""
     try:
         class_obj = Class.objects.get(class_id=class_id)
@@ -1980,7 +1972,7 @@ def remove_student_from_class(request: HttpRequest, class_id: ClassId, user_id: 
         class_obj.class_size = Enrollment.objects.filter(class_id_class=class_obj).count()
         class_obj.save()
 
-        return {"success": True}
+        return SuccessResponse(success=True)
     except Class.DoesNotExist:
         raise HttpError(404, "Class not found")
     except Enrollment.DoesNotExist:
@@ -1991,6 +1983,7 @@ def remove_student_from_class(request: HttpRequest, class_id: ClassId, user_id: 
 def archive_class(request: HttpRequest, class_id: ClassId):
     """Archive a class."""
     from datetime import datetime
+
     user = request.auth
     if user.user_role not in ["lecturer", "admin"]:
         raise HttpError(403, "Only lecturers or admins can archive classes")
@@ -2002,8 +1995,10 @@ def archive_class(request: HttpRequest, class_id: ClassId):
         return class_obj
     except Class.DoesNotExist:
         raise HttpError(404, "Class not found")
-@router.delete("/classes/{class_id}/leave/", response=dict)
-def leave_class(request: HttpRequest, class_id: ClassId):
+
+
+@router.delete("/classes/{class_id}/leave/", response=SuccessResponse)
+def leave_class(request: HttpRequest, class_id: ClassId) -> SuccessResponse:
     """Student leaves a class."""
     user = request.auth
     if user.user_role != "student":
@@ -2024,6 +2019,51 @@ def leave_class(request: HttpRequest, class_id: ClassId):
         class_obj.class_size = Enrollment.objects.filter(class_id_class=class_obj).count()
         class_obj.save()
 
-        return {"success": True, "message": "Successfully left the class"}
+        return SuccessResponse(success=True, message="Successfully left the class")
     except Class.DoesNotExist:
         raise HttpError(404, "Class not found")
+
+
+# =============================================================================
+# PRD-09 & 10 Enhancements: Task & Class Actions
+# =============================================================================
+
+
+@router.post("/tasks/{task_id}/duplicate/", response=TaskOut)
+def duplicate_task(request: HttpRequest, task_id: TaskId, data: TaskDuplicateIn):
+    """Duplicate a task, optionally to a different class."""
+    if request.auth.user_role not in ["admin", "lecturer"]:
+        raise HttpError(403, "Only admins or lecturers can duplicate tasks")
+    try:
+        Task.objects.get(task_id=task_id)
+    except Task.DoesNotExist:
+        raise HttpError(404, "Task not found")
+    raise HttpError(501, "Not implemented")
+
+
+@router.post("/tasks/{task_id}/extend/", response=TaskOut)
+def extend_task_deadline(request: HttpRequest, task_id: TaskId, data: TaskExtendIn):
+    """Extend the deadline for a specific task."""
+    if request.auth.user_role not in ["admin", "lecturer"]:
+        raise HttpError(403, "Only admins or lecturers can extend tasks")
+    try:
+        Task.objects.get(task_id=task_id)
+    except Task.DoesNotExist:
+        raise HttpError(404, "Task not found")
+    raise HttpError(501, "Not implemented")
+
+
+@router.post("/admin/classes/batch-enroll/", response=SuccessResponse)
+def batch_enroll_students(request: HttpRequest, data: BatchEnrollIn):
+    """Batch enroll students into a class by email."""
+    if request.auth.user_role != "admin":
+        raise HttpError(403, "Only admins can batch enroll")
+    raise HttpError(501, "Not implemented")
+
+
+@router.post("/admin/users/invite-lecturer/", response=SuccessResponse)
+def invite_lecturer(request: HttpRequest, data: InviteLecturerIn):
+    """Invite a new lecturer via email."""
+    if request.auth.user_role != "admin":
+        raise HttpError(403, "Only admins can invite lecturers")
+    raise HttpError(501, "Not implemented")

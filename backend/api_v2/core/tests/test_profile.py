@@ -397,8 +397,8 @@ class TestProfileIntegration:
             submission = Submission.objects.create(
                 task_id_task=task,
                 user_id_user=student_user,
-                submission_txt=f"Essay {i+1}",
-                submission_time=now - timedelta(days=i*7),
+                submission_txt=f"Essay {i + 1}",
+                submission_time=now - timedelta(days=i * 7),
             )
 
         # Create badges

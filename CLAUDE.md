@@ -4,7 +4,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 > **IMPORTANT**: This file is the single source of truth for project status. Update it after every significant code change to reflect the current state and next priorities.
 >
-- **Last Updated**: 2026-02-27 (Backend Python type-system refactor plan added)
+- **Last Updated**: 2026-02-28 (Backend Python type-system refactor completed)
+- **Incremental Update**: 2026-02-28 (Backend Python type-system refactor completed, PRD 11-14 modules bootstrapped)
 - **Incremental Update**: 2026-02-27 (Dashboard Overview route fix + Task/Class backend hardening + Rubrics SSR URL fix + health-check workflow + real Chrome DevTools validation + typed-architecture roadmap)
 
 ---
@@ -265,10 +266,10 @@ The `docs/prd/` directory contains an explicit contract for code generation:
 | 08 Profile | ✅ Implemented | Phase 2 Functional sync complete (role-based tabs, Student/Lecturer/Admin specific views, 1 test passing) | - |
 | 09 Assignments (Tasks) | ✅ Complete | Backend: Full CRUD + action endpoints. Frontend: Full components, routes, navigation. Tests: 17 passing. | - |
 | 10 Classes | ✅ Complete | Backend: Full CRUD + action endpoints. Frontend: Full components, routes, navigation. Tests: 14 passing. | - |
-| 11 Social Learning Hub | ❌ Not Started | Planned for post-MVP | 🟢 P3 |
-| 12 Analytics | ❌ Not Started | Planned for post-MVP | 🟢 P3 |
-| 13 Users | ❌ Not Started | Admin user management | 🟢 P3 |
-| 14 Help | ❌ Not Started | Basic help docs needed | 🟢 P3 |
+| 11 Social Learning Hub | 🚧 Contract Bootstrapped | Backend typing/schemas defined. Core business logic pending. | 🟢 P3 |
+| 12 Analytics | 🚧 Contract Bootstrapped | Backend typing/schemas defined. Core business logic pending. | 🟢 P3 |
+| 13 Users (Admin) | 🚧 Contract Bootstrapped | Backend typing/schemas defined. Core business logic pending. | 🟢 P3 |
+| 14 Help Center | 🚧 Contract Bootstrapped | Backend typing/schemas defined. Core business logic pending. | 🟢 P3 |
 
 | PRD Module | Status | Gap Summary | Priority |
 |------------|--------|-------------|----------|
@@ -282,10 +283,10 @@ The `docs/prd/` directory contains an explicit contract for code generation:
 | 08 Profile | ✅ Implemented | Phase 2 Functional sync complete (role-based tabs, Student/Lecturer/Admin specific views, 1 test passing) | - |
 | 09 Assignments (Tasks) | ✅ Complete | Backend: Model fields, schemas, CRUD + publish/unpublish/submissions endpoints complete with 10 tests. Frontend: Full components (list, card, form, submissions), routes (/dashboard/tasks/*), navigation, and 7 service tests. Build passes. | - |
 | 10 Classes | ✅ Complete | Backend: Model fields, schemas, CRUD + join/leave/students/archive endpoints complete with 6 tests. Frontend: Full components (list, card, form, detail, roster, join dialog), routes (/dashboard/classes/*), navigation, and 8 service tests. Build passes. | - |
-| 11 Social Learning Hub | ❌ Not Started | Planned for post-MVP | 🟢 P3 |
-| 12 Analytics | ❌ Not Started | Planned for post-MVP | 🟢 P3 |
-| 13 Users | ❌ Not Started | Admin user management | 🟢 P3 |
-| 14 Help | ❌ Not Started | Basic help docs needed | 🟢 P3 |
+| 11 Social Learning Hub | 🚧 Contract Bootstrapped | Backend typing/schemas defined. Core business logic pending. | 🟢 P3 |
+| 12 Analytics | 🚧 Contract Bootstrapped | Backend typing/schemas defined. Core business logic pending. | 🟢 P3 |
+| 13 Users (Admin) | 🚧 Contract Bootstrapped | Backend typing/schemas defined. Core business logic pending. | 🟢 P3 |
+| 14 Help Center | 🚧 Contract Bootstrapped | Backend typing/schemas defined. Core business logic pending. | 🟢 P3 |
 
 #### Test Accounts
 - **Admin**: admin@example.com / admin123
@@ -886,7 +887,7 @@ This section defines the canonical plan for rebuilding backend typing quality an
 
 ### Refactor & Initialization Roadmap
 
-#### Phase 0 — Stabilization (Week 1)
+#### Phase 0 — Stabilization (Week 1) ✅ Complete
 Goal: remove blocking type debt in existing modules.
 
 - Fix all current pyright errors in:
@@ -902,7 +903,7 @@ Exit criteria:
 - `pyright api_v2 ai_feedback core` returns 0 errors.
 - No stale V3 type names remain in active services.
 
-#### Phase 1 — Domain Typing Core (Week 2)
+#### Phase 1 — Domain Typing Core (Week 2) ✅ Complete
 Goal: establish reusable primitives for current and future PRDs.
 
 - Create centralized type primitives (new module namespace):
@@ -919,7 +920,7 @@ Exit criteria:
 - Constrained fields in schemas no longer use unconstrained free-form `str`.
 - Shared base response/pagination types are reused across modules.
 
-#### Phase 2 — Contract Unification (Week 3)
+#### Phase 2 — Contract Unification (Week 3) ✅ Complete
 Goal: eliminate schema drift in existing feature modules.
 
 - Unify AI schema source-of-truth:
@@ -933,7 +934,7 @@ Exit criteria:
 - No semantic duplication for the same API payload across modules.
 - Dashboard/auth/ai handlers are type-consistent end-to-end.
 
-#### Phase 3 — PRD-09/10 Contract Completion (Week 4)
+#### Phase 3 — PRD-09/10 Contract Completion (Week 4) ✅ Complete
 Goal: complete typed contracts for remaining Tasks/Classes requirements.
 
 - Add typed endpoint contracts and handlers for:
@@ -946,7 +947,7 @@ Goal: complete typed contracts for remaining Tasks/Classes requirements.
 Exit criteria:
 - PRD-09/10 endpoint list has typed API contracts aligned with docs.
 
-#### Phase 4 — PRD-11/12 Type-System Initialization (Weeks 5-6)
+#### Phase 4 — PRD-11/12 Type-System Initialization (Weeks 5-6) ✅ Complete
 Goal: bootstrap Social Hub + Analytics with contract-first modules.
 
 - Create dedicated typed modules (no dumping into `core/views.py`):
@@ -960,7 +961,7 @@ Goal: bootstrap Social Hub + Analytics with contract-first modules.
 Exit criteria:
 - PRD-11/12 have stable typed API surfaces and OpenAPI visibility.
 
-#### Phase 5 — PRD-13/14 Type-System Initialization (Weeks 7-8)
+#### Phase 5 — PRD-13/14 Type-System Initialization (Weeks 7-8) ✅ Complete
 Goal: bootstrap Users(Admin) + Help Center with strict contracts.
 
 - Add typed modules:

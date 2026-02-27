@@ -1,26 +1,33 @@
 from __future__ import annotations
 
-from api_v2.types.ids import (
-    UserId, ClassId, TaskId, SubmissionId, FeedbackId, RubricId, RubricItemId, EnrollmentId, UnitId
-)
 from datetime import datetime
 from decimal import Decimal
 from typing import Annotated  # For Pydantic V2 compatible FilterSchema syntax
 
 from ninja import FilterLookup, FilterSchema, Schema  # FieldLookup replaces Field(q=...)
 from ninja.orm import ModelSchema
-from pydantic import Field
+from pydantic import EmailStr, Field, field_validator
 
 from api_v2.types.enums import (
     ClassStatus,
     ClassTerm,
     FeedbackSource,
     ImprovementTrend,
+    SubmissionStatus,
     TaskStatus,
     UserRole,
     UserStatus,
-    SubmissionStatus,
     Visibility,
+)
+from api_v2.types.ids import (
+    ClassId,
+    FeedbackId,
+    RubricId,
+    RubricItemId,
+    SubmissionId,
+    TaskId,
+    UnitId,
+    UserId,
 )
 from core.models import (
     Class,
@@ -44,7 +51,7 @@ from core.models import (
 class UserIn(Schema):
     """Input schema for creating users with validation."""
 
-    user_email: str
+    user_email: EmailStr
     password: str
     user_fname: str | None = None
     user_lname: str | None = None
@@ -57,7 +64,7 @@ class UserIn(Schema):
 class UserUpdateIn(Schema):
     """Input schema for updating users - password is optional."""
 
-    user_email: str | None = None
+    user_email: EmailStr | None = None
     password: str | None = None
     user_fname: str | None = None
     user_lname: str | None = None
@@ -70,6 +77,16 @@ class UserUpdateIn(Schema):
 class UserOut(ModelSchema):
     user_role: UserRole
     user_status: UserStatus
+
+    @field_validator("user_role", mode="before")
+    @classmethod
+    def default_role(cls, v):
+        return v or UserRole.STUDENT
+
+    @field_validator("user_status", mode="before")
+    @classmethod
+    def default_status(cls, v):
+        return v or UserStatus.ACTIVE
 
     """Output schema for users - auto-generated from User model."""
 
@@ -202,6 +219,7 @@ class MarkingRubricIn(Schema):
 
 class MarkingRubricOut(Schema):
     """Output schema for marking rubrics."""
+
     rubric_id: RubricId
     user_id_user: UserId
     rubric_create_time: datetime
@@ -523,6 +541,7 @@ class TaskFilterParams(FilterSchema):
     task_status: TaskStatus | None = None
     task_title: Annotated[str | None, FilterLookup(q="task_title__icontains")] = None
 
+
 class SubmissionFilterParams(FilterSchema):
     """Filter parameters for Submission list endpoint."""
 
@@ -618,7 +637,7 @@ class DashboardUserInfoOut(Schema):
     id: int
     name: str
     role: UserRole | str
-    email: str
+    email: EmailStr
 
 
 class DashboardActivityItemOut(Schema):
@@ -730,6 +749,7 @@ class StudentDashboardOut(Schema):
     stats: StudentStatsOut
     myEssays: list[StudentEssayOut]
     recentActivity: list[DashboardActivityItemOut]
+    classes: list[ClassOverviewOut] | None = None
 
 
 class AdminDashboardOut(Schema):
@@ -739,7 +759,41 @@ class AdminDashboardOut(Schema):
     stats: AdminStatsOut
     recentActivity: list[DashboardActivityItemOut]
     systemStatus: SystemStatusOut
+    classes: list[ClassOverviewOut] | None = None
 
 
 # Backward-compatible alias used by integration tests.
 DashboardResponse = LecturerDashboardOut | StudentDashboardOut | AdminDashboardOut
+
+# =============================================================================
+# PRD-09 & 10 Enhancements: Task & Class Actions
+# =============================================================================
+
+
+class TaskDuplicateIn(Schema):
+    """Input schema for duplicating a task."""
+
+    class_id_class: ClassId | None = Field(None, description="Optional target class ID for the duplicate.")
+    task_title: str | None = Field(None, description="Optional new title for the duplicated task.")
+    task_deadline: datetime | None = Field(None, description="Optional new deadline.")
+
+
+class TaskExtendIn(Schema):
+    """Input schema for extending a task deadline."""
+
+    new_deadline: datetime = Field(..., description="The new deadline for the task.")
+
+
+class BatchEnrollIn(Schema):
+    """Input schema for batch enrolling students via email."""
+
+    class_id: ClassId = Field(..., description="ID of the class to enroll into.")
+    student_emails: list[EmailStr] = Field(default_factory=list, description="List of student emails to enroll.")
+
+
+class InviteLecturerIn(Schema):
+    """Input schema for inviting a new lecturer."""
+
+    email: EmailStr = Field(..., description="Email address for the invited lecturer.")
+    first_name: str | None = Field(None, description="Lecturer's first name.")
+    last_name: str | None = Field(None, description="Lecturer's last name.")

@@ -18,8 +18,12 @@ from ninja import NinjaAPI
 
 from .advanced.views import router as advanced_router
 from .ai_feedback.views import router as ai_feedback_router
+from .analytics.views import router as analytics_router
 from .auth.views import router as auth_router
 from .core.views import router as core_router
+from .help.views import router as help_router
+from .social.views import router as social_router
+from .users_admin.views import router as users_admin_router
 
 # Create the main Ninja API instance
 api_v2 = NinjaAPI(
@@ -52,3 +56,7 @@ api_v2.add_router("/ai-feedback/", ai_feedback_router)
 api_v2.add_router("/auth/", auth_router)
 api_v2.add_router("/core/", core_router)
 api_v2.add_router("/advanced/", advanced_router)
+api_v2.add_router("/social/", social_router)
+api_v2.add_router("/analytics/", analytics_router)
+api_v2.add_router("/admin/users/", users_admin_router)
+api_v2.add_router("/help/", help_router)

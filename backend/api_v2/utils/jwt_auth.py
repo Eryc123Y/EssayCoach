@@ -209,6 +209,7 @@ def refresh_jwt_token(refresh_token: str) -> JWTPair | None:
 
         # Get user from database
         from core.models import User
+
         try:
             user = User.objects.get(user_id=user_id)
         except User.DoesNotExist:
@@ -288,6 +289,7 @@ class JWTAuth(HttpBearer):
 
         try:
             from core.models import User
+
             user = User.objects.get(user_id=user_id)
             if not user.is_active:
                 return None

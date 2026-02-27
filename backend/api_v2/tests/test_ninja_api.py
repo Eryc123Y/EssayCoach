@@ -193,10 +193,7 @@ def test_task_schema_validation():
 
     due_date = datetime.now() + timedelta(days=7)
     task_in = TaskIn(
-        unit_id_unit="CS101",
-        rubric_id_marking_rubric=1,
-        task_due_datetime=due_date,
-        task_title="Test Task"
+        unit_id_unit="CS101", rubric_id_marking_rubric=1, task_due_datetime=due_date, task_title="Test Task"
     )
     assert task_in.unit_id_unit == "CS101"
 

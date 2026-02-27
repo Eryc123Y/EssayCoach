@@ -13,11 +13,11 @@ from api_v2.types.enums import (
     FeedbackSource,
     ImprovementTrend,
     ResponseMode,
-    ThemePreference,
+    SubmissionStatus,
     TaskStatus,
+    ThemePreference,
     UserRole,
     UserStatus,
-    SubmissionStatus,
     Visibility,
     WorkflowStatus,
 )

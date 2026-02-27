@@ -59,9 +59,7 @@ def student_token(student):
 def test_create_task_with_all_fields(client, admin_token, admin_user):
     """Admin can create task with all new fields."""
     Unit.objects.create(unit_id="TEST001", unit_name="Test Unit")
-    MarkingRubric.objects.create(
-        rubric_id=1, user_id_user=admin_user, rubric_desc="Description"
-    )
+    MarkingRubric.objects.create(rubric_id=1, user_id_user=admin_user, rubric_desc="Description")
 
     payload = {
         "unit_id_unit": "TEST001",
@@ -94,9 +92,7 @@ def test_create_task_with_all_fields(client, admin_token, admin_user):
 def test_update_task_all_fields(client, admin_token, admin_user):
     """Admin can update all task fields."""
     unit = Unit.objects.create(unit_id="TEST002", unit_name="Test Unit 2")
-    rubric = MarkingRubric.objects.create(
-        rubric_id=2, user_id_user=admin_user, rubric_desc="Description 2"
-    )
+    rubric = MarkingRubric.objects.create(rubric_id=2, user_id_user=admin_user, rubric_desc="Description 2")
     task = Task.objects.create(
         unit_id_unit=unit,
         rubric_id_marking_rubric=rubric,
