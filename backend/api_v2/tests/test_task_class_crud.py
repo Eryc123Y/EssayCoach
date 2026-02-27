@@ -241,7 +241,7 @@ def test_create_class_with_all_fields(client, admin_token):
         "class_name": "English 101",
         "class_desc": "Introduction to Academic Writing",
         "class_join_code": "ENG101",
-        "class_term": "fall",
+        "class_term": "semester1",
         "class_year": 2026,
         "class_size": 0,
     }
@@ -255,7 +255,7 @@ def test_create_class_with_all_fields(client, admin_token):
     assert data["class_name"] == "English 101"
     assert data["class_desc"] == "Introduction to Academic Writing"
     assert data["class_join_code"] == "ENG101"
-    assert data["class_term"] == "fall"
+    assert data["class_term"] == "semester1"
     assert data["class_year"] == 2026
 
     Class.objects.filter(class_name="English 101").delete()
@@ -270,7 +270,7 @@ def test_update_class_all_fields(client, admin_token):
         class_name="Original Class",
         class_desc="Original desc",
         class_join_code="ORIG",
-        class_term="spring",
+        class_term="semester2",
         class_year=2025,
         class_size=0,
     )
@@ -280,7 +280,7 @@ def test_update_class_all_fields(client, admin_token):
         "class_name": "Updated Class",
         "class_desc": "Updated description",
         "class_join_code": "UPD",
-        "class_term": "fall",
+        "class_term": "semester1",
         "class_year": 2026,
         "class_size": 25,
     }
@@ -342,7 +342,7 @@ def test_get_my_classes_returns_new_fields(client, student_token, student):
         class_name="Student Class",
         class_desc="Test class",
         class_join_code="STU005",
-        class_term="fall",
+        class_term="semester1",
         class_year=2026,
         class_status="active",
         class_size=1,
@@ -358,7 +358,7 @@ def test_get_my_classes_returns_new_fields(client, student_token, student):
     assert cls["class_name"] == "Student Class"
     assert cls["class_desc"] == "Test class"
     assert cls["class_join_code"] == "STU005"
-    assert cls["class_term"] == "fall"
+    assert cls["class_term"] == "semester1"
     assert cls["class_year"] == 2026
     assert cls["class_status"] == "active"
 

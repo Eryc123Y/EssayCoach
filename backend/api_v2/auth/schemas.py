@@ -1,10 +1,11 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Literal
 
 from ninja import Schema
 from pydantic import Field, field_validator
+
+from api_v2.types.enums import ThemePreference, UserRole, UserStatus
 
 
 class UserRegistrationIn(Schema):
@@ -13,15 +14,15 @@ class UserRegistrationIn(Schema):
     password_confirm: str = Field(...)
     first_name: str | None = Field(None, max_length=20)
     last_name: str | None = Field(None, max_length=20)
-    role: str | None = Field(None, max_length=10)
+    role: UserRole | None = Field(None, max_length=10)
 
     @field_validator("role")
     @classmethod
-    def validate_role(cls, v: str | None) -> str | None:
+    def validate_role(cls, v: UserRole | None) -> UserRole | None:
         if v is not None:
-            allowed_roles = ["student", "lecturer", "admin"]
+            allowed_roles = [UserRole.STUDENT, UserRole.LECTURER, UserRole.ADMIN]
             if v not in allowed_roles:
-                raise ValueError(f"Role must be one of: {', '.join(allowed_roles)}")
+                raise ValueError(f"Role must be one of: {', '.join(str(r) for r in allowed_roles)}")
         return v
 
 
@@ -38,8 +39,8 @@ class UserOut(Schema):
     last_name: str | None
     name: str
     avatar: str | None
-    role: str
-    status: str
+    role: UserRole
+    status: UserStatus
     date_joined: str
 
 
@@ -57,7 +58,7 @@ class UserPreferencesIn(Schema):
     grading_alerts: bool | None = None
     weekly_digest: bool | None = None
     language: str | None = None
-    theme: Literal["light", "dark", "system"] | None = None
+    theme: ThemePreference | None = None
 
 
 class UserPreferencesOut(Schema):
@@ -69,7 +70,7 @@ class UserPreferencesOut(Schema):
     grading_alerts: bool = False
     weekly_digest: bool = False
     language: str = "en"
-    theme: Literal["light", "dark", "system"] = "system"
+    theme: ThemePreference = ThemePreference.SYSTEM
 
 
 class UserPreferencesResponse(Schema):
@@ -153,7 +154,7 @@ class UserUpdateIn(Schema):
 class MessageResponse(Schema):
     success: bool = True
     message: str
-    data: dict = {}
+    data: dict = Field(default_factory=dict)
 
 
 class UserInfoResponse(Schema):

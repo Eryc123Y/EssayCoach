@@ -31,7 +31,7 @@ class ImportOut(Schema):
     success: bool
     message: str
     imported_count: int
-    errors: list[str] = []
+    errors: list[str] = Field(default_factory=list)
 
 
 class ExportOut(Schema):

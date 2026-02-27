@@ -14,6 +14,8 @@ from datetime import datetime
 
 from pydantic import BaseModel, Field, field_validator
 
+from api_v2.types.enums import ResponseMode
+
 
 class EssayAnalysisInput(BaseModel):
     """Input for essay analysis."""
@@ -44,8 +46,8 @@ class EssayAnalysisInput(BaseModel):
         max_length=128,
         description="Unique user identifier",
     )
-    response_mode: str = Field(
-        default="blocking",
+    response_mode: ResponseMode = Field(
+        default=ResponseMode.BLOCKING,
         description="Blocking waits for completion, streaming returns SSE chunks",
     )
 
@@ -120,14 +122,14 @@ class WorkflowRunRequest(BaseModel):
     essay_question: str = Field(..., min_length=1, max_length=2000)
     essay_content: str = Field(..., min_length=1, max_length=20000)
     language: str = Field(default="English", max_length=48)
-    response_mode: str = Field(default="blocking")
+    response_mode: ResponseMode = Field(default=ResponseMode.BLOCKING)
     user_id: str = Field(default="essaycoach-service", max_length=128)
     rubric_id: int | None = Field(default=None)
 
     @field_validator("response_mode")
     @classmethod
-    def validate_response_mode(cls, v: str) -> str:
-        if v not in ("blocking", "streaming"):
+    def validate_response_mode(cls, v: ResponseMode) -> ResponseMode:
+        if v not in (ResponseMode.BLOCKING, ResponseMode.STREAMING):
             raise ValueError("response_mode must be 'blocking' or 'streaming'")
         return v
 
@@ -141,7 +143,7 @@ class WorkflowRunResponse(BaseModel):
     # Use string type for JSON data to avoid conversion issues
     data: str = Field(default="{}", description="Additional data as JSON string")
     inputs: str = Field(default="{}", description="Input parameters as JSON string")
-    response_mode: str = Field(..., description="Requested response mode")
+    response_mode: ResponseMode | str = Field(..., description="Requested response mode")
     created_at: datetime = Field(default_factory=datetime.now)
 
 

@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+from api_v2.types.ids import (
+    UserId, ClassId, TaskId, SubmissionId, FeedbackId, RubricId, RubricItemId, EnrollmentId, UnitId
+)
 from datetime import datetime
 from decimal import Decimal
 from typing import Annotated  # For Pydantic V2 compatible FilterSchema syntax
@@ -8,6 +11,17 @@ from ninja import FilterLookup, FilterSchema, Schema  # FieldLookup replaces Fie
 from ninja.orm import ModelSchema
 from pydantic import Field
 
+from api_v2.types.enums import (
+    ClassStatus,
+    ClassTerm,
+    FeedbackSource,
+    ImprovementTrend,
+    TaskStatus,
+    UserRole,
+    UserStatus,
+    SubmissionStatus,
+    Visibility,
+)
 from core.models import (
     Class,
     Enrollment,
@@ -34,8 +48,8 @@ class UserIn(Schema):
     password: str
     user_fname: str | None = None
     user_lname: str | None = None
-    user_role: str = "student"
-    user_status: str = "active"
+    user_role: UserRole = UserRole.STUDENT
+    user_status: UserStatus = UserStatus.ACTIVE
     is_active: bool = True
     is_staff: bool = False
 
@@ -47,13 +61,16 @@ class UserUpdateIn(Schema):
     password: str | None = None
     user_fname: str | None = None
     user_lname: str | None = None
-    user_role: str | None = None
-    user_status: str | None = None
+    user_role: UserRole | None = None
+    user_status: UserStatus | None = None
     is_active: bool | None = None
     is_staff: bool | None = None
 
 
 class UserOut(ModelSchema):
+    user_role: UserRole
+    user_status: UserStatus
+
     """Output schema for users - auto-generated from User model."""
 
     class Meta:
@@ -79,7 +96,7 @@ class UserOut(ModelSchema):
 class UnitIn(Schema):
     """Input schema for creating units with validation."""
 
-    unit_id: str = Field(..., max_length=10)
+    unit_id: UnitId = Field(..., max_length=10)
     unit_name: str = Field(..., max_length=50)
     unit_desc: str | None = None
 
@@ -100,16 +117,19 @@ class UnitOut(ModelSchema):
 class ClassIn(Schema):
     """Input schema for creating classes."""
 
-    unit_id_unit: str
+    unit_id_unit: UnitId
     class_name: str
     class_desc: str | None = None
     class_join_code: str | None = None
-    class_term: str = "full_year"
+    class_term: ClassTerm = ClassTerm.FULL_YEAR
     class_year: int | None = None
     class_size: int = 0
 
 
 class ClassOut(ModelSchema):
+    class_status: ClassStatus
+    class_term: ClassTerm
+
     """Output schema for classes - auto-generated from Class model."""
 
     class Meta:
@@ -131,14 +151,14 @@ class ClassOut(ModelSchema):
 class ClassDetailOut(Schema):
     """Output schema for classes with computed unit_name field."""
 
-    class_id: int
-    unit_id_unit: str
+    class_id: ClassId
+    unit_id_unit: UnitId
     class_name: str | None = None
     class_desc: str | None = None
     class_join_code: str | None = None
-    class_term: str | None = None
+    class_term: ClassTerm | None = None
     class_year: int | None = None
-    class_status: str | None = None
+    class_status: ClassStatus | None = None
 
 
 # =============================================================================
@@ -149,9 +169,9 @@ class ClassDetailOut(Schema):
 class EnrollmentIn(Schema):
     """Input schema for creating enrollments."""
 
-    user_id_user: int
-    class_id_class: int
-    unit_id_unit: str
+    user_id_user: UserId
+    class_id_class: ClassId
+    unit_id_unit: UnitId
 
 
 class EnrollmentOut(ModelSchema):
@@ -177,22 +197,22 @@ class MarkingRubricIn(Schema):
     """Input schema for creating marking rubrics with validation."""
 
     rubric_desc: str | None = Field(None, max_length=100)
-    visibility: str = "private"
+    visibility: Visibility = Visibility.PRIVATE
 
 
 class MarkingRubricOut(Schema):
     """Output schema for marking rubrics."""
-    rubric_id: int
-    user_id_user: int
+    rubric_id: RubricId
+    user_id_user: UserId
     rubric_create_time: datetime
     rubric_desc: str | None = None
-    visibility: str = "private"
+    visibility: Visibility = Visibility.PRIVATE
 
 
 class RubricVisibilityUpdate(Schema):
     """Input schema for toggling rubric visibility."""
 
-    visibility: str = Field(..., description="Visibility status: 'public' or 'private'")
+    visibility: Visibility = Field(..., description="Visibility status: 'public' or 'private'")
 
 
 # =============================================================================
@@ -203,7 +223,7 @@ class RubricVisibilityUpdate(Schema):
 class RubricItemIn(Schema):
     """Input schema for creating rubric items with validation."""
 
-    rubric_id_marking_rubric: int
+    rubric_id_marking_rubric: RubricId
     rubric_item_name: str = Field(..., max_length=50)
     rubric_item_weight: Decimal
 
@@ -229,7 +249,7 @@ class RubricItemOut(ModelSchema):
 class RubricLevelDescIn(Schema):
     """Input schema for creating rubric level descriptions."""
 
-    rubric_item_id_rubric_item: int
+    rubric_item_id_rubric_item: RubricItemId
     level_min_score: int
     level_max_score: int
     level_desc: str
@@ -257,18 +277,20 @@ class RubricLevelDescOut(ModelSchema):
 class TaskIn(Schema):
     """Input schema for creating tasks."""
 
-    unit_id_unit: str
-    rubric_id_marking_rubric: int
+    unit_id_unit: UnitId
+    rubric_id_marking_rubric: RubricId
     task_due_datetime: datetime
     task_title: str
     task_desc: str | None = None
     task_instructions: str = ""
-    class_id_class: int | None = None
-    task_status: str = "draft"
+    class_id_class: ClassId | None = None
+    task_status: TaskStatus = TaskStatus.DRAFT
     task_allow_late_submission: bool = False
 
 
 class TaskOut(ModelSchema):
+    task_status: TaskStatus
+
     """Output schema for tasks - auto-generated from Task model."""
 
     class Meta:
@@ -296,8 +318,8 @@ class TaskOut(ModelSchema):
 class SubmissionIn(Schema):
     """Input schema for creating submissions."""
 
-    task_id_task: int
-    user_id_user: int
+    task_id_task: TaskId
+    user_id_user: UserId
     submission_txt: str
 
 
@@ -323,8 +345,8 @@ class SubmissionOut(ModelSchema):
 class FeedbackIn(Schema):
     """Input schema for creating feedback."""
 
-    submission_id_submission: int
-    user_id_user: int
+    submission_id_submission: SubmissionId
+    user_id_user: UserId
 
 
 class FeedbackOut(ModelSchema):
@@ -343,14 +365,16 @@ class FeedbackOut(ModelSchema):
 class FeedbackItemIn(Schema):
     """Input schema for creating feedback items."""
 
-    feedback_id_feedback: int
-    rubric_item_id_rubric_item: int
+    feedback_id_feedback: FeedbackId
+    rubric_item_id_rubric_item: RubricItemId
     feedback_item_score: int
     feedback_item_comment: str | None = None
-    feedback_item_source: str = "human"
+    feedback_item_source: FeedbackSource = FeedbackSource.HUMAN
 
 
 class FeedbackItemOut(ModelSchema):
+    feedback_item_source: FeedbackSource
+
     """Output schema for feedback items - auto-generated from FeedbackItem model."""
 
     class Meta:
@@ -373,8 +397,8 @@ class FeedbackItemOut(ModelSchema):
 class TeachingAssnIn(Schema):
     """Input schema for creating teaching assignments."""
 
-    user_id_user: int
-    class_id_class: int
+    user_id_user: UserId
+    class_id_class: ClassId
 
 
 class TeachingAssnOut(ModelSchema):
@@ -423,7 +447,7 @@ class RubricImportOut(Schema):
     """Output schema for rubric import results."""
 
     success: bool
-    rubric_id: int | None = None
+    rubric_id: RubricId | None = None
     rubric_name: str | None = None
     items_count: int | None = None
     levels_count: int | None = None
@@ -443,47 +467,47 @@ class RubricImportOut(Schema):
 class UnitFilterParams(FilterSchema):
     """Filter parameters for Unit list endpoint."""
 
-    unit_id: str | None = None
+    unit_id: UnitId | None = None
     unit_name: Annotated[str | None, FilterLookup(q="unit_name__icontains")] = None
 
 
 class ClassFilterParams(FilterSchema):
     """Filter parameters for Class list endpoint."""
 
-    unit_id_unit: str | None = None
+    unit_id_unit: UnitId | None = None
     class_size__gte: int | None = None
     class_size__lte: int | None = None
-    class_status: str | None = None
+    class_status: ClassStatus | None = None
     class_name: Annotated[str | None, FilterLookup(q="class_name__icontains")] = None
 
 
 class EnrollmentFilterParams(FilterSchema):
     """Filter parameters for Enrollment list endpoint."""
 
-    user_id_user: int | None = None
-    class_id_class: int | None = None
-    unit_id_unit: str | None = None
+    user_id_user: UserId | None = None
+    class_id_class: ClassId | None = None
+    unit_id_unit: UnitId | None = None
 
 
 class RubricFilterParams(FilterSchema):
     """Filter parameters for MarkingRubric list endpoint."""
 
-    user_id_user: int | None = Field(None, description="Filter by user ID")
-    visibility: str | None = Field(None, description="Filter by visibility (public/private)")
+    user_id_user: UserId | None = Field(None, description="Filter by user ID")
+    visibility: Visibility | None = Field(None, description="Filter by visibility (public/private)")
     rubric_desc: Annotated[str | None, FilterLookup(q="rubric_desc__icontains")] = None
 
 
 class RubricItemFilterParams(FilterSchema):
     """Filter parameters for RubricItem list endpoint."""
 
-    rubric_id_marking_rubric: int | None = None
+    rubric_id_marking_rubric: RubricId | None = None
     rubric_item_name: Annotated[str | None, FilterLookup(q="rubric_item_name__icontains")] = None
 
 
 class RubricLevelDescFilterParams(FilterSchema):
     """Filter parameters for RubricLevelDesc list endpoint."""
 
-    rubric_item_id_rubric_item: int | None = None
+    rubric_item_id_rubric_item: RubricItemId | None = None
     level_min_score__gte: int | None = None
     level_max_score__lte: int | None = None
 
@@ -491,33 +515,33 @@ class RubricLevelDescFilterParams(FilterSchema):
 class TaskFilterParams(FilterSchema):
     """Filter parameters for Task list endpoint."""
 
-    unit_id_unit: str | None = None
-    rubric_id_marking_rubric: int | None = None
+    unit_id_unit: UnitId | None = None
+    rubric_id_marking_rubric: RubricId | None = None
     task_due_datetime__gte: datetime | None = None
     task_due_datetime__lte: datetime | None = None
-    class_id_class: int | None = None
-    task_status: str | None = None
+    class_id_class: ClassId | None = None
+    task_status: TaskStatus | None = None
     task_title: Annotated[str | None, FilterLookup(q="task_title__icontains")] = None
 
 class SubmissionFilterParams(FilterSchema):
     """Filter parameters for Submission list endpoint."""
 
-    task_id_task: int | None = None
-    user_id_user: int | None = None
+    task_id_task: TaskId | None = None
+    user_id_user: UserId | None = None
 
 
 class FeedbackFilterParams(FilterSchema):
     """Filter parameters for Feedback list endpoint."""
 
-    submission_id_submission: int | None = None
-    user_id_user: int | None = None
+    submission_id_submission: SubmissionId | None = None
+    user_id_user: UserId | None = None
 
 
 class FeedbackItemFilterParams(FilterSchema):
     """Filter parameters for FeedbackItem list endpoint."""
 
-    feedback_id_feedback: int | None = None
-    rubric_item_id_rubric_item: int | None = None
+    feedback_id_feedback: FeedbackId | None = None
+    rubric_item_id_rubric_item: RubricItemId | None = None
     feedback_item_score__gte: int | None = None
     feedback_item_score__lte: int | None = None
 
@@ -525,8 +549,8 @@ class FeedbackItemFilterParams(FilterSchema):
 class TeachingAssnFilterParams(FilterSchema):
     """Filter parameters for TeachingAssn list endpoint."""
 
-    user_id_user: int | None = None
-    class_id_class: int | None = None
+    user_id_user: UserId | None = None
+    class_id_class: ClassId | None = None
 
 
 class PaginationParams(Schema):
@@ -539,8 +563,8 @@ class PaginationParams(Schema):
 class UserFilterParams(FilterSchema):
     """Filter parameters for user list endpoints with multi-field search."""
 
-    user_role: str | None = None
-    user_status: str | None = None
+    user_role: UserRole | None = None
+    user_status: UserStatus | None = None
     search: Annotated[str | None, FilterLookup(q=["user_email", "user_fname", "user_lname"])] = None
 
 
@@ -579,7 +603,7 @@ class ProgressEntryOut(Schema):
 class UserProgressOut(Schema):
     """Output schema for user progress over time."""
 
-    user_id: int
+    user_id: UserId
     entries: list[ProgressEntryOut]
 
 
@@ -593,7 +617,7 @@ class DashboardUserInfoOut(Schema):
 
     id: int
     name: str
-    role: str
+    role: UserRole | str
     email: str
 
 
@@ -630,7 +654,7 @@ class StudentStatsOut(DashboardStatsOut):
 
     essaysSubmitted: int
     avgScore: float | None
-    improvementTrend: str
+    improvementTrend: ImprovementTrend | str
     feedbackReceived: int
 
 
@@ -664,7 +688,7 @@ class GradingQueueItemOut(Schema):
     essayTitle: str
     submittedAt: datetime
     dueDate: datetime | None = None
-    status: str | None = None
+    status: SubmissionStatus | None = None
     aiScore: float | None = None
 
 
@@ -673,7 +697,7 @@ class StudentEssayOut(Schema):
 
     id: int
     title: str
-    status: str
+    status: SubmissionStatus
     submittedAt: datetime
     score: float | None
     unitName: str | None

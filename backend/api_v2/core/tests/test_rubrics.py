@@ -345,7 +345,7 @@ class TestRubricVisibilityToggle:
         assert response.status_code == 403
 
     def test_toggle_visibility_invalid_value(self, lecturer_user, private_rubric):
-        """Invalid visibility value returns 400."""
+        """Invalid visibility value returns 422 (Pydantic validation)."""
         client = Client()
         jwt_pair = create_jwt_pair(lecturer_user)
         client.defaults["HTTP_AUTHORIZATION"] = f"Bearer {jwt_pair.access}"
@@ -355,8 +355,8 @@ class TestRubricVisibilityToggle:
             content_type="application/json",
             data={"visibility": "invalid"},
         )
-        assert response.status_code == 400
-        # Ninja uses 'detail' key for error messages
+        assert response.status_code == 422
+        # Ninja returns 422 for Pydantic enum validation errors
 
     def test_toggle_visibility_not_found(self, lecturer_user):
         """Non-existent rubric returns 404."""

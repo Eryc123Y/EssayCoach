@@ -1,31 +1,37 @@
 """
 Type utilities and helpers for Django Ninja API v2.
 
-This module provides:
-- Literal type definitions for enums
-- TypedDict for API responses
-- Helper functions for DRF → Ninja conversions
-- Pagination utilities
+This module re-exports centralized types from ``api_v2.types`` and provides
+helper functions for pagination and response formatting.
+
+Migration note (2026-02-28): Literal types and bare int aliases previously
+defined here have been replaced by StrEnum and NewType definitions in
+``api_v2.types.enums`` and ``api_v2.types.ids``. This module now re-exports
+them for backward compatibility.
 """
 
 from __future__ import annotations
 
-from typing import Literal, TypedDict
+from typing import TypedDict
 
-# =============================================================================
-# Literal Types (Enums)
-# =============================================================================
+# Re-export all enums from centralized kernel
+from api_v2.types.enums import (  # noqa: F401
+    FeedbackSource,
+    ResponseMode,
+    UserRole,
+    UserStatus,
+    WorkflowStatus,
+)
 
-# User-related
-UserRole = Literal["student", "lecturer", "admin"]
-UserStatus = Literal["active", "suspended", "unregistered"]
-
-# Feedback-related
-FeedbackSource = Literal["ai", "human", "revised"]
-
-# AI Feedback-related
-ResponseMode = Literal["blocking", "streaming"]
-WorkflowStatus = Literal["pending", "running", "succeeded", "failed", "stopped"]
+# Re-export all typed IDs from centralized kernel
+from api_v2.types.ids import (  # noqa: F401
+    ClassId,
+    FeedbackId,
+    RubricId,
+    SubmissionId,
+    TaskId,
+    UserId,
+)
 
 # =============================================================================
 # TypedDict for API Responses
@@ -164,18 +170,9 @@ def format_error_response(
 
 
 # =============================================================================
-# Type Aliases for Common Patterns
+# Score type aliases
 # =============================================================================
 
-# ID types for type safety
-UserId = int
-ClassId = int
-RubricId = int
-TaskId = int
-SubmissionId = int
-FeedbackId = int
-
-# Score types
 Score = float
 Percentage = float
 Weight = float

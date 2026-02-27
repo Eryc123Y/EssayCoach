@@ -3,6 +3,11 @@ Shared Pydantic schemas for Django Ninja API v2.
 
 These schemas provide base classes and common patterns used across all API modules.
 All schemas use Pydantic v2 syntax for maximum compatibility and performance.
+
+NOTE: Simple utility schemas (PaginationParams, MessageResponse, ErrorResponse)
+also live in ``api_v2.types.common`` for lightweight imports. The classes defined
+here have richer structure (e.g. ErrorResponse with ErrorDetail) and remain the
+canonical version for endpoint responses.
 """
 
 from __future__ import annotations
@@ -12,6 +17,20 @@ from typing import Any
 
 from ninja import Schema
 from pydantic import Field
+
+# Re-export typed IDs from the centralized kernel for convenience.
+from api_v2.types.ids import (  # noqa: F401
+    BadgeId,
+    ClassId,
+    EnrollmentId,
+    FeedbackId,
+    RubricId,
+    RubricItemId,
+    SubmissionId,
+    TaskId,
+    UnitId,
+    UserId,
+)
 
 
 class TimestampSchema(Schema):
@@ -101,8 +120,7 @@ class BaseFilterSchema(Schema):
     ordering: str | None = Field(None, description="Field to order by (prefix with - for descending)")
 
 
-# Common field type aliases for consistency
-UserId = int
+# Common field type aliases for consistency -- prefer NewType IDs from api_v2.types.ids
 Score = float
 Percentage = float
 Timestamp = datetime

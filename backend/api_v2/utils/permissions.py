@@ -10,6 +10,8 @@ from typing import TYPE_CHECKING
 
 from ninja.errors import HttpError
 
+from api_v2.types.enums import UserRole
+
 if TYPE_CHECKING:
     from django.http import HttpRequest
 
@@ -23,13 +25,13 @@ class PermissionDenied(HttpError):
         super().__init__(403, message)
 
 
-def has_role(user: User, roles: list[str]) -> bool:
+def has_role(user: User, roles: list[str | UserRole]) -> bool:
     """
     Check if user has one of the specified roles.
 
     Args:
         user: User instance to check
-        roles: List of allowed roles (e.g., ['admin', 'lecturer'])
+        roles: List of allowed roles (e.g., [UserRole.ADMIN, UserRole.LECTURER])
 
     Returns:
         True if user has one of the specified roles, False otherwise
@@ -39,7 +41,7 @@ def has_role(user: User, roles: list[str]) -> bool:
     return getattr(user, "user_role", None) in roles
 
 
-def check_role(request: HttpRequest, roles: list[str]) -> None:
+def check_role(request: HttpRequest, roles: list[str | UserRole]) -> None:
     """
     Check if the authenticated user has one of the specified roles.
     Raises PermissionDenied if the user doesn't have the required role.
@@ -54,7 +56,7 @@ def check_role(request: HttpRequest, roles: list[str]) -> None:
     user = getattr(request, "auth", None)
     if not has_role(user, roles):
         raise PermissionDenied(
-            f"This action requires one of the following roles: {', '.join(roles)}"
+            f"This action requires one of the following roles: {', '.join(str(r) for r in roles)}"
         )
 
 
@@ -69,7 +71,7 @@ class IsAdminOrLecturer:
             # ... rest of the logic
     """
 
-    allowed_roles = ["admin", "lecturer"]
+    allowed_roles: list[str | UserRole] = [UserRole.ADMIN, UserRole.LECTURER]
 
     def check(self, request: HttpRequest) -> None:
         """
@@ -107,7 +109,7 @@ class IsAdmin:
             # ... rest of the logic
     """
 
-    allowed_roles = ["admin"]
+    allowed_roles: list[str | UserRole] = [UserRole.ADMIN]
 
     def check(self, request: HttpRequest) -> None:
         """Check if the user is admin."""
@@ -147,7 +149,7 @@ class IsOwnerOrAdmin:
             raise PermissionDenied("Authentication required")
 
         # Admin can do anything
-        if has_role(user, ["admin"]):
+        if has_role(user, [UserRole.ADMIN]):
             return
 
         # Users can only modify themselves

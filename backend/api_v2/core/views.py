@@ -1,5 +1,8 @@
 from __future__ import annotations
 
+from api_v2.types.ids import (
+    UserId, ClassId, TaskId, SubmissionId, FeedbackId, RubricId, RubricItemId, EnrollmentId, UnitId
+)
 from datetime import datetime, timedelta
 
 from django.conf import settings
@@ -127,7 +130,7 @@ def _build_dashboard_user_info(user: User) -> DashboardUserInfoOut:
 
 
 def _make_activity_item(
-    item_id: int,
+    item_id: RubricItemId,
     activity_type: str,
     title: str,
     description: str,
@@ -594,7 +597,7 @@ def get_current_user(request: HttpRequest):
 
 
 @router.get("/users/{user_id}/", response=UserOut)
-def get_user(request: HttpRequest, user_id: int):
+def get_user(request: HttpRequest, user_id: UserId):
     """
     Get a specific user.
 
@@ -615,7 +618,7 @@ def get_user(request: HttpRequest, user_id: int):
 
 
 @router.put("/users/{user_id}/", response=UserOut)
-def update_user(request: HttpRequest, user_id: int, data: UserUpdateIn):
+def update_user(request: HttpRequest, user_id: UserId, data: UserUpdateIn):
     """
     Update a user.
 
@@ -657,8 +660,8 @@ def update_user(request: HttpRequest, user_id: int, data: UserUpdateIn):
         raise HttpError(404, "User not found")
 
 
-@router.delete("/users/{user_id}/")
-def delete_user(request: HttpRequest, user_id: int):
+@router.delete("/users/{user_id}/", response=dict)
+def delete_user(request: HttpRequest, user_id: UserId):
     """
     Delete a user.
 
@@ -689,7 +692,7 @@ def delete_user(request: HttpRequest, user_id: int):
 
 
 @router.get("/users/{user_id}/stats/", response=UserStatsOut)
-def get_user_stats(request: HttpRequest, user_id: int):
+def get_user_stats(request: HttpRequest, user_id: UserId):
     """
     Get user statistics including essay count, average score, and activity.
 
@@ -738,7 +741,7 @@ def get_user_stats(request: HttpRequest, user_id: int):
 
 
 @router.get("/users/{user_id}/badges/", response=list[BadgeOut])
-def get_user_badges(request: HttpRequest, user_id: int):
+def get_user_badges(request: HttpRequest, user_id: UserId):
     """
     Get user's earned badges.
 
@@ -778,7 +781,7 @@ def get_user_badges(request: HttpRequest, user_id: int):
 
 
 @router.get("/users/{user_id}/progress/", response=UserProgressOut)
-def get_user_progress(request: HttpRequest, user_id: int, period: str = "month"):
+def get_user_progress(request: HttpRequest, user_id: UserId, period: str = "month"):
     """
     Get user's progress over time (weekly or monthly aggregation).
 
@@ -926,7 +929,7 @@ def create_unit(request: HttpRequest, data: UnitIn):
 
 
 @router.get("/units/{unit_id}/", response=UnitOut)
-def get_unit(request: HttpRequest, unit_id: str):
+def get_unit(request: HttpRequest, unit_id: UnitId):
     try:
         return Unit.objects.get(unit_id=unit_id)
     except Unit.DoesNotExist:
@@ -934,7 +937,7 @@ def get_unit(request: HttpRequest, unit_id: str):
 
 
 @router.put("/units/{unit_id}/", response=UnitOut)
-def update_unit(request: HttpRequest, unit_id: str, data: UnitIn):
+def update_unit(request: HttpRequest, unit_id: UnitId, data: UnitIn):
     try:
         unit = Unit.objects.get(unit_id=unit_id)
         for key, value in data.dict().items():
@@ -945,8 +948,8 @@ def update_unit(request: HttpRequest, unit_id: str, data: UnitIn):
         raise HttpError(404, "Unit not found")
 
 
-@router.delete("/units/{unit_id}/")
-def delete_unit(request: HttpRequest, unit_id: str):
+@router.delete("/units/{unit_id}/", response=dict)
+def delete_unit(request: HttpRequest, unit_id: UnitId):
     try:
         unit = Unit.objects.get(unit_id=unit_id)
         unit.delete()
@@ -1018,7 +1021,7 @@ def join_class_by_code(request: HttpRequest, join_code: str):
 
 
 @router.get("/classes/{class_id}/", response=ClassOut)
-def get_class(request: HttpRequest, class_id: int):
+def get_class(request: HttpRequest, class_id: ClassId):
     try:
         return Class.objects.get(class_id=class_id)
     except Class.DoesNotExist:
@@ -1026,7 +1029,7 @@ def get_class(request: HttpRequest, class_id: int):
 
 
 @router.put("/classes/{class_id}/", response=ClassOut)
-def update_class(request: HttpRequest, class_id: int, data: ClassIn):
+def update_class(request: HttpRequest, class_id: ClassId, data: ClassIn):
     try:
         class_obj = Class.objects.get(class_id=class_id)
         if data.unit_id_unit:
@@ -1048,8 +1051,8 @@ def update_class(request: HttpRequest, class_id: int, data: ClassIn):
         raise HttpError(404, "Class not found")
 
 
-@router.delete("/classes/{class_id}/")
-def delete_class(request: HttpRequest, class_id: int):
+@router.delete("/classes/{class_id}/", response=dict)
+def delete_class(request: HttpRequest, class_id: ClassId):
     try:
         class_obj = Class.objects.get(class_id=class_id)
         class_obj.delete()
@@ -1076,15 +1079,15 @@ def create_enrollment(request: HttpRequest, data: EnrollmentIn):
 
 
 @router.get("/enrollments/{enrollment_id}/", response=EnrollmentOut)
-def get_enrollment(request: HttpRequest, enrollment_id: int):
+def get_enrollment(request: HttpRequest, enrollment_id: EnrollmentId):
     try:
         return Enrollment.objects.get(enrollment_id=enrollment_id)
     except Enrollment.DoesNotExist:
         raise HttpError(404, "Enrollment not found")
 
 
-@router.delete("/enrollments/{enrollment_id}/")
-def delete_enrollment(request: HttpRequest, enrollment_id: int):
+@router.delete("/enrollments/{enrollment_id}/", response=dict)
+def delete_enrollment(request: HttpRequest, enrollment_id: EnrollmentId):
     try:
         enrollment = Enrollment.objects.get(enrollment_id=enrollment_id)
         enrollment.delete()
@@ -1238,7 +1241,7 @@ def import_rubric_from_pdf_with_ai(request: HttpRequest, file: UploadedFile, rub
 
 
 @router.get("/rubrics/{rubric_id}/", response=MarkingRubricOut)
-def get_rubric(request: HttpRequest, rubric_id: int):
+def get_rubric(request: HttpRequest, rubric_id: RubricId):
     """
     Get a specific rubric by ID.
 
@@ -1271,7 +1274,7 @@ def get_rubric(request: HttpRequest, rubric_id: int):
 
 
 @router.get("/rubrics/{rubric_id}/detail/", response=RubricDetailOut)
-def get_rubric_detail(request: HttpRequest, rubric_id: int):
+def get_rubric_detail(request: HttpRequest, rubric_id: RubricId):
     """
     Get rubric with nested items and level descriptions.
 
@@ -1353,12 +1356,12 @@ def get_rubric_detail(request: HttpRequest, rubric_id: int):
 
 
 @router.get("/rubrics/{rubric_id}/detail_with_items/", response=RubricDetailOut)
-def get_rubric_detail_with_items(request: HttpRequest, rubric_id: int):
+def get_rubric_detail_with_items(request: HttpRequest, rubric_id: RubricId):
     return get_rubric_detail(request, rubric_id)
 
 
 @router.put("/rubrics/{rubric_id}/", response=MarkingRubricOut)
-def update_rubric(request: HttpRequest, rubric_id: int, data: MarkingRubricIn):
+def update_rubric(request: HttpRequest, rubric_id: RubricId, data: MarkingRubricIn):
     """
     Update a rubric.
 
@@ -1396,7 +1399,7 @@ def update_rubric(request: HttpRequest, rubric_id: int, data: MarkingRubricIn):
 
 
 @router.patch("/rubrics/{rubric_id}/visibility/", response=MarkingRubricOut)
-def update_rubric_visibility(request: HttpRequest, rubric_id: int, data: RubricVisibilityUpdate):
+def update_rubric_visibility(request: HttpRequest, rubric_id: RubricId, data: RubricVisibilityUpdate):
     """
     Toggle rubric visibility between public and private.
 
@@ -1431,8 +1434,8 @@ def update_rubric_visibility(request: HttpRequest, rubric_id: int, data: RubricV
         raise HttpError(404, "Rubric not found")
 
 
-@router.delete("/rubrics/{rubric_id}/")
-def delete_rubric(request: HttpRequest, rubric_id: int):
+@router.delete("/rubrics/{rubric_id}/", response=dict)
+def delete_rubric(request: HttpRequest, rubric_id: RubricId):
     """
     Delete a rubric.
 
@@ -1477,7 +1480,7 @@ def create_rubric_item(request: HttpRequest, data: RubricItemIn):
 
 
 @router.get("/rubric-items/{item_id}/", response=RubricItemOut)
-def get_rubric_item(request: HttpRequest, item_id: int):
+def get_rubric_item(request: HttpRequest, item_id: RubricItemId):
     try:
         return RubricItem.objects.get(rubric_item_id=item_id)
     except RubricItem.DoesNotExist:
@@ -1485,7 +1488,7 @@ def get_rubric_item(request: HttpRequest, item_id: int):
 
 
 @router.put("/rubric-items/{item_id}/", response=RubricItemOut)
-def update_rubric_item(request: HttpRequest, item_id: int, data: RubricItemIn):
+def update_rubric_item(request: HttpRequest, item_id: RubricItemId, data: RubricItemIn):
     try:
         item = RubricItem.objects.get(rubric_item_id=item_id)
         item.rubric_item_name = data.rubric_item_name
@@ -1496,8 +1499,8 @@ def update_rubric_item(request: HttpRequest, item_id: int, data: RubricItemIn):
         raise HttpError(404, "Rubric item not found")
 
 
-@router.delete("/rubric-items/{item_id}/")
-def delete_rubric_item(request: HttpRequest, item_id: int):
+@router.delete("/rubric-items/{item_id}/", response=dict)
+def delete_rubric_item(request: HttpRequest, item_id: RubricItemId):
     try:
         item = RubricItem.objects.get(rubric_item_id=item_id)
         item.delete()
@@ -1550,7 +1553,7 @@ def update_rubric_level(request: HttpRequest, level_id: int, data: RubricLevelDe
         raise HttpError(404, "Rubric level not found")
 
 
-@router.delete("/rubric-levels/{level_id}/")
+@router.delete("/rubric-levels/{level_id}/", response=dict)
 def delete_rubric_level(request: HttpRequest, level_id: int):
     try:
         level = RubricLevelDesc.objects.get(level_desc_id=level_id)
@@ -1611,7 +1614,7 @@ def create_task(request: HttpRequest, data: TaskIn):
 
 
 @router.get("/tasks/{task_id}/", response=TaskOut)
-def get_task(request: HttpRequest, task_id: int):
+def get_task(request: HttpRequest, task_id: TaskId):
     try:
         return Task.objects.get(task_id=task_id)
     except Task.DoesNotExist:
@@ -1619,7 +1622,7 @@ def get_task(request: HttpRequest, task_id: int):
 
 
 @router.put("/tasks/{task_id}/", response=TaskOut)
-def update_task(request: HttpRequest, task_id: int, data: TaskIn):
+def update_task(request: HttpRequest, task_id: TaskId, data: TaskIn):
     try:
         task = Task.objects.get(task_id=task_id)
         if data.unit_id_unit:
@@ -1640,8 +1643,8 @@ def update_task(request: HttpRequest, task_id: int, data: TaskIn):
         raise HttpError(404, "Task not found")
 
 
-@router.delete("/tasks/{task_id}/")
-def delete_task(request: HttpRequest, task_id: int):
+@router.delete("/tasks/{task_id}/", response=dict)
+def delete_task(request: HttpRequest, task_id: TaskId):
     try:
         task = Task.objects.get(task_id=task_id)
         task.delete()
@@ -1654,7 +1657,7 @@ def delete_task(request: HttpRequest, task_id: int):
 # =============================================================================
 
 @router.post("/tasks/{task_id}/publish/", response=TaskOut)
-def publish_task(request: HttpRequest, task_id: int):
+def publish_task(request: HttpRequest, task_id: TaskId):
     """Publish a task (lecturer/admin only)."""
     user = request.auth
     if user.user_role not in ["lecturer", "admin"]:
@@ -1669,7 +1672,7 @@ def publish_task(request: HttpRequest, task_id: int):
 
 
 @router.post("/tasks/{task_id}/unpublish/", response=TaskOut)
-def unpublish_task(request: HttpRequest, task_id: int):
+def unpublish_task(request: HttpRequest, task_id: TaskId):
     """Unpublish a task (lecturer/admin only)."""
     user = request.auth
     if user.user_role not in ["lecturer", "admin"]:
@@ -1684,7 +1687,7 @@ def unpublish_task(request: HttpRequest, task_id: int):
 
 
 @router.get("/tasks/{task_id}/submissions/", response=list[SubmissionOut])
-def get_task_submissions(request: HttpRequest, task_id: int):
+def get_task_submissions(request: HttpRequest, task_id: TaskId):
     """Get all submissions for a task."""
     user = request.auth
     try:
@@ -1723,7 +1726,7 @@ def create_submission(request: HttpRequest, data: SubmissionIn):
 
 
 @router.get("/submissions/{submission_id}/", response=SubmissionOut)
-def get_submission(request: HttpRequest, submission_id: int):
+def get_submission(request: HttpRequest, submission_id: SubmissionId):
     try:
         return Submission.objects.get(submission_id=submission_id)
     except Submission.DoesNotExist:
@@ -1731,7 +1734,7 @@ def get_submission(request: HttpRequest, submission_id: int):
 
 
 @router.put("/submissions/{submission_id}/", response=SubmissionOut)
-def update_submission(request: HttpRequest, submission_id: int, data: SubmissionIn):
+def update_submission(request: HttpRequest, submission_id: SubmissionId, data: SubmissionIn):
     try:
         submission = Submission.objects.get(submission_id=submission_id)
         submission.submission_txt = data.submission_txt
@@ -1741,8 +1744,8 @@ def update_submission(request: HttpRequest, submission_id: int, data: Submission
         raise HttpError(404, "Submission not found")
 
 
-@router.delete("/submissions/{submission_id}/")
-def delete_submission(request: HttpRequest, submission_id: int):
+@router.delete("/submissions/{submission_id}/", response=dict)
+def delete_submission(request: HttpRequest, submission_id: SubmissionId):
     try:
         submission = Submission.objects.get(submission_id=submission_id)
         submission.delete()
@@ -1774,15 +1777,15 @@ def create_feedback(request: HttpRequest, data: FeedbackIn):
 
 
 @router.get("/feedbacks/{feedback_id}/", response=FeedbackOut)
-def get_feedback(request: HttpRequest, feedback_id: int):
+def get_feedback(request: HttpRequest, feedback_id: FeedbackId):
     try:
         return Feedback.objects.get(feedback_id=feedback_id)
     except Feedback.DoesNotExist:
         raise HttpError(404, "Feedback not found")
 
 
-@router.delete("/feedbacks/{feedback_id}/")
-def delete_feedback(request: HttpRequest, feedback_id: int):
+@router.delete("/feedbacks/{feedback_id}/", response=dict)
+def delete_feedback(request: HttpRequest, feedback_id: FeedbackId):
     try:
         feedback = Feedback.objects.get(feedback_id=feedback_id)
         feedback.delete()
@@ -1817,7 +1820,7 @@ def create_feedback_item(request: HttpRequest, data: FeedbackItemIn):
 
 
 @router.get("/feedback-items/{item_id}/", response=FeedbackItemOut)
-def get_feedback_item(request: HttpRequest, item_id: int):
+def get_feedback_item(request: HttpRequest, item_id: RubricItemId):
     try:
         return FeedbackItem.objects.get(feedback_item_id=item_id)
     except FeedbackItem.DoesNotExist:
@@ -1825,7 +1828,7 @@ def get_feedback_item(request: HttpRequest, item_id: int):
 
 
 @router.put("/feedback-items/{item_id}/", response=FeedbackItemOut)
-def update_feedback_item(request: HttpRequest, item_id: int, data: FeedbackItemIn):
+def update_feedback_item(request: HttpRequest, item_id: RubricItemId, data: FeedbackItemIn):
     try:
         item = FeedbackItem.objects.get(feedback_item_id=item_id)
         item.feedback_item_score = data.feedback_item_score
@@ -1837,8 +1840,8 @@ def update_feedback_item(request: HttpRequest, item_id: int, data: FeedbackItemI
         raise HttpError(404, "Feedback item not found")
 
 
-@router.delete("/feedback-items/{item_id}/")
-def delete_feedback_item(request: HttpRequest, item_id: int):
+@router.delete("/feedback-items/{item_id}/", response=dict)
+def delete_feedback_item(request: HttpRequest, item_id: RubricItemId):
     try:
         item = FeedbackItem.objects.get(feedback_item_id=item_id)
         item.delete()
@@ -1877,7 +1880,7 @@ def get_teaching_assignment(request: HttpRequest, assignment_id: int):
         raise HttpError(404, "Teaching assignment not found")
 
 
-@router.delete("/teaching-assignments/{assignment_id}/")
+@router.delete("/teaching-assignments/{assignment_id}/", response=dict)
 def delete_teaching_assignment(request: HttpRequest, assignment_id: int):
     try:
         assignment = TeachingAssn.objects.get(teaching_assn_id=assignment_id)
@@ -1930,7 +1933,7 @@ def get_my_classes(request):
 # =============================================================================
 
 @router.get("/classes/{class_id}/students/", response=list[UserOut])
-def get_class_students(request: HttpRequest, class_id: int):
+def get_class_students(request: HttpRequest, class_id: ClassId):
     """Get all students in a class."""
     try:
         class_obj = Class.objects.get(class_id=class_id)
@@ -1941,7 +1944,7 @@ def get_class_students(request: HttpRequest, class_id: int):
 
 
 @router.post("/classes/{class_id}/students/", response=UserOut)
-def add_student_to_class(request: HttpRequest, class_id: int, user_id: int):
+def add_student_to_class(request: HttpRequest, class_id: ClassId, user_id: UserId):
     """Add a student to a class (admin/lecturer only)."""
     try:
         class_obj = Class.objects.get(class_id=class_id)
@@ -1966,8 +1969,8 @@ def add_student_to_class(request: HttpRequest, class_id: int, user_id: int):
         raise HttpError(404, "Student not found")
 
 
-@router.delete("/classes/{class_id}/students/{user_id}/")
-def remove_student_from_class(request: HttpRequest, class_id: int, user_id: int):
+@router.delete("/classes/{class_id}/students/{user_id}/", response=dict)
+def remove_student_from_class(request: HttpRequest, class_id: ClassId, user_id: UserId):
     """Remove a student from a class (admin/lecturer only)."""
     try:
         class_obj = Class.objects.get(class_id=class_id)
@@ -1985,7 +1988,7 @@ def remove_student_from_class(request: HttpRequest, class_id: int, user_id: int)
 
 
 @router.post("/classes/{class_id}/archive/", response=ClassOut)
-def archive_class(request: HttpRequest, class_id: int):
+def archive_class(request: HttpRequest, class_id: ClassId):
     """Archive a class."""
     from datetime import datetime
     user = request.auth
@@ -1999,8 +2002,8 @@ def archive_class(request: HttpRequest, class_id: int):
         return class_obj
     except Class.DoesNotExist:
         raise HttpError(404, "Class not found")
-@router.delete("/classes/{class_id}/leave/")
-def leave_class(request: HttpRequest, class_id: int):
+@router.delete("/classes/{class_id}/leave/", response=dict)
+def leave_class(request: HttpRequest, class_id: ClassId):
     """Student leaves a class."""
     user = request.auth
     if user.user_role != "student":

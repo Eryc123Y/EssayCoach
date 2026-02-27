@@ -252,7 +252,7 @@ def refresh_token(request: HttpRequest, data: RefreshTokenIn) -> RefreshTokenOut
     )
 
 
-@router.get("/getUserInfo")
+@router.get("/getUserInfo", response=UserInfoResponse)
 def get_user_info(request: HttpRequest) -> UserInfoResponse:
     """
     Get current user info.

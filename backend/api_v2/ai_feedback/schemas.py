@@ -7,8 +7,13 @@ They are compatible with the existing Pydantic schemas in ai_feedback/schemas.py
 
 from __future__ import annotations
 
+from api_v2.types.ids import (
+    UserId, ClassId, TaskId, SubmissionId, FeedbackId, RubricId, RubricItemId, EnrollmentId, UnitId
+)
 from datetime import datetime
 from typing import Literal
+from api_v2.types.enums import ResponseMode, WorkflowStatus
+
 
 from ninja import Schema
 from pydantic import Field, field_validator
@@ -34,8 +39,8 @@ class WorkflowRunIn(Schema):
         max_length=48,
         description="Optional language hint for the analysis",
     )
-    response_mode: Literal["blocking", "streaming"] = Field(
-        default="blocking",
+    response_mode: ResponseMode = Field(
+        default=ResponseMode.BLOCKING,
         description="Blocking waits for completion, streaming returns SSE chunks",
     )
     user_id: str = Field(
@@ -43,15 +48,15 @@ class WorkflowRunIn(Schema):
         max_length=128,
         description="Unique user identifier",
     )
-    rubric_id: int | None = Field(
+    rubric_id: RubricId | None = Field(
         default=None,
         description="ID of the marking rubric to use for grading",
     )
 
     @field_validator("response_mode")
     @classmethod
-    def validate_response_mode(cls, v: str) -> str:
-        if v not in ("blocking", "streaming"):
+    def validate_response_mode(cls, v: ResponseMode) -> ResponseMode:
+        if v not in (ResponseMode.BLOCKING, ResponseMode.STREAMING):
             raise ValueError("response_mode must be 'blocking' or 'streaming'")
         return v
 
@@ -63,14 +68,14 @@ class WorkflowRunOut(Schema):
     task_id: str = Field(..., description="Task identifier for tracking")
     data: WorkflowDataOut = Field(..., description="Workflow execution data")
     inputs: WorkflowInputsOut = Field(..., description="Input parameters")
-    response_mode: str = Field(..., description="Requested response mode")
+    response_mode: ResponseMode = Field(..., description="Requested response mode")
 
 
 class WorkflowDataOut(Schema):
     """Workflow execution data."""
 
     id: str = Field(..., description="Workflow run ID")
-    status: str = Field(..., description="Current status of the workflow")
+    status: WorkflowStatus = Field(..., description="Current status of the workflow")
     outputs: dict | None = Field(None, description="Workflow outputs if completed")
     error: str | None = Field(None, description="Error message if failed")
     elapsed_time: float | None = Field(None, description="Elapsed time in seconds")
@@ -124,7 +129,7 @@ class EssayAnalysisOut(Schema):
     suggestions: list[str] = Field(default_factory=list, description="General suggestions")
     analysis_metadata: dict = Field(default_factory=dict, description="Provider-specific metadata")
     rubric_name: str | None = Field(None, description="Name of the rubric used")
-    rubric_id: int | None = Field(None, description="ID of the rubric used")
+    rubric_id: RubricId | None = Field(None, description="ID of the rubric used")
 
 
 class WorkflowStatusOut(Schema):
@@ -132,7 +137,7 @@ class WorkflowStatusOut(Schema):
 
     workflow_run_id: str
     task_id: str
-    status: str
+    status: WorkflowStatus
     outputs: EssayAnalysisOut | None = None
     error_message: str | None = None
     elapsed_time_seconds: float | None = None
