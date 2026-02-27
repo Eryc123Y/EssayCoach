@@ -61,10 +61,7 @@ class DashboardService:
 
         # Count recent activity (last 7 days)
         week_ago = django_timezone.now() - timedelta(days=7)
-        recent_activity = Submission.objects.filter(
-            user_id_user=user,
-            submission_time__gte=week_ago
-        ).count()
+        recent_activity = Submission.objects.filter(user_id_user=user, submission_time__gte=week_ago).count()
 
         # Count pending notifications (placeholder - implement notifications module later)
         pending_notifications = 0
@@ -91,9 +88,7 @@ class DashboardService:
         )
 
         # Get classes this lecturer teaches
-        taught_class_ids = TeachingAssn.objects.filter(
-            user_id_user=user
-        ).values_list("class_id_class_id", flat=True)
+        taught_class_ids = TeachingAssn.objects.filter(user_id_user=user).values_list("class_id_class_id", flat=True)
 
         # Get grading queue - essays submitted to lecturer's classes that need review
         grading_queue = cls.get_grading_queue(user, limit=10)
@@ -210,9 +205,7 @@ class DashboardService:
         """Calculate lecturer statistics."""
         from api_v2.core.schemas import LecturerStatsOut
 
-        today_start = django_timezone.now().replace(
-            hour=0, minute=0, second=0, microsecond=0
-        )
+        today_start = django_timezone.now().replace(hour=0, minute=0, second=0, microsecond=0)
 
         # Essays reviewed today (feedback created today)
         essays_reviewed_today = Feedback.objects.filter(
@@ -220,9 +213,9 @@ class DashboardService:
             feedback_id__in=Feedback.objects.filter(
                 submission_id_submission__in=Submission.objects.filter(
                     task_id_task__in=Task.objects.filter(
-                        unit_id_unit__in=Class.objects.filter(
-                            class_id__in=taught_class_ids
-                        ).values_list("unit_id_unit_id", flat=True)
+                        unit_id_unit__in=Class.objects.filter(class_id__in=taught_class_ids).values_list(
+                            "unit_id_unit_id", flat=True
+                        )
                     )
                 )
             ),
@@ -230,15 +223,17 @@ class DashboardService:
         ).count()
 
         # Pending reviews (submissions without feedback)
-        pending_reviews = Submission.objects.filter(
-            task_id_task__in=Task.objects.filter(
-                unit_id_unit__in=Class.objects.filter(
-                    class_id__in=taught_class_ids
-                ).values_list("unit_id_unit_id", flat=True)
+        pending_reviews = (
+            Submission.objects.filter(
+                task_id_task__in=Task.objects.filter(
+                    unit_id_unit__in=Class.objects.filter(class_id__in=taught_class_ids).values_list(
+                        "unit_id_unit_id", flat=True
+                    )
+                )
             )
-        ).filter(
-            feedback__isnull=True
-        ).count()
+            .filter(feedback__isnull=True)
+            .count()
+        )
 
         # Active classes
         active_classes = len(taught_class_ids)
@@ -267,9 +262,7 @@ class DashboardService:
         avg_score = None
         feedbacks = Feedback.objects.filter(user_id_user=user)
         if feedbacks.exists():
-            avg_result = FeedbackItem.objects.filter(
-                feedback_id_feedback__in=feedbacks
-            ).aggregate(
+            avg_result = FeedbackItem.objects.filter(feedback_id_feedback__in=feedbacks).aggregate(
                 avg_score=Avg("feedback_item_score")
             )
             avg_score = avg_result["avg_score"]
@@ -278,15 +271,13 @@ class DashboardService:
         improvement_trend = "stable"
         if essays_submitted >= 2:
             # Get last 4 submissions
-            submissions = Submission.objects.filter(
-                user_id_user=user
-            ).order_by("-submission_time")[:4]
+            submissions = Submission.objects.filter(user_id_user=user).order_by("-submission_time")[:4]
 
             if submissions.count() >= 2:
                 submission_ids = list(submissions.values_list("submission_id", flat=True))
-                recent_feedback = Feedback.objects.filter(
-                    submission_id_submission__in=submission_ids
-                ).order_by("-submission_id_submission__submission_time")
+                recent_feedback = Feedback.objects.filter(submission_id_submission__in=submission_ids).order_by(
+                    "-submission_id_submission__submission_time"
+                )
 
                 # Get scores from feedback items
                 recent_scores = []
@@ -297,8 +288,10 @@ class DashboardService:
                         recent_scores.append(total)
 
                 if len(recent_scores) >= 2:
-                    first_half_avg = sum(recent_scores[:len(recent_scores)//2]) / (len(recent_scores)//2)
-                    second_half_avg = sum(recent_scores[len(recent_scores)//2:]) / (len(recent_scores) - len(recent_scores)//2)
+                    first_half_avg = sum(recent_scores[: len(recent_scores) // 2]) / (len(recent_scores) // 2)
+                    second_half_avg = sum(recent_scores[len(recent_scores) // 2 :]) / (
+                        len(recent_scores) - len(recent_scores) // 2
+                    )
 
                     if second_half_avg > first_half_avg * 1.1:
                         improvement_trend = "up"
@@ -325,26 +318,26 @@ class DashboardService:
         from api_v2.core.schemas import GradingQueueItemOut
 
         # Get classes this lecturer teaches
-        taught_class_ids = TeachingAssn.objects.filter(
-            user_id_user=user
-        ).values_list("class_id_class_id", flat=True)
+        taught_class_ids = TeachingAssn.objects.filter(user_id_user=user).values_list("class_id_class_id", flat=True)
 
         # Get submissions to lecturer's tasks without lecturer feedback
-        queue = Submission.objects.filter(
-            task_id_task__unit_id_unit__in=Class.objects.filter(
-                class_id__in=taught_class_ids
-            ).values_list("unit_id_unit_id", flat=True)
-        ).select_related(
-            "user_id_user",
-            "task_id_task",
-            "task_id_task__unit_id_unit",
-        ).prefetch_related(
-            "feedback"
-        ).filter(
-            feedback__isnull=True  # No feedback yet
-        ).order_by(
-            "submission_time"
-        )[:limit]
+        queue = (
+            Submission.objects.filter(
+                task_id_task__unit_id_unit__in=Class.objects.filter(class_id__in=taught_class_ids).values_list(
+                    "unit_id_unit_id", flat=True
+                )
+            )
+            .select_related(
+                "user_id_user",
+                "task_id_task",
+                "task_id_task__unit_id_unit",
+            )
+            .prefetch_related("feedback")
+            .filter(
+                feedback__isnull=True  # No feedback yet
+            )
+            .order_by("submission_time")[:limit]
+        )
 
         result = []
         now = django_timezone.now()
@@ -387,29 +380,28 @@ class DashboardService:
         if not class_ids:
             return []
 
-        classes = Class.objects.filter(
-            class_id__in=class_ids
-        ).select_related("unit_id_unit").annotate(
-            student_count=Count("enrollment", distinct=True),
-            essay_count=Count("enrollment__user_id_user__submission", distinct=True),
-        )[:limit]
+        classes = (
+            Class.objects.filter(class_id__in=class_ids)
+            .select_related("unit_id_unit")
+            .annotate(
+                student_count=Count("enrollment", distinct=True),
+                essay_count=Count("enrollment__user_id_user__submission", distinct=True),
+            )[:limit]
+        )
 
         result = []
         for cls in classes:
             # Calculate average score for this class's submissions
-            avg_score_result = Submission.objects.filter(
-                task_id_task__unit_id_unit=cls.unit_id_unit_id
-            ).filter(
-                feedback__isnull=False
-            ).aggregate(
-                avg=Avg("feedback__feedback_items__feedback_item_score")
+            avg_score_result = (
+                Submission.objects.filter(task_id_task__unit_id_unit=cls.unit_id_unit_id)
+                .filter(feedback__isnull=False)
+                .aggregate(avg=Avg("feedback__feedback_items__feedback_item_score"))
             )
             avg_score = avg_score_result["avg"] or 0.0
 
             # Count pending reviews
             pending_reviews = Submission.objects.filter(
-                task_id_task__unit_id_unit=cls.unit_id_unit_id,
-                feedback__isnull=True
+                task_id_task__unit_id_unit=cls.unit_id_unit_id, feedback__isnull=True
             ).count()
 
             # Calculate completion rate
@@ -439,16 +431,18 @@ class DashboardService:
         from api_v2.core.schemas import DashboardActivityItemOut
 
         # Get classes this lecturer teaches
-        taught_class_ids = TeachingAssn.objects.filter(
-            user_id_user=user
-        ).values_list("class_id_class_id", flat=True)
+        taught_class_ids = TeachingAssn.objects.filter(user_id_user=user).values_list("class_id_class_id", flat=True)
 
         # Get recent submissions to lecturer's classes
-        submissions = Submission.objects.filter(
-            task_id_task__unit_id_unit__in=Class.objects.filter(
-                class_id__in=taught_class_ids
-            ).values_list("unit_id_unit_id", flat=True)
-        ).select_related("user_id_user").order_by("-submission_time")[:limit]
+        submissions = (
+            Submission.objects.filter(
+                task_id_task__unit_id_unit__in=Class.objects.filter(class_id__in=taught_class_ids).values_list(
+                    "unit_id_unit_id", flat=True
+                )
+            )
+            .select_related("user_id_user")
+            .order_by("-submission_time")[:limit]
+        )
 
         result = []
         for sub in submissions:
@@ -474,19 +468,18 @@ class DashboardService:
         from api_v2.core.schemas import DashboardActivityItemOut
 
         # Get user's recent submissions
-        submissions = Submission.objects.filter(
-            user_id_user=user
-        ).order_by("-submission_time")[:limit]
+        submissions = Submission.objects.filter(user_id_user=user).order_by("-submission_time")[:limit]
 
         result = []
         for sub in submissions:
-            has_feedback = hasattr(sub, 'feedback') and sub.feedback is not None
+            has_feedback = hasattr(sub, "feedback") and sub.feedback is not None
             result.append(
                 DashboardActivityItemOut(
                     id=sub.submission_id,
                     type="feedback" if has_feedback else "submission",
                     title="Feedback Received" if has_feedback else "Essay Submitted",
-                    description=f"Submission #{sub.submission_id} - " + ("Feedback available" if has_feedback else "Awaiting review"),
+                    description=f"Submission #{sub.submission_id} - "
+                    + ("Feedback available" if has_feedback else "Awaiting review"),
                     timestamp=sub.submission_time,
                     icon="check-circle" if has_feedback else "file-text",
                     user_name=sub.user_id_user.get_full_name() or sub.user_id_user.user_email,
@@ -503,9 +496,7 @@ class DashboardService:
         from api_v2.core.schemas import DashboardActivityItemOut
 
         # Get recent submissions platform-wide
-        submissions = Submission.objects.all().select_related(
-            "user_id_user"
-        ).order_by("-submission_time")[:limit]
+        submissions = Submission.objects.all().select_related("user_id_user").order_by("-submission_time")[:limit]
 
         result = []
         for sub in submissions:
@@ -530,18 +521,16 @@ class DashboardService:
         """Get student's recent essay submissions."""
         from api_v2.core.schemas import StudentEssayOut
 
-        submissions = Submission.objects.filter(
-            user_id_user=user
-        ).select_related(
-            "task_id_task",
-            "task_id_task__unit_id_unit"
-        ).prefetch_related(
-            "feedback"
-        ).order_by("-submission_time")[:limit]
+        submissions = (
+            Submission.objects.filter(user_id_user=user)
+            .select_related("task_id_task", "task_id_task__unit_id_unit")
+            .prefetch_related("feedback")
+            .order_by("-submission_time")[:limit]
+        )
 
         result = []
         for sub in submissions:
-            has_feedback = hasattr(sub, 'feedback') and sub.feedback is not None
+            has_feedback = hasattr(sub, "feedback") and sub.feedback is not None
             status = "submitted"
             if has_feedback:
                 status = "ai_graded"
@@ -570,25 +559,21 @@ class DashboardService:
         from api_v2.core.schemas import ProgressEntryOut
 
         # Get submissions with feedback, ordered by time
-        submissions = Submission.objects.filter(
-            user_id_user=user,
-            feedback__isnull=False
-        ).select_related(
-            "task_id_task"
-        ).prefetch_related(
-            "feedback__feedback_item"
-        ).order_by("submission_time")[:limit]
+        submissions = (
+            Submission.objects.filter(user_id_user=user, feedback__isnull=False)
+            .select_related("task_id_task")
+            .prefetch_related("feedback__feedback_item")
+            .order_by("submission_time")[:limit]
+        )
 
         result = []
         prev_score = None
 
         for sub in submissions:
             # Calculate average score from feedback items
-            feedback = sub.feedback.first() if hasattr(sub, 'feedback') else None
+            feedback = sub.feedback.first() if hasattr(sub, "feedback") else None
             if feedback:
-                avg_score = feedback.feedback_item.aggregate(
-                    avg=Avg("feedback_item_score")
-                )["avg"] or 0.0
+                avg_score = feedback.feedback_item.aggregate(avg=Avg("feedback_item_score"))["avg"] or 0.0
             else:
                 avg_score = 0.0
 

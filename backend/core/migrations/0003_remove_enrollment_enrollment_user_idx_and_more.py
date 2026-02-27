@@ -7,7 +7,6 @@ import core.models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
         ("core", "0002_add_dashboard_indexes"),
     ]

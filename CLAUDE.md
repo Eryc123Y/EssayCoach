@@ -97,6 +97,10 @@ The `docs/prd/` directory contains an explicit contract for code generation:
 ### Version: v2.0.0 (v2-only migration target)
 
 #### ✅ Completed Features
+- **Backend Python Type System Refactor** ✅ Complete 2026-02-28
+  - Cleaned up API v2 schema drift and eliminated Pyright errors
+  - Built canonical types (Enums, IDs) for PRDs 11-14
+  - Stubbed out admin endpoints with explicit response contracts
 - **Dashboard Overview Route Hardening (PRD-04 follow-up)** ✅ Complete 2026-02-27
   - Added missing route page: `frontend/src/app/dashboard/overview/page.tsx`
   - Fixed layout composition to render overview page correctly: `frontend/src/app/dashboard/overview/layout.tsx`
@@ -203,49 +207,7 @@ The `docs/prd/` directory contains an explicit contract for code generation:
   - Frontend: types.ts + settingsService API client + 8 vitest tests
   - Location: `backend/api_v2/auth/views.py`, `backend/api_v2/auth/schemas.py`, `backend/core/models.py`
   - Migration: `core/0008_badge_user_preferences_userbadge_and_more.py` (includes User.preferences field)
-- Core AI essay analysis functionality
-- Dashboard overview (student/lecturer role-aware)
-- Rubric management (CRUD + PDF import via AI)
-- Essay Practice submission flow
-- API v2 core endpoints for existing features
-- RBAC permission checks on Users CRUD endpoints ✅ Added 2026-02-24
-- Cookie security hardening (httpOnly, sameSite, secure flags) ✅ Added 2026-02-24
-- Navigation links to 404 pages removed ✅ Fixed 2026-02-24
-- **JWT Refresh Token mechanism** ✅ Implemented 2026-02-24
-- **Dashboard API endpoint** ✅ Implemented 2026-02-25 (`/api/v2/core/dashboard/`)
-- **Comprehensive test coverage** ✅ Added 2026-02-25
-  - Backend: 50+ dashboard API tests (pytest)
-  - Frontend: Dashboard page + component tests (vitest)
-  - Integration tests for full workflows
-  - Backend: `/api/v2/auth/refresh/` with token rotation and blacklist
-  - Frontend: `useAuthRefresh` hook with auto-refresh 5min before expiry
-  - Security: httpOnly cookies, single-flight pattern, retry with backoff
-  - Tests: 52 tests passing (33 authStore + 19 useAuthRefresh)
-- **Dashboard Backend API (Phase 1)** ✅ Implemented 2026-02-25
-  - Endpoints: `/api/v2/core/dashboard/lecturer/`, `/api/v2/core/dashboard/student/`, `/api/v2/core/dashboard/admin/`
-  - Schemas: Role-specific response schemas (LecturerDashboardOut, StudentDashboardOut, AdminDashboardOut)
-  - Frontend: API client (`dashboardService`), TypeScript types, useDashboard hook
-  - Documentation: `docs/learnings/dashboard-refactor-phase1-backend.md`
-- **Dashboard Performance Optimization** ✅ Complete 2026-02-25
-  - Database indexes added: 11 new indexes on Submission, Feedback, Enrollment, FeedbackItem, Class tables
-  - Artificial delays removed from all dashboard slot pages (+3s TTI improvement)
-  - Documentation: `docs/learnings/dashboard-performance-optimization.md`
-- **Dashboard Frontend (Phase 2)** ✅ Complete 2026-02-25
-  - Role-based routing: `/dashboard/student`, `/dashboard/lecturer`, `/dashboard/admin`
-  - Components: 5 implemented (`DashboardHeader`, `ActivityFeed`, `LecturerDashboard`, `StudentDashboard`, `AdminDashboard`)
-  - Location: `frontend/src/features/dashboard/`, `frontend/src/app/dashboard/[role]/page.tsx`
-  - Documentation: `docs/learnings/dashboard-frontend-implementation.md`
-  - UI Designer Review: ✅ Complete (70% compliance score)
-  - Testing: ✅ Complete (201 tests created)
-  - Code Review: ✅ Complete (28 findings, 3 High priority security)
-- **Sidebar Fix** ✅ Complete 2026-02-25
-  - Added skeleton loading state during auth initialization
-  - Added placeholder UI when no classes available
-  - Fixed icon mismatches (`IconBook`, `IconChevronsDown`)
-  - Documentation: `docs/learnings/sidebar-fix-implementation.md`
-- **Test Account Quick-Fill** ✅ Complete 2026-02-25
-  - Added Student/Lecturer/Admin quick-fill buttons on login page
-  - Documentation: `docs/learnings/test-account-quick-fill.md`
+
 
 #### 🚧 In Progress / Needs Attention
 - RevisionChat Backend Integration (~8h) - **Deferred to LangGraph migration**
@@ -271,22 +233,7 @@ The `docs/prd/` directory contains an explicit contract for code generation:
 | 13 Users (Admin) | 🚧 Contract Bootstrapped | Backend typing/schemas defined. Core business logic pending. | 🟢 P3 |
 | 14 Help Center | 🚧 Contract Bootstrapped | Backend typing/schemas defined. Core business logic pending. | 🟢 P3 |
 
-| PRD Module | Status | Gap Summary | Priority |
-|------------|--------|-------------|----------|
-| 01 Landing Page | ✅ Implemented | - | - |
-| 02 Sign In | ✅ Implemented | - | - |
-| 03 Sign Up | ✅ Implemented | - | - |
-| 04 Dashboard Overview | ✅ Complete | Phase 3 complete: dashboard components + `useDashboardData` hook tests passing (201 tests total), frontend build passing, and duplicated dashboard type declarations removed. | - |
-| 05 Essay Practice | ✅ Complete | Skill radar chart implemented (68 tests). Missing: PDF export (~4h), RevisionChat backend (Deferred) | - |
-| 06 Rubrics | ⚠️ Partial | Missing: Visibility (public/private), student view, duplicate | 🟡 P2 |
-| 07 Settings | ✅ Implemented | Phase 2 Functional sync complete (role-based rendering, form hooks integrated, 3 tests passing) | - |
-| 08 Profile | ✅ Implemented | Phase 2 Functional sync complete (role-based tabs, Student/Lecturer/Admin specific views, 1 test passing) | - |
-| 09 Assignments (Tasks) | ✅ Complete | Backend: Model fields, schemas, CRUD + publish/unpublish/submissions endpoints complete with 10 tests. Frontend: Full components (list, card, form, submissions), routes (/dashboard/tasks/*), navigation, and 7 service tests. Build passes. | - |
-| 10 Classes | ✅ Complete | Backend: Model fields, schemas, CRUD + join/leave/students/archive endpoints complete with 6 tests. Frontend: Full components (list, card, form, detail, roster, join dialog), routes (/dashboard/classes/*), navigation, and 8 service tests. Build passes. | - |
-| 11 Social Learning Hub | 🚧 Contract Bootstrapped | Backend typing/schemas defined. Core business logic pending. | 🟢 P3 |
-| 12 Analytics | 🚧 Contract Bootstrapped | Backend typing/schemas defined. Core business logic pending. | 🟢 P3 |
-| 13 Users (Admin) | 🚧 Contract Bootstrapped | Backend typing/schemas defined. Core business logic pending. | 🟢 P3 |
-| 14 Help Center | 🚧 Contract Bootstrapped | Backend typing/schemas defined. Core business logic pending. | 🟢 P3 |
+
 
 #### Test Accounts
 - **Admin**: admin@example.com / admin123
@@ -380,37 +327,7 @@ The `docs/prd/` directory contains an explicit contract for code generation:
 3. **Apply Fix Feature** (~4h)
    - Display modification suggestions for user decision
    - Status: Not started
-### 🟡 P2 - Medium Priority (This Month)
 
-1. **Rubric Visibility Enhancement** (~6h)
-   - Add `visibility` field to `MarkingRubric` model
-   - Public/private toggle UI
-   - Student view for public rubrics
-
-2. **Dashboard Enhancement** (~8h)
-   - Grading queue for lecturers
-   - Activity feed
-   - Class overview cards
-
-3. **Authentication Security Hardening** (~9h)
-   - Remove client-side token reading
-   - Request interceptor standardization
-   - Middleware route protection
-
-4. **Save to Portfolio** (~2h)
-   - Backend endpoint: `POST /api/v2/core/submissions/{id}/save/`
-
-5. **Apply Fix Feature** (~4h)
-   - Display modification suggestions for user decision
-
-### 🟢 P3 - Low Priority (Post-MVP)
-
-- Social Learning Hub (PRD-11) - peer essay sharing
-- Analytics Dashboard (PRD-12) - student progress tracking
-- Multi-AI provider support (LangChain)
-- Internationalization (Chinese)
-- Redis caching
-- OAuth integration (Google/GitHub)
 
 ---
 
@@ -428,14 +345,7 @@ The `docs/prd/` directory contains an explicit contract for code generation:
 | Class Model Extension | `core/models.py::Class` (+7 fields) | ✅ Completed 2026-02-26 |
 | Task Publish/Unpublish API | `api_v2/core/views.py` | ✅ Completed 2026-02-26 |
 | Class Join Code API | `api_v2/core/views.py` | ✅ Completed 2026-02-26 |
-|------|-----------------|----------|
-| JWT Refresh Token | `api_v2/auth/views.py`, `api_v2/auth/schemas.py`, `useAuthRefresh.ts` | ✅ Done |
-| **Dashboard Overview Refactor** | `frontend/src/app/dashboard/`, `frontend/src/features/dashboard/` | **P0** |
-| RevisionChat API | `api_v2/ai_feedback/views.py`, `revision-chat.tsx` | Deferred |
-| Task Model Extension | `core/models.py::Task` (+8 fields) | P1 |
-| Class Model Extension | `core/models.py::Class` (+7 fields added; migration pending) | P1 |
-| Task Publish/Unpublish API | `api_v2/core/views.py` | P1 |
-| Class Join Code API | `api_v2/core/views.py` | P1 |
+
 
 ### Phase 2: Feature Completion (Week 3-4)
 **Goal**: Complete PRD-defined features
@@ -589,26 +499,6 @@ When updating CLAUDE.md:
 
 ## Key Files
 
-| File | Purpose |
-|------|---------|
-| `backend/manage.py` | Django management entry point |
-| `backend/core/models.py` | Single source of truth for database schema |
-| `backend/api_v2/api.py` | API v2 router configuration |
-| `backend/essay_coach/settings.py` | Django settings (DB, CORS, Ninja config) |
-| `backend/essay_coach/middleware.py` | Custom middleware (auth, logging) |
-| `frontend/src/app/layout.tsx` | Root layout with providers |
-| `frontend/src/lib/request.ts` | API request utilities |
-| `frontend/src/lib/auth.ts` | JWT validation utilities |
-| `Makefile` | Centralized development commands |
-|------|---------|
-| `backend/manage.py` | Django management entry point |
-| `backend/core/models.py` | Single source of truth for database schema |
-| `backend/api_v2/api.py` | API v2 router configuration |
-| `backend/essay_coach/settings.py` | Django settings (DB, CORS, Ninja config) |
-| `backend/essay_coach/middleware.py` | Custom middleware (auth, logging) |
-| `frontend/src/app/layout.tsx` | Root layout with providers |
-| `frontend/src/lib/request.ts` | API request utilities |
-| `Makefile` | Centralized development commands |
 
 ---
 
@@ -616,6 +506,9 @@ When updating CLAUDE.md:
 - **Parallel Routes**: Dashboard uses Next.js parallel routes (`@bar_stats`, `@pie_stats`, etc.) - all must be included in layout
 - **Role Routing**: Dashboard role routing decodes JWT from httpOnly cookie server-side (`/app/dashboard/page.tsx`)
 - **Duplicate Interface Declarations**: TypeScript allows duplicate interface names (merging); LSP won't flag these. Use `grep` to find duplicates before declaring types clean.
+- **Django ORM + Pydantic Strict Typing**: Use `@field_validator("field_name", mode="before")` in schemas to provide default enum values for legacy DB records that contain `null`.
+- **Django Ninja Type Safety**: Rely on `@api.get(response=Schema)` instead of strict Python return hints (`-> Schema`) when returning ORM objects/QuerySets to avoid Pyright errors.
+- **Domain Primitives**: All constrained string fields (role, status, visibility) must use `StrEnum` defined centrally in `backend/api_v2/types/enums.py`.
 - **Build Warnings**: `pnpm build` passes with pre-existing warnings (console statements, unused vars). These are non-blocking; focus on errors only.
 - **DRF Dependency**: `djangorestframework` is required by `djangorestframework-simplejwt` for JWT token handling. Project does NOT use DRF's API framework (views, serializers, routers) — only uses simplejwt for token generation/blacklist/rotation. Do not remove unless migrating to pure `pyjwt`.
 - **Authentication Pattern**: Hybrid approach - httpOnly cookies for tokens (secure), localStorage for user data (client access)
@@ -627,6 +520,9 @@ When updating CLAUDE.md:
 - **Parallel Routes**: Dashboard uses Next.js parallel routes (`@bar_stats`, `@pie_stats`, etc.) - all must be included in layout
 - **Role Routing**: Dashboard role routing decodes JWT from httpOnly cookie server-side (`/app/dashboard/page.tsx`)
 - **Duplicate Interface Declarations**: TypeScript allows duplicate interface names (merging); LSP won't flag these. Use `grep` to find duplicates before declaring types clean.
+- **Django ORM + Pydantic Strict Typing**: Use `@field_validator("field_name", mode="before")` in schemas to provide default enum values for legacy DB records that contain `null`.
+- **Django Ninja Type Safety**: Rely on `@api.get(response=Schema)` instead of strict Python return hints (`-> Schema`) when returning ORM objects/QuerySets to avoid Pyright errors.
+- **Domain Primitives**: All constrained string fields (role, status, visibility) must use `StrEnum` defined centrally in `backend/api_v2/types/enums.py`.
 - **Build Warnings**: `pnpm build` passes with pre-existing warnings (console statements, unused vars). These are non-blocking; focus on errors only.
 - **DRF Dependency**: `djangorestframework` is required by `djangorestframework-simplejwt` for JWT token handling. Project does NOT use DRF's API framework (views, serializers, routers) — only uses simplejwt for token generation/blacklist/rotation. Do not remove unless migrating to pure `pyjwt`.
 
@@ -723,11 +619,7 @@ Orchestrator (multi-agent-coordinator)
 3. ✅ Fix direct cookie access to use secure HTTP-only pattern - **DONE 2026-02-25**
 4. Add keyboard focus indicators (A11Y - optional)
 5. Add unique aria-labels to icon buttons (A11Y - optional)
-1. Add JWT signature verification in `/app/dashboard/page.tsx`
-2. Implement CSRF token handling in API client
-3. Fix direct cookie access to use secure HTTP-only pattern
-4. Add keyboard focus indicators
-5. Add unique aria-labels to icon buttons
+
 
 **Full report**: `docs/learnings/dashboard-frontend-phase2-code-review.md`
 
@@ -738,18 +630,8 @@ Orchestrator (multi-agent-coordinator)
 **Resolved Issues:**
 
 | Issue | Status | Date Fixed |
-|-------|--------|------------|
-| JWT Refresh Token Mechanism | ✅ Implemented | 2026-02-24 |
-| RBAC Missing on Users CRUD | ✅ Fixed | 2026-02-24 |
-| Cookie httpOnly=false | ✅ Fixed | 2026-02-24 |
-| Navigation links to 404 pages | ✅ Fixed | 2026-02-24 |
 | **Dashboard JWT Validation** | ✅ Fixed | 2026-02-25 |
 | **Dashboard CSRF Protection** | ✅ Fixed | 2026-02-25 |
-|-------|--------|------------|
-| JWT Refresh Token Mechanism | ✅ Implemented | 2026-02-24 |
-| RBAC Missing on Users CRUD | ✅ Fixed | 2026-02-24 |
-| Cookie httpOnly=false | ✅ Fixed | 2026-02-24 |
-| Navigation links to 404 pages | ✅ Fixed | 2026-02-24 |
 
 ---
 
@@ -800,25 +682,9 @@ Orchestrator (multi-agent-coordinator)
 |-------|----------|--------|
 | v2 proxy hardcoded URL | `frontend/src/app/api/v2/[...path]/route.ts:3` | Pending |
 
-| Debt | Impact | Fix Effort | Status |
-|------|--------|------------|--------|
-| Task model missing 8 fields (title, description, instructions, class_id, status, etc.) | Blocks PRD-09 | ~6h + migration | Pending |
-| Class model missing 9 fields (name, description, code/join_code, term, status, etc.) | Blocks PRD-10 | ~6h + migration | Pending |
-| DRF dependencies 残留 (djangorestframework in pyproject.toml + settings.py) | Technical debt | ~1h | ✅ Resolved 2026-02-25 - DRF is required by simplejwt for JWT handling, not removable |
 
-### Documentation Consistency Issues (Verified 2026-02-24)
 
-| Issue | Description |
-|-------|-------------|
-| Single source of truth | CLAUDE.md is now updated with accurate status after security audit |
-| Frontend routes | Navigation links to 404 pages removed 2026-02-24 |
 
-### Code Hygiene Issues (Verified 2026-02-24)
-
-| Issue | Location | Status |
-|-------|----------|--------|
-| v2 proxy hardcoded URL | `frontend/src/app/api/v2/[...path]/route.ts:3` | Pending |
-| DRF dependencies 残留 | `backend/pyproject.toml`, `backend/essay_coach/settings.py` | ✅ Clarified 2026-02-25 - DRF is simplejwt dependency, not directly used |
 
 - **`docs/prd/`**: Product Requirement Documents (14 modules) - **Source of truth for features**
 
@@ -832,173 +698,3 @@ Orchestrator (multi-agent-coordinator)
 
 ---
 
-## Backend Python Type System Refactor Plan (2026-02-27)
-
-This section defines the canonical plan for rebuilding backend typing quality and preparing API contracts for unimplemented PRDs (11/12/13/14).
-
-### Why This Plan Exists
-
-- API v2 has strong schema adoption, but contract consistency is uneven (some handlers return raw dicts while annotated as schemas).
-- Domain constraints exist in Django models but are not fully represented in schema-layer types.
-- Static checking is not strict enough for safe expansion into Social Hub / Analytics / Users(Admin) / Help Center.
-- PRD requirements for planned modules include endpoint families that are currently not present in typed backend modules.
-
-### Current Assessment (Type Safety Baseline)
-
-| Dimension | Current State | Risk | Target |
-|-----------|---------------|------|--------|
-| API contract consistency | Partial (mixed schema + raw dict returns) | High | Contract-first on all public handlers |
-| Domain constrained fields | Partial (`str` used where enum/literal should be used) | High | Enum/Literal single source |
-| Shared type reuse | Partial (base schema exists but repeated patterns remain) | Medium | One canonical base + aliases |
-| Static checker rigor | Basic mode with key checks relaxed | High | Incremental strict mode in CI |
-| PRD-11~14 readiness | Low (no dedicated typed modules/contracts) | High | Typed contracts before business rollout |
-
-### Source Evidence (Key Files)
-
-- API router boundary: `backend/api_v2/api.py`
-- Shared schema base: `backend/api_v2/schemas/base.py`
-- Core contracts/views: `backend/api_v2/core/schemas.py`, `backend/api_v2/core/views.py`
-- Auth contracts/views: `backend/api_v2/auth/schemas.py`, `backend/api_v2/auth/views.py`
-- AI contracts/views: `backend/api_v2/ai_feedback/schemas.py`, `backend/api_v2/ai_feedback/views.py`
-- AI domain schemas/interfaces: `backend/ai_feedback/schemas.py`, `backend/ai_feedback/interfaces.py`
-- Stale service typing risk: `backend/core/services.py`
-- Type-check config: `backend/pyrightconfig.json`, `backend/pyproject.toml`
-- Planned PRDs: `docs/prd/11-social-learning-hub.md`, `docs/prd/12-analytics.md`, `docs/prd/13-users.md`, `docs/prd/14-help.md`
-
-### Type-System North Star (Target Architecture)
-
-1. **Type-First Development**
-   - Define schema/DTO/protocol first, then implement handler/service.
-   - No new endpoint without explicit request/response types.
-
-2. **Single Source of Truth for Domain Primitives**
-   - Consolidate role/status/source/visibility states into centralized enum/literal definitions.
-   - Enforce consistent use in schemas, services, and validation.
-
-3. **Layered Typing Model**
-   - `Domain Types` (enums, IDs, value objects)
-   - `API Contracts` (Ninja/Pydantic schemas)
-   - `Service Protocols` (business contracts, structural typing)
-   - `Persistence Adapters` (ORM mapping + conversion)
-
-4. **Strict-by-Default Governance**
-   - Gradually move pyright from `basic` to strict policy with module-based rollout.
-   - CI must fail on contract drift and type regressions.
-
-### Refactor & Initialization Roadmap
-
-#### Phase 0 — Stabilization (Week 1) ✅ Complete
-Goal: remove blocking type debt in existing modules.
-
-- Fix all current pyright errors in:
-  - `backend/api_v2/core/views.py`
-  - `backend/api_v2/auth/views.py`
-  - `backend/api_v2/utils/jwt_auth.py`
-  - `backend/core/services.py`
-- Remove stale schema references and undefined type names in `backend/core/services.py`.
-- Ensure high-traffic routes declare `response=...` contracts (no implicit response shape).
-- Replace mutable defaults in schemas (e.g. list/dict defaults) with `Field(default_factory=...)`.
-
-Exit criteria:
-- `pyright api_v2 ai_feedback core` returns 0 errors.
-- No stale V3 type names remain in active services.
-
-#### Phase 1 — Domain Typing Core (Week 2) ✅ Complete
-Goal: establish reusable primitives for current and future PRDs.
-
-- Create centralized type primitives (new module namespace):
-  - `backend/api_v2/types/ids.py`
-  - `backend/api_v2/types/enums.py`
-  - `backend/api_v2/types/common.py`
-- Introduce typed IDs (`NewType`) for core entities:
-  - `UserId`, `ClassId`, `TaskId`, `SubmissionId`, `FeedbackId`, `RubricId`
-- Migrate constrained fields to enum/literal-backed types:
-  - `user_role`, `user_status`, `task_status`, `class_status`, `feedback_source`, `visibility`
-- Remove duplicated pagination/response patterns and align with `backend/api_v2/schemas/base.py`.
-
-Exit criteria:
-- Constrained fields in schemas no longer use unconstrained free-form `str`.
-- Shared base response/pagination types are reused across modules.
-
-#### Phase 2 — Contract Unification (Week 3) ✅ Complete
-Goal: eliminate schema drift in existing feature modules.
-
-- Unify AI schema source-of-truth:
-  - Reconcile `backend/api_v2/ai_feedback/schemas.py` and `backend/ai_feedback/schemas.py`.
-  - Align `analysis_metadata`, `token_usage`, `tracing` field types.
-- Normalize dashboard payload construction:
-  - Return concrete schema objects instead of dicts for typed handlers.
-- Standardize handler signatures and return annotations across `api_v2`.
-
-Exit criteria:
-- No semantic duplication for the same API payload across modules.
-- Dashboard/auth/ai handlers are type-consistent end-to-end.
-
-#### Phase 3 — PRD-09/10 Contract Completion (Week 4) ✅ Complete
-Goal: complete typed contracts for remaining Tasks/Classes requirements.
-
-- Add typed endpoint contracts and handlers for:
-  - Task duplicate: `POST /api/v2/core/tasks/{task_id}/duplicate`
-  - Task deadline extension: `POST /api/v2/core/tasks/{task_id}/extend`
-  - Batch enroll: `POST /api/v2/admin/classes/batch-enroll/`
-  - Invite lecturer: `POST /api/v2/admin/users/invite-lecturer/`
-- Use explicit request/response schemas even when business implementation is staged.
-
-Exit criteria:
-- PRD-09/10 endpoint list has typed API contracts aligned with docs.
-
-#### Phase 4 — PRD-11/12 Type-System Initialization (Weeks 5-6) ✅ Complete
-Goal: bootstrap Social Hub + Analytics with contract-first modules.
-
-- Create dedicated typed modules (no dumping into `core/views.py`):
-  - `backend/api_v2/social/` (schemas, views, service_protocols)
-  - `backend/api_v2/analytics/` (schemas, views, service_protocols)
-- Define domain enums/literals before implementation:
-  - Social: visibility, interaction type, moderation action, report status
-  - Analytics: metric name, granularity, scope (student/class/institution)
-- Add minimal stubs where needed (feature-flag or 501) but keep schema stable.
-
-Exit criteria:
-- PRD-11/12 have stable typed API surfaces and OpenAPI visibility.
-
-#### Phase 5 — PRD-13/14 Type-System Initialization (Weeks 7-8) ✅ Complete
-Goal: bootstrap Users(Admin) + Help Center with strict contracts.
-
-- Add typed modules:
-  - `backend/api_v2/users_admin/`
-  - `backend/api_v2/help/`
-- Define typed workflows:
-  - Users: disable/enable/reset-password/activity-log action contracts
-  - Help: article/category/search/feedback/ticket contracts
-- Ensure all new action endpoints use explicit response envelopes and error types.
-
-Exit criteria:
-- PRD-13/14 planned endpoint families exist with typed contract baselines.
-
-### CI & Governance Policy
-
-- Stage 1 (immediate):
-  - Keep pyright on required modules in CI (`api_v2`, `core`, `ai_feedback`).
-  - Fail CI on any new type error.
-- Stage 2 (after Phase 2):
-  - Enable stricter pyright checks module-by-module.
-  - Disallow untyped public handlers in `api_v2`.
-- Stage 3 (after Phase 5):
-  - Strict policy becomes default for backend feature modules.
-
-### Definition of Done (Type-System Program)
-
-- Pyright: zero errors on active backend modules.
-- 100% public API routes have explicit typed request/response contracts.
-- Constrained domain states are represented by centralized enum/literal types.
-- AI/schema duplication removed; one source of truth per payload family.
-- PRD-11/12/13/14 each has initialized typed API modules and contract baselines before full feature coding.
-
-### Execution Notes
-
-- Follow type-first workflow for all new backend work:
-  1. Define contracts and primitives
-  2. Define service protocol
-  3. Implement adapters/handlers
-  4. Run type-check + tests
-- Do not introduce new feature endpoints that bypass schema contracts.

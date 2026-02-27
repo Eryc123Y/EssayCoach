@@ -249,7 +249,9 @@ class Task(models.Model):
     task_title = models.CharField(max_length=200, blank=False, db_comment="Task title")
     task_desc = models.TextField(blank=True, null=True, db_comment="Short description")
     task_instructions = models.TextField(blank=False, db_comment="Submission instructions")
-    class_id_class = models.ForeignKey("Class", models.CASCADE, db_column="class_id_class", db_comment="Link to class", blank=True, null=True)
+    class_id_class = models.ForeignKey(
+        "Class", models.CASCADE, db_column="class_id_class", db_comment="Link to class", blank=True, null=True
+    )
     task_status = models.CharField(
         max_length=20,
         choices=[
