@@ -275,30 +275,6 @@ All Phase 3 dialog components are implemented and committed. See Completed Featu
 
 ## Refactoring Roadmap
 
-### Phase 1: Foundation (Week 1-2)
-**Goal**: Secure authentication + core missing features + Dashboard refactor
-
-| Task | Files to Modify | Priority |
-|------|-----------------|----------|
-| JWT Refresh Token | `api_v2/auth/views.py`, `api_v2/auth/schemas.py`, `useAuthRefresh.ts` | ✅ Done |
-| **Dashboard Overview Refactor** | `frontend/src/app/dashboard/`, `frontend/src/features/dashboard/` | **P0** ✅ Done |
-| RevisionChat API | `api_v2/ai_feedback/views.py`, `revision-chat.tsx` | Deferred |
-| Task Model Extension | `core/models.py::Task` (+8 fields) | ✅ Completed 2026-02-26 |
-| Class Model Extension | `core/models.py::Class` (+7 fields) | ✅ Completed 2026-02-26 |
-| Task Publish/Unpublish API | `api_v2/core/views.py` | ✅ Completed 2026-02-26 |
-| Class Join Code API | `api_v2/core/views.py` | ✅ Completed 2026-02-26 |
-
-
-### Phase 2: Feature Completion (Week 3-4)
-**Goal**: Complete PRD-defined features
-
-| Task | Files to Modify | Priority |
-|------|-----------------|----------|
-| PDF Export | `frontend/src/features/essay-feedback/components/feedback-pdf.tsx`, `useExportPDF.tsx` | ✅ Complete |
-| Rubric Visibility | `core/models.py::MarkingRubric`, rubric forms | P2 |
-| Task Module (PRD-09) | `core/models.py::Task`, `api_v2/core/views.py`, Task components | ✅ Complete |
-| Class Module (PRD-10) | `core/models.py::Class`, `api_v2/core/views.py`, Class components | ✅ Complete |
-| Auth Hardening | `request.ts`, `middleware.ts` | ✅ Done (httpOnly cookies, single-flight) |
 
 ### Phase 3: Polish & Scale (Month 2+)
 **Goal**: Production readiness + advanced features
