@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 > **IMPORTANT**: This file is the single source of truth for project status. Update it after every significant code change to reflect the current state and next priorities.
 >
-- **Last Updated**: 2026-02-28 (Backend Python type-system refactor completed)
+- **Last Updated**: 2026-02-28 (Frontend service layer for PRD-09/10/06 advanced actions complete; PRD-06 Rubrics verified complete)
 - **Incremental Update**: 2026-02-28 (Backend Python type-system refactor completed, PRD 11-14 modules bootstrapped)
 - **Incremental Update**: 2026-02-27 (Dashboard Overview route fix + Task/Class backend hardening + Rubrics SSR URL fix + health-check workflow + real Chrome DevTools validation + typed-architecture roadmap)
 
@@ -223,11 +223,11 @@ The `docs/prd/` directory contains an explicit contract for code generation:
 | 03 Sign Up | ✅ Implemented | - | - |
 | 04 Dashboard Overview | ✅ Complete | Phase 3 complete: dashboard components + `useDashboardData` hook tests passing (201 tests total), frontend build passing. | - |
 | 05 Essay Practice | ✅ Complete | Skill radar chart implemented (68 tests). Missing: PDF export (~4h), RevisionChat backend (Deferred) | - |
-| 06 Rubrics | ⚠️ Partial | Missing: Visibility field (public/private, ~3h), student view (~3h) | 🟡 P2 |
+| 06 Rubrics | ✅ Complete | visibility-toggle.tsx implemented; student view role-filtered; rubricActionsService.duplicateRubric wired. UI duplicate button pending. | - |
 | 07 Settings | ✅ Implemented | Phase 2 Functional sync complete (role-based rendering, form hooks integrated, 3 tests passing) | - |
 | 08 Profile | ✅ Implemented | Phase 2 Functional sync complete (role-based tabs, Student/Lecturer/Admin specific views, 1 test passing) | - |
-| 09 Assignments (Tasks) | ✅ Complete | Backend: Full CRUD + action endpoints. Frontend: Full components, routes, navigation. Tests: 17 passing. | - |
-| 10 Classes | ✅ Complete | Backend: Full CRUD + action endpoints. Frontend: Full components, routes, navigation. Tests: 14 passing. | - |
+| 09 Assignments (Tasks) | ✅ Complete | Backend + Frontend complete. Service layer includes duplicateTask, extendDeadline. UI dialogs (DuplicateTaskDialog, ExtendDeadlineDialog) pending. | - |
+| 10 Classes | ✅ Complete | Backend + Frontend complete. Service layer includes batchEnrollStudents (@adminOnly), inviteLecturer (@adminOnly). UI dialogs (BatchEnrollDialog, InviteLecturerDialog) pending. | - |
 | 11 Social Learning Hub | 🚧 Contract Bootstrapped | Backend typing/schemas defined. Core business logic pending. | 🟢 P3 |
 | 12 Analytics | 🚧 Contract Bootstrapped | Backend typing/schemas defined. Core business logic pending. | 🟢 P3 |
 | 13 Users (Admin) | 🚧 Contract Bootstrapped | Backend typing/schemas defined. Core business logic pending. | 🟢 P3 |
@@ -310,7 +310,13 @@ The `docs/prd/` directory contains an explicit contract for code generation:
    - Add `visibility` field to `MarkingRubric` model
    - Public/private toggle UI
    - Student view for public rubrics
-   - Status: Not started
+   - Status: ✅ Complete (visibility-toggle.tsx exists, student view role-filtered)
+
+### 🔴 P1 - Next Up (Phase 3: UI Dialog Components)
+
+1. **Rubric Duplicate Button** (~1h) - Add menu item to `rubric-list.tsx` action menu, call `rubricActionsService.duplicateRubric`
+2. **Task Advanced Action Dialogs** (~4h) - `DuplicateTaskDialog` + `ExtendDeadlineDialog` → wire into task-list/task-card (lecturer+admin only)
+3. **Class Admin Action Dialogs** (~6h) - `BatchEnrollDialog` + `InviteLecturerDialog` → wire into class pages (admin only)
 
 ### 🟡 P2 - Medium Priority (This Month)
 
@@ -507,6 +513,8 @@ When updating CLAUDE.md:
 - **Role Routing**: Dashboard role routing decodes JWT from httpOnly cookie server-side (`/app/dashboard/page.tsx`)
 - **Duplicate Interface Declarations**: TypeScript allows duplicate interface names (merging); LSP won't flag these. Use `grep` to find duplicates before declaring types clean.
 - **Django ORM + Pydantic Strict Typing**: Use `@field_validator("field_name", mode="before")` in schemas to provide default enum values for legacy DB records that contain `null`.
+- **gitignore Gotcha**: Root `.gitignore` has `tasks/` which matches `frontend/src/features/tasks/`. Use `git add -f frontend/src/features/tasks/...` to stage files in that directory.
+- **Rubric Service Split**: `rubricActionsService` in `service/api/v2/rubrics.ts` handles advanced actions (duplicate). Existing rubric CRUD lives in `service/api/auth.ts` (via `rubricService`) consumed by `features/rubrics/hooks/useRubrics.ts`. Do NOT merge — `useRubrics` depends on the original service.
 - **Django Ninja Type Safety**: Rely on `@api.get(response=Schema)` instead of strict Python return hints (`-> Schema`) when returning ORM objects/QuerySets to avoid Pyright errors.
 - **Domain Primitives**: All constrained string fields (role, status, visibility) must use `StrEnum` defined centrally in `backend/api_v2/types/enums.py`.
 - **Build Warnings**: `pnpm build` passes with pre-existing warnings (console statements, unused vars). These are non-blocking; focus on errors only.
