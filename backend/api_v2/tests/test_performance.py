@@ -62,7 +62,7 @@ def test_units_list_performance(create_test_data):
     from django.http import HttpRequest
 
     from api_v2.core.schemas import UnitFilterParams
-    from api_v2.core.views import list_units
+    from api_v2.core.routers.units import list_units
 
     # Create mock request
     request = HttpRequest()
@@ -94,7 +94,7 @@ def test_classes_list_performance(create_test_data):
     from django.http import HttpRequest
 
     from api_v2.core.schemas import ClassFilterParams, PaginationParams
-    from api_v2.core.views import list_classes
+    from api_v2.core.routers.classes import list_classes
 
     request = HttpRequest()
     request.method = "GET"
@@ -128,7 +128,7 @@ def test_rubrics_list_performance(create_test_data):
     from django.http import HttpRequest
 
     from api_v2.core.schemas import RubricFilterParams
-    from api_v2.core.views import list_rubrics
+    from api_v2.core.routers.rubrics import list_rubrics
 
     request = HttpRequest()
     request.method = "GET"
@@ -208,7 +208,7 @@ def test_modelschema_serialization_performance(create_test_data):
 def test_pagination_performance(create_test_data):
     """Benchmark pagination performance."""
     from api_v2.core.schemas import PaginationParams
-    from api_v2.core.views import paginate
+    from api_v2.core.routers.users import paginate
     from core.models import Unit
 
     qs = Unit.objects.all()
