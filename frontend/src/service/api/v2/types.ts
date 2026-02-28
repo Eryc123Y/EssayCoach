@@ -479,3 +479,77 @@ export interface ProfileTab {
   id: 'essays' | 'achievements' | 'progress';
   label: string;
 }
+
+// =============================================================================
+// Advanced Task Action Types (PRD-09)
+// =============================================================================
+
+export interface TaskDuplicateInput {
+  class_id_class?: number | null;
+  task_title?: string | null;
+  task_deadline?: string | null;
+}
+
+export interface TaskExtendInput {
+  new_deadline: string;
+  student_id?: number | null;
+  reason?: string;
+}
+
+export interface DeadlineExtension {
+  extension_id: number;
+  task_id: number;
+  user_id: number;
+  original_deadline: string;
+  extended_deadline: string;
+  reason: string;
+  granted_by: number;
+  created_at: string;
+}
+
+export interface TaskExtendResponse {
+  task: Task;
+  extension: DeadlineExtension | null;
+}
+
+// =============================================================================
+// Advanced Class Action Types (PRD-10)
+// =============================================================================
+
+export interface BatchEnrollInput {
+  class_id: number;
+  student_emails: string[];
+}
+
+export interface BatchEnrollResult {
+  success: boolean;
+  message: string;
+  enrolled_count: number;
+  created_count: number;
+  already_enrolled: string[];
+  newly_created: string[];
+  failed: string[];
+}
+
+export interface InviteLecturerInput {
+  email: string;
+  first_name?: string | null;
+  last_name?: string | null;
+}
+
+export interface InviteLecturerResult {
+  success: boolean;
+  message: string;
+  user_id: number;
+  email: string;
+  status: 'created' | 'existing';
+}
+
+// =============================================================================
+// Advanced Rubric Action Types (PRD-06)
+// =============================================================================
+
+export interface RubricDuplicateInput {
+  rubric_desc?: string | null;
+  visibility?: 'public' | 'private';
+}

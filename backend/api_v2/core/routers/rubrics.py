@@ -517,7 +517,7 @@ def delete_rubric_level(request: HttpRequest, level_id: int) -> SuccessResponse:
 
 
 
-@router.post("/{rubric_id}/duplicate/", response=RubricDetailOut)
+@router.post("/rubrics/{rubric_id}/duplicate/", response=RubricDetailOut)
 def duplicate_rubric(request: HttpRequest, rubric_id: RubricId, data: RubricDuplicateIn):
     """
     Duplicate a rubric with all its items and level descriptions.

@@ -136,4 +136,123 @@ describe('classService', () => {
       expect(cls.class_status).toBe('archived');
     });
   });
+
+  describe('batchEnrollStudents', () => {
+    it('batch enrolls students by email', async () => {
+      const mockResult = {
+        success: true,
+        message: 'Enrolled 2 students',
+        enrolled_count: 2,
+        created_count: 1,
+        already_enrolled: [],
+        newly_created: ['new@example.com'],
+        failed: [],
+      };
+      (global.fetch as any).mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockResult,
+      });
+
+      const result = await classService.batchEnrollStudents({
+        class_id: 1,
+        student_emails: ['existing@example.com', 'new@example.com'],
+      });
+      expect(result.enrolled_count).toBe(2);
+      expect(result.created_count).toBe(1);
+      expect(result.newly_created).toContain('new@example.com');
+      expect(global.fetch).toHaveBeenCalledWith(
+        expect.stringContaining('/api/v2/core/admin/classes/batch-enroll/'),
+        expect.objectContaining({ method: 'POST' })
+      );
+    });
+
+    it('reports failed enrollments in result', async () => {
+      const mockResult = {
+        success: true,
+        message: 'Partial enroll',
+        enrolled_count: 0,
+        created_count: 0,
+        already_enrolled: [],
+        newly_created: [],
+        failed: ['bad-email'],
+      };
+      (global.fetch as any).mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockResult,
+      });
+
+      const result = await classService.batchEnrollStudents({
+        class_id: 1,
+        student_emails: ['bad-email'],
+      });
+      expect(result.failed).toContain('bad-email');
+    });
+
+    it('throws on API error (403 for non-admin)', async () => {
+      (global.fetch as any).mockResolvedValueOnce({
+        ok: false,
+        status: 403,
+        json: async () => ({ message: 'Only admins can batch enroll students' }),
+      });
+      await expect(
+        classService.batchEnrollStudents({ class_id: 1, student_emails: ['x@y.com'] })
+      ).rejects.toThrow();
+    });
+  });
+
+  describe('inviteLecturer', () => {
+    it('invites a new lecturer by email', async () => {
+      const mockResult = {
+        success: true,
+        message: 'Lecturer invited',
+        user_id: 55,
+        email: 'newlecturer@example.com',
+        status: 'created' as const,
+      };
+      (global.fetch as any).mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockResult,
+      });
+
+      const result = await classService.inviteLecturer({
+        email: 'newlecturer@example.com',
+        first_name: 'Dr',
+        last_name: 'Smith',
+      });
+      expect(result.status).toBe('created');
+      expect(result.user_id).toBe(55);
+      expect(global.fetch).toHaveBeenCalledWith(
+        expect.stringContaining('/api/v2/core/admin/users/invite-lecturer/'),
+        expect.objectContaining({ method: 'POST' })
+      );
+    });
+
+    it('returns "existing" status for existing user', async () => {
+      const mockResult = {
+        success: true,
+        message: 'Lecturer already exists',
+        user_id: 10,
+        email: 'existing@example.com',
+        status: 'existing' as const,
+      };
+      (global.fetch as any).mockResolvedValueOnce({
+        ok: true,
+        json: async () => mockResult,
+      });
+
+      const result = await classService.inviteLecturer({ email: 'existing@example.com' });
+      expect(result.status).toBe('existing');
+    });
+
+    it('throws on API error (403 for non-admin)', async () => {
+      (global.fetch as any).mockResolvedValueOnce({
+        ok: false,
+        status: 403,
+        json: async () => ({ message: 'Forbidden' }),
+      });
+      await expect(
+        classService.inviteLecturer({ email: 'lecturer@example.com' })
+      ).rejects.toThrow();
+    });
+  });
 });

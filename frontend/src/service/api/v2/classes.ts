@@ -1,5 +1,16 @@
 import { request } from '@/service/request';
-import type { ClassItem, ClassCreateInput, ClassUpdateInput, ClassDetail, StudentInfo, JoinClassRequest, LeaveClassResponse } from './types';
+import type {
+  ClassItem,
+  ClassCreateInput,
+  ClassUpdateInput,
+  ClassDetail,
+  StudentInfo,
+  LeaveClassResponse,
+  BatchEnrollInput,
+  BatchEnrollResult,
+  InviteLecturerInput,
+  InviteLecturerResult,
+} from './types';
 
 const BASE_URL = '/api/v2';
 
@@ -87,6 +98,32 @@ export const classService = {
     return request<ClassItem>({
       url: `${BASE_URL}/core/classes/${classId}/archive/`,
       method: 'POST',
+    });
+  },
+
+  /**
+   * Batch enroll students by email into a class.
+   * Creates unregistered accounts for unknown emails.
+   * @adminOnly - returns HTTP 403 for non-admin callers.
+   */
+  async batchEnrollStudents(data: BatchEnrollInput): Promise<BatchEnrollResult> {
+    return request<BatchEnrollResult>({
+      url: `${BASE_URL}/core/admin/classes/batch-enroll/`,
+      method: 'POST',
+      data,
+    });
+  },
+
+  /**
+   * Invite a new lecturer by email.
+   * Creates an unregistered lecturer account if the email is not yet in the system.
+   * @adminOnly - returns HTTP 403 for non-admin callers.
+   */
+  async inviteLecturer(data: InviteLecturerInput): Promise<InviteLecturerResult> {
+    return request<InviteLecturerResult>({
+      url: `${BASE_URL}/core/admin/users/invite-lecturer/`,
+      method: 'POST',
+      data,
     });
   },
 };

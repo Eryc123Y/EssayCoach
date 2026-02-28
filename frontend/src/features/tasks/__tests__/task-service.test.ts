@@ -127,4 +127,107 @@ describe('taskService', () => {
       expect(submissions).toHaveLength(1);
     });
   });
+
+  describe('duplicateTask', () => {
+    it('duplicates a task with minimal input', async () => {
+      const duplicatedTask = { ...mockTask, task_id: 99, task_title: 'Copy of Test Essay' };
+      (global.fetch as any).mockResolvedValueOnce({
+        ok: true,
+        json: async () => duplicatedTask,
+      });
+
+      const result = await taskService.duplicateTask(1, {});
+      expect(result.task_id).toBe(99);
+      expect(global.fetch).toHaveBeenCalledWith(
+        expect.stringContaining('/api/v2/core/tasks/1/duplicate/'),
+        expect.objectContaining({ method: 'POST' })
+      );
+    });
+
+    it('passes optional fields when duplicating', async () => {
+      const duplicatedTask = {
+        ...mockTask,
+        task_id: 99,
+        task_title: 'Custom Title',
+        class_id_class: 5,
+      };
+      (global.fetch as any).mockResolvedValueOnce({
+        ok: true,
+        json: async () => duplicatedTask,
+      });
+
+      const result = await taskService.duplicateTask(1, {
+        task_title: 'Custom Title',
+        class_id_class: 5,
+        task_deadline: '2025-04-01T23:59:59Z',
+      });
+      expect(result.task_title).toBe('Custom Title');
+    });
+
+    it('throws on API error', async () => {
+      (global.fetch as any).mockResolvedValueOnce({
+        ok: false,
+        status: 404,
+        json: async () => ({ message: 'Task not found' }),
+      });
+      await expect(taskService.duplicateTask(999, {})).rejects.toThrow();
+    });
+  });
+
+  describe('extendDeadline', () => {
+    it('extends deadline globally (no student_id)', async () => {
+      const extendedTask = { ...mockTask, task_due_datetime: '2025-04-01T23:59:59Z' };
+      (global.fetch as any).mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ task: extendedTask, extension: null }),
+      });
+
+      const result = await taskService.extendDeadline(1, {
+        new_deadline: '2025-04-01T23:59:59Z',
+      });
+      expect(result.task.task_due_datetime).toBe('2025-04-01T23:59:59Z');
+      expect(result.extension).toBeNull();
+      expect(global.fetch).toHaveBeenCalledWith(
+        expect.stringContaining('/api/v2/core/tasks/1/extend/'),
+        expect.objectContaining({ method: 'POST' })
+      );
+    });
+
+    it('creates per-student extension when student_id provided', async () => {
+      const mockExtension = {
+        extension_id: 1,
+        task_id: 1,
+        user_id: 42,
+        original_deadline: '2025-03-15T23:59:59Z',
+        extended_deadline: '2025-04-01T23:59:59Z',
+        reason: 'Medical leave',
+        granted_by: 2,
+        created_at: '2025-02-28T10:00:00Z',
+      };
+      (global.fetch as any).mockResolvedValueOnce({
+        ok: true,
+        json: async () => ({ task: mockTask, extension: mockExtension }),
+      });
+
+      const result = await taskService.extendDeadline(1, {
+        new_deadline: '2025-04-01T23:59:59Z',
+        student_id: 42,
+        reason: 'Medical leave',
+      });
+      expect(result.extension).not.toBeNull();
+      expect(result.extension?.user_id).toBe(42);
+      expect(result.extension?.reason).toBe('Medical leave');
+    });
+
+    it('throws on API error (403 for non-admin/lecturer)', async () => {
+      (global.fetch as any).mockResolvedValueOnce({
+        ok: false,
+        status: 403,
+        json: async () => ({ message: 'Forbidden' }),
+      });
+      await expect(
+        taskService.extendDeadline(1, { new_deadline: '2025-04-01T23:59:59Z' })
+      ).rejects.toThrow();
+    });
+  });
 });

@@ -2,6 +2,7 @@ export { authService, rubricService } from './auth';
 export { dashboardService } from './dashboard';
 export { taskService } from './tasks';
 export { classService } from './classes';
+export { rubricActionsService } from './rubrics';
 export type {
   LoginRequest,
   LoginResponse,
@@ -37,12 +38,21 @@ export type {
   TaskCreateInput,
   TaskUpdateInput,
   TaskSubmission,
+  TaskDuplicateInput,
+  TaskExtendInput,
+  TaskExtendResponse,
+  DeadlineExtension,
   // Class types (PRD-10)
   ClassItem,
   ClassCreateInput,
   ClassUpdateInput,
   ClassDetail,
   StudentInfo,
-  JoinClassRequest,
   LeaveClassResponse,
+  BatchEnrollInput,
+  BatchEnrollResult,
+  InviteLecturerInput,
+  InviteLecturerResult,
+  // Rubric action types (PRD-06)
+  RubricDuplicateInput,
 } from './types';

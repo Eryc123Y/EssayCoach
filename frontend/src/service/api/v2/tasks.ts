@@ -1,5 +1,13 @@
 import { request } from '@/service/request';
-import type { Task, TaskCreateInput, TaskUpdateInput, TaskSubmission } from './types';
+import type {
+  Task,
+  TaskCreateInput,
+  TaskUpdateInput,
+  TaskSubmission,
+  TaskDuplicateInput,
+  TaskExtendInput,
+  TaskExtendResponse,
+} from './types';
 
 const BASE_URL = '/api/v2';
 
@@ -68,6 +76,22 @@ export const taskService = {
     return request<TaskSubmission[]>({
       url: `${BASE_URL}/core/tasks/${taskId}/submissions/`,
       method: 'GET',
+    });
+  },
+
+  async duplicateTask(taskId: number, data: TaskDuplicateInput): Promise<Task> {
+    return request<Task>({
+      url: `${BASE_URL}/core/tasks/${taskId}/duplicate/`,
+      method: 'POST',
+      data,
+    });
+  },
+
+  async extendDeadline(taskId: number, data: TaskExtendInput): Promise<TaskExtendResponse> {
+    return request<TaskExtendResponse>({
+      url: `${BASE_URL}/core/tasks/${taskId}/extend/`,
+      method: 'POST',
+      data,
     });
   },
 };
