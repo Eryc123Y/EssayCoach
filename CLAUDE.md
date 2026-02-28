@@ -75,7 +75,6 @@ EssayCoach is a dual-monorepo application with a separated frontend and backend:
   - `api_v2/auth/`: JWT/Token authentication logic.
   - `api_v2/core/`: CRUD operations for core models.
   - `api_v2/ai_feedback/`: Orchestrates AI analysis using Dify.
-- **`api_v1/`**: Legacy DRF code - deleted 2026-02-24.
 
 ### Frontend Architecture
 - **Framework**: Next.js App Router (`src/app/`).
