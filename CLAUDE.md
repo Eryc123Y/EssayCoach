@@ -700,7 +700,7 @@ Orchestrator (multi-agent-coordinator)
 
 | Issue | Location | Status |
 |-------|----------|--------|
-| v2 proxy hardcoded URL | `frontend/src/app/api/v2/[...path]/route.ts:3` | Pending |
+| v2 proxy hardcoded URL | `frontend/src/app/api/v2/[...path]/route.ts:3` | ✅ Resolved (Uses `getServerApiUrl()` from `@/lib/server-api` — reads `NEXT_PUBLIC_API_URL`) |
 
 
 
