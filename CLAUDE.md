@@ -424,8 +424,13 @@ When updating CLAUDE.md:
 ---
 
 ## Key Files
-
-
+- `backend/core/models.py`: Central location for all database models
+- `backend/api_v2/api.py`: Main router configuration for API v2
+- `frontend/src/app/dashboard/page.tsx`: Dashboard role routing with JWT validation
+- `frontend/src/lib/auth.ts`: Authentication utilities (JWT validation, token handling)
+- `frontend/src/lib/server-api.ts`: Server-side API URL resolver
+- `backend/api_v2/ai_feedback/views.py`: AI feedback and essay analysis endpoints
+- `docs/prd/`: Product Requirement Documents (14 modules) - Source of truth for features
 ---
 
 - **Docker Required**: PostgreSQL runs in Docker - run `make db` before starting backend
