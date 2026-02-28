@@ -234,8 +234,8 @@ The `docs/prd/` directory contains an explicit contract for code generation:
 | 02 Sign In | ✅ Implemented | - | - |
 | 03 Sign Up | ✅ Implemented | - | - |
 | 04 Dashboard Overview | ✅ Complete | Phase 3 complete: dashboard components + `useDashboardData` hook tests passing (201 tests total), frontend build passing. | - |
-| 05 Essay Practice | ✅ Complete | Skill radar chart implemented (68 tests). Missing: PDF export (~4h), RevisionChat backend (Deferred) | - |
-| 06 Rubrics | ✅ Complete | visibility-toggle.tsx implemented; student view role-filtered; rubricActionsService.duplicateRubric wired. UI duplicate button pending. | - |
+| 05 Essay Practice | ✅ Complete | Skill radar chart (68 tests), PDF export complete. RevisionChat backend Deferred (Agent Migration). | - |
+| 06 Rubrics | ✅ Complete | visibility-toggle.tsx implemented; student view role-filtered; Rubric Duplicate button complete (Phase 3). | - |
 | 07 Settings | ✅ Implemented | Phase 2 Functional sync complete (role-based rendering, form hooks integrated, 3 tests passing) | - |
 | 08 Profile | ✅ Implemented | Phase 2 Functional sync complete (role-based tabs, Student/Lecturer/Admin specific views, 1 test passing) | - |
 | 09 Assignments (Tasks) | ✅ Complete | Backend + Frontend complete. Service layer includes duplicateTask, extendDeadline. UI dialogs (DuplicateTaskDialog, ExtendDeadlineDialog) pending. | - |
