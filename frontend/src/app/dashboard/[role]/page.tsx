@@ -1,7 +1,14 @@
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { DashboardHeader, ActivityFeed, LecturerDashboard, StudentDashboard, AdminDashboard } from '@/features/dashboard';
-import { dashboardService } from '@/service/api/v2';
+import { getServerApiUrl } from '@/lib/server-api';
+import type {
+  AdminDashboardResponse,
+  DashboardRole,
+  LecturerDashboardResponse,
+  StudentDashboardResponse,
+} from '@/service/api/v2/types';
+import { fetchRoleDashboardData, isDashboardRole, type RoleDashboardData } from './page-utils';
 
 interface RoleDashboardPageProps {
   params: Promise<{
@@ -27,30 +34,16 @@ export default async function RoleDashboardPage({ params }: RoleDashboardPagePro
     redirect('/auth/sign-in');
   }
 
-  // Validate role parameter
-  const validRoles = ['student', 'lecturer', 'admin'] as const;
-  if (!validRoles.includes(role as typeof validRoles[number])) {
+  if (!isDashboardRole(role)) {
     redirect('/dashboard/overview');
   }
 
-  // Fetch dashboard data based on role
-  let dashboardData;
+  const apiUrl = getServerApiUrl();
+  let dashboardData: RoleDashboardData;
   try {
-    switch (role) {
-      case 'student':
-        dashboardData = await dashboardService.getStudentDashboard();
-        break;
-      case 'lecturer':
-        dashboardData = await dashboardService.getLecturerDashboard();
-        break;
-      case 'admin':
-        dashboardData = await dashboardService.getAdminDashboard();
-        break;
-    }
+    dashboardData = await fetchRoleDashboardData(apiUrl, role, access);
   } catch (error) {
-    // TODO: Log error and show error state
     console.error('Failed to fetch dashboard data:', error);
-    // For now, redirect to overview on error
     redirect('/dashboard/overview');
   }
 
@@ -67,18 +60,7 @@ export default async function RoleDashboardPage({ params }: RoleDashboardPagePro
         role={role}
       />
 
-      {/* Role-Specific Dashboard Content */}
-      {role === 'student' && (
-        <StudentDashboard data={dashboardData as import('@/service/api/v2/types').StudentDashboardResponse} />
-      )}
-
-      {role === 'lecturer' && (
-        <LecturerDashboard data={dashboardData as import('@/service/api/v2/types').LecturerDashboardResponse} />
-      )}
-
-      {role === 'admin' && (
-        <AdminDashboard data={dashboardData as import('@/service/api/v2/types').AdminDashboardResponse} />
-      )}
+      {renderRoleSpecificDashboard(role, dashboardData)}
 
       {/* Activity Feed (Common to all roles) */}
       <ActivityFeed
@@ -88,4 +70,16 @@ export default async function RoleDashboardPage({ params }: RoleDashboardPagePro
       />
     </div>
   );
+}
+
+function renderRoleSpecificDashboard(role: DashboardRole, dashboardData: RoleDashboardData) {
+  if (role === 'student') {
+    return <StudentDashboard data={dashboardData as StudentDashboardResponse} />;
+  }
+
+  if (role === 'lecturer') {
+    return <LecturerDashboard data={dashboardData as LecturerDashboardResponse} />;
+  }
+
+  return <AdminDashboard data={dashboardData as AdminDashboardResponse} />;
 }
