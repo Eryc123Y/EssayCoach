@@ -401,15 +401,20 @@ All Phase 3 dialog components are implemented and committed. See Completed Featu
 
 ```python
 User              # student/lecturer/admin roles
-Class             # ⚠️ Needs implementation for PRD-10
-Enrollment        # ⚠️ Needs implementation for PRD-10
-MarkingRubric     # ✅ Exists, ⚠️ needs visibility field
+Class             # ✅ Implemented
+Enrollment        # ✅ Implemented
+MarkingRubric     # ✅ Exists
 RubricItem        # ✅ Exists
 RubricLevelDesc   # ✅ Exists
-Task              # ⚠️ Exists, needs PRD-09 alignment
+Task              # ✅ Exists
 Submission        # ✅ Exists
 Feedback          # ✅ Exists
 FeedbackItem      # ✅ Exists
+DeadlineExtension # ✅ Exists
+TeachingAssn      # ✅ Exists
+Unit              # ✅ Exists
+Badge             # ✅ Exists
+UserBadge         # ✅ Exists
 ```
 
 ### Missing Models
