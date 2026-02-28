@@ -56,6 +56,12 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Database Reset**: `make db-reset` (wipe and recreate PostgreSQL container)
 - **Django Shell**: `make shell` (open Django Python shell)
 - **Create Superuser**: `make createsuperuser`
+- **Check DB Status**: `make db-status` (Check PostgreSQL container status)
+- **Build Frontend**: `make build` (Build frontend production bundle)
+- **Clean Cache**: `make clean` (Clean Python/Node cache - .venv, node_modules, .next)
+- **Generate Docs**: `make docs-generate` (Generate documentation)
+- **Generate OpenAPI**: `make docs-api` (Generate OpenAPI schema JSON)
+- **Generate ERD**: `make docs-erd` (Generate ERD diagram)
 
 ---
 
