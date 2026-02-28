@@ -217,7 +217,6 @@ The `docs/prd/` directory contains an explicit contract for code generation:
 
 #### 🚧 In Progress / Needs Attention
 - **Agent Migration** 🔴 **P0 - Current Priority** — Replace Dify with custom LangGraph/LangChain agent (see Active Development Priorities)
-- API v1 → v2 migration (cleanup pending)
 
 #### 🔍 PRD vs Implementation Gap Analysis
 
