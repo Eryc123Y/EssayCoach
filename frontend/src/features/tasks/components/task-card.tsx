@@ -5,15 +5,18 @@ import type { Task } from '@/service/api/v2/types';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { MoreVertical, Edit, Trash2, FileText } from 'lucide-react';
+import { MoreVertical, Edit, Trash2, FileText, Copy, CalendarClock } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import {
   DropdownMenu,
   DropdownMenuContent,
   DropdownMenuItem,
+  DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
+import { DuplicateTaskDialog } from './duplicate-task-dialog';
+import { ExtendDeadlineDialog } from './extend-deadline-dialog';
 
 interface TaskCardProps {
   task: Task;
@@ -24,6 +27,8 @@ interface TaskCardProps {
 export function TaskCard({ task, userRole, onUpdate }: TaskCardProps) {
   const router = useRouter();
   const [isDeleting, setIsDeleting] = useState(false);
+  const [duplicateOpen, setDuplicateOpen] = useState(false);
+  const [extendOpen, setExtendOpen] = useState(false);
 
   const statusColors: Record<string, string> = {
     draft: 'bg-secondary text-secondary-foreground',
@@ -129,7 +134,17 @@ export function TaskCard({ task, userRole, onUpdate }: TaskCardProps) {
                   Publish
                 </DropdownMenuItem>
               )}
-              <DropdownMenuItem 
+              <DropdownMenuSeparator />
+              <DropdownMenuItem onClick={() => setDuplicateOpen(true)}>
+                <Copy className="mr-2 h-4 w-4" />
+                Duplicate
+              </DropdownMenuItem>
+              <DropdownMenuItem onClick={() => setExtendOpen(true)}>
+                <CalendarClock className="mr-2 h-4 w-4" />
+                Extend Deadline
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem
                 onClick={handleDelete}
                 disabled={isDeleting}
                 className="text-destructive"
@@ -141,6 +156,19 @@ export function TaskCard({ task, userRole, onUpdate }: TaskCardProps) {
           </DropdownMenu>
         )}
       </CardFooter>
+
+      <DuplicateTaskDialog
+        task={task}
+        open={duplicateOpen}
+        onOpenChange={setDuplicateOpen}
+        onSuccess={onUpdate}
+      />
+      <ExtendDeadlineDialog
+        task={task}
+        open={extendOpen}
+        onOpenChange={setExtendOpen}
+        onSuccess={onUpdate}
+      />
     </Card>
   );
 }

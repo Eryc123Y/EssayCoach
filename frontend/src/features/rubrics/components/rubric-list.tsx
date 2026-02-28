@@ -16,6 +16,7 @@ import {
   deleteRubric,
   toggleRubricVisibility
 } from '@/service/api/rubric';
+import { rubricActionsService } from '@/service/api/v2/rubrics';
 import { toast } from 'sonner';
 import {
   Loader2,
@@ -27,7 +28,7 @@ import {
   BookOpen,
   Globe,
   Lock,
-  Users
+  Copy
 } from 'lucide-react';
 import {
   Table,
@@ -79,6 +80,7 @@ export function RubricsClient({
   const [visibilityTogglingId, setVisibilityTogglingId] = useState<number | null>(
     null
   );
+  const [duplicatingId, setDuplicatingId] = useState<number | null>(null);
 
   const handleUploadSuccess = () => {
     router.refresh();
@@ -93,8 +95,7 @@ export function RubricsClient({
     setDeleteDialogOpen(true);
   };
 
-  const handleDeleteConfirm = async () => {
-    if (!rubricToDelete) return;
+  const handleDeleteConfirm = async () => {    if (!rubricToDelete) return;
 
     setIsDeleting(true);
     try {
@@ -112,6 +113,19 @@ export function RubricsClient({
       toast.error(error.message || 'Failed to delete rubric');
     } finally {
       setIsDeleting(false);
+    }
+  };
+
+  const handleDuplicate = async (rubric: RubricListItem) => {
+    setDuplicatingId(rubric.rubric_id);
+    try {
+      await rubricActionsService.duplicateRubric(rubric.rubric_id, {});
+      toast.success(`Rubric "${rubric.rubric_desc}" duplicated successfully`);
+      router.refresh();
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to duplicate rubric');
+    } finally {
+      setDuplicatingId(null);
     }
   };
 
@@ -350,6 +364,22 @@ export function RubricsClient({
                                   <Eye className='h-4 w-4' />
                                   <span className='sr-only'>View</span>
                                 </Button>
+                                {canCreatePublic && (
+                                  <Button
+                                    variant='ghost'
+                                    size='sm'
+                                    onClick={() => handleDuplicate(rubric)}
+                                    disabled={duplicatingId === rubric.rubric_id}
+                                    className='h-8 w-8 p-0 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-400'
+                                  >
+                                    {duplicatingId === rubric.rubric_id ? (
+                                      <Loader2 className='h-4 w-4 animate-spin' />
+                                    ) : (
+                                      <Copy className='h-4 w-4' />
+                                    )}
+                                    <span className='sr-only'>Duplicate</span>
+                                  </Button>
+                                )}
                                 {canCreatePublic && (
                                   <Button
                                     variant='ghost'

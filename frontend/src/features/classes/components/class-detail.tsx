@@ -3,17 +3,25 @@
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { classService } from '@/service/api/v2';
+import { useAuth } from '@/components/layout/simple-auth-context';
 import { StudentRoster } from './student-roster';
+import { BatchEnrollDialog } from './batch-enroll-dialog';
+import { InviteLecturerDialog } from './invite-lecturer-dialog';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Badge } from '@/components/ui/badge';
-import { Users, ClipboardList } from 'lucide-react';
+import { Button } from '@/components/ui/button';
+import { Users, ClipboardList, UserPlus, UsersRound } from 'lucide-react';
 
 export function ClassDetail() {
   const params = useParams();
   const classId = parseInt(params.id as string);
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'admin';
   const [loading, setLoading] = useState(true);
   const [classData, setClassData] = useState<any>(null);
+  const [batchEnrollOpen, setBatchEnrollOpen] = useState(false);
+  const [inviteLecturerOpen, setInviteLecturerOpen] = useState(false);
 
   useEffect(() => {
     if (classId) {
@@ -37,9 +45,23 @@ export function ClassDetail() {
           <h1 className="text-3xl font-bold">{classData.class_name}</h1>
           <p className="text-muted-foreground">{classData.unit_name}</p>
         </div>
-        <Badge variant={classData.class_status === 'active' ? 'default' : 'secondary'}>
-          {classData.class_status}
-        </Badge>
+        <div className="flex items-center gap-2">
+          {isAdmin && (
+            <>
+              <Button variant="outline" size="sm" onClick={() => setBatchEnrollOpen(true)}>
+                <UsersRound className="mr-2 h-4 w-4" />
+                Batch Enroll
+              </Button>
+              <Button variant="outline" size="sm" onClick={() => setInviteLecturerOpen(true)}>
+                <UserPlus className="mr-2 h-4 w-4" />
+                Invite Lecturer
+              </Button>
+            </>
+          )}
+          <Badge variant={classData.class_status === 'active' ? 'default' : 'secondary'}>
+            {classData.class_status}
+          </Badge>
+        </div>
       </div>
 
       <Tabs defaultValue="students">
@@ -85,6 +107,23 @@ export function ClassDetail() {
           </Card>
         </TabsContent>
       </Tabs>
+
+      {isAdmin && (
+        <>
+          <BatchEnrollDialog
+            classId={classId}
+            className={classData.class_name}
+            open={batchEnrollOpen}
+            onOpenChange={setBatchEnrollOpen}
+            onSuccess={() => {}}
+          />
+          <InviteLecturerDialog
+            open={inviteLecturerOpen}
+            onOpenChange={setInviteLecturerOpen}
+            onSuccess={() => {}}
+          />
+        </>
+      )}
     </div>
   );
 }
