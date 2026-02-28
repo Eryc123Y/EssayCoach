@@ -12,6 +12,8 @@ from api_v2.types.ids import (
     EnrollmentId,
     UserId,
 )
+from api_v2.utils.auth import JWTAuth
+from api_v2.utils.permissions import IsAdminOrLecturer
 from core.models import (
     Class,
     Enrollment,
@@ -19,11 +21,11 @@ from core.models import (
     Unit,
     User,
 )
+from core.services import EnrollmentService
 
-from api_v2.utils.auth import JWTAuth
-from api_v2.utils.permissions import IsAdminOrLecturer
 from ..schemas import (
     BatchEnrollIn,
+    BatchEnrollResultOut,
     ClassFilterParams,
     ClassIn,
     ClassOut,
@@ -31,12 +33,11 @@ from ..schemas import (
     EnrollmentIn,
     EnrollmentOut,
     InviteLecturerIn,
+    InviteLecturerOut,
     TeachingAssnIn,
     TeachingAssnOut,
     UserOut,
 )
-
-
 
 
 def paginate(queryset, params: PaginationParams):
@@ -341,17 +342,44 @@ def leave_class(request: HttpRequest, class_id: ClassId) -> SuccessResponse:
 
 
 # --- Class Actions (PRD-10) ---
-@router.post("/admin/classes/batch-enroll/", response=SuccessResponse)
+@router.post("/admin/classes/batch-enroll/", response=BatchEnrollResultOut)
 def batch_enroll_students(request: HttpRequest, data: BatchEnrollIn):
-    """Batch enroll students into a class by email."""
-    if request.auth.user_role != "admin":
-        raise HttpError(403, "Only admins can batch enroll")
-    raise HttpError(501, "Not implemented")
+    """
+    Batch enroll students via email. Creates 'unregistered' users if they don't exist.
+    Admin only.
+    """
+    user = request.auth
+    if user.user_role != "admin":
+        raise HttpError(403, "Only admins can batch enroll students")
+
+    try:
+        class_obj = Class.objects.get(class_id=data.class_id)
+    except Class.DoesNotExist:
+        raise HttpError(400, "Class not found")
+
+    if not data.student_emails:
+        raise HttpError(400, "Email list cannot be empty")
+
+    result = EnrollmentService.batch_enroll(class_obj, data.student_emails)
+    return result
 
 
-@router.post("/admin/users/invite-lecturer/", response=SuccessResponse)
+@router.post("/admin/users/invite-lecturer/", response=InviteLecturerOut)
 def invite_lecturer(request: HttpRequest, data: InviteLecturerIn):
-    """Invite a new lecturer via email."""
-    if request.auth.user_role != "admin":
+    """
+    Invite a new lecturer via email. Creates an 'unregistered' lecturer account.
+    Admin only.
+    """
+    user = request.auth
+    if user.user_role != "admin":
         raise HttpError(403, "Only admins can invite lecturers")
-    raise HttpError(501, "Not implemented")
+
+    result = EnrollmentService.invite_lecturer(data.email, data.first_name, data.last_name)
+
+    return {
+        "success": True,
+        "message": "Lecturer invited successfully",
+        "user_id": result["user"].user_id,
+        "email": result["user"].user_email,
+        "status": result["status"]
+    }

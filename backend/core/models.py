@@ -227,6 +227,36 @@ class RubricLevelDesc(models.Model):
         ]
 
 
+
+class DeadlineExtension(models.Model):
+    extension_id = models.AutoField(primary_key=True, db_comment="Unique identifier for deadline extension")
+    task_id_task = models.ForeignKey("Task", models.CASCADE, db_column="task_id_task", related_name="deadline_extensions")
+    user_id_user = models.ForeignKey("User", models.CASCADE, db_column="user_id_user", related_name="deadline_extensions")
+    original_deadline = models.DateTimeField(db_comment="Original task deadline at time of extension")
+    extended_deadline = models.DateTimeField(db_comment="New extended deadline for this student")
+    reason = models.TextField(blank=True, default="", db_comment="Reason for extension")
+    granted_by = models.ForeignKey("User", models.CASCADE, db_column="granted_by", related_name="granted_extensions")
+    created_at = models.DateTimeField(auto_now_add=True, db_comment="When extension was granted")
+
+    class Meta:
+        managed = True
+        db_table = "deadline_extension"
+        db_table_comment = "Per-student deadline extensions for tasks"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["task_id_task", "user_id_user"],
+                name="task_user_extension_uq",
+            ),
+            models.CheckConstraint(
+                check=models.Q(extended_deadline__gt=models.F("original_deadline")),
+                name="extension_after_original_ck",
+            ),
+        ]
+        indexes = [
+            models.Index(fields=["task_id_task"], name="extension_task_idx"),
+            models.Index(fields=["user_id_user"], name="extension_user_idx"),
+        ]
+
 class Submission(models.Model):
     submission_id = models.AutoField(primary_key=True, db_comment="unique identifier for submission")
     submission_time = models.DateTimeField(auto_now_add=True, db_comment="time/date of submission")

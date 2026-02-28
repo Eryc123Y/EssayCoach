@@ -778,12 +778,6 @@ class TaskDuplicateIn(Schema):
     task_deadline: datetime | None = Field(None, description="Optional new deadline.")
 
 
-class TaskExtendIn(Schema):
-    """Input schema for extending a task deadline."""
-
-    new_deadline: datetime = Field(..., description="The new deadline for the task.")
-
-
 class BatchEnrollIn(Schema):
     """Input schema for batch enrolling students via email."""
 
@@ -797,3 +791,60 @@ class InviteLecturerIn(Schema):
     email: EmailStr = Field(..., description="Email address for the invited lecturer.")
     first_name: str | None = Field(None, description="Lecturer's first name.")
     last_name: str | None = Field(None, description="Lecturer's last name.")
+
+
+class DeadlineExtensionOut(Schema):
+    """Output schema for per-student deadline extension."""
+
+    extension_id: int
+    task_id: TaskId
+    user_id: UserId
+    original_deadline: datetime
+    extended_deadline: datetime
+    reason: str
+    granted_by: UserId
+    created_at: datetime
+
+
+class TaskExtendOut(Schema):
+    """Response for deadline extension -- includes both global and per-student info."""
+
+    task: TaskOut
+    extension: DeadlineExtensionOut | None = None
+
+
+class TaskExtendIn(Schema):
+    """Input schema for extending a task deadline -- updated."""
+
+    new_deadline: datetime = Field(..., description="The new deadline for the task.")
+    student_id: UserId | None = Field(None, description="Global extension if None")
+    reason: str = Field("", description="Reason for the extension.")
+
+
+class BatchEnrollResultOut(Schema):
+    """Detailed result of batch enrollment."""
+
+    success: bool = True
+    message: str
+    enrolled_count: int
+    created_count: int
+    already_enrolled: list[str] = Field(default_factory=list)
+    newly_created: list[str] = Field(default_factory=list)
+    failed: list[str] = Field(default_factory=list)
+
+
+class InviteLecturerOut(Schema):
+    """Result of lecturer invitation."""
+
+    success: bool = True
+    message: str
+    user_id: UserId
+    email: str
+    status: str  # "created" or "existing"
+
+
+class RubricDuplicateIn(Schema):
+    """Input schema for duplicating a rubric."""
+
+    rubric_desc: str | None = Field(None, description="Optional new description.")
+    visibility: Visibility = Field(Visibility.PRIVATE, description="Visibility for the duplicate.")

@@ -8,26 +8,27 @@ from api_v2.schemas.base import PaginationParams, SuccessResponse
 from api_v2.types.ids import (
     TaskId,
 )
+from api_v2.utils.auth import JWTAuth
+from api_v2.utils.permissions import IsAdminOrLecturer
 from core.models import (
     Class,
     MarkingRubric,
     Submission,
     Task,
     Unit,
+    User,
 )
+from core.services import TaskService
 
-from api_v2.utils.auth import JWTAuth
-from api_v2.utils.permissions import IsAdminOrLecturer
 from ..schemas import (
     SubmissionOut,
     TaskDuplicateIn,
     TaskExtendIn,
+    TaskExtendOut,
     TaskFilterParams,
     TaskIn,
     TaskOut,
 )
-
-
 
 
 def paginate(queryset, params: PaginationParams):
@@ -192,25 +193,50 @@ def get_task_submissions(request: HttpRequest, task_id: TaskId):
 # --- Task Actions (PRD-09) ---
 @router.post("/tasks/{task_id}/duplicate/", response=TaskOut)
 def duplicate_task(request: HttpRequest, task_id: TaskId, data: TaskDuplicateIn):
-    """Duplicate a task, optionally to a different class."""
-    if request.auth.user_role not in ["admin", "lecturer"]:
+    """Duplicate an existing task. Admins and lecturers only."""
+    user = request.auth
+    if user.user_role not in ["admin", "lecturer"]:
         raise HttpError(403, "Only admins or lecturers can duplicate tasks")
     try:
-        task = Task.objects.get(task_id=task_id)
+        source_task = Task.objects.get(task_id=task_id)
     except Task.DoesNotExist:
         raise HttpError(404, "Task not found")
-    raise HttpError(501, "Not implemented")
+
+    if data.class_id_class:
+        try:
+            Class.objects.get(class_id=data.class_id_class)
+        except Class.DoesNotExist:
+            raise HttpError(400, "Target class does not exist")
+
+    new_task = TaskService.duplicate_task(
+        source_task, user, data.class_id_class, data.task_title, data.task_deadline
+    )
+    return new_task
 
 
-@router.post("/tasks/{task_id}/extend/", response=TaskOut)
+@router.post("/tasks/{task_id}/extend/", response=TaskExtendOut)
 def extend_task_deadline(request: HttpRequest, task_id: TaskId, data: TaskExtendIn):
-    """Extend the deadline for a specific task."""
-    if request.auth.user_role not in ["admin", "lecturer"]:
+    """Extend the deadline for a specific task. Admins and lecturers only."""
+    user = request.auth
+    if user.user_role not in ["admin", "lecturer"]:
         raise HttpError(403, "Only admins or lecturers can extend tasks")
     try:
         task = Task.objects.get(task_id=task_id)
     except Task.DoesNotExist:
         raise HttpError(404, "Task not found")
-    raise HttpError(501, "Not implemented")
+
+    if data.student_id:
+        try:
+            student = User.objects.get(user_id=data.student_id, user_role="student")
+        except User.DoesNotExist:
+            raise HttpError(404, "Student not found")
+
+        extension = TaskService.extend_deadline_per_student(
+            task, student, data.new_deadline, data.reason, user
+        )
+        return {"task": task, "extension": extension}
+    else:
+        task = TaskService.extend_deadline_global(task, data.new_deadline)
+        return {"task": task, "extension": None}
 
 

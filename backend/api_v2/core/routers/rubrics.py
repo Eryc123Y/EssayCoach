@@ -12,18 +12,20 @@ from api_v2.types.ids import (
     RubricId,
     RubricItemId,
 )
+from api_v2.utils.auth import JWTAuth
 from core.models import (
     MarkingRubric,
     RubricItem,
     RubricLevelDesc,
 )
 from core.models import RubricLevelDesc as RubricLevelDescModel
+from core.services import RubricService
 
-from api_v2.utils.auth import JWTAuth
 from ..schemas import (
     MarkingRubricIn,
     MarkingRubricOut,
     RubricDetailOut,
+    RubricDuplicateIn,
     RubricFilterParams,
     RubricImportOut,
     RubricItemDetailOut,
@@ -35,8 +37,6 @@ from ..schemas import (
     RubricLevelDescOut,
     RubricVisibilityUpdate,
 )
-
-
 
 
 def paginate(queryset, params: PaginationParams):
@@ -516,3 +516,23 @@ def delete_rubric_level(request: HttpRequest, level_id: int) -> SuccessResponse:
         raise HttpError(404, "Rubric level not found")
 
 
+
+@router.post("/{rubric_id}/duplicate/", response=RubricDetailOut)
+def duplicate_rubric(request: HttpRequest, rubric_id: RubricId, data: RubricDuplicateIn):
+    """
+    Duplicate a rubric with all its items and level descriptions.
+    """
+    user = request.auth
+    try:
+        source_rubric = MarkingRubric.objects.get(rubric_id=rubric_id)
+    except MarkingRubric.DoesNotExist:
+        raise HttpError(404, "Rubric not found")
+
+    if source_rubric.visibility == "private" and \
+       source_rubric.user_id_user_id != user.user_id and user.user_role != "admin":
+        raise HttpError(403, "Cannot duplicate a private rubric you don't own")
+
+    new_rubric = RubricService.duplicate_rubric(source_rubric, user, data.rubric_desc, data.visibility)
+
+    # We must format it to match RubricDetailOut by doing queries or using the helper if it exists
+    return get_rubric_detail(request, new_rubric.rubric_id)
