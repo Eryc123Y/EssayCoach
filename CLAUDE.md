@@ -4,7 +4,8 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 > **IMPORTANT**: This file is the single source of truth for project status. Update it after every significant code change to reflect the current state and next priorities.
 >
-- **Last Updated**: 2026-02-28 (Frontend service layer for PRD-09/10/06 advanced actions complete; PRD-06 Rubrics verified complete)
+- **Last Updated**: 2026-02-28 (Phase 3 advanced action dialogs complete; full PRD gap audit done)
+- **Incremental Update**: 2026-02-28 (Frontend service layer for PRD-09/10/06 advanced actions complete; PRD-06 Rubrics verified complete)
 - **Incremental Update**: 2026-02-28 (Backend Python type-system refactor completed, PRD 11-14 modules bootstrapped)
 - **Incremental Update**: 2026-02-27 (Dashboard Overview route fix + Task/Class backend hardening + Rubrics SSR URL fix + health-check workflow + real Chrome DevTools validation + typed-architecture roadmap)
 
@@ -97,6 +98,11 @@ The `docs/prd/` directory contains an explicit contract for code generation:
 ### Version: v2.0.0 (v2-only migration target)
 
 #### ✅ Completed Features
+- **Phase 3 Advanced Action Dialogs** ✅ Complete 2026-02-28
+  - `DuplicateTaskDialog`, `ExtendDeadlineDialog` → wired into `task-card.tsx` dropdown menu
+  - `BatchEnrollDialog`, `InviteLecturerDialog` → admin-gated buttons in `class-detail.tsx` header
+  - Rubric Duplicate button → `canCreatePublic`-gated inline button in `rubric-list.tsx`
+  - Location: `frontend/src/features/tasks/components/`, `frontend/src/features/classes/components/`
 - **Backend Python Type System Refactor** ✅ Complete 2026-02-28
   - Cleaned up API v2 schema drift and eliminated Pyright errors
   - Built canonical types (Enums, IDs) for PRDs 11-14
@@ -210,9 +216,8 @@ The `docs/prd/` directory contains an explicit contract for code generation:
 
 
 #### 🚧 In Progress / Needs Attention
-- RevisionChat Backend Integration (~8h) - **Deferred to LangGraph migration**
+- **Agent Migration** 🔴 **P0 - Current Priority** — Replace Dify with custom LangGraph/LangChain agent (see Active Development Priorities)
 - API v1 → v2 migration (cleanup pending)
-- RevisionChat Backend Integration (~8h)
 
 #### 🔍 PRD vs Implementation Gap Analysis
 
@@ -228,10 +233,10 @@ The `docs/prd/` directory contains an explicit contract for code generation:
 | 08 Profile | ✅ Implemented | Phase 2 Functional sync complete (role-based tabs, Student/Lecturer/Admin specific views, 1 test passing) | - |
 | 09 Assignments (Tasks) | ✅ Complete | Backend + Frontend complete. Service layer includes duplicateTask, extendDeadline. UI dialogs (DuplicateTaskDialog, ExtendDeadlineDialog) pending. | - |
 | 10 Classes | ✅ Complete | Backend + Frontend complete. Service layer includes batchEnrollStudents (@adminOnly), inviteLecturer (@adminOnly). UI dialogs (BatchEnrollDialog, InviteLecturerDialog) pending. | - |
-| 11 Social Learning Hub | 🚧 Contract Bootstrapped | Backend typing/schemas defined. Core business logic pending. | 🟢 P3 |
-| 12 Analytics | 🚧 Contract Bootstrapped | Backend typing/schemas defined. Core business logic pending. | 🟢 P3 |
-| 13 Users (Admin) | 🚧 Contract Bootstrapped | Backend typing/schemas defined. Core business logic pending. | 🟢 P3 |
-| 14 Help Center | 🚧 Contract Bootstrapped | Backend typing/schemas defined. Core business logic pending. | 🟢 P3 |
+| 11 Social Learning Hub | ❌ Stubs Only (~5%) | All endpoints raise NotImplementedError, no frontend components | 🟢 P3 |
+| 12 Analytics | ❌ Stubs Only (~5%) | All endpoints raise NotImplementedError, no frontend components | 🟢 P3 |
+| 13 Users (Admin) | ❌ Stubs Only (~10%) | No admin user management UI, backend stubs only | 🟢 P3 |
+| 14 Help Center | ❌ Stubs Only (~10%) | No articles/FAQs/tickets, backend stubs only | 🟢 P3 |
 
 
 
@@ -274,12 +279,10 @@ The `docs/prd/` directory contains an explicit contract for code generation:
    - Add focus indicators for keyboard navigation (A11Y, optional)
    - See: `docs/learnings/dashboard-frontend-phase2-code-review.md`
 
-2. **RevisionChat Backend Integration** - ⚠️ **Deferred** (~8h)
+2. **RevisionChat Backend Integration** - ⚠️ **Deferred — Blocked on Agent Migration**
    - Backend: Chat endpoint at `/api/v2/ai-feedback/chat/` ✅ Already exists
    - Frontend: Connect to real API (currently using mock data at `revision-chat.tsx:18-25`)
-   - Status: **Deferred - Will migrate to LangGraph/LangChain agent**
-   - Decision: Current Dify implementation is temporary. Will implement properly after LangGraph migration.
-   - For now: Keep mock data, focus on higher priority features (Dashboard refactor, Task/Classes modules)
+   - Status: **Will be rebuilt as part of Agent Migration**
 
 3. **API v1 → v2 Cleanup** (~8h)
    - Delete `backend/api_v1/` directory ✅ Deleted 2026-02-24
@@ -312,11 +315,31 @@ The `docs/prd/` directory contains an explicit contract for code generation:
    - Student view for public rubrics
    - Status: ✅ Complete (visibility-toggle.tsx exists, student view role-filtered)
 
-### 🔴 P1 - Next Up (Phase 3: UI Dialog Components)
+### 🔴 P1 - Next Up (Phase 3: UI Dialog Components) ✅ COMPLETE 2026-02-28
 
-1. **Rubric Duplicate Button** (~1h) - Add menu item to `rubric-list.tsx` action menu, call `rubricActionsService.duplicateRubric`
-2. **Task Advanced Action Dialogs** (~4h) - `DuplicateTaskDialog` + `ExtendDeadlineDialog` → wire into task-list/task-card (lecturer+admin only)
-3. **Class Admin Action Dialogs** (~6h) - `BatchEnrollDialog` + `InviteLecturerDialog` → wire into class pages (admin only)
+All Phase 3 dialog components are implemented and committed. See Completed Features above.
+
+### 🔴 P0 - Current Priority: Agent Migration
+
+### 🔴 P0 - Current Priority: Agent Migration
+
+**Goal:** Replace Dify with a custom agent built on LangGraph or LangChain. This is the top priority — Dify is a third-party dependency that limits customization of prompting, multi-step reasoning, and rubric-aware grading.
+
+**Scope:**
+1. **Essay Analysis Agent** — Replace `POST /api/v2/ai-feedback/analyze/` Dify call with LangGraph agent
+   - Multi-step: parse rubric → analyze essay → score per criterion → synthesize feedback
+   - Self-reflection / critique loop for quality
+   - Structured output matching existing `EssayAnalysisOutput` schema (no frontend changes needed)
+2. **RevisionChat Agent** — Replace mock data with real streaming chat agent
+   - Context-aware: knows the essay, rubric, and prior feedback
+   - Connects to `revision-chat.tsx` frontend (currently mock at `:18-25`)
+3. **Backend location:** `backend/api_v2/ai_feedback/` — refactor `views.py` and `agent.py`
+
+**Remaining PRD priorities (after agent migration):**
+- PRD-05 Essay Practice: annotated essay view, progress diff (benefits from richer agent output)
+- PRD-01 Landing Page: needed before real users
+- PRD-12 Analytics: after data accumulates
+- PRD-11/13/14: defer until user scale
 
 ### 🟡 P2 - Medium Priority (This Month)
 
@@ -523,16 +546,10 @@ When updating CLAUDE.md:
 - **Login Flow**: After login, MUST store user data to localStorage OR auth context fails to initialize
 - **Server vs Client Auth**: Server components (`/dashboard/page.tsx`) strictly validate JWT cookies; client components use localStorage (more forgiving)
 - **Cookie Propagation**: Setting cookie in one request doesn't guarantee availability in next server component (race condition)
+- **`tasks/` gitignore**: Root `.gitignore` has a `tasks/` entry — new files under `frontend/src/features/tasks/components/` must be staged with `git add -f`. Existing tracked files use normal `git add`.
+- **LSP false-positive during multi-step edits**: When adding imports before the JSX that uses them, TS LSP flags them as "declared but never read". Diagnostics clear after the consuming JSX edit completes — not a real error, safe to ignore mid-edit.
 - **Edit Tool Risk**: Can create duplicate code blocks; use `write` instead of `edit` for large rewrites (>50% change)
 - **Test Accounts**: Created by `make seed-db` (admin/lecturer/student@example.com). Login page has Student/Lecturer/Admin quick-fill buttons for fast testing
-- **Parallel Routes**: Dashboard uses Next.js parallel routes (`@bar_stats`, `@pie_stats`, etc.) - all must be included in layout
-- **Role Routing**: Dashboard role routing decodes JWT from httpOnly cookie server-side (`/app/dashboard/page.tsx`)
-- **Duplicate Interface Declarations**: TypeScript allows duplicate interface names (merging); LSP won't flag these. Use `grep` to find duplicates before declaring types clean.
-- **Django ORM + Pydantic Strict Typing**: Use `@field_validator("field_name", mode="before")` in schemas to provide default enum values for legacy DB records that contain `null`.
-- **Django Ninja Type Safety**: Rely on `@api.get(response=Schema)` instead of strict Python return hints (`-> Schema`) when returning ORM objects/QuerySets to avoid Pyright errors.
-- **Domain Primitives**: All constrained string fields (role, status, visibility) must use `StrEnum` defined centrally in `backend/api_v2/types/enums.py`.
-- **Build Warnings**: `pnpm build` passes with pre-existing warnings (console statements, unused vars). These are non-blocking; focus on errors only.
-- **DRF Dependency**: `djangorestframework` is required by `djangorestframework-simplejwt` for JWT token handling. Project does NOT use DRF's API framework (views, serializers, routers) — only uses simplejwt for token generation/blacklist/rotation. Do not remove unless migrating to pure `pyjwt`.
 
 ---
 
@@ -697,7 +714,8 @@ Orchestrator (multi-agent-coordinator)
 - **`docs/prd/`**: Product Requirement Documents (14 modules) - **Source of truth for features**
 
 ### Development Priorities Strategy
-- **RevisionChat Deferred**: Dify implementation is temporary; will migrate to LangGraph/LangChain agent. Continue using mock data.
+- **Agent Migration is P0**: Dify is a temporary dependency. Replace with LangGraph/LangChain agent before expanding UI features. Agent output structure will unlock PRD-05 annotated view and richer feedback.
+- **RevisionChat Deferred**: Dify implementation is temporary; will be replaced by custom agent. Keep mock data until agent migration is complete.
 - **Refactor > New Features**: Prioritize refactoring existing features to match PRD/UI design before implementing new functionality.
 - **Dashboard First**: Dashboard Overview Refactor unlocks Task and Classes module development (dependency chain).
 - **`docs/architecture/`**: System architecture docs
