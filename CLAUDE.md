@@ -499,36 +499,9 @@ During Dashboard Phase 2 implementation, key learnings included:
 - Test early: comprehensive tests caught issues early.
 ---
 
-## 🔍 Security Findings (2026-02-25 Code Review)
-
-**Dashboard Phase 2 Code Review - 28 findings total**
-
-| Severity | Count | Issues |
-|----------|-------|--------|
-| 🔴 High | 5 | JWT parsing without signature verification, CSRF handling missing, direct cookie access, missing focus indicators, button links without aria-labels |
-| 🟠 Medium | 8 | TypeScript strictness, re-render optimization, color contrast |
-| 🟢 Low | 15 | Minor accessibility, code style |
-
-**Immediate Actions Required**:
-1. ✅ Add JWT signature verification in `/app/dashboard/page.tsx` - **DONE 2026-02-25**
-2. ✅ Implement CSRF token handling in API client - **DONE 2026-02-25**
-3. ✅ Fix direct cookie access to use secure HTTP-only pattern - **DONE 2026-02-25**
-4. Add keyboard focus indicators (A11Y - optional)
-5. Add unique aria-labels to icon buttons (A11Y - optional)
-
-
-**Full report**: `docs/learnings/dashboard-frontend-phase2-code-review.md`
-
----
-
 ## 🚨 Security Warnings (Archive)
 
-**Resolved Issues:**
-
-| Issue | Status | Date Fixed |
-| **Dashboard JWT Validation** | ✅ Fixed | 2026-02-25 |
-| **Dashboard CSRF Protection** | ✅ Fixed | 2026-02-25 |
-
+**Resolved Issues**: Security audit 2026-02-25: All 5 high findings resolved. See `docs/learnings/dashboard-frontend-phase2-code-review.md` for full report.
 ---
 
 ## Latest Validation Snapshot (2026-02-27)
