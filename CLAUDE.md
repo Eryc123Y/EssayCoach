@@ -497,7 +497,7 @@ When updating CLAUDE.md:
 ## Key Development Context
 
 - **Roles**: The system supports three primary user roles: `student`, `lecturer` (formerly teacher), and `admin`.
-- **API Versioning**: Do not modify `api_v1`. Target `api_v2` exclusively.
+- **API Versioning**: All development targets api_v2 exclusively. api_v1 has been removed.
 
 ---
 
