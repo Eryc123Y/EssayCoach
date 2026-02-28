@@ -106,121 +106,28 @@ The `docs/prd/` directory contains an explicit contract for code generation:
 ### Version: v2.0.0 (v2-only migration target)
 
 #### ✅ Completed Features
-- **Phase 3 Advanced Action Dialogs** ✅ Complete 2026-02-28
-  - `DuplicateTaskDialog`, `ExtendDeadlineDialog` → wired into `task-card.tsx` dropdown menu
-  - `BatchEnrollDialog`, `InviteLecturerDialog` → admin-gated buttons in `class-detail.tsx` header
-  - Rubric Duplicate button → `canCreatePublic`-gated inline button in `rubric-list.tsx`
-  - Location: `frontend/src/features/tasks/components/`, `frontend/src/features/classes/components/`
-- **Backend Python Type System Refactor** ✅ Complete 2026-02-28
-  - Cleaned up API v2 schema drift and eliminated Pyright errors
-  - Built canonical types (Enums, IDs) for PRDs 11-14
-  - Stubbed out admin endpoints with explicit response contracts
-- **Dashboard Overview Route Hardening (PRD-04 follow-up)** ✅ Complete 2026-02-27
-  - Added missing route page: `frontend/src/app/dashboard/overview/page.tsx`
-  - Fixed layout composition to render overview page correctly: `frontend/src/app/dashboard/overview/layout.tsx`
-  - Updated page container to support extension styles: `frontend/src/components/layout/page-container.tsx` (`className` support)
-  - Updated breadcrumbs route mapping for current dashboard routes: `frontend/src/hooks/use-breadcrumbs.tsx`
-  - Validation: overview frontend test passing (`38/38`)
-- **Task/Class Backend Hardening (PRD-09/10 follow-up)** ✅ Complete 2026-02-27
-  - Fixed query parsing for list filters/pagination (`Query(...)`) in `backend/api_v2/core/views.py`
-  - Added `IsAdminOrLecturer` permission enforcement for task/class create endpoints
-  - Added defensive 400 handling for missing related entities instead of server errors
-  - `TaskIn.task_instructions` default set to empty string in `backend/api_v2/core/schemas.py`
-  - `Class` join code normalization/auto-generation added in `backend/core/models.py`
-  - Validation: backend suites passing (`test_task_class_crud.py` + `test_task_class_actions.py`)
+- **Phase 3 Advanced Action Dialogs** ✅ Complete 2026-02-28 (Task/Class/Rubric action dialogs)
+- **Backend Python Type System Refactor** ✅ Complete 2026-02-28 (API v2 schemas, PRDs 11-14 types)
+- **Dashboard Overview Route Hardening** ✅ Complete 2026-02-27 (PRD-04 follow-up)
+- **Task/Class Backend Hardening** ✅ Complete 2026-02-27 (PRD-09/10 follow-up)
 - **Rubrics SSR Fetch Fix** ✅ Complete 2026-02-27
-  - Server component now uses backend absolute URL + cookie token flow (fixes relative URL/Invalid URL issues in SSR)
-  - File: `frontend/src/app/dashboard/rubrics/page.tsx`
-- **Auth Proxy/Service Consolidation (v2)** ✅ Complete 2026-02-27
-  - Added/updated auth proxy endpoints under `frontend/src/app/api/v2/auth/`
-  - Updated API service/store integration: `frontend/src/service/api/v2/auth.ts`, `frontend/src/stores/authStore.ts`
-  - Added test coverage updates: `frontend/src/stores/__tests__/authStore.test.ts`
-- **Profile & Settings Sync (Phase 2)** ✅ Complete 2026-02-27
-  - Settings: Role-based sidebar rendering (Organization/API keys hidden for non-admins)
-  - Settings: Forms integrated with backend hooks (toast notifications added)
-  - Profile: Role-based tabs (Achievements hidden for non-students)
-  - Tests: 3 new feature-specific tests added and passing
+- **Auth Proxy/Service Consolidation** ✅ Complete 2026-02-27 (v2)
+- **Profile & Settings Sync** ✅ Complete 2026-02-27 (Phase 2)
 - Core AI essay analysis functionality
-- Dashboard overview (student/lecturer role-aware)
+- Dashboard overview (student/lecturer role-aware), UI compliant, security hardened
 - Rubric management (CRUD + PDF import via AI)
-- Essay Practice submission flow
+- Essay Practice submission flow, PDF Export, Skill Radar Chart
 - API v2 core endpoints for existing features
-- RBAC permission checks on Users CRUD endpoints ✅ Added 2026-02-24
-- Cookie security hardening (httpOnly, sameSite, secure flags) ✅ Added 2026-02-24
-- Navigation links to 404 pages removed ✅ Fixed 2026-02-24
-- **JWT Refresh Token mechanism** ✅ Implemented 2026-02-24
-- **Dashboard API endpoint** ✅ Implemented 2026-02-25 (`/api/v2/core/dashboard/`)
-- **Comprehensive test coverage** ✅ Added 2026-02-25
-  - Backend: 50+ dashboard API tests (pytest)
-  - Frontend: Dashboard page + component tests (vitest)
-  - Integration tests for full workflows
-  - Backend: `/api/v2/auth/refresh/` with token rotation and blacklist
-  - Frontend: `useAuthRefresh` hook with auto-refresh 5min before expiry
-  - Security: httpOnly cookies, single-flight pattern, retry with backoff
-  - Tests: 52 tests passing (33 authStore + 19 useAuthRefresh)
-- **Dashboard Backend API (Phase 1)** ✅ Implemented 2026-02-25
-  - Endpoints: `/api/v2/core/dashboard/lecturer/`, `/api/v2/core/dashboard/student/`, `/api/v2/core/dashboard/admin/`
-  - Schemas: Role-specific response schemas (LecturerDashboardOut, StudentDashboardOut, AdminDashboardOut)
-  - Frontend: API client (`dashboardService`), TypeScript types, useDashboard hook
-  - Documentation: `docs/learnings/dashboard-refactor-phase1-backend.md`
-- **Dashboard Performance Optimization** ✅ Complete 2026-02-25
-  - Database indexes added: 11 new indexes on Submission, Feedback, Enrollment, FeedbackItem, Class tables
-  - Artificial delays removed from all dashboard slot pages (+3s TTI improvement)
-  - Documentation: `docs/learnings/dashboard-performance-optimization.md`
-- **Dashboard Frontend (Phase 2)** ✅ Complete 2026-02-25
-  - Role-based routing: `/dashboard/student`, `/dashboard/lecturer`, `/dashboard/admin`
-  - Components: 5 implemented (`DashboardHeader`, `ActivityFeed`, `LecturerDashboard`, `StudentDashboard`, `AdminDashboard`)
-  - Location: `frontend/src/features/dashboard/`, `frontend/src/app/dashboard/[role]/page.tsx`
-  - Documentation: `docs/learnings/dashboard-frontend-implementation.md`
-  - UI Designer Review: ✅ Complete (70% compliance score)
-  - Testing: ✅ Complete (201 tests created)
-  - Code Review: ✅ Complete (28 findings, 3 High priority security)
-- **Dashboard UI Compliance (Phase 3)** ✅ Complete 2026-02-25
-  - Updated role dashboard components to align with current UI/test expectations
-  - Dashboard component + hook tests passing: 201/201
-  - Frontend build passes (`pnpm build`)
-  - Type cleanup complete: removed duplicate dashboard interfaces in `frontend/src/service/api/v2/types.ts`
-- **Sidebar Fix** ✅ Complete 2026-02-25
-  - Added skeleton loading state during auth initialization
-  - Added placeholder UI when no classes available
-  - Fixed icon mismatches (`IconBook`, `IconChevronsDown`)
-  - Documentation: `docs/learnings/sidebar-fix-implementation.md`
-- **Test Account Quick-Fill** ✅ Complete 2026-02-25
-  - Added Student/Lecturer/Admin quick-fill buttons on login page
-  - Documentation: `docs/learnings/test-account-quick-fill.md`
-- **Code Hygiene (Phase 1)** ✅ Complete 2026-02-25
-  - Deleted 5 orphaned v1 auth route files
-  - Fixed hardcoded API URLs to use `NEXT_PUBLIC_API_URL` env var
-- **Task + Class Model Extension (Phase 2)** ✅ Complete 2026-02-25
-  - Task model: +6 fields (title, description, instructions, class_id, status, allow_late)
-  - Class model: +7 fields (name, description, join_code, term, year, status, archived_at)
-  - Migrations created and applied
-  - API endpoints: publish/unpublish/submissions, join/students/archive
-  - Tests: 21 pytest tests passing
-- **Tasks + Classes Module (PRD-09/10)** ✅ Complete 2026-02-26
-  - Backend: Full CRUD + action endpoints (publish/unpublish/submissions/join/leave/archive)
-  - Frontend: Full routes, components, navigation integration
-  - Testing: 15 service tests + 16 backend CRUD tests passing
-- **Profile Backend API (PRD-08)** ✅ Complete 2026-02-26
-  - Models: Badge, UserBadge created with migrations
-  - Endpoints: `/api/v2/core/users/{user_id}/stats/`, `/badges/`, `/progress/`
-  - Testing: 18 pytest tests passing
-  - Location: `backend/api_v2/core/views.py`, `backend/core/models.py`
-- **Settings Backend API (PRD-07)** ✅ Complete 2026-02-26
-  - Models: User.preferences (JSONField) added to store user settings
-  - Endpoints implemented:
-    - `PUT /api/v2/auth/password-change/` - Change password with current password verification ✅ Already existed
-    - `POST /api/v2/auth/settings/avatar/` - Upload avatar (PNG/JPG, max 5MB) ✅ New
-    - `GET /api/v2/auth/settings/preferences/` - Get user preferences ✅ New
-    - `PUT /api/v2/auth/settings/preferences/` - Update user preferences (partial update) ✅ New
-    - `GET /api/v2/auth/settings/sessions/` - List active sessions ✅ New
-    - `DELETE /api/v2/auth/settings/sessions/{session_id}/` - Revoke session ✅ New
-    - `GET /api/v2/auth/settings/login-history/` - Get login history ✅ New
-  - Schemas: UserPreferencesIn, UserPreferencesOut, SessionOut, LoginHistoryOut, AvatarUploadOut
-  - Testing: 19 pytest tests passing (password change, preferences, avatar, sessions, login history)
-  - Frontend: types.ts + settingsService API client + 8 vitest tests
-  - Location: `backend/api_v2/auth/views.py`, `backend/api_v2/auth/schemas.py`, `backend/core/models.py`
-  - Migration: `core/0008_badge_user_preferences_userbadge_and_more.py` (includes User.preferences field)
+- RBAC permission checks, Cookie security hardening, JWT Refresh Token mechanism
+- Navigation links to 404 pages removed (2026-02-24)
+- **Dashboard API endpoint** ✅ Implemented 2026-02-25
+- **Comprehensive test coverage** ✅ Added 2026-02-25 (50+ backend, 201 frontend tests)
+- **Dashboard Backend/Frontend/Performance** ✅ Complete 2026-02-25 (Phase 1-3)
+- **Sidebar Fix + Test Account Quick-Fill** ✅ Complete 2026-02-25
+- **Code Hygiene** ✅ Complete 2026-02-25 (Phase 1: v1 routes deleted)
+- **Task + Class Model Extension** ✅ Complete 2026-02-25-26 (Phase 2 + PRD-09/10 modules)
+- **Profile Backend API** ✅ Complete 2026-02-26 (PRD-08)
+- **Settings Backend API** ✅ Complete 2026-02-26 (PRD-07: preferences, avatar, sessions)
 
 
 #### 🚧 In Progress / Needs Attention
