@@ -30,13 +30,13 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Backend Migrations**: `make migrate`
 
 ### Testing
-- **All Tests**: `make test` (runs both api_v1 and api_v2 tests)
+- **All Tests**: `make test` (runs backend and frontend tests)
 - **Backend Tests (API v2 only)**: `cd backend && uv run pytest api_v2/ -v`
 - **Frontend Tests**: `cd frontend && pnpm test`
 - **Targeted Frontend Tests**: `cd frontend && pnpm exec vitest run src/features/<path>/<file>.test.ts`
   > **Note**: `pnpm test -- <path>` may still run broad suites; `pnpm exec vitest run <file>` is more precise for single-file runs.
 
-> **Note**: `make test` includes legacy api_v1 tests. For api_v2-only testing, use the command above. Tests require `.env` at project root and have a 60s timeout per test.
+> **Note**: Tests require `.env` at project root and have a 60s timeout per test.
 
 ### Linting & Formatting
 - **Check All**: `make lint`
