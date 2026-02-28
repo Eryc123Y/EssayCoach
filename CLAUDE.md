@@ -567,10 +567,7 @@ When updating CLAUDE.md:
 - **Logout**: Clear both cookie + localStorage
 - **Why**: httpOnly cookies can't be read by JS, but client components need user data
 
-### CSRF Protection (API Client)
-- Use `jose` library: `jwtVerify(token, new TextEncoder().encode(JWT_SECRET))`
-- Never use manual `atob(token.split('.')[1])` parsing - vulnerable to tampering
-- Location: `frontend/src/lib/auth.ts`
+
 
 ### CSRF Protection (API Client)
 - Read Django `csrftoken` cookie: `document.cookie.match(/csrftoken=([^;]+)/)`
