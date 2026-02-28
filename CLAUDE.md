@@ -321,7 +321,6 @@ All Phase 3 dialog components are implemented and committed. See Completed Featu
 
 ### 🔴 P0 - Current Priority: Agent Migration
 
-### 🔴 P0 - Current Priority: Agent Migration
 
 **Goal:** Replace Dify with a custom agent built on LangGraph or LangChain. This is the top priority — Dify is a third-party dependency that limits customization of prompting, multi-step reasoning, and rubric-aware grading.
 
