@@ -452,9 +452,6 @@ ProgressSnapshot  # Historical progress
 
 | Endpoint | PRD | Priority |
 |----------|-----|----------|
-| `POST /api/v2/ai-feedback/chat/` | 05 | P0 |
-| `GET/POST /api/v2/core/tasks/` | 09 | P1 |
-| `GET/POST /api/v2/core/classes/` | 10 | P1 |
 | `POST /api/v2/core/submissions/{id}/share/` | 11 | P3 |
 | `GET /api/v2/core/feed/` | 11 | P3 |
 
