@@ -1,4 +1,4 @@
-.PHONY: install dev dev-backend dev-frontend health health-check test lint clean db docs docs-generate docs-erd
+.PHONY: install dev dev-backend dev-frontend health health-check test test-performance lint clean db docs docs-generate docs-erd
 
 # Install all dependencies
 install:
@@ -90,11 +90,15 @@ seed-db:
 
 # Testing
 test:
-	@echo "Running API v2 tests..."
-	@cd backend && .venv/bin/pytest -v --timeout=120
+	@echo "Running API v2 tests (excluding performance)..."
+	@cd backend && .venv/bin/pytest -m "not performance" -v --timeout=120
 	@echo ""
 	@echo "Running Node tests..."
 	@cd frontend && pnpm test
+
+test-performance:
+	@echo "Running API v2 performance tests..."
+	@cd backend && .venv/bin/pytest -m performance -v --timeout=120
 
 # Code quality
 lint:

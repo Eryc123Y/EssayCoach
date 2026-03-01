@@ -110,3 +110,6 @@ python_classes = ["Test*", "*Tests"]
 python_functions = ["test_*"]
 addopts = "-v --tb=short --timeout=60"
 norecursedirs = ["test_e2e*.py", "test_dify.py", ".*", "node_modules", "*.egg-info"]
+markers = [
+    "performance: performance-sensitive tests that are excluded from default make test",
+]

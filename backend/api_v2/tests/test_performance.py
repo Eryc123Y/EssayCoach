@@ -9,6 +9,8 @@ import pytest
 
 from core.models import Class, MarkingRubric, Unit, User
 
+pytestmark = pytest.mark.performance
+
 
 @pytest.fixture
 def create_test_data():
