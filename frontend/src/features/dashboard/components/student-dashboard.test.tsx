@@ -16,24 +16,35 @@ import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import {
   StudentDashboard,
-  StudentDashboardSkeleton,
+  StudentDashboardSkeleton
 } from '@/features/dashboard/components/student-dashboard';
-import type { StudentDashboardResponse, StudentEssay } from '@/service/api/v2/types';
+import type {
+  StudentDashboardResponse,
+  StudentEssay
+} from '@/service/api/v2/types';
 
 // Mock shadcn/ui components
 vi.mock('@/components/ui/card', () => ({
   Card: ({ children, className, ...props }: any) => (
-    <div data-testid="card" className={className} {...props}>{children}</div>
+    <div data-testid='card' className={className} {...props}>
+      {children}
+    </div>
   ),
   CardHeader: ({ children, className, ...props }: any) => (
-    <div data-testid="card-header" className={className} {...props}>{children}</div>
+    <div data-testid='card-header' className={className} {...props}>
+      {children}
+    </div>
   ),
   CardTitle: ({ children, className, ...props }: any) => (
-    <h4 data-testid="card-title" className={className} {...props}>{children}</h4>
+    <h4 data-testid='card-title' className={className} {...props}>
+      {children}
+    </h4>
   ),
   CardContent: ({ children, className, ...props }: any) => (
-    <div data-testid="card-content" className={className} {...props}>{children}</div>
-  ),
+    <div data-testid='card-content' className={className} {...props}>
+      {children}
+    </div>
+  )
 }));
 
 vi.mock('@/components/ui/badge', () => ({
@@ -41,36 +52,66 @@ vi.mock('@/components/ui/badge', () => ({
     <span className={className} data-variant={variant} {...props}>
       {children}
     </span>
-  ),
+  )
 }));
 
 vi.mock('@/components/ui/select', () => ({
-  Select: ({ children }: any) => <div data-testid="select">{children}</div>,
-  SelectContent: ({ children }: any) => <div data-testid="select-content">{children}</div>,
-  SelectItem: ({ children, value }: any) => <div data-testid="select-item" data-value={value}>{children}</div>,
-  SelectTrigger: ({ children }: any) => <button data-testid="select-trigger">{children}</button>,
-  SelectValue: ({ placeholder }: any) => <span data-testid="select-value">{placeholder}</span>,
+  Select: ({ children }: any) => <div data-testid='select'>{children}</div>,
+  SelectContent: ({ children }: any) => (
+    <div data-testid='select-content'>{children}</div>
+  ),
+  SelectItem: ({ children, value }: any) => (
+    <div data-testid='select-item' data-value={value}>
+      {children}
+    </div>
+  ),
+  SelectTrigger: ({ children }: any) => (
+    <button data-testid='select-trigger'>{children}</button>
+  ),
+  SelectValue: ({ placeholder }: any) => (
+    <span data-testid='select-value'>{placeholder}</span>
+  )
 }));
 vi.mock('@/components/ui/button', () => ({
-  Button: ({ children, className, asChild, size, variant, onClick, ...props }: any) => (
-    <button className={className} data-size={size} data-variant={variant} onClick={onClick} {...props}>
+  Button: ({
+    children,
+    className,
+    asChild,
+    size,
+    variant,
+    onClick,
+    ...props
+  }: any) => (
+    <button
+      className={className}
+      data-size={size}
+      data-variant={variant}
+      onClick={onClick}
+      {...props}
+    >
       {children}
     </button>
-  ),
+  )
 }));
 
 // Mock next/link
 vi.mock('next/link', () => ({
   default: ({ children, href, ...props }: any) => (
-    <a href={href} {...props}>{children}</a>
-  ),
+    <a href={href} {...props}>
+      {children}
+    </a>
+  )
 }));
 
 // Mock date-fns
 vi.mock('date-fns', () => ({
   format: vi.fn((date: Date) => {
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-  }),
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    });
+  })
 }));
 
 // Mock student data
@@ -79,7 +120,7 @@ const mockStudentData: StudentDashboardResponse = {
     id: 1,
     name: 'John Student',
     role: 'student',
-    email: 'john@example.com',
+    email: 'john@example.com'
   },
   stats: {
     essaysSubmitted: 5,
@@ -88,7 +129,7 @@ const mockStudentData: StudentDashboardResponse = {
     feedbackReceived: 12,
     totalEssays: 5,
     averageScore: 82.5,
-    pendingGrading: 0,
+    pendingGrading: 0
   },
   myEssays: [
     {
@@ -98,7 +139,7 @@ const mockStudentData: StudentDashboardResponse = {
       submittedAt: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
       score: 85,
       unitName: 'English 101',
-      taskTitle: 'Personal Story',
+      taskTitle: 'Personal Story'
     },
     {
       id: 2,
@@ -107,7 +148,7 @@ const mockStudentData: StudentDashboardResponse = {
       submittedAt: new Date(Date.now() - 1000 * 60 * 60 * 48).toISOString(),
       score: 78,
       unitName: 'English 101',
-      taskTitle: 'Book Analysis',
+      taskTitle: 'Book Analysis'
     },
     {
       id: 3,
@@ -116,7 +157,7 @@ const mockStudentData: StudentDashboardResponse = {
       submittedAt: new Date(Date.now() - 1000 * 60 * 60 * 12).toISOString(),
       score: null,
       unitName: 'English 202',
-      taskTitle: 'Research Plan',
+      taskTitle: 'Research Plan'
     },
     {
       id: 4,
@@ -125,7 +166,7 @@ const mockStudentData: StudentDashboardResponse = {
       submittedAt: new Date(Date.now() - 1000 * 60 * 60 * 72).toISOString(),
       score: 90,
       unitName: 'English 202',
-      taskTitle: 'Argument Writing',
+      taskTitle: 'Argument Writing'
     },
     {
       id: 5,
@@ -134,10 +175,10 @@ const mockStudentData: StudentDashboardResponse = {
       submittedAt: new Date(Date.now() - 1000 * 60 * 60 * 6).toISOString(),
       score: null,
       unitName: null,
-      taskTitle: null,
-    },
+      taskTitle: null
+    }
   ],
-  recentActivity: [],
+  recentActivity: []
 };
 
 describe('StudentDashboard', () => {
@@ -238,7 +279,9 @@ describe('StudentDashboard', () => {
       render(<StudentDashboard data={mockStudentData} />);
 
       // Date should be formatted
-      expect(screen.getAllByText(/^[A-Z][a-z]{2} \d{1,2}, \d{4}$/).length).toBeGreaterThan(0);
+      expect(
+        screen.getAllByText(/^[A-Z][a-z]{2} \d{1,2}, \d{4}$/).length
+      ).toBeGreaterThan(0);
     });
   });
 
@@ -259,14 +302,18 @@ describe('StudentDashboard', () => {
     it('should link draft essays to edit page', () => {
       render(<StudentDashboard data={mockStudentData} />);
 
-      const editLinks = document.querySelectorAll('a[href*="/dashboard/essay?edit="]');
+      const editLinks = document.querySelectorAll(
+        'a[href*="/dashboard/essay?edit="]'
+      );
       expect(editLinks.length).toBe(1);
     });
 
     it('should link graded essays to analysis page', () => {
       render(<StudentDashboard data={mockStudentData} />);
 
-      const analysisLinks = document.querySelectorAll('a[href*="/dashboard/essay-analysis/"]');
+      const analysisLinks = document.querySelectorAll(
+        'a[href*="/dashboard/essay-analysis/"]'
+      );
       expect(analysisLinks.length).toBeGreaterThan(0);
     });
   });
@@ -332,9 +379,25 @@ describe('StudentDashboard', () => {
       const decliningData: StudentDashboardResponse = {
         ...mockStudentData,
         myEssays: [
-          { id: 1, title: 'Essay 1', status: 'ai_graded', submittedAt: '2024-01-01', score: 90, unitName: null, taskTitle: null },
-          { id: 2, title: 'Essay 2', status: 'ai_graded', submittedAt: '2024-01-02', score: 80, unitName: null, taskTitle: null },
-        ],
+          {
+            id: 1,
+            title: 'Essay 1',
+            status: 'ai_graded',
+            submittedAt: '2024-01-01',
+            score: 90,
+            unitName: null,
+            taskTitle: null
+          },
+          {
+            id: 2,
+            title: 'Essay 2',
+            status: 'ai_graded',
+            submittedAt: '2024-01-02',
+            score: 80,
+            unitName: null,
+            taskTitle: null
+          }
+        ]
       };
 
       render(<StudentDashboard data={decliningData} />);
@@ -346,9 +409,25 @@ describe('StudentDashboard', () => {
       const stableData: StudentDashboardResponse = {
         ...mockStudentData,
         myEssays: [
-          { id: 1, title: 'Essay 1', status: 'ai_graded', submittedAt: '2024-01-01', score: 85, unitName: null, taskTitle: null },
-          { id: 2, title: 'Essay 2', status: 'ai_graded', submittedAt: '2024-01-02', score: 85, unitName: null, taskTitle: null },
-        ],
+          {
+            id: 1,
+            title: 'Essay 1',
+            status: 'ai_graded',
+            submittedAt: '2024-01-01',
+            score: 85,
+            unitName: null,
+            taskTitle: null
+          },
+          {
+            id: 2,
+            title: 'Essay 2',
+            status: 'ai_graded',
+            submittedAt: '2024-01-02',
+            score: 85,
+            unitName: null,
+            taskTitle: null
+          }
+        ]
       };
 
       render(<StudentDashboard data={stableData} />);
@@ -361,19 +440,21 @@ describe('StudentDashboard', () => {
     it('should show empty state when no essays', () => {
       const emptyData: StudentDashboardResponse = {
         ...mockStudentData,
-        myEssays: [],
+        myEssays: []
       };
 
       render(<StudentDashboard data={emptyData} />);
 
       expect(screen.getByText('No Submissions Yet')).toBeInTheDocument();
-      expect(screen.getByText('Start with your first essay submission.')).toBeInTheDocument();
+      expect(
+        screen.getByText('Start with your first essay submission.')
+      ).toBeInTheDocument();
     });
 
     it('should show Submit Essay button in empty state', () => {
       const emptyData: StudentDashboardResponse = {
         ...mockStudentData,
-        myEssays: [],
+        myEssays: []
       };
 
       render(<StudentDashboard data={emptyData} />);
@@ -384,7 +465,7 @@ describe('StudentDashboard', () => {
     it('should link to essay submission page from empty state', () => {
       const emptyData: StudentDashboardResponse = {
         ...mockStudentData,
-        myEssays: [],
+        myEssays: []
       };
 
       render(<StudentDashboard data={emptyData} />);
@@ -396,7 +477,7 @@ describe('StudentDashboard', () => {
     it('should not show progress tracker when no essays', () => {
       const emptyData: StudentDashboardResponse = {
         ...mockStudentData,
-        myEssays: [],
+        myEssays: []
       };
 
       render(<StudentDashboard data={emptyData} />);
@@ -415,9 +496,9 @@ describe('StudentDashboard', () => {
             submittedAt: new Date().toISOString(),
             score: 85,
             unitName: null,
-            taskTitle: null,
-          },
-        ],
+            taskTitle: null
+          }
+        ]
       };
 
       render(<StudentDashboard data={oneEssayData} />);
@@ -437,9 +518,9 @@ describe('StudentDashboard', () => {
             submittedAt: new Date().toISOString(),
             score: 85,
             unitName: null,
-            taskTitle: null,
-          },
-        ],
+            taskTitle: null
+          }
+        ]
       };
 
       render(<StudentDashboard data={oneEssayData} />);
@@ -461,8 +542,8 @@ describe('StudentDashboard', () => {
           submittedAt: new Date().toISOString(),
           score: 80 + i,
           unitName: 'English 101',
-          taskTitle: 'Assignment',
-        })),
+          taskTitle: 'Assignment'
+        }))
       };
 
       render(<StudentDashboard data={manyEssaysData} />);
@@ -482,7 +563,9 @@ describe('StudentDashboard', () => {
       const progressHeading = screen.queryByText('Progress Over Time');
 
       if (progressHeading) {
-        expect(myEssaysHeading.compareDocumentPosition(progressHeading)).toBe(4);
+        expect(myEssaysHeading.compareDocumentPosition(progressHeading)).toBe(
+          4
+        );
       }
     });
 
@@ -490,7 +573,9 @@ describe('StudentDashboard', () => {
       render(<StudentDashboard data={mockStudentData} />);
 
       // Each essay should be in a bordered container
-      const essayItems = document.querySelectorAll('[class*="border"]:not([class*="animate-pulse"])');
+      const essayItems = document.querySelectorAll(
+        '[class*="border"]:not([class*="animate-pulse"])'
+      );
       expect(essayItems.length).toBeGreaterThan(4);
     });
   });

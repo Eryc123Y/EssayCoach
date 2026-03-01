@@ -2,7 +2,6 @@ import { NextRequest, NextResponse } from 'next/server';
 import { normalizeUserInfo } from '@/lib/user-normalization';
 import { getServerApiUrl } from '@/lib/server-api';
 
-
 export async function GET(req: NextRequest) {
   try {
     // Get the token from HttpOnly cookie
@@ -26,7 +25,6 @@ export async function GET(req: NextRequest) {
       }
     });
 
-
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
       return NextResponse.json(
@@ -42,7 +40,10 @@ export async function GET(req: NextRequest) {
       data: normalizedUser
     });
   } catch (error) {
-    console.error('[getUserInfo] Error:', error instanceof Error ? error.message : 'Unknown error');
+    console.error(
+      '[getUserInfo] Error:',
+      error instanceof Error ? error.message : 'Unknown error'
+    );
     return NextResponse.json(
       { message: 'Internal server error' },
       { status: 500 }

@@ -11,10 +11,7 @@ import {
   CardTitle
 } from '@/components/ui/card';
 import { RubricUpload } from '@/components/rubric/RubricUpload';
-import {
-  RubricListItem,
-  deleteRubric
-} from '@/service/api/rubric';
+import { RubricListItem, deleteRubric } from '@/service/api/rubric';
 import { toast } from 'sonner';
 import {
   Loader2,
@@ -53,7 +50,9 @@ export function RubricsClient({ initialRubrics }: RubricsClientProps) {
   const router = useRouter();
   const [rubrics, setRubrics] = useState<RubricListItem[]>(initialRubrics);
   const [deleteDialogOpen, setDeleteDialogOpen] = useState(false);
-  const [rubricToDelete, setRubricToDelete] = useState<RubricListItem | null>(null);
+  const [rubricToDelete, setRubricToDelete] = useState<RubricListItem | null>(
+    null
+  );
   const [isDeleting, setIsDeleting] = useState(false);
 
   const handleUploadSuccess = () => {

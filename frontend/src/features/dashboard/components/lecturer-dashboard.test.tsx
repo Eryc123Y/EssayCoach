@@ -14,23 +14,38 @@
 
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { LecturerDashboard, LecturerDashboardSkeleton } from '@/features/dashboard/components/lecturer-dashboard';
-import type { LecturerDashboardResponse, ClassOverview, GradingQueueItem } from '@/service/api/v2/types';
+import {
+  LecturerDashboard,
+  LecturerDashboardSkeleton
+} from '@/features/dashboard/components/lecturer-dashboard';
+import type {
+  LecturerDashboardResponse,
+  ClassOverview,
+  GradingQueueItem
+} from '@/service/api/v2/types';
 
 // Mock shadcn/ui components
 vi.mock('@/components/ui/card', () => ({
   Card: ({ children, className, ...props }: any) => (
-    <div data-testid="card" className={className} {...props}>{children}</div>
+    <div data-testid='card' className={className} {...props}>
+      {children}
+    </div>
   ),
   CardHeader: ({ children, className, ...props }: any) => (
-    <div data-testid="card-header" className={className} {...props}>{children}</div>
+    <div data-testid='card-header' className={className} {...props}>
+      {children}
+    </div>
   ),
   CardTitle: ({ children, className, ...props }: any) => (
-    <h4 data-testid="card-title" className={className} {...props}>{children}</h4>
+    <h4 data-testid='card-title' className={className} {...props}>
+      {children}
+    </h4>
   ),
   CardContent: ({ children, className, ...props }: any) => (
-    <div data-testid="card-content" className={className} {...props}>{children}</div>
-  ),
+    <div data-testid='card-content' className={className} {...props}>
+      {children}
+    </div>
+  )
 }));
 
 vi.mock('@/components/ui/badge', () => ({
@@ -38,36 +53,66 @@ vi.mock('@/components/ui/badge', () => ({
     <span className={className} data-variant={variant} {...props}>
       {children}
     </span>
-  ),
+  )
 }));
 
 vi.mock('@/components/ui/select', () => ({
-  Select: ({ children }: any) => <div data-testid="select">{children}</div>,
-  SelectContent: ({ children }: any) => <div data-testid="select-content">{children}</div>,
-  SelectItem: ({ children, value }: any) => <div data-testid="select-item" data-value={value}>{children}</div>,
-  SelectTrigger: ({ children }: any) => <button data-testid="select-trigger">{children}</button>,
-  SelectValue: ({ placeholder }: any) => <span data-testid="select-value">{placeholder}</span>,
+  Select: ({ children }: any) => <div data-testid='select'>{children}</div>,
+  SelectContent: ({ children }: any) => (
+    <div data-testid='select-content'>{children}</div>
+  ),
+  SelectItem: ({ children, value }: any) => (
+    <div data-testid='select-item' data-value={value}>
+      {children}
+    </div>
+  ),
+  SelectTrigger: ({ children }: any) => (
+    <button data-testid='select-trigger'>{children}</button>
+  ),
+  SelectValue: ({ placeholder }: any) => (
+    <span data-testid='select-value'>{placeholder}</span>
+  )
 }));
 vi.mock('@/components/ui/button', () => ({
-  Button: ({ children, className, asChild, size, variant, onClick, ...props }: any) => (
-    <button className={className} data-size={size} data-variant={variant} onClick={onClick} {...props}>
+  Button: ({
+    children,
+    className,
+    asChild,
+    size,
+    variant,
+    onClick,
+    ...props
+  }: any) => (
+    <button
+      className={className}
+      data-size={size}
+      data-variant={variant}
+      onClick={onClick}
+      {...props}
+    >
       {children}
     </button>
-  ),
+  )
 }));
 
 // Mock next/link
 vi.mock('next/link', () => ({
   default: ({ children, href, ...props }: any) => (
-    <a href={href} {...props}>{children}</a>
-  ),
+    <a href={href} {...props}>
+      {children}
+    </a>
+  )
 }));
 
 // Mock date-fns
 vi.mock('date-fns', () => ({
   format: vi.fn((date: Date) => {
-    return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
-  }),
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    });
+  })
 }));
 
 // Mock data
@@ -76,7 +121,7 @@ const mockLecturerData: LecturerDashboardResponse = {
     id: 1,
     name: 'Jane Lecturer',
     role: 'lecturer',
-    email: 'jane@example.com',
+    email: 'jane@example.com'
   },
   stats: {
     essaysReviewedToday: 12,
@@ -85,7 +130,7 @@ const mockLecturerData: LecturerDashboardResponse = {
     avgGradingTime: 25,
     totalEssays: 150,
     averageScore: 78.5,
-    pendingGrading: 5,
+    pendingGrading: 5
   },
   classes: [
     {
@@ -95,7 +140,7 @@ const mockLecturerData: LecturerDashboardResponse = {
       studentCount: 25,
       essayCount: 45,
       avgScore: 78.5,
-      pendingReviews: 3,
+      pendingReviews: 3
     },
     {
       id: 2,
@@ -104,8 +149,8 @@ const mockLecturerData: LecturerDashboardResponse = {
       studentCount: 20,
       essayCount: 35,
       avgScore: 82.3,
-      pendingReviews: 2,
-    },
+      pendingReviews: 2
+    }
   ],
   gradingQueue: [
     {
@@ -115,7 +160,7 @@ const mockLecturerData: LecturerDashboardResponse = {
       submittedAt: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(),
       status: 'ai_graded',
       aiScore: 85,
-      dueDate: new Date(Date.now() + 1000 * 60 * 60 * 48).toISOString(),
+      dueDate: new Date(Date.now() + 1000 * 60 * 60 * 48).toISOString()
     },
     {
       submissionId: 2,
@@ -124,10 +169,10 @@ const mockLecturerData: LecturerDashboardResponse = {
       submittedAt: new Date(Date.now() - 1000 * 60 * 60 * 48).toISOString(),
       status: 'pending_review',
       aiScore: null,
-      dueDate: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(), // Overdue
-    },
+      dueDate: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString() // Overdue
+    }
   ],
-  recentActivity: [],
+  recentActivity: []
 };
 
 describe('LecturerDashboard', () => {
@@ -188,9 +233,9 @@ describe('LecturerDashboard', () => {
             submittedAt: new Date().toISOString(),
             status: 'pending_review',
             aiScore: null,
-            dueDate: new Date().toISOString(),
-          },
-        ],
+            dueDate: new Date().toISOString()
+          }
+        ]
       };
 
       render(<LecturerDashboard data={dataWithoutAiScore} />);
@@ -210,7 +255,9 @@ describe('LecturerDashboard', () => {
     it('should link to essay analysis page', () => {
       render(<LecturerDashboard data={mockLecturerData} />);
 
-      const reviewLinks = document.querySelectorAll('a[href*="/dashboard/essay-analysis"]');
+      const reviewLinks = document.querySelectorAll(
+        'a[href*="/dashboard/essay-analysis"]'
+      );
       expect(reviewLinks.length).toBe(2);
     });
   });
@@ -254,7 +301,9 @@ describe('LecturerDashboard', () => {
     it('should display unit names', () => {
       render(<LecturerDashboard data={mockLecturerData} />);
 
-      expect(screen.getByText('Introduction to Academic Writing')).toBeInTheDocument();
+      expect(
+        screen.getByText('Introduction to Academic Writing')
+      ).toBeInTheDocument();
       expect(screen.getByText('Advanced Composition')).toBeInTheDocument();
     });
 
@@ -306,7 +355,9 @@ describe('LecturerDashboard', () => {
     it('should link to class detail page', () => {
       render(<LecturerDashboard data={mockLecturerData} />);
 
-      const classLinks = document.querySelectorAll('a[href*="/dashboard/classes"]');
+      const classLinks = document.querySelectorAll(
+        'a[href*="/dashboard/classes"]'
+      );
       expect(classLinks.length).toBe(2);
     });
   });
@@ -315,31 +366,35 @@ describe('LecturerDashboard', () => {
     it('should show empty state when grading queue is empty', () => {
       const emptyQueueData: LecturerDashboardResponse = {
         ...mockLecturerData,
-        gradingQueue: [],
+        gradingQueue: []
       };
 
       render(<LecturerDashboard data={emptyQueueData} />);
 
       expect(screen.getByText('All Caught Up!')).toBeInTheDocument();
-      expect(screen.getByText('No pending reviews at the moment.')).toBeInTheDocument();
+      expect(
+        screen.getByText('No pending reviews at the moment.')
+      ).toBeInTheDocument();
     });
 
     it('should show empty state when no classes', () => {
       const noClassesData: LecturerDashboardResponse = {
         ...mockLecturerData,
-        classes: [],
+        classes: []
       };
 
       render(<LecturerDashboard data={noClassesData} />);
 
       expect(screen.getByText('No Classes Yet')).toBeInTheDocument();
-      expect(screen.getByText('Create your first class to get started.')).toBeInTheDocument();
+      expect(
+        screen.getByText('Create your first class to get started.')
+      ).toBeInTheDocument();
     });
 
     it('should show file check icon in empty grading queue', () => {
       const emptyQueueData: LecturerDashboardResponse = {
         ...mockLecturerData,
-        gradingQueue: [],
+        gradingQueue: []
       };
 
       render(<LecturerDashboard data={emptyQueueData} />);
@@ -352,7 +407,7 @@ describe('LecturerDashboard', () => {
     it('should show users icon in empty classes', () => {
       const noClassesData: LecturerDashboardResponse = {
         ...mockLecturerData,
-        classes: [],
+        classes: []
       };
 
       render(<LecturerDashboard data={noClassesData} />);
@@ -367,7 +422,9 @@ describe('LecturerDashboard', () => {
       render(<LecturerDashboard data={mockLecturerData} />);
 
       // Progress bars should be present
-      const progressBars = document.querySelectorAll('[class*="h-2"][class*="rounded-full"]');
+      const progressBars = document.querySelectorAll(
+        '[class*="h-2"][class*="rounded-full"]'
+      );
       expect(progressBars.length).toBe(2);
     });
 
@@ -382,9 +439,9 @@ describe('LecturerDashboard', () => {
             studentCount: 10,
             essayCount: 5,
             avgScore: 75,
-            pendingReviews: 0,
-          },
-        ],
+            pendingReviews: 0
+          }
+        ]
       };
 
       render(<LecturerDashboard data={customData} />);
@@ -404,9 +461,9 @@ describe('LecturerDashboard', () => {
             studentCount: 10,
             essayCount: 0,
             avgScore: null,
-            pendingReviews: 0,
-          },
-        ],
+            pendingReviews: 0
+          }
+        ]
       };
 
       render(<LecturerDashboard data={zeroEssaysData} />);
@@ -424,7 +481,9 @@ describe('LecturerDashboard', () => {
       const classOverviewHeading = screen.getByText('Class Overview');
 
       // Grading Queue should come before Class Overview
-      expect(gradingQueueHeading.compareDocumentPosition(classOverviewHeading)).toBe(4);
+      expect(
+        gradingQueueHeading.compareDocumentPosition(classOverviewHeading)
+      ).toBe(4);
     });
 
     it('should use grid layout for class cards', () => {

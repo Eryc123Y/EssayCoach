@@ -50,7 +50,7 @@ export function RecentSales() {
     <Card className='h-full border-0 shadow-sm'>
       <CardHeader className='pb-4'>
         <CardTitle className='text-lg font-semibold'>Recent Sales</CardTitle>
-        <CardDescription className='text-sm text-muted-foreground'>
+        <CardDescription className='text-muted-foreground text-sm'>
           You made 265 sales this month.
         </CardDescription>
       </CardHeader>
@@ -58,19 +58,25 @@ export function RecentSales() {
         {salesData.map((sale, index) => (
           <div
             key={index}
-            className='flex items-center gap-4 rounded-lg p-2 -mx-2 transition-colors hover:bg-muted/50'
+            className='hover:bg-muted/50 -mx-2 flex items-center gap-4 rounded-lg p-2 transition-colors'
           >
-            <Avatar className='h-10 w-10 ring-2 ring-background shadow-sm'>
+            <Avatar className='ring-background h-10 w-10 shadow-sm ring-2'>
               <AvatarImage src={sale.avatar} alt={sale.name} />
               <AvatarFallback className='bg-primary/10 text-primary font-medium'>
                 {sale.fallback}
               </AvatarFallback>
             </Avatar>
-            <div className='flex-1 min-w-0'>
-              <p className='text-sm font-medium leading-none truncate'>{sale.name}</p>
-              <p className='text-sm text-muted-foreground truncate mt-1'>{sale.email}</p>
+            <div className='min-w-0 flex-1'>
+              <p className='truncate text-sm leading-none font-medium'>
+                {sale.name}
+              </p>
+              <p className='text-muted-foreground mt-1 truncate text-sm'>
+                {sale.email}
+              </p>
             </div>
-            <div className='text-sm font-semibold text-emerald-600'>{sale.amount}</div>
+            <div className='text-sm font-semibold text-emerald-600'>
+              {sale.amount}
+            </div>
           </div>
         ))}
       </CardContent>

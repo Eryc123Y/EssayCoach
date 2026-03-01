@@ -2,10 +2,24 @@
 
 import { taskService } from '@/service/api/v2';
 import type { Task } from '@/service/api/v2/types';
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle
+} from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { MoreVertical, Edit, Trash2, FileText, Copy, CalendarClock } from 'lucide-react';
+import {
+  MoreVertical,
+  Edit,
+  Trash2,
+  FileText,
+  Copy,
+  CalendarClock
+} from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import {
@@ -13,7 +27,7 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuSeparator,
-  DropdownMenuTrigger,
+  DropdownMenuTrigger
 } from '@/components/ui/dropdown-menu';
 import { DuplicateTaskDialog } from './duplicate-task-dialog';
 import { ExtendDeadlineDialog } from './extend-deadline-dialog';
@@ -34,12 +48,12 @@ export function TaskCard({ task, userRole, onUpdate }: TaskCardProps) {
     draft: 'bg-secondary text-secondary-foreground',
     published: 'bg-green-500 text-white',
     unpublished: 'bg-orange-500 text-white',
-    archived: 'bg-muted text-muted-foreground',
+    archived: 'bg-muted text-muted-foreground'
   };
 
   const handleDelete = async () => {
     if (!confirm('Are you sure you want to delete this task?')) return;
-    
+
     setIsDeleting(true);
     try {
       await taskService.deleteTask(task.task_id);
@@ -72,12 +86,12 @@ export function TaskCard({ task, userRole, onUpdate }: TaskCardProps) {
   const canEdit = userRole === 'lecturer' || userRole === 'admin';
 
   return (
-    <Card className="transition-shadow hover:shadow-md">
+    <Card className='transition-shadow hover:shadow-md'>
       <CardHeader>
-        <div className="flex items-start justify-between">
-          <div className="space-y-1">
-            <CardTitle className="text-lg">{task.task_title}</CardTitle>
-            <CardDescription className="line-clamp-2">
+        <div className='flex items-start justify-between'>
+          <div className='space-y-1'>
+            <CardTitle className='text-lg'>{task.task_title}</CardTitle>
+            <CardDescription className='line-clamp-2'>
               {task.task_desc || 'No description'}
             </CardDescription>
           </div>
@@ -86,43 +100,45 @@ export function TaskCard({ task, userRole, onUpdate }: TaskCardProps) {
           </Badge>
         </div>
       </CardHeader>
-      
-      <CardContent className="space-y-2">
+
+      <CardContent className='space-y-2'>
         {task.class_id_class && (
-          <div className="text-sm text-muted-foreground">
+          <div className='text-muted-foreground text-sm'>
             Class ID: {task.class_id_class}
           </div>
         )}
-        <div className="text-sm text-muted-foreground">
+        <div className='text-muted-foreground text-sm'>
           Due: {new Date(task.task_due_datetime).toLocaleDateString()}
         </div>
         {task.task_allow_late_submission && (
-          <div className="text-sm text-green-600">
-            Late submissions allowed
-          </div>
+          <div className='text-sm text-green-600'>Late submissions allowed</div>
         )}
       </CardContent>
 
-      <CardFooter className="flex items-center justify-between">
+      <CardFooter className='flex items-center justify-between'>
         <Button
-          variant="outline"
-          size="sm"
+          variant='outline'
+          size='sm'
           onClick={() => router.push(`/dashboard/tasks/${task.task_id}`)}
         >
-          <FileText className="mr-2 h-4 w-4" />
+          <FileText className='mr-2 h-4 w-4' />
           {userRole === 'student' ? 'Submit' : 'View'}
         </Button>
 
         {canEdit && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm">
-                <MoreVertical className="h-4 w-4" />
+              <Button variant='ghost' size='sm'>
+                <MoreVertical className='h-4 w-4' />
               </Button>
             </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={() => router.push(`/dashboard/tasks/${task.task_id}/edit`)}>
-                <Edit className="mr-2 h-4 w-4" />
+            <DropdownMenuContent align='end'>
+              <DropdownMenuItem
+                onClick={() =>
+                  router.push(`/dashboard/tasks/${task.task_id}/edit`)
+                }
+              >
+                <Edit className='mr-2 h-4 w-4' />
                 Edit
               </DropdownMenuItem>
               {task.task_status === 'published' ? (
@@ -130,26 +146,29 @@ export function TaskCard({ task, userRole, onUpdate }: TaskCardProps) {
                   Unpublish
                 </DropdownMenuItem>
               ) : (
-                <DropdownMenuItem onClick={handlePublish} disabled={task.task_status === 'archived'}>
+                <DropdownMenuItem
+                  onClick={handlePublish}
+                  disabled={task.task_status === 'archived'}
+                >
                   Publish
                 </DropdownMenuItem>
               )}
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={() => setDuplicateOpen(true)}>
-                <Copy className="mr-2 h-4 w-4" />
+                <Copy className='mr-2 h-4 w-4' />
                 Duplicate
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => setExtendOpen(true)}>
-                <CalendarClock className="mr-2 h-4 w-4" />
+                <CalendarClock className='mr-2 h-4 w-4' />
                 Extend Deadline
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 onClick={handleDelete}
                 disabled={isDeleting}
-                className="text-destructive"
+                className='text-destructive'
               >
-                <Trash2 className="mr-2 h-4 w-4" />
+                <Trash2 className='mr-2 h-4 w-4' />
                 Delete
               </DropdownMenuItem>
             </DropdownMenuContent>

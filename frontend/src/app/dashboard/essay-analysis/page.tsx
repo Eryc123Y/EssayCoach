@@ -22,7 +22,10 @@ import { fetchDifyWorkflowRun } from '@/service/api/dify';
 import { useAuth } from '@/components/layout/simple-auth-context';
 // TODO: Implement useExportPDF hook
 // import { useExportPDF } from '@/features/essay-feedback/hooks/useExportPDF';
-import type { FeedbackPDFData, SkillData } from '@/features/essay-feedback/components/feedback-pdf';
+import type {
+  FeedbackPDFData,
+  SkillData
+} from '@/features/essay-feedback/components/feedback-pdf';
 
 type AnalysisState = 'input' | 'analyzing' | 'results';
 
@@ -55,16 +58,27 @@ export default function AIAnalysisPage() {
 
     // Convert scores to skills format for radar chart
     const skills: SkillData = {
-      grammar: analysisResult.scores.find(s => s.category === 'Grammar')?.score || 0,
-      logic: analysisResult.scores.find(s => s.category === 'Content')?.score || 0,
-      tone: analysisResult.scores.find(s => s.category === 'Style')?.score || 0,
-      structure: analysisResult.scores.find(s => s.category === 'Structure')?.score || 0,
-      vocabulary: analysisResult.scores.find(s => s.category === 'Language')?.score || 0
+      grammar:
+        analysisResult.scores.find((s) => s.category === 'Grammar')?.score || 0,
+      logic:
+        analysisResult.scores.find((s) => s.category === 'Content')?.score || 0,
+      tone:
+        analysisResult.scores.find((s) => s.category === 'Style')?.score || 0,
+      structure:
+        analysisResult.scores.find((s) => s.category === 'Structure')?.score ||
+        0,
+      vocabulary:
+        analysisResult.scores.find((s) => s.category === 'Language')?.score || 0
     };
 
     // If we don't have all 5 skills, distribute scores evenly
-    if (skills.grammar === 0 && skills.logic === 0 && skills.tone === 0 &&
-        skills.structure === 0 && skills.vocabulary === 0) {
+    if (
+      skills.grammar === 0 &&
+      skills.logic === 0 &&
+      skills.tone === 0 &&
+      skills.structure === 0 &&
+      skills.vocabulary === 0
+    ) {
       // Use available scores or default to overall score
       const defaultScore = analysisResult.overallScore;
       skills.grammar = analysisResult.scores[0]?.score || defaultScore;

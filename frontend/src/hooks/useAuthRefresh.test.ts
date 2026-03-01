@@ -28,7 +28,7 @@ function createMockJWT(
     sub: 'user-123',
     iat: now,
     exp: now + expiresInSeconds,
-    ...payload,
+    ...payload
   };
 
   const base64Header = btoa(JSON.stringify(header));
@@ -47,7 +47,7 @@ describe('useAuthRefresh', () => {
       refreshToken: null,
       tokenExpiry: null,
       isRefreshing: false,
-      refreshError: null,
+      refreshError: null
     });
   });
 
@@ -64,7 +64,7 @@ describe('useAuthRefresh', () => {
         refreshToken: 'refresh-token-123',
         tokenExpiry: Date.now() + 3600000,
         isRefreshing: false,
-        refreshError: null,
+        refreshError: null
       });
 
       const { result } = renderHook(() => useAuthRefresh({ enabled: false }));
@@ -98,8 +98,8 @@ describe('useAuthRefresh', () => {
         json: async () => ({
           access: newToken,
           refresh: 'new-refresh',
-          expires_at: new Date(Date.now() + 3600000).toISOString(),
-        }),
+          expires_at: new Date(Date.now() + 3600000).toISOString()
+        })
       });
 
       // Setup with token expiring in 3 minutes (within buffer)
@@ -108,15 +108,18 @@ describe('useAuthRefresh', () => {
         refreshToken: 'refresh-123',
         tokenExpiry: Date.now() + 3 * 60 * 1000,
         isRefreshing: false,
-        refreshError: null,
+        refreshError: null
       });
 
       renderHook(() => useAuthRefresh({ enabled: true }));
 
       // Wait for refresh to be triggered
-      await waitFor(() => {
-        expect(mockFetch).toHaveBeenCalled();
-      }, { timeout: 1000 });
+      await waitFor(
+        () => {
+          expect(mockFetch).toHaveBeenCalled();
+        },
+        { timeout: 1000 }
+      );
     });
   });
 
@@ -129,8 +132,8 @@ describe('useAuthRefresh', () => {
         status: 200,
         json: async () => ({
           access: newToken,
-          refresh: 'new-refresh',
-        }),
+          refresh: 'new-refresh'
+        })
       });
 
       authStore.setState({
@@ -138,7 +141,7 @@ describe('useAuthRefresh', () => {
         refreshToken: 'old-refresh',
         tokenExpiry: Date.now() - 1000,
         isRefreshing: false,
-        refreshError: null,
+        refreshError: null
       });
 
       const { result } = renderHook(() => useAuthRefresh({ enabled: false }));
@@ -162,7 +165,7 @@ describe('useAuthRefresh', () => {
         refreshToken: null, // No refresh token
         tokenExpiry: Date.now() - 1000,
         isRefreshing: false,
-        refreshError: null,
+        refreshError: null
       });
 
       const { result } = renderHook(() => useAuthRefresh({ enabled: false }));
@@ -183,7 +186,7 @@ describe('useAuthRefresh', () => {
         refreshToken: 'refresh-123',
         tokenExpiry: Date.now() + 3600000,
         isRefreshing: false,
-        refreshError: null,
+        refreshError: null
       });
 
       const { result } = renderHook(() => useAuthRefresh({ enabled: false }));
@@ -197,7 +200,7 @@ describe('useAuthRefresh', () => {
       authStore.setState({
         accessToken: null,
         refreshToken: null,
-        tokenExpiry: null,
+        tokenExpiry: null
       });
 
       const { result } = renderHook(() => useAuthRefresh({ enabled: false }));
@@ -213,7 +216,7 @@ describe('useAuthRefresh', () => {
       authStore.setState({
         accessToken: 'valid-token',
         refreshToken: 'refresh-123',
-        tokenExpiry: Date.now() + 3600000,
+        tokenExpiry: Date.now() + 3600000
       });
 
       const { result } = renderHook(() => useAuthRefresh({ enabled: false }));
@@ -252,14 +255,14 @@ describe('useAuthRefresh', () => {
         status: 200,
         json: async () => ({
           access: newToken,
-          refresh: 'new-refresh',
-        }),
+          refresh: 'new-refresh'
+        })
       });
 
       authStore.setState({
         accessToken: 'old-token',
         refreshToken: 'refresh-123',
-        tokenExpiry: Date.now() + 3 * 60 * 1000, // Within buffer
+        tokenExpiry: Date.now() + 3 * 60 * 1000 // Within buffer
       });
 
       const { result } = renderHook(() => useAuthRefresh({ enabled: false }));
@@ -275,7 +278,7 @@ describe('useAuthRefresh', () => {
       authStore.setState({
         accessToken: 'valid-token',
         refreshToken: 'refresh-123',
-        tokenExpiry: Date.now() + 2 * 60 * 60 * 1000, // 2 hours
+        tokenExpiry: Date.now() + 2 * 60 * 60 * 1000 // 2 hours
       });
 
       const { result } = renderHook(() => useAuthRefresh({ enabled: false }));
@@ -313,7 +316,7 @@ describe('useAuthRefresh', () => {
       authStore.setState({
         accessToken: validToken,
         refreshToken: 'refresh-123',
-        tokenExpiry: Date.now() + 3600000,
+        tokenExpiry: Date.now() + 3600000
       });
 
       const token = await getValidAccessToken();
@@ -325,7 +328,7 @@ describe('useAuthRefresh', () => {
       authStore.setState({
         accessToken: 'expired-token',
         refreshToken: null,
-        tokenExpiry: Date.now() - 1000,
+        tokenExpiry: Date.now() - 1000
       });
 
       const token = await getValidAccessToken();

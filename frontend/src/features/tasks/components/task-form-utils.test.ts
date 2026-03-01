@@ -3,7 +3,7 @@ import {
   OPTIONAL_SELECT_SENTINEL,
   fromOptionalSelectValue,
   fromRequiredSelectValue,
-  toOptionalSelectValue,
+  toOptionalSelectValue
 } from './task-form-utils';
 
 describe('task-form-utils', () => {

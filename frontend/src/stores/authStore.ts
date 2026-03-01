@@ -95,7 +95,7 @@ export const createAuthStore = (
           refreshToken: refresh,
           tokenExpiry: expiryTimestamp,
           isRefreshing: false,
-          refreshError: null,
+          refreshError: null
         });
       },
 
@@ -105,7 +105,7 @@ export const createAuthStore = (
           refreshToken: null,
           tokenExpiry: null,
           isRefreshing: false,
-          refreshError: null,
+          refreshError: null
         });
       },
 
@@ -132,7 +132,7 @@ export const createAuthStore = (
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               credentials: 'include',
-              body: JSON.stringify({ refresh: refreshToken }),
+              body: JSON.stringify({ refresh: refreshToken })
             });
 
             if (!response.ok) {
@@ -166,7 +166,7 @@ export const createAuthStore = (
               accessToken: access,
               refreshToken: refresh, // Always use new rotated refresh token
               tokenExpiry: newExpiry,
-              isRefreshing: false,
+              isRefreshing: false
             });
 
             return true;
@@ -175,7 +175,7 @@ export const createAuthStore = (
               error instanceof Error ? error.message : 'Refresh failed';
             set({
               isRefreshing: false,
-              refreshError: errorMessage,
+              refreshError: errorMessage
             });
             return false;
           } finally {
@@ -193,7 +193,7 @@ export const createAuthStore = (
 
       clearRefreshError: () => {
         set({ refreshError: null });
-      },
+      }
     };
   });
 };

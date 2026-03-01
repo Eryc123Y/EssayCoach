@@ -14,7 +14,7 @@ describe('taskService', () => {
     task_instructions: 'Use APA format',
     class_id_class: null,
     task_status: 'published',
-    task_allow_late_submission: true,
+    task_allow_late_submission: true
   };
 
   beforeEach(() => {
@@ -29,7 +29,7 @@ describe('taskService', () => {
     it('fetches tasks successfully', async () => {
       (global.fetch as any).mockResolvedValueOnce({
         ok: true,
-        json: async () => [mockTask],
+        json: async () => [mockTask]
       });
 
       const tasks = await taskService.listTasks();
@@ -40,7 +40,7 @@ describe('taskService', () => {
     it('passes filters to API', async () => {
       (global.fetch as any).mockResolvedValueOnce({
         ok: true,
-        json: async () => [mockTask],
+        json: async () => [mockTask]
       });
 
       await taskService.listTasks({ task_status: 'published' });
@@ -55,7 +55,7 @@ describe('taskService', () => {
     it('fetches a single task', async () => {
       (global.fetch as any).mockResolvedValueOnce({
         ok: true,
-        json: async () => mockTask,
+        json: async () => mockTask
       });
 
       const task = await taskService.getTask(1);
@@ -67,7 +67,7 @@ describe('taskService', () => {
     it('creates a new task', async () => {
       (global.fetch as any).mockResolvedValueOnce({
         ok: true,
-        json: async () => mockTask,
+        json: async () => mockTask
       });
 
       const task = await taskService.createTask({
@@ -75,7 +75,7 @@ describe('taskService', () => {
         rubric_id_marking_rubric: 1,
         task_due_datetime: '2025-03-15T23:59:59Z',
         task_title: 'New Task',
-        task_instructions: 'Instructions',
+        task_instructions: 'Instructions'
       });
 
       expect(task.task_title).toBe('Test Essay');
@@ -90,7 +90,7 @@ describe('taskService', () => {
     it('publishes a task', async () => {
       (global.fetch as any).mockResolvedValueOnce({
         ok: true,
-        json: async () => ({ ...mockTask, task_status: 'published' as const }),
+        json: async () => ({ ...mockTask, task_status: 'published' as const })
       });
 
       const task = await taskService.publishTask(1);
@@ -105,7 +105,7 @@ describe('taskService', () => {
     it('unpublishes a task', async () => {
       (global.fetch as any).mockResolvedValueOnce({
         ok: true,
-        json: async () => ({ ...mockTask, task_status: 'unpublished' as const }),
+        json: async () => ({ ...mockTask, task_status: 'unpublished' as const })
       });
 
       const task = await taskService.unpublishTask(1);
@@ -120,7 +120,9 @@ describe('taskService', () => {
     it('fetches task submissions', async () => {
       (global.fetch as any).mockResolvedValueOnce({
         ok: true,
-        json: async () => [{ submission_id: 1, task_id_task: 1, user_id_user: 5 }],
+        json: async () => [
+          { submission_id: 1, task_id_task: 1, user_id_user: 5 }
+        ]
       });
 
       const submissions = await taskService.getTaskSubmissions(1);
@@ -130,10 +132,14 @@ describe('taskService', () => {
 
   describe('duplicateTask', () => {
     it('duplicates a task with minimal input', async () => {
-      const duplicatedTask = { ...mockTask, task_id: 99, task_title: 'Copy of Test Essay' };
+      const duplicatedTask = {
+        ...mockTask,
+        task_id: 99,
+        task_title: 'Copy of Test Essay'
+      };
       (global.fetch as any).mockResolvedValueOnce({
         ok: true,
-        json: async () => duplicatedTask,
+        json: async () => duplicatedTask
       });
 
       const result = await taskService.duplicateTask(1, {});
@@ -149,17 +155,17 @@ describe('taskService', () => {
         ...mockTask,
         task_id: 99,
         task_title: 'Custom Title',
-        class_id_class: 5,
+        class_id_class: 5
       };
       (global.fetch as any).mockResolvedValueOnce({
         ok: true,
-        json: async () => duplicatedTask,
+        json: async () => duplicatedTask
       });
 
       const result = await taskService.duplicateTask(1, {
         task_title: 'Custom Title',
         class_id_class: 5,
-        task_deadline: '2025-04-01T23:59:59Z',
+        task_deadline: '2025-04-01T23:59:59Z'
       });
       expect(result.task_title).toBe('Custom Title');
     });
@@ -168,7 +174,7 @@ describe('taskService', () => {
       (global.fetch as any).mockResolvedValueOnce({
         ok: false,
         status: 404,
-        json: async () => ({ message: 'Task not found' }),
+        json: async () => ({ message: 'Task not found' })
       });
       await expect(taskService.duplicateTask(999, {})).rejects.toThrow();
     });
@@ -176,14 +182,17 @@ describe('taskService', () => {
 
   describe('extendDeadline', () => {
     it('extends deadline globally (no student_id)', async () => {
-      const extendedTask = { ...mockTask, task_due_datetime: '2025-04-01T23:59:59Z' };
+      const extendedTask = {
+        ...mockTask,
+        task_due_datetime: '2025-04-01T23:59:59Z'
+      };
       (global.fetch as any).mockResolvedValueOnce({
         ok: true,
-        json: async () => ({ task: extendedTask, extension: null }),
+        json: async () => ({ task: extendedTask, extension: null })
       });
 
       const result = await taskService.extendDeadline(1, {
-        new_deadline: '2025-04-01T23:59:59Z',
+        new_deadline: '2025-04-01T23:59:59Z'
       });
       expect(result.task.task_due_datetime).toBe('2025-04-01T23:59:59Z');
       expect(result.extension).toBeNull();
@@ -202,17 +211,17 @@ describe('taskService', () => {
         extended_deadline: '2025-04-01T23:59:59Z',
         reason: 'Medical leave',
         granted_by: 2,
-        created_at: '2025-02-28T10:00:00Z',
+        created_at: '2025-02-28T10:00:00Z'
       };
       (global.fetch as any).mockResolvedValueOnce({
         ok: true,
-        json: async () => ({ task: mockTask, extension: mockExtension }),
+        json: async () => ({ task: mockTask, extension: mockExtension })
       });
 
       const result = await taskService.extendDeadline(1, {
         new_deadline: '2025-04-01T23:59:59Z',
         student_id: 42,
-        reason: 'Medical leave',
+        reason: 'Medical leave'
       });
       expect(result.extension).not.toBeNull();
       expect(result.extension?.user_id).toBe(42);
@@ -223,7 +232,7 @@ describe('taskService', () => {
       (global.fetch as any).mockResolvedValueOnce({
         ok: false,
         status: 403,
-        json: async () => ({ message: 'Forbidden' }),
+        json: async () => ({ message: 'Forbidden' })
       });
       await expect(
         taskService.extendDeadline(1, { new_deadline: '2025-04-01T23:59:59Z' })

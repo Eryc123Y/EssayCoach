@@ -16,17 +16,25 @@ import { RecommendedPractice } from '@/features/overview/components/recommended-
 // Mock shadcn/ui components
 vi.mock('@/components/ui/card', () => ({
   Card: ({ children, className, ...props }: any) => (
-    <div className={className} {...props}>{children}</div>
+    <div className={className} {...props}>
+      {children}
+    </div>
   ),
   CardHeader: ({ children, className, ...props }: any) => (
-    <div className={className} {...props}>{children}</div>
+    <div className={className} {...props}>
+      {children}
+    </div>
   ),
   CardTitle: ({ children, className, ...props }: any) => (
-    <div className={className} {...props}>{children}</div>
+    <div className={className} {...props}>
+      {children}
+    </div>
   ),
   CardContent: ({ children, className, ...props }: any) => (
-    <div className={className} {...props}>{children}</div>
-  ),
+    <div className={className} {...props}>
+      {children}
+    </div>
+  )
 }));
 
 vi.mock('@/components/ui/button', () => ({
@@ -34,7 +42,7 @@ vi.mock('@/components/ui/button', () => ({
     <button className={className} onClick={onClick} {...props}>
       {children}
     </button>
-  ),
+  )
 }));
 
 describe('RecommendedPractice', () => {
@@ -47,9 +55,7 @@ describe('RecommendedPractice', () => {
 
     expect(screen.getByText(/Recommended Practice/i)).toBeInTheDocument();
     expect(screen.getByText(/Advanced Vocabulary/i)).toBeInTheDocument();
-    expect(
-      screen.getByText(/Boost your/i)
-    ).toBeInTheDocument();
+    expect(screen.getByText(/Boost your/i)).toBeInTheDocument();
   });
 
   it('displays the Language skill focus', () => {
@@ -90,17 +96,16 @@ describe('RecommendedPractice', () => {
   it('has accessible card structure', () => {
     render(<RecommendedPractice />);
 
-    const card = screen.getByText(/Recommended Practice/i).closest('[role="article"]')
-      || screen.getByText(/Recommended Practice/i).closest('div');
+    const card =
+      screen.getByText(/Recommended Practice/i).closest('[role="article"]') ||
+      screen.getByText(/Recommended Practice/i).closest('div');
     expect(card).toBeInTheDocument();
   });
 
   it('displays improvement suggestion text', () => {
     render(<RecommendedPractice />);
 
-    expect(
-      screen.getByText(/targeted exercises/i)
-    ).toBeInTheDocument();
+    expect(screen.getByText(/targeted exercises/i)).toBeInTheDocument();
   });
 
   it('has visual arrow indicator on button', () => {
@@ -117,8 +122,9 @@ describe('RecommendedPractice', () => {
 
       // CardTitle is inside CardHeader, get the parent card structure
       const cardTitle = screen.getByText(/Recommended Practice/i);
-      const card = cardTitle.closest('div')?.parentElement?.closest('div')
-        || cardTitle.closest('div');
+      const card =
+        cardTitle.closest('div')?.parentElement?.closest('div') ||
+        cardTitle.closest('div');
       // At minimum, verify the structure exists
       expect(card).toBeInTheDocument();
     });

@@ -6,7 +6,7 @@ import type {
   TaskSubmission,
   TaskDuplicateInput,
   TaskExtendInput,
-  TaskExtendResponse,
+  TaskExtendResponse
 } from './types';
 
 const BASE_URL = '/api/v2';
@@ -24,14 +24,14 @@ export const taskService = {
     return request<Task[]>({
       url: `${BASE_URL}/core/tasks/`,
       method: 'GET',
-      params,
+      params
     });
   },
 
   async getTask(taskId: number): Promise<Task> {
     return request<Task>({
       url: `${BASE_URL}/core/tasks/${taskId}/`,
-      method: 'GET',
+      method: 'GET'
     });
   },
 
@@ -39,7 +39,7 @@ export const taskService = {
     return request<Task>({
       url: `${BASE_URL}/core/tasks/`,
       method: 'POST',
-      data,
+      data
     });
   },
 
@@ -47,35 +47,35 @@ export const taskService = {
     return request<Task>({
       url: `${BASE_URL}/core/tasks/${taskId}/`,
       method: 'PUT',
-      data,
+      data
     });
   },
 
   async deleteTask(taskId: number): Promise<{ success: boolean }> {
     return request<{ success: boolean }>({
       url: `${BASE_URL}/core/tasks/${taskId}/`,
-      method: 'DELETE',
+      method: 'DELETE'
     });
   },
 
   async publishTask(taskId: number): Promise<Task> {
     return request<Task>({
       url: `${BASE_URL}/core/tasks/${taskId}/publish/`,
-      method: 'POST',
+      method: 'POST'
     });
   },
 
   async unpublishTask(taskId: number): Promise<Task> {
     return request<Task>({
       url: `${BASE_URL}/core/tasks/${taskId}/unpublish/`,
-      method: 'POST',
+      method: 'POST'
     });
   },
 
   async getTaskSubmissions(taskId: number): Promise<TaskSubmission[]> {
     return request<TaskSubmission[]>({
       url: `${BASE_URL}/core/tasks/${taskId}/submissions/`,
-      method: 'GET',
+      method: 'GET'
     });
   },
 
@@ -83,15 +83,18 @@ export const taskService = {
     return request<Task>({
       url: `${BASE_URL}/core/tasks/${taskId}/duplicate/`,
       method: 'POST',
-      data,
+      data
     });
   },
 
-  async extendDeadline(taskId: number, data: TaskExtendInput): Promise<TaskExtendResponse> {
+  async extendDeadline(
+    taskId: number,
+    data: TaskExtendInput
+  ): Promise<TaskExtendResponse> {
     return request<TaskExtendResponse>({
       url: `${BASE_URL}/core/tasks/${taskId}/extend/`,
       method: 'POST',
-      data,
+      data
     });
-  },
+  }
 };

@@ -3,7 +3,7 @@ import type {
   AdminDashboardResponse,
   DashboardRole,
   LecturerDashboardResponse,
-  StudentDashboardResponse,
+  StudentDashboardResponse
 } from '@/service/api/v2/types';
 
 export type RoleDashboardData =
@@ -19,7 +19,10 @@ export function isAuthFailure(status: number): boolean {
   return status === 401 || status === 403;
 }
 
-export function buildDashboardUrl(apiBaseUrl: string, role: DashboardRole): string {
+export function buildDashboardUrl(
+  apiBaseUrl: string,
+  role: DashboardRole
+): string {
   return `${apiBaseUrl}/api/v2/core/dashboard/${role}/`;
 }
 
@@ -32,9 +35,9 @@ export async function fetchRoleDashboardData(
     method: 'GET',
     headers: {
       Authorization: `Bearer ${accessToken}`,
-      'Content-Type': 'application/json',
+      'Content-Type': 'application/json'
     },
-    cache: 'no-store',
+    cache: 'no-store'
   });
 
   if (isAuthFailure(response.status)) {

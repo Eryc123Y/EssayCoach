@@ -61,7 +61,9 @@ export function RevisionChat() {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
         content: response.message,
-        timestamp: response.timestamp ? new Date(response.timestamp) : new Date()
+        timestamp: response.timestamp
+          ? new Date(response.timestamp)
+          : new Date()
       };
 
       // Store conversation ID for follow-up messages
@@ -69,7 +71,8 @@ export function RevisionChat() {
         setMessages((prev) => [...prev, aiMsg]);
       }
     } catch (error) {
-      const errorMessage = error instanceof Error ? error.message : 'Failed to send message';
+      const errorMessage =
+        error instanceof Error ? error.message : 'Failed to send message';
       toast.error(errorMessage);
 
       // Remove the user message if API failed

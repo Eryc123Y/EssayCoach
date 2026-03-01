@@ -98,21 +98,20 @@ export async function POST(req: NextRequest) {
       path: '/',
       maxAge: 60 * 60 * 24
     });
-    res.cookies.set(
-      'user_id',
-      String(normalizedUser.user_id || ''),
-      {
-        httpOnly: true,
-        sameSite: 'strict',
-        secure: process.env.NODE_ENV === 'production',
-        path: '/',
-        maxAge: 60 * 60 * 24
-      }
-    );
+    res.cookies.set('user_id', String(normalizedUser.user_id || ''), {
+      httpOnly: true,
+      sameSite: 'strict',
+      secure: process.env.NODE_ENV === 'production',
+      path: '/',
+      maxAge: 60 * 60 * 24
+    });
 
     return res;
   } catch (error) {
-    console.error('[Login] Failed:', error instanceof Error ? error.message : 'Unknown error');
+    console.error(
+      '[Login] Failed:',
+      error instanceof Error ? error.message : 'Unknown error'
+    );
     return NextResponse.json(
       { message: 'Internal server error' },
       { status: 500 }

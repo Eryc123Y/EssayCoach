@@ -4,7 +4,7 @@ import type {
   UserPreferences,
   UserPreferencesInput,
   SessionInfo,
-  LoginHistoryItem,
+  LoginHistoryItem
 } from '@/service/api/v2/types';
 import { toast } from 'sonner';
 
@@ -38,7 +38,7 @@ const DEFAULT_PREFERENCES: UserPreferences = {
   grading_alerts: false,
   weekly_digest: true,
   language: 'en',
-  theme: 'system',
+  theme: 'system'
 };
 
 export const useSettingsStore = create<SettingsState>((set, get) => ({
@@ -94,7 +94,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
       await settingsService.revokeSession(sessionKey);
       // Remove from local state
       set((state) => ({
-        sessions: state.sessions.filter((s) => s.session_key !== sessionKey),
+        sessions: state.sessions.filter((s) => s.session_key !== sessionKey)
       }));
       toast.success('Session revoked successfully');
     } catch (error) {
@@ -124,7 +124,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
       sessions: [],
       isLoadingSessions: false,
       loginHistory: [],
-      isLoadingHistory: false,
+      isLoadingHistory: false
     });
-  },
+  }
 }));

@@ -1,7 +1,7 @@
 import React from 'react';
 
 export default function OverViewLayout({
-  children,
+  children
 }: {
   children: React.ReactNode;
   submissions: React.ReactNode;

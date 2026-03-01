@@ -18,58 +18,77 @@ import { cn } from '@/lib/utils'; // Import cn to use in the mock
 // Mock shadcn/ui components
 vi.mock('@/components/ui/card', () => ({
   Card: ({ children, className, ...props }: any) => (
-    <div className={cn(className)} {...props}>{children}</div>
+    <div className={cn(className)} {...props}>
+      {children}
+    </div>
   ),
   CardHeader: ({ children, className, ...props }: any) => (
-    <div className={cn(className)} {...props}>{children}</div>
+    <div className={cn(className)} {...props}>
+      {children}
+    </div>
   ),
   CardTitle: ({ children, className, ...props }: any) => (
-    <h2 className={cn(className)} {...props}>{children}</h2>
+    <h2 className={cn(className)} {...props}>
+      {children}
+    </h2>
   ),
   CardDescription: ({ children, className, ...props }: any) => (
-    <p className={cn(className)} {...props}>{children}</p>
+    <p className={cn(className)} {...props}>
+      {children}
+    </p>
   ),
   CardContent: ({ children, className, ...props }: any) => (
-    <div className={cn(className)} {...props}>{children}</div>
-  ),
+    <div className={cn(className)} {...props}>
+      {children}
+    </div>
+  )
 }));
 
 vi.mock('@/components/ui/avatar', () => ({
   Avatar: ({ children, className, ...props }: any) => (
-    <div className={cn(className)} {...props}>{children}</div>
+    <div className={cn(className)} {...props}>
+      {children}
+    </div>
   ),
   AvatarImage: ({ src, alt }: any) => <img src={src} alt={alt} />,
   AvatarFallback: ({ children, className, ...props }: any) => (
-    <div className={cn(className)} {...props}>{children}</div>
-  ),
+    <div className={cn(className)} {...props}>
+      {children}
+    </div>
+  )
 }));
 
 vi.mock('@/components/ui/badge', () => ({
   Badge: ({ children, className, variant, ...props }: any) => {
     // Merge classes using cn utility
     const mergedClassName = cn(className, {
-      'border-emerald-500/30 bg-emerald-50 text-emerald-600 dark:bg-emerald-950/30': variant === 'outline' && children === 'Graded',
-      'border-amber-500/30 bg-amber-50 text-amber-600 dark:bg-amber-950/30': variant === 'outline' && children === 'Pending',
-      'border-red-500/30 bg-red-50 text-red-600 dark:bg-red-950/30': variant === 'outline' && children === 'Late',
-      'border-0 bg-indigo-600 text-white shadow-sm hover:bg-indigo-700': children?.includes('Feedback Ready'),
-      'animate-pulse border-indigo-400 text-indigo-500': children?.includes('Processing AI'),
-      'text-muted-foreground': variant === 'secondary' && children?.includes('Draft'),
+      'border-emerald-500/30 bg-emerald-50 text-emerald-600 dark:bg-emerald-950/30':
+        variant === 'outline' && children === 'Graded',
+      'border-amber-500/30 bg-amber-50 text-amber-600 dark:bg-amber-950/30':
+        variant === 'outline' && children === 'Pending',
+      'border-red-500/30 bg-red-50 text-red-600 dark:bg-red-950/30':
+        variant === 'outline' && children === 'Late',
+      'border-0 bg-indigo-600 text-white shadow-sm hover:bg-indigo-700':
+        children?.includes('Feedback Ready'),
+      'animate-pulse border-indigo-400 text-indigo-500':
+        children?.includes('Processing AI'),
+      'text-muted-foreground':
+        variant === 'secondary' && children?.includes('Draft')
     });
     return (
       <span className={mergedClassName} data-variant={variant} {...props}>
         {children}
       </span>
     );
-  },
+  }
 }));
 
 // Mock the icons
 vi.mock('@tabler/icons-react', () => ({
-  IconClock: (props: any) => <svg {...props} data-testid="icon-clock" />,
-  IconSparkles: (props: any) => <svg {...props} data-testid="icon-sparkles" />,
-  IconEdit: (props: any) => <svg {...props} data-testid="icon-edit" />,
+  IconClock: (props: any) => <svg {...props} data-testid='icon-clock' />,
+  IconSparkles: (props: any) => <svg {...props} data-testid='icon-sparkles' />,
+  IconEdit: (props: any) => <svg {...props} data-testid='icon-edit' />
 }));
-
 
 vi.mock('@/constants/data', () => ({
   recentSubmissionsData: [
@@ -82,7 +101,7 @@ vi.mock('@/constants/data', () => ({
       image: 'https://api.dicebear.com/9.x/notionists/svg?seed=Alex',
       initials: 'AJ',
       status: 'Graded',
-      aiStatus: 'Feedback Ready',
+      aiStatus: 'Feedback Ready'
     },
     {
       id: 2,
@@ -93,7 +112,7 @@ vi.mock('@/constants/data', () => ({
       image: 'https://api.dicebear.com/9.x/notionists/svg?seed=Sarah',
       initials: 'SC',
       status: 'Pending',
-      aiStatus: 'Processing',
+      aiStatus: 'Processing'
     },
     {
       id: 3,
@@ -104,7 +123,7 @@ vi.mock('@/constants/data', () => ({
       image: 'https://api.dicebear.com/9.x/notionists/svg?seed=Michael',
       initials: 'MT',
       status: 'Graded',
-      aiStatus: 'Feedback Ready',
+      aiStatus: 'Feedback Ready'
     },
     {
       id: 4,
@@ -115,7 +134,7 @@ vi.mock('@/constants/data', () => ({
       image: 'https://api.dicebear.com/9.x/notionists/svg?seed=Emily',
       initials: 'EW',
       status: 'Graded',
-      aiStatus: 'Feedback Ready',
+      aiStatus: 'Feedback Ready'
     },
     {
       id: 5,
@@ -126,9 +145,9 @@ vi.mock('@/constants/data', () => ({
       image: 'https://api.dicebear.com/9.x/notionists/svg?seed=David',
       initials: 'DK',
       status: 'Late',
-      aiStatus: 'Draft',
-    },
-  ],
+      aiStatus: 'Draft'
+    }
+  ]
 }));
 
 describe('RecentSubmissions', () => {
@@ -139,7 +158,9 @@ describe('RecentSubmissions', () => {
   it('renders the component with header', () => {
     render(<RecentSubmissions />);
 
-    expect(screen.getByRole('heading', { name: /Recent Submissions/i })).toBeInTheDocument();
+    expect(
+      screen.getByRole('heading', { name: /Recent Submissions/i })
+    ).toBeInTheDocument();
     expect(
       screen.getByText(/Latest graded essays and pending assignments/i)
     ).toBeInTheDocument();
@@ -209,7 +230,9 @@ describe('RecentSubmissions', () => {
       feedbackReadyBadges.forEach((badge) => {
         expect(badge).toHaveClass('bg-indigo-600');
         expect(badge).toHaveClass('text-white');
-        expect(badge.querySelector('[data-testid="icon-sparkles"]')).toBeInTheDocument();
+        expect(
+          badge.querySelector('[data-testid="icon-sparkles"]')
+        ).toBeInTheDocument();
       });
     });
 
@@ -223,7 +246,9 @@ describe('RecentSubmissions', () => {
       expect(processingBadge).toHaveClass('border-indigo-400');
       expect(processingBadge).toHaveClass('text-indigo-500');
       expect(processingBadge).toHaveAttribute('data-variant', 'outline');
-      expect(processingBadge.querySelector('[data-testid="icon-clock"]')).toBeInTheDocument();
+      expect(
+        processingBadge.querySelector('[data-testid="icon-clock"]')
+      ).toBeInTheDocument();
     });
 
     it('shows Draft badge with correct styling and icon', () => {
@@ -233,7 +258,9 @@ describe('RecentSubmissions', () => {
       expect(draftBadge).toBeInTheDocument();
       expect(draftBadge).toHaveClass('text-muted-foreground');
       expect(draftBadge).toHaveAttribute('data-variant', 'secondary');
-      expect(draftBadge.querySelector('[data-testid="icon-edit"]')).toBeInTheDocument();
+      expect(
+        draftBadge.querySelector('[data-testid="icon-edit"]')
+      ).toBeInTheDocument();
     });
   });
 
@@ -255,7 +282,9 @@ describe('RecentSubmissions', () => {
       expect(screen.getByText('88/100')).toBeInTheDocument();
       expect(screen.getByText('95/100')).toBeInTheDocument();
       // "Pending" score is also used as a status badge, so we need to be more specific
-      const pendingScores = screen.getAllByText('Pending').filter(el => el.closest('.tabular-nums'));
+      const pendingScores = screen
+        .getAllByText('Pending')
+        .filter((el) => el.closest('.tabular-nums'));
       expect(pendingScores.length).toBeGreaterThan(0);
     });
 
@@ -276,8 +305,8 @@ describe('RecentSubmissions', () => {
       expect(images.length).toBe(5);
 
       // Check that images have correct src
-      const alexImage = Array.from(images).find(
-        (img) => img.src.includes('Alex')
+      const alexImage = Array.from(images).find((img) =>
+        img.src.includes('Alex')
       );
       expect(alexImage).toBeInTheDocument();
     });
@@ -292,7 +321,7 @@ describe('RecentSubmissions', () => {
       );
       expect(submissionItems.length).toBe(5);
 
-      submissionItems.forEach(item => {
+      submissionItems.forEach((item) => {
         expect(item).toHaveClass('flex');
         expect(item).toHaveClass('items-center');
         expect(item).toHaveClass('gap-4');
@@ -306,8 +335,12 @@ describe('RecentSubmissions', () => {
       render(<RecentSubmissions />);
 
       // The div containing name and assignment should have flex-1
-      expect(screen.getByText('Alex Johnson').closest('.flex-1')).toBeInTheDocument();
-      expect(screen.getByText('Narrative Essay').closest('.flex-1')).toBeInTheDocument();
+      expect(
+        screen.getByText('Alex Johnson').closest('.flex-1')
+      ).toBeInTheDocument();
+      expect(
+        screen.getByText('Narrative Essay').closest('.flex-1')
+      ).toBeInTheDocument();
     });
   });
 
@@ -315,7 +348,10 @@ describe('RecentSubmissions', () => {
     it('has proper heading hierarchy', () => {
       render(<RecentSubmissions />);
 
-      const title = screen.getByRole('heading', { name: /Recent Submissions/i, level: 2 });
+      const title = screen.getByRole('heading', {
+        name: /Recent Submissions/i,
+        level: 2
+      });
       expect(title).toBeInTheDocument();
     });
 
@@ -358,7 +394,9 @@ describe('RecentSubmissions', () => {
     it('has hover effect on submission items', () => {
       render(<RecentSubmissions />);
 
-      const submissionItems = screen.getAllByText('Alex Johnson').find(el => el.closest('.hover\\:bg-slate-50'));
+      const submissionItems = screen
+        .getAllByText('Alex Johnson')
+        .find((el) => el.closest('.hover\\:bg-slate-50'));
       expect(submissionItems).toBeInTheDocument();
     });
 
@@ -366,7 +404,9 @@ describe('RecentSubmissions', () => {
       render(<RecentSubmissions />);
 
       // The name/status container should have flex-wrap
-      const flexWrapContainer = screen.getByText('Alex Johnson').closest('.flex-wrap');
+      const flexWrapContainer = screen
+        .getByText('Alex Johnson')
+        .closest('.flex-wrap');
       expect(flexWrapContainer).toBeInTheDocument();
     });
   });
@@ -385,7 +425,9 @@ describe('RecentSubmissions', () => {
       render(<RecentSubmissions />);
 
       // Find pending score elements
-      const pendingScores = screen.getAllByText('Pending').filter(el => el.closest('.text-amber-600'));
+      const pendingScores = screen
+        .getAllByText('Pending')
+        .filter((el) => el.closest('.text-amber-600'));
       expect(pendingScores.length).toBeGreaterThan(0);
     });
   });
@@ -396,7 +438,9 @@ describe('RecentSubmissions', () => {
 
       const feedbackReadyBadges = screen.getAllByText('Feedback Ready');
       feedbackReadyBadges.forEach((badge) => {
-        expect(badge.querySelector('[data-testid="icon-sparkles"]')).toBeInTheDocument();
+        expect(
+          badge.querySelector('[data-testid="icon-sparkles"]')
+        ).toBeInTheDocument();
       });
     });
 
@@ -404,14 +448,18 @@ describe('RecentSubmissions', () => {
       render(<RecentSubmissions />);
 
       const processingBadge = screen.getByText('Processing AI');
-      expect(processingBadge.querySelector('[data-testid="icon-clock"]')).toBeInTheDocument();
+      expect(
+        processingBadge.querySelector('[data-testid="icon-clock"]')
+      ).toBeInTheDocument();
     });
 
     it('shows edit icon for Draft', () => {
       render(<RecentSubmissions />);
 
       const draftBadge = screen.getByText('Draft');
-      expect(draftBadge.querySelector('[data-testid="icon-edit"]')).toBeInTheDocument();
+      expect(
+        draftBadge.querySelector('[data-testid="icon-edit"]')
+      ).toBeInTheDocument();
     });
   });
 });

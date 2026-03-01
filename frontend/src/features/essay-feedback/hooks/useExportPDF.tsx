@@ -3,7 +3,10 @@
 import { useCallback, useState } from 'react';
 import { pdf } from '@react-pdf/renderer';
 import { toast } from 'sonner';
-import { FeedbackPDFDocument, FeedbackPDFData } from '../components/feedback-pdf';
+import {
+  FeedbackPDFDocument,
+  FeedbackPDFData
+} from '../components/feedback-pdf';
 
 export interface UseExportPDFOptions {
   /** 文件名（不含扩展名） */
@@ -18,7 +21,10 @@ export interface UseExportPDFReturn {
   /** 是否正在生成 PDF */
   isGenerating: boolean;
   /** 生成 PDF 的函数 */
-  generatePDF: (data: FeedbackPDFData, options?: UseExportPDFOptions) => Promise<void>;
+  generatePDF: (
+    data: FeedbackPDFData,
+    options?: UseExportPDFOptions
+  ) => Promise<void>;
   /** 生成 PDF Blob */
   generatePDFBlob: (data: FeedbackPDFData) => Promise<Blob>;
   /** 错误状态 */
@@ -35,16 +41,20 @@ export function useExportPDF(): UseExportPDFReturn {
   /**
    * Generate PDF as Blob (for advanced usage)
    */
-  const generatePDFBlob = useCallback(async (data: FeedbackPDFData): Promise<Blob> => {
-    try {
-      const pdfDocument = <FeedbackPDFDocument data={data} />;
-      const blob = await pdf(pdfDocument).toBlob();
-      return blob;
-    } catch (err) {
-      const error = err instanceof Error ? err : new Error('Failed to generate PDF');
-      throw error;
-    }
-  }, []);
+  const generatePDFBlob = useCallback(
+    async (data: FeedbackPDFData): Promise<Blob> => {
+      try {
+        const pdfDocument = <FeedbackPDFDocument data={data} />;
+        const blob = await pdf(pdfDocument).toBlob();
+        return blob;
+      } catch (err) {
+        const error =
+          err instanceof Error ? err : new Error('Failed to generate PDF');
+        throw error;
+      }
+    },
+    []
+  );
 
   /**
    * Generate and download PDF file
@@ -84,7 +94,8 @@ export function useExportPDF(): UseExportPDFReturn {
         toast.success('PDF report exported successfully');
         onSuccess?.();
       } catch (err) {
-        const error = err instanceof Error ? err : new Error('Failed to generate PDF');
+        const error =
+          err instanceof Error ? err : new Error('Failed to generate PDF');
         setError(error);
         toast.error('Failed to export PDF. Please try again.');
         onError?.(error);

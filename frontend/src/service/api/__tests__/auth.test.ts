@@ -28,7 +28,7 @@ function createMockJWT(
     sub: 'user-123',
     iat: now,
     exp: now + expiresInSeconds,
-    ...payload,
+    ...payload
   };
 
   const base64Header = btoa(JSON.stringify(header));
@@ -47,7 +47,7 @@ describe('Auth API Integration', () => {
       refreshToken: null,
       tokenExpiry: null,
       isRefreshing: false,
-      refreshError: null,
+      refreshError: null
     });
   });
 
@@ -71,15 +71,15 @@ describe('Auth API Integration', () => {
             user_fname: 'Test',
             user_lname: 'User',
             user_role: 'student',
-            is_active: true,
-          },
-        }),
+            is_active: true
+          }
+        })
       });
 
       // Step 1: Login
       const loginResult = await authService.login({
         email: 'test@example.com',
-        password: 'password123',
+        password: 'password123'
       });
 
       expect(loginResult.access).toBe(validAccessToken);
@@ -90,8 +90,8 @@ describe('Auth API Integration', () => {
           method: 'POST',
           body: JSON.stringify({
             email: 'test@example.com',
-            password: 'password123',
-          }),
+            password: 'password123'
+          })
         })
       );
     });
@@ -105,7 +105,7 @@ describe('Auth API Integration', () => {
       authStore.setState({
         accessToken: expiredToken,
         refreshToken,
-        tokenExpiry: Date.now() - 1000, // Expired
+        tokenExpiry: Date.now() - 1000 // Expired
       });
 
       // Mock refresh response
@@ -115,8 +115,8 @@ describe('Auth API Integration', () => {
         json: async () => ({
           access: newToken,
           refresh: 'new-refresh-token',
-          expires_at: new Date(Date.now() + 3600000).toISOString(),
-        }),
+          expires_at: new Date(Date.now() + 3600000).toISOString()
+        })
       });
 
       // Get valid token (should trigger refresh)
@@ -127,7 +127,7 @@ describe('Auth API Integration', () => {
         '/api/v2/auth/refresh/',
         expect.objectContaining({
           method: 'POST',
-          body: JSON.stringify({ refresh: refreshToken }),
+          body: JSON.stringify({ refresh: refreshToken })
         })
       );
     });
@@ -140,7 +140,7 @@ describe('Auth API Integration', () => {
       authStore.setState({
         accessToken: validToken,
         refreshToken,
-        tokenExpiry: Date.now() + 3600000,
+        tokenExpiry: Date.now() + 3600000
       });
 
       const token = await getValidAccessToken();
@@ -161,7 +161,7 @@ describe('Auth API Integration', () => {
       authStore.setState({
         accessToken: 'expired-token',
         refreshToken: oldRefreshToken,
-        tokenExpiry: Date.now() - 1000,
+        tokenExpiry: Date.now() - 1000
       });
 
       mockFetch.mockResolvedValueOnce({
@@ -170,8 +170,8 @@ describe('Auth API Integration', () => {
         json: async () => ({
           access: newAccessToken,
           refresh: newRefreshToken,
-          expires_at: new Date(Date.now() + 3600000).toISOString(),
-        }),
+          expires_at: new Date(Date.now() + 3600000).toISOString()
+        })
       });
 
       await getValidAccessToken();
@@ -180,7 +180,7 @@ describe('Auth API Integration', () => {
       expect(mockFetch).toHaveBeenCalledWith(
         '/api/v2/auth/refresh/',
         expect.objectContaining({
-          body: JSON.stringify({ refresh: oldRefreshToken }),
+          body: JSON.stringify({ refresh: oldRefreshToken })
         })
       );
 
@@ -198,7 +198,7 @@ describe('Auth API Integration', () => {
       authStore.setState({
         accessToken: 'expired-token',
         refreshToken: 'refresh-token',
-        tokenExpiry: Date.now() - 1000,
+        tokenExpiry: Date.now() - 1000
       });
 
       const result = await getValidAccessToken();
@@ -211,14 +211,14 @@ describe('Auth API Integration', () => {
       mockFetch.mockResolvedValueOnce({
         ok: false,
         status: 500,
-        statusText: 'Internal Server Error',
+        statusText: 'Internal Server Error'
       });
 
       // Setup with expired token
       authStore.setState({
         accessToken: 'expired-token',
         refreshToken: 'refresh-token',
-        tokenExpiry: Date.now() - 1000,
+        tokenExpiry: Date.now() - 1000
       });
 
       const result = await getValidAccessToken();
@@ -229,14 +229,14 @@ describe('Auth API Integration', () => {
     it('should clear tokens on 401 (refresh token expired)', async () => {
       mockFetch.mockResolvedValueOnce({
         ok: false,
-        status: 401,
+        status: 401
       });
 
       // Setup with expired token
       authStore.setState({
         accessToken: 'expired-token',
         refreshToken: 'old-refresh',
-        tokenExpiry: Date.now() - 1000,
+        tokenExpiry: Date.now() - 1000
       });
 
       const result = await getValidAccessToken();
@@ -255,7 +255,7 @@ describe('Auth API Integration', () => {
       authStore.setState({
         accessToken: validToken,
         refreshToken: 'refresh-token',
-        tokenExpiry: Date.now() + 3600000, // 1 hour from now
+        tokenExpiry: Date.now() + 3600000 // 1 hour from now
       });
 
       const token = await getValidAccessToken();
@@ -273,7 +273,7 @@ describe('Auth API Integration', () => {
       authStore.setState({
         accessToken: validToken,
         refreshToken: 'refresh-token',
-        tokenExpiry: bufferExpiry,
+        tokenExpiry: bufferExpiry
       });
 
       mockFetch.mockResolvedValueOnce({
@@ -282,8 +282,8 @@ describe('Auth API Integration', () => {
         json: async () => ({
           access: newToken,
           refresh: 'new-refresh',
-          expires_at: new Date(Date.now() + 3600000).toISOString(),
-        }),
+          expires_at: new Date(Date.now() + 3600000).toISOString()
+        })
       });
 
       const token = await getValidAccessToken();
@@ -326,7 +326,7 @@ describe('Auth API Integration', () => {
     it('should call logout endpoint', async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        status: 204, // No content
+        status: 204 // No content
       });
 
       await authService.logout();
@@ -334,7 +334,7 @@ describe('Auth API Integration', () => {
       expect(mockFetch).toHaveBeenCalledWith(
         '/api/v2/auth/logout/',
         expect.objectContaining({
-          method: 'POST',
+          method: 'POST'
         })
       );
     });
@@ -342,13 +342,13 @@ describe('Auth API Integration', () => {
     it('should clear tokens on logout', async () => {
       mockFetch.mockResolvedValueOnce({
         ok: true,
-        status: 204,
+        status: 204
       });
 
       authStore.setState({
         accessToken: 'valid-token',
         refreshToken: 'refresh-token',
-        tokenExpiry: Date.now() + 3600000,
+        tokenExpiry: Date.now() + 3600000
       });
 
       // Note: authService.logout doesn't clear the store automatically
@@ -373,13 +373,13 @@ describe('Auth API Integration', () => {
         email: 'test@example.com',
         first_name: 'Test',
         last_name: 'User',
-        role: 'student',
+        role: 'student'
       };
 
       mockFetch.mockResolvedValueOnce({
         ok: true,
         status: 200,
-        json: async () => mockUserInfo,
+        json: async () => mockUserInfo
       });
 
       const userInfo = await authService.getUserInfo();
@@ -389,7 +389,7 @@ describe('Auth API Integration', () => {
         '/api/v2/auth/me/',
         expect.objectContaining({
           method: 'GET',
-          credentials: 'include',
+          credentials: 'include'
         })
       );
     });
@@ -397,7 +397,7 @@ describe('Auth API Integration', () => {
     it('should throw on 401 when fetching user info', async () => {
       mockFetch.mockResolvedValueOnce({
         ok: false,
-        status: 401,
+        status: 401
       });
 
       await expect(authService.getUserInfo()).rejects.toThrow();

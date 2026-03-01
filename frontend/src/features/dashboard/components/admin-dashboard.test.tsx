@@ -14,49 +14,72 @@
 
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
-import { AdminDashboard, AdminDashboardSkeleton } from '@/features/dashboard/components/admin-dashboard';
+import {
+  AdminDashboard,
+  AdminDashboardSkeleton
+} from '@/features/dashboard/components/admin-dashboard';
 import type { AdminDashboardResponse } from '@/service/api/v2/types';
 
 // Mock shadcn/ui components
 vi.mock('@/components/ui/card', () => ({
   Card: ({ children, className, ...props }: any) => (
-    <div data-testid="card" className={className} {...props}>{children}</div>
+    <div data-testid='card' className={className} {...props}>
+      {children}
+    </div>
   ),
   CardHeader: ({ children, className, ...props }: any) => (
-    <div data-testid="card-header" className={className} {...props}>{children}</div>
+    <div data-testid='card-header' className={className} {...props}>
+      {children}
+    </div>
   ),
   CardTitle: ({ children, className, ...props }: any) => (
-    <h3 data-testid="card-title" className={className} {...props}>{children}</h3>
+    <h3 data-testid='card-title' className={className} {...props}>
+      {children}
+    </h3>
   ),
   CardContent: ({ children, className, ...props }: any) => (
-    <div data-testid="card-content" className={className} {...props}>{children}</div>
-  ),
+    <div data-testid='card-content' className={className} {...props}>
+      {children}
+    </div>
+  )
 }));
 
 // Mock icons
 vi.mock('@tabler/icons-react', () => ({
-  IconUsers: () => <svg data-testid="icon-users" />,
-  IconDatabase: () => <svg data-testid="icon-database" />,
-  IconServer: () => <svg data-testid="icon-server" />,
-  IconActivity: () => <svg data-testid="icon-activity" />,
-  IconCheck: () => <svg data-testid="icon-check" />,
-  IconAlertTriangle: () => <svg data-testid="icon-alert-triangle" />,
-  IconAlertCircle: () => <svg data-testid="icon-alert-circle" />,
-  IconExternalLink: () => <svg data-testid="icon-external-link" />,
+  IconUsers: () => <svg data-testid='icon-users' />,
+  IconDatabase: () => <svg data-testid='icon-database' />,
+  IconServer: () => <svg data-testid='icon-server' />,
+  IconActivity: () => <svg data-testid='icon-activity' />,
+  IconCheck: () => <svg data-testid='icon-check' />,
+  IconAlertTriangle: () => <svg data-testid='icon-alert-triangle' />,
+  IconAlertCircle: () => <svg data-testid='icon-alert-circle' />,
+  IconExternalLink: () => <svg data-testid='icon-external-link' />
 }));
 
 vi.mock('@/components/ui/button', () => ({
   Button: ({ children, className, ...props }: any) => (
-    <button className={className} {...props}>{children}</button>
-  ),
+    <button className={className} {...props}>
+      {children}
+    </button>
+  )
 }));
 
 vi.mock('@/components/ui/select', () => ({
-  Select: ({ children }: any) => <div data-testid="select">{children}</div>,
-  SelectContent: ({ children }: any) => <div data-testid="select-content">{children}</div>,
-  SelectItem: ({ children, value }: any) => <div data-testid="select-item" data-value={value}>{children}</div>,
-  SelectTrigger: ({ children }: any) => <button data-testid="select-trigger">{children}</button>,
-  SelectValue: ({ placeholder }: any) => <span data-testid="select-value">{placeholder}</span>,
+  Select: ({ children }: any) => <div data-testid='select'>{children}</div>,
+  SelectContent: ({ children }: any) => (
+    <div data-testid='select-content'>{children}</div>
+  ),
+  SelectItem: ({ children, value }: any) => (
+    <div data-testid='select-item' data-value={value}>
+      {children}
+    </div>
+  ),
+  SelectTrigger: ({ children }: any) => (
+    <button data-testid='select-trigger'>{children}</button>
+  ),
+  SelectValue: ({ placeholder }: any) => (
+    <span data-testid='select-value'>{placeholder}</span>
+  )
 }));
 
 vi.mock('@/components/ui/badge', () => ({
@@ -64,7 +87,7 @@ vi.mock('@/components/ui/badge', () => ({
     <span className={className} data-variant={variant} {...props}>
       {children}
     </span>
-  ),
+  )
 }));
 
 // Mock data
@@ -73,7 +96,7 @@ const mockAdminData: AdminDashboardResponse = {
     id: 1,
     name: 'Admin User',
     role: 'admin',
-    email: 'admin@example.com',
+    email: 'admin@example.com'
   },
   stats: {
     totalUsers: 1500,
@@ -83,15 +106,15 @@ const mockAdminData: AdminDashboardResponse = {
     totalEssays: 5000,
     averageScore: 82.5,
     pendingGrading: 120,
-    systemHealth: 'healthy',
+    systemHealth: 'healthy'
   },
   recentActivity: [],
   systemStatus: {
     database: 'healthy',
     submissionsLast24h: 125,
     feedbacksLast24h: 98,
-    activeUsers: 450,
-  },
+    activeUsers: 450
+  }
 };
 
 describe('AdminDashboard', () => {
@@ -124,7 +147,9 @@ describe('AdminDashboard', () => {
     it('should display active students and lecturers breakdown', () => {
       render(<AdminDashboard data={mockAdminData} />);
 
-      expect(screen.getByText('1200 students, 300 lecturers')).toBeInTheDocument();
+      expect(
+        screen.getByText('1200 students, 300 lecturers')
+      ).toBeInTheDocument();
     });
 
     it('should display total essays', () => {
@@ -156,8 +181,8 @@ describe('AdminDashboard', () => {
           ...mockAdminData.stats,
           totalUsers: 125000,
           activeStudents: 100000,
-          activeLecturers: 25000,
-        },
+          activeLecturers: 25000
+        }
       };
 
       render(<AdminDashboard data={largeNumbersData} />);
@@ -204,8 +229,8 @@ describe('AdminDashboard', () => {
         ...mockAdminData,
         systemStatus: {
           ...mockAdminData.systemStatus,
-          feedbacksLast24h: 0,
-        },
+          feedbacksLast24h: 0
+        }
       };
 
       render(<AdminDashboard data={idleData} />);
@@ -247,12 +272,12 @@ describe('AdminDashboard', () => {
         ...mockAdminData,
         stats: {
           ...mockAdminData.stats,
-          systemHealth: 'healthy',
+          systemHealth: 'healthy'
         },
         systemStatus: {
           ...mockAdminData.systemStatus,
-          database: 'healthy',
-        },
+          database: 'healthy'
+        }
       };
 
       render(<AdminDashboard data={healthyData} />);
@@ -265,8 +290,8 @@ describe('AdminDashboard', () => {
         ...mockAdminData,
         stats: {
           ...mockAdminData.stats,
-          systemHealth: 'degraded',
-        },
+          systemHealth: 'degraded'
+        }
       };
 
       render(<AdminDashboard data={degradedData} />);
@@ -279,12 +304,12 @@ describe('AdminDashboard', () => {
         ...mockAdminData,
         stats: {
           ...mockAdminData.stats,
-          systemHealth: 'critical',
+          systemHealth: 'critical'
         },
         systemStatus: {
           ...mockAdminData.systemStatus,
-          database: 'critical',
-        },
+          database: 'critical'
+        }
       };
 
       render(<AdminDashboard data={criticalData} />);
@@ -332,7 +357,9 @@ describe('AdminDashboard', () => {
       render(<AdminDashboard data={mockAdminData} />);
 
       // Progress bars should be present
-      const progressBars = document.querySelectorAll('[class*="h-2"][class*="rounded-full"]');
+      const progressBars = document.querySelectorAll(
+        '[class*="h-2"][class*="rounded-full"]'
+      );
       expect(progressBars.length).toBe(2);
     });
 
@@ -342,8 +369,8 @@ describe('AdminDashboard', () => {
         stats: {
           ...mockAdminData.stats,
           activeStudents: 0,
-          activeLecturers: 0,
-        },
+          activeLecturers: 0
+        }
       };
 
       render(<AdminDashboard data={zeroUsersData} />);
@@ -357,7 +384,9 @@ describe('AdminDashboard', () => {
       render(<AdminDashboard data={mockAdminData} />);
 
       // Database healthy should have green indicator
-      const healthItems = document.querySelectorAll('[class*="bg-emerald-500"]');
+      const healthItems = document.querySelectorAll(
+        '[class*="bg-emerald-500"]'
+      );
       expect(healthItems.length).toBeGreaterThan(0);
     });
 
@@ -366,8 +395,8 @@ describe('AdminDashboard', () => {
         ...mockAdminData,
         systemStatus: {
           ...mockAdminData.systemStatus,
-          database: 'critical',
-        },
+          database: 'critical'
+        }
       };
 
       render(<AdminDashboard data={degradedData} />);
@@ -390,7 +419,9 @@ describe('AdminDashboard', () => {
       render(<AdminDashboard data={mockAdminData} />);
 
       // Find grid with 2 columns for system health
-      const healthGrids = document.querySelectorAll('[class*="md:grid-cols-2"]');
+      const healthGrids = document.querySelectorAll(
+        '[class*="md:grid-cols-2"]'
+      );
       expect(healthGrids.length).toBeGreaterThan(0);
     });
 
@@ -402,9 +433,13 @@ describe('AdminDashboard', () => {
       const userMetricsHeading = screen.getByText('User Metrics');
 
       // Platform should come before System Health
-      expect(platformHeading.compareDocumentPosition(systemHealthHeading)).toBe(4);
+      expect(platformHeading.compareDocumentPosition(systemHealthHeading)).toBe(
+        4
+      );
       // System Health should come before User Metrics
-      expect(systemHealthHeading.compareDocumentPosition(userMetricsHeading)).toBe(4);
+      expect(
+        systemHealthHeading.compareDocumentPosition(userMetricsHeading)
+      ).toBe(4);
     });
   });
 
@@ -428,7 +463,9 @@ describe('AdminDashboard', () => {
       render(<AdminDashboard data={mockAdminData} />);
 
       // Status indicators (colored dots)
-      const statusIndicators = document.querySelectorAll('[class*="rounded-full"][class*="bg-"]');
+      const statusIndicators = document.querySelectorAll(
+        '[class*="rounded-full"][class*="bg-"]'
+      );
       expect(statusIndicators.length).toBeGreaterThan(2);
     });
   });
@@ -441,10 +478,14 @@ describe('AdminDashboard', () => {
       const blueIcons = document.querySelectorAll('[class*="text-blue-500"]');
       expect(blueIcons.length).toBeGreaterThan(0);
 
-      const emeraldIcons = document.querySelectorAll('[class*="text-emerald-500"]');
+      const emeraldIcons = document.querySelectorAll(
+        '[class*="text-emerald-500"]'
+      );
       expect(emeraldIcons.length).toBeGreaterThan(0);
 
-      const violetIcons = document.querySelectorAll('[class*="text-violet-500"]');
+      const violetIcons = document.querySelectorAll(
+        '[class*="text-violet-500"]'
+      );
       expect(violetIcons.length).toBeGreaterThan(0);
 
       const amberIcons = document.querySelectorAll('[class*="text-amber-500"]');
@@ -507,7 +548,9 @@ describe('AdminDashboardSkeleton', () => {
   it('should use grid layout for skeleton cards', () => {
     render(<AdminDashboardSkeleton />);
 
-    const gridContainers = document.querySelectorAll('[class*="grid grid-cols"]');
+    const gridContainers = document.querySelectorAll(
+      '[class*="grid grid-cols"]'
+    );
     expect(gridContainers.length).toBeGreaterThan(0);
   });
 });

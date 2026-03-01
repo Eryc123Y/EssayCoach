@@ -6,7 +6,7 @@ import type {
   StudentDashboardResponse,
   AdminDashboardResponse,
   DashboardActivityItem,
-  UserInfo,
+  UserInfo
 } from '@/service/api/v2/types';
 
 type DashboardData =
@@ -46,7 +46,6 @@ export function useDashboard<T extends DashboardData>(): UseDashboardReturn<T> {
 
       switch (userInfo.user_role) {
         case 'lecturer':
-        case 'teacher':  // Backend may return either 'lecturer' or 'teacher'
         case 'admin':
           response = await dashboardService.getLecturerDashboard();
           break;
@@ -60,7 +59,10 @@ export function useDashboard<T extends DashboardData>(): UseDashboardReturn<T> {
 
       setData(response as T);
     } catch (err) {
-      const error = err instanceof Error ? err : new Error('Failed to fetch dashboard data');
+      const error =
+        err instanceof Error
+          ? err
+          : new Error('Failed to fetch dashboard data');
       setError(error);
     } finally {
       setIsLoading(false);
@@ -79,7 +81,7 @@ export function useDashboard<T extends DashboardData>(): UseDashboardReturn<T> {
     error,
     refetch: fetchDashboard,
     recentActivity,
-    user,
+    user
   };
 }
 

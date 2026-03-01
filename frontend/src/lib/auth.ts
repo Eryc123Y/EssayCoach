@@ -59,7 +59,7 @@ export async function validateAndDecodeToken(
   if (!jwtSecret) {
     return {
       valid: false,
-      error: 'Server auth misconfiguration: JWT secret is not configured',
+      error: 'Server auth misconfiguration: JWT secret is not configured'
     };
   }
 
@@ -71,7 +71,7 @@ export async function validateAndDecodeToken(
       {
         issuer: JWT_ISSUER,
         audience: JWT_AUDIENCE,
-        algorithms: ['HS256'], // Only allow HMAC-SHA256
+        algorithms: ['HS256'] // Only allow HMAC-SHA256
       }
     );
 
@@ -81,24 +81,25 @@ export async function validateAndDecodeToken(
     if (!userRole || typeof userRole !== 'string') {
       return {
         valid: false,
-        error: 'Invalid token: missing role claim',
+        error: 'Invalid token: missing role claim'
       };
     }
 
     if (!validRoles.includes(userRole as (typeof validRoles)[number])) {
       return {
         valid: false,
-        error: 'Invalid token: unrecognized user_role',
+        error: 'Invalid token: unrecognized user_role'
       };
     }
 
     // Normalize 'teacher' to 'lecturer' for frontend consistency
-    const normalizedRole: UserRole = userRole === 'teacher' ? 'lecturer' : (userRole as UserRole);
+    const normalizedRole: UserRole =
+      userRole === 'teacher' ? 'lecturer' : (userRole as UserRole);
 
     return {
       valid: true,
       role: normalizedRole,
-      payload: verified.payload as Record<string, unknown>,
+      payload: verified.payload as Record<string, unknown>
     };
   } catch (error) {
     // Handle specific JWT errors without exposing internal details
@@ -106,7 +107,10 @@ export async function validateAndDecodeToken(
       return { valid: false, error: 'Invalid token: algorithm not allowed' };
     }
     if (error instanceof errors.JWEDecryptionFailed) {
-      return { valid: false, error: 'Invalid token: signature verification failed' };
+      return {
+        valid: false,
+        error: 'Invalid token: signature verification failed'
+      };
     }
     if (error instanceof errors.JWTExpired) {
       return { valid: false, error: 'Invalid token: token has expired' };
@@ -115,7 +119,10 @@ export async function validateAndDecodeToken(
       return { valid: false, error: 'Invalid token: claim validation failed' };
     }
     if (error instanceof errors.JWSSignatureVerificationFailed) {
-      return { valid: false, error: 'Invalid token: signature verification failed' };
+      return {
+        valid: false,
+        error: 'Invalid token: signature verification failed'
+      };
     }
 
     // Generic error for security (don't expose internal error details)
@@ -193,7 +200,7 @@ export function getCsrfToken(): string | null {
  */
 export function createAuthHeaders(method: string = 'GET'): HeadersInit {
   const headers: HeadersInit = {
-    'Content-Type': 'application/json',
+    'Content-Type': 'application/json'
   };
 
   // Include CSRF token for state-changing methods

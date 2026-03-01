@@ -54,5 +54,5 @@ export type {
   InviteLecturerInput,
   InviteLecturerResult,
   // Rubric action types (PRD-06)
-  RubricDuplicateInput,
+  RubricDuplicateInput
 } from './types';

@@ -33,5 +33,10 @@ export interface SkillRadarData {
   topSkill: { name: string; score: number } | null;
   bottomSkill: { name: string; score: number } | null;
   averageScore: number;
-  masteryLevel: 'Beginner' | 'Developing' | 'Proficient' | 'Advanced' | 'Expert';
+  masteryLevel:
+    | 'Beginner'
+    | 'Developing'
+    | 'Proficient'
+    | 'Advanced'
+    | 'Expert';
 }

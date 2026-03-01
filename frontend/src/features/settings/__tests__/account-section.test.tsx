@@ -6,7 +6,14 @@ import { AccountSection } from '../components/account-section';
 describe('AccountSection', () => {
   it('calls onSaveUser when the profile form is submitted', async () => {
     const mockOnSaveUser = vi.fn().mockResolvedValue(undefined);
-    const mockUser = { user_id: 1, user_email: 'test@test.com', user_fname: 'John', user_lname: 'Doe', user_role: 'student', is_active: true };
+    const mockUser = {
+      user_id: 1,
+      user_email: 'test@test.com',
+      user_fname: 'John',
+      user_lname: 'Doe',
+      user_role: 'student',
+      is_active: true
+    };
 
     render(
       <AccountSection
@@ -32,7 +39,7 @@ describe('AccountSection', () => {
       expect(mockOnSaveUser).toHaveBeenCalledWith({
         user_fname: 'Jane',
         user_lname: 'Doe',
-        user_email: 'test@test.com',
+        user_email: 'test@test.com'
       });
     });
   });

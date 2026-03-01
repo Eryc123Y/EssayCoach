@@ -1,12 +1,12 @@
 /**
  * BarGraph Component Tests
- * 
+ *
  * Tests for the writing dimensions bar graph covering:
  * - Component rendering
  * - Client-side rendering (useEffect)
  * - Chart data display
  * - Tooltip functionality
- * 
+ *
  * Run with: pnpm test -- bar-graph.test.tsx
  */
 
@@ -18,37 +18,50 @@ import { BarGraph } from './bar-graph';
 vi.mock('@/components/ui/chart', () => ({
   ChartConfig: {},
   ChartContainer: ({ children, config, className }: any) => (
-    <div data-testid="chart-container" className={className}>
+    <div data-testid='chart-container' className={className}>
       {children}
     </div>
   ),
   ChartTooltip: ({ children, content }: any) => (
-    <div data-testid="chart-tooltip">{content}{children}</div>
-  ),
-  ChartTooltipContent: ({ indicator, className }: any) => (
-    <div data-testid="chart-tooltip-content" className={className}>
-      Tooltip Content - {indicator}
+    <div data-testid='chart-tooltip'>
+      {content}
+      {children}
     </div>
   ),
+  ChartTooltipContent: ({ indicator, className }: any) => (
+    <div data-testid='chart-tooltip-content' className={className}>
+      Tooltip Content - {indicator}
+    </div>
+  )
 }));
 
 // Mock shadcn/ui card components
 vi.mock('@/components/ui/card', () => ({
   Card: ({ children, className, ...props }: any) => (
-    <div data-testid="card-component" className={className} {...props}>{children}</div>
+    <div data-testid='card-component' className={className} {...props}>
+      {children}
+    </div>
   ),
   CardContent: ({ children, className, ...props }: any) => (
-    <div className={className} {...props}>{children}</div>
+    <div className={className} {...props}>
+      {children}
+    </div>
   ),
   CardDescription: ({ children, className, ...props }: any) => (
-    <div className={className} {...props}>{children}</div>
+    <div className={className} {...props}>
+      {children}
+    </div>
   ),
   CardHeader: ({ children, className, ...props }: any) => (
-    <div className={className} {...props}>{children}</div>
+    <div className={className} {...props}>
+      {children}
+    </div>
   ),
   CardTitle: ({ children, className, ...props }: any) => (
-    <div className={className} {...props}>{children}</div>
-  ),
+    <div className={className} {...props}>
+      {children}
+    </div>
+  )
 }));
 
 // Mock recharts
@@ -59,23 +72,23 @@ vi.mock('recharts', () => ({
     </div>
   ),
   BarChart: ({ children, data, layout, margin }: any) => (
-    <div data-testid="bar-chart" data-layout={layout}>
+    <div data-testid='bar-chart' data-layout={layout}>
       {children}
     </div>
   ),
   CartesianGrid: ({ horizontal, strokeDasharray, strokeOpacity }: any) => (
-    <div 
-      data-testid="cartesian-grid" 
+    <div
+      data-testid='cartesian-grid'
       data-horizontal={horizontal}
       data-stroke-dasharray={strokeDasharray}
     />
   ),
   XAxis: ({ type, hide, dataKey }: any) => (
-    <div data-testid="x-axis" data-type={type} data-hide={hide} />
+    <div data-testid='x-axis' data-type={type} data-hide={hide} />
   ),
   YAxis: ({ dataKey, type, tickLine, axisLine, width }: any) => (
-    <div data-testid="y-axis" data-datakey={dataKey} data-type={type} />
-  ),
+    <div data-testid='y-axis' data-datakey={dataKey} data-type={type} />
+  )
 }));
 
 describe('BarGraph', () => {
@@ -164,9 +177,7 @@ describe('BarGraph', () => {
 
     it('displays card title', async () => {
       await waitFor(() => {
-        expect(
-          screen.getByText(/Writing Dimensions/i)
-        ).toBeInTheDocument();
+        expect(screen.getByText(/Writing Dimensions/i)).toBeInTheDocument();
       });
     });
 

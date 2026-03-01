@@ -61,7 +61,10 @@ export async function POST(req: NextRequest) {
 
     return res;
   } catch (error) {
-    console.error('[Refresh] Failed:', error instanceof Error ? error.message : 'Unknown error');
+    console.error(
+      '[Refresh] Failed:',
+      error instanceof Error ? error.message : 'Unknown error'
+    );
     return NextResponse.json(
       { message: 'Internal server error' },
       { status: 500 }

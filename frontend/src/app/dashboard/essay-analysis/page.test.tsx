@@ -111,8 +111,12 @@ describe('AIAnalysisPage', () => {
     render(<AIAnalysisPage />);
 
     expect(screen.getByText(/Essay Practice/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/Essay Question \/ Topic/i)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Continue/i })).toBeInTheDocument();
+    expect(
+      screen.getByLabelText(/Essay Question \/ Topic/i)
+    ).toBeInTheDocument();
+    expect(
+      screen.getByRole('button', { name: /Continue/i })
+    ).toBeInTheDocument();
   });
 
   it('allows user input in question and content fields', async () => {
@@ -145,9 +149,12 @@ describe('AIAnalysisPage', () => {
     });
     fireEvent.click(screen.getByRole('button', { name: /Continue/i }));
 
-    fireEvent.change(await screen.findByPlaceholderText(/Paste or type your essay here/i), {
-      target: { value: 'Test Essay Content' }
-    });
+    fireEvent.change(
+      await screen.findByPlaceholderText(/Paste or type your essay here/i),
+      {
+        target: { value: 'Test Essay Content' }
+      }
+    );
     fireEvent.click(screen.getByRole('button', { name: /Continue/i }));
 
     // Submit
@@ -183,9 +190,12 @@ describe('AIAnalysisPage', () => {
     });
     fireEvent.click(screen.getByRole('button', { name: /Continue/i }));
 
-    fireEvent.change(await screen.findByPlaceholderText(/Paste or type your essay here/i), {
-      target: { value: 'C' }
-    });
+    fireEvent.change(
+      await screen.findByPlaceholderText(/Paste or type your essay here/i),
+      {
+        target: { value: 'C' }
+      }
+    );
     fireEvent.click(screen.getByRole('button', { name: /Continue/i }));
     fireEvent.click(screen.getByRole('button', { name: /Analyze My Essay/i }));
 
@@ -205,9 +215,12 @@ describe('AIAnalysisPage', () => {
     });
     fireEvent.click(screen.getByRole('button', { name: /Continue/i }));
 
-    fireEvent.change(await screen.findByPlaceholderText(/Paste or type your essay here/i), {
-      target: { value: 'C' }
-    });
+    fireEvent.change(
+      await screen.findByPlaceholderText(/Paste or type your essay here/i),
+      {
+        target: { value: 'C' }
+      }
+    );
     fireEvent.click(screen.getByRole('button', { name: /Continue/i }));
     fireEvent.click(screen.getByRole('button', { name: /Analyze My Essay/i }));
 
@@ -259,9 +272,12 @@ describe('AIAnalysisPage', () => {
     });
     fireEvent.click(screen.getByRole('button', { name: /Continue/i }));
 
-    fireEvent.change(await screen.findByPlaceholderText(/Paste or type your essay here/i), {
-      target: { value: 'C' }
-    });
+    fireEvent.change(
+      await screen.findByPlaceholderText(/Paste or type your essay here/i),
+      {
+        target: { value: 'C' }
+      }
+    );
     fireEvent.click(screen.getByRole('button', { name: /Continue/i }));
     fireEvent.click(screen.getByRole('button', { name: /Analyze My Essay/i }));
 

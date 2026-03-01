@@ -1,13 +1,12 @@
-
 /**
  * AreaGraph Component Tests
- * 
+ *
  * Tests for the score improvement area graph covering:
  * - Component rendering
  * - Chart data display
  * - Trend indicators
  * - Tooltip functionality
- * 
+ *
  * Run with: pnpm test -- area-graph.test.tsx
  */
 
@@ -19,79 +18,94 @@ import { AreaGraph } from './area-graph';
 vi.mock('@/components/ui/chart', () => ({
   ChartConfig: {},
   ChartContainer: ({ children, config, className }: any) => (
-    <div data-testid="chart-container" className={className}>
+    <div data-testid='chart-container' className={className}>
       {children}
     </div>
   ),
   ChartTooltip: ({ children, content, cursor }: any) => (
-    <div data-testid="chart-tooltip" data-cursor={cursor}>
-      {content}{children}
+    <div data-testid='chart-tooltip' data-cursor={cursor}>
+      {content}
+      {children}
     </div>
   ),
   ChartTooltipContent: ({ indicator, className }: any) => (
-    <div data-testid="chart-tooltip-content" className={className}>
+    <div data-testid='chart-tooltip-content' className={className}>
       Tooltip Content - {indicator}
     </div>
-  ),
+  )
 }));
 
 // Mock shadcn/ui card components
 vi.mock('@/components/ui/card', () => ({
   Card: ({ children, className, ...props }: any) => (
-    <div data-testid="card-component" className={className} {...props}>{children}</div>
+    <div data-testid='card-component' className={className} {...props}>
+      {children}
+    </div>
   ),
   CardContent: ({ children, className, ...props }: any) => (
-    <div className={className} {...props}>{children}</div>
+    <div className={className} {...props}>
+      {children}
+    </div>
   ),
   CardDescription: ({ children, className, ...props }: any) => (
-    <div className={className} {...props}>{children}</div>
+    <div className={className} {...props}>
+      {children}
+    </div>
   ),
   CardFooter: ({ children, className, ...props }: any) => (
-    <div className={className} {...props}>{children}</div>
+    <div className={className} {...props}>
+      {children}
+    </div>
   ),
   CardHeader: ({ children, className, ...props }: any) => (
-    <div className={className} {...props}>{children}</div>
+    <div className={className} {...props}>
+      {children}
+    </div>
   ),
   CardTitle: ({ children, className, ...props }: any) => (
-    <div className={className} {...props}>{children}</div>
-  ),
+    <div className={className} {...props}>
+      {children}
+    </div>
+  )
 }));
 
 // Mock tabler icons
 vi.mock('@tabler/icons-react', () => ({
   IconTrendingUp: ({ className, ...props }: any) => (
-    <svg data-testid="trending-up-icon" className={className} {...props} />
-  ),
+    <svg data-testid='trending-up-icon' className={className} {...props} />
+  )
 }));
 
 // Mock recharts
 vi.mock('recharts', () => ({
   Area: ({ dataKey, type, fill, stroke, strokeWidth, stackId }: any) => (
-    <div 
-      data-testid={`area-${dataKey}`} 
+    <div
+      data-testid={`area-${dataKey}`}
       data-type={type}
       data-stroke={stroke}
       data-stroke-width={strokeWidth}
     />
   ),
   AreaChart: ({ children, data, margin }: any) => (
-    <div data-testid="area-chart">
-      {children}
-    </div>
+    <div data-testid='area-chart'>{children}</div>
   ),
   CartesianGrid: ({ vertical, strokeDasharray, strokeOpacity }: any) => (
-    <div 
-      data-testid="cartesian-grid" 
-      data-vertical={vertical}
-    />
+    <div data-testid='cartesian-grid' data-vertical={vertical} />
   ),
-  XAxis: ({ dataKey, tickLine, axisLine, tickMargin, minTickGap, tickFormatter }: any) => (
-    <div 
-      data-testid="x-axis" 
+  XAxis: ({
+    dataKey,
+    tickLine,
+    axisLine,
+    tickMargin,
+    minTickGap,
+    tickFormatter
+  }: any) => (
+    <div
+      data-testid='x-axis'
       data-datakey={dataKey}
       data-tick-margin={tickMargin}
     />
-  ),
+  )
 }));
 
 describe('AreaGraph', () => {
@@ -165,7 +179,7 @@ describe('AreaGraph', () => {
     it('uses monotone interpolation for smooth curves', () => {
       const scoreArea = screen.getByTestId('area-score');
       expect(scoreArea).toHaveAttribute('data-type', 'monotone');
-      
+
       const avgArea = screen.getByTestId('area-avg');
       expect(avgArea).toHaveAttribute('data-type', 'monotone');
     });

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -33,31 +33,39 @@ export function AccountSection({
   isLoading,
   onSaveUser,
   onUploadAvatar,
-  onChangePassword,
+  onChangePassword
 }: AccountSectionProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
     user_fname: user?.user_fname || '',
     user_lname: user?.user_lname || '',
-    user_email: user?.user_email || '',
+    user_email: user?.user_email || ''
   });
   const [isSaving, setIsSaving] = useState(false);
   const [showPasswordForm, setShowPasswordForm] = useState(false);
   const [passwordData, setPasswordData] = useState({
     current_password: '',
     new_password: '',
-    new_password_confirm: '',
+    new_password_confirm: ''
   });
   const [passwordStrength, setPasswordStrength] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    if (user) {
+      setFormData({
+        user_fname: user.user_fname || '',
+        user_lname: user.user_lname || '',
+        user_email: user.user_email || ''
+      });
+    }
+  }, [user]);
 
   const handleAvatarClick = () => {
     fileInputRef.current?.click();
   };
 
-  const handleAvatarChange = async (
-    e: React.ChangeEvent<HTMLInputElement>
-  ) => {
+  const handleAvatarChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
@@ -78,7 +86,9 @@ export function AccountSection({
       toast.success('Avatar updated successfully');
       // The avatar will be updated via the returned URL
     } catch (error) {
-      console.error('Failed to upload avatar:', error);
+      toast.error(
+        error instanceof Error ? error.message : 'Failed to upload avatar'
+      );
     }
   };
 
@@ -89,7 +99,9 @@ export function AccountSection({
       toast.success('Profile updated successfully');
       setIsEditing(false);
     } catch (error) {
-      console.error('Failed to update profile:', error);
+      toast.error(
+        error instanceof Error ? error.message : 'Failed to update profile'
+      );
     } finally {
       setIsSaving(false);
     }
@@ -126,11 +138,13 @@ export function AccountSection({
       setPasswordData({
         current_password: '',
         new_password: '',
-        new_password_confirm: '',
+        new_password_confirm: ''
       });
       setShowPasswordForm(false);
     } catch (error) {
-      console.error('Failed to change password:', error);
+      toast.error(
+        error instanceof Error ? error.message : 'Failed to change password'
+      );
     }
   };
 
@@ -153,47 +167,48 @@ export function AccountSection({
           <CardTitle>Profile Information</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="animate-pulse space-y-4">
-            <div className="h-10 w-full rounded bg-muted" />
-            <div className="h-10 w-full rounded bg-muted" />
-            <div className="h-10 w-full rounded bg-muted" />
+          <div className='animate-pulse space-y-4'>
+            <div className='bg-muted h-10 w-full rounded' />
+            <div className='bg-muted h-10 w-full rounded' />
+            <div className='bg-muted h-10 w-full rounded' />
           </div>
         </CardContent>
       </Card>
     );
   }
 
-  const initials = `${formData.user_fname?.[0] || ''}${formData.user_lname?.[0] || ''}`.toUpperCase();
+  const initials =
+    `${formData.user_fname?.[0] || ''}${formData.user_lname?.[0] || ''}`.toUpperCase();
 
   return (
-    <div className="space-y-6">
+    <div className='space-y-6'>
       {/* Profile Information */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg font-semibold">
+          <CardTitle className='text-lg font-semibold'>
             Profile Information
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-6">
+        <CardContent className='space-y-6'>
           {/* Avatar Upload */}
-          <div className="flex items-center gap-4">
-            <Avatar className="size-20">
-              <AvatarImage src={user?.user_fname ?? undefined} alt="Avatar" />
-              <AvatarFallback className="text-lg">{initials}</AvatarFallback>
+          <div className='flex items-center gap-4'>
+            <Avatar className='size-20'>
+              <AvatarImage src={user?.user_fname ?? undefined} alt='Avatar' />
+              <AvatarFallback className='text-lg'>{initials}</AvatarFallback>
             </Avatar>
-            <div className="space-y-2">
+            <div className='space-y-2'>
               <input
                 ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                className="hidden"
+                type='file'
+                accept='image/*'
+                className='hidden'
                 onChange={handleAvatarChange}
               />
-              <Button variant="outline" size="sm" onClick={handleAvatarClick}>
-                <IconCamera className="mr-2 size-4" />
+              <Button variant='outline' size='sm' onClick={handleAvatarClick}>
+                <IconCamera className='mr-2 size-4' />
                 Change Avatar
               </Button>
-              <p className="text-xs text-muted-foreground">
+              <p className='text-muted-foreground text-xs'>
                 JPG, GIF or PNG. Max size 5MB.
               </p>
             </div>
@@ -202,12 +217,12 @@ export function AccountSection({
           <Separator />
 
           {/* Name and Email Form */}
-          <div className="space-y-4">
-            <div className="grid gap-4 sm:grid-cols-2">
-              <div className="space-y-2">
-                <Label htmlFor="first-name">First Name</Label>
+          <div className='space-y-4'>
+            <div className='grid gap-4 sm:grid-cols-2'>
+              <div className='space-y-2'>
+                <Label htmlFor='first-name'>First Name</Label>
                 <Input
-                  id="first-name"
+                  id='first-name'
                   value={formData.user_fname}
                   onChange={(e) =>
                     setFormData({ ...formData, user_fname: e.target.value })
@@ -215,10 +230,10 @@ export function AccountSection({
                   disabled={!isEditing}
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="last-name">Last Name</Label>
+              <div className='space-y-2'>
+                <Label htmlFor='last-name'>Last Name</Label>
                 <Input
-                  id="last-name"
+                  id='last-name'
                   value={formData.user_lname}
                   onChange={(e) =>
                     setFormData({ ...formData, user_lname: e.target.value })
@@ -227,11 +242,11 @@ export function AccountSection({
                 />
               </div>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+            <div className='space-y-2'>
+              <Label htmlFor='email'>Email</Label>
               <Input
-                id="email"
-                type="email"
+                id='email'
+                type='email'
                 value={formData.user_email}
                 onChange={(e) =>
                   setFormData({ ...formData, user_email: e.target.value })
@@ -241,18 +256,18 @@ export function AccountSection({
             </div>
 
             {isEditing ? (
-              <div className="flex gap-2">
+              <div className='flex gap-2'>
                 <Button onClick={handleSaveUser} disabled={isSaving}>
                   {isSaving ? 'Saving...' : 'Save Changes'}
                 </Button>
                 <Button
-                  variant="outline"
+                  variant='outline'
                   onClick={() => {
                     setIsEditing(false);
                     setFormData({
                       user_fname: user?.user_fname || '',
                       user_lname: user?.user_lname || '',
-                      user_email: user?.user_email || '',
+                      user_email: user?.user_email || ''
                     });
                   }}
                 >
@@ -269,94 +284,91 @@ export function AccountSection({
       {/* Password Change */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg font-semibold">
+          <CardTitle className='text-lg font-semibold'>
             Change Password
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
+        <CardContent className='space-y-4'>
           {!showPasswordForm ? (
-            <Button
-              variant="outline"
-              onClick={() => setShowPasswordForm(true)}
-            >
-              <IconLock className="mr-2 size-4" />
+            <Button variant='outline' onClick={() => setShowPasswordForm(true)}>
+              <IconLock className='mr-2 size-4' />
               Change Password
             </Button>
           ) : (
-            <div className="space-y-4">
-              <div className="space-y-2">
-                <Label htmlFor="current-password">Current Password</Label>
+            <div className='space-y-4'>
+              <div className='space-y-2'>
+                <Label htmlFor='current-password'>Current Password</Label>
                 <Input
-                  id="current-password"
-                  type="password"
+                  id='current-password'
+                  type='password'
                   value={passwordData.current_password}
                   onChange={(e) =>
                     setPasswordData({
                       ...passwordData,
-                      current_password: e.target.value,
+                      current_password: e.target.value
                     })
                   }
-                  placeholder="Enter current password"
+                  placeholder='Enter current password'
                 />
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="new-password">New Password</Label>
+              <div className='space-y-2'>
+                <Label htmlFor='new-password'>New Password</Label>
                 <Input
-                  id="new-password"
-                  type="password"
+                  id='new-password'
+                  type='password'
                   value={passwordData.new_password}
                   onChange={(e) => {
                     setPasswordData({
                       ...passwordData,
-                      new_password: e.target.value,
+                      new_password: e.target.value
                     });
                     setPasswordStrength(
                       calculatePasswordStrength(e.target.value)
                     );
                   }}
-                  placeholder="Enter new password"
+                  placeholder='Enter new password'
                 />
                 {passwordData.new_password && (
-                  <div className="flex items-center gap-2">
-                    <div className="flex h-2 flex-1 overflow-hidden rounded-full bg-muted">
+                  <div className='flex items-center gap-2'>
+                    <div className='bg-muted flex h-2 flex-1 overflow-hidden rounded-full'>
                       <div
                         className={`h-full transition-all ${getPasswordStrengthColor(passwordStrength)}`}
                         style={{
-                          width: `${(passwordStrength / 5) * 100}%`,
+                          width: `${(passwordStrength / 5) * 100}%`
                         }}
                       />
                     </div>
-                    <span className="text-xs text-muted-foreground">
+                    <span className='text-muted-foreground text-xs'>
                       {getPasswordStrengthLabel(passwordStrength)}
                     </span>
                   </div>
                 )}
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="confirm-password">Confirm New Password</Label>
+              <div className='space-y-2'>
+                <Label htmlFor='confirm-password'>Confirm New Password</Label>
                 <Input
-                  id="confirm-password"
-                  type="password"
+                  id='confirm-password'
+                  type='password'
                   value={passwordData.new_password_confirm}
                   onChange={(e) =>
                     setPasswordData({
                       ...passwordData,
-                      new_password_confirm: e.target.value,
+                      new_password_confirm: e.target.value
                     })
                   }
-                  placeholder="Confirm new password"
+                  placeholder='Confirm new password'
                 />
               </div>
-              <div className="flex gap-2">
+              <div className='flex gap-2'>
                 <Button onClick={handlePasswordChange}>Confirm Change</Button>
                 <Button
-                  variant="outline"
+                  variant='outline'
                   onClick={() => {
                     setShowPasswordForm(false);
                     setPasswordData({
                       current_password: '',
                       new_password: '',
-                      new_password_confirm: '',
+                      new_password_confirm: ''
                     });
                     setPasswordStrength(0);
                   }}

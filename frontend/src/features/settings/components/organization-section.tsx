@@ -16,7 +16,7 @@ export function OrganizationSection() {
     name: 'EssayCoach University',
     logo: '',
     primaryColor: '#3b82f6',
-    selfRegistrationEnabled: true,
+    selfRegistrationEnabled: true
   });
   const [isSaving, setIsSaving] = useState(false);
 
@@ -29,64 +29,62 @@ export function OrganizationSection() {
   };
 
   return (
-    <div className="space-y-6">
+    <div className='space-y-6'>
       {/* Organization Branding */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg font-semibold">
+          <CardTitle className='text-lg font-semibold'>
             Organization Branding
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center gap-4">
-            <Avatar className="size-16">
-              <AvatarImage src={orgData.logo} alt="Organization Logo" />
+        <CardContent className='space-y-4'>
+          <div className='flex items-center gap-4'>
+            <Avatar className='size-16'>
+              <AvatarImage src={orgData.logo} alt='Organization Logo' />
               <AvatarFallback>
-                <IconBuilding className="size-6" />
+                <IconBuilding className='size-6' />
               </AvatarFallback>
             </Avatar>
-            <div className="space-y-2">
-              <Label htmlFor="logo-url">Logo URL</Label>
+            <div className='space-y-2'>
+              <Label htmlFor='logo-url'>Logo URL</Label>
               <Input
-                id="logo-url"
+                id='logo-url'
                 value={orgData.logo}
                 onChange={(e) =>
                   setOrgData({ ...orgData, logo: e.target.value })
                 }
-                placeholder="https://example.com/logo.png"
+                placeholder='https://example.com/logo.png'
               />
             </div>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="org-name">Organization Name</Label>
+          <div className='space-y-2'>
+            <Label htmlFor='org-name'>Organization Name</Label>
             <Input
-              id="org-name"
+              id='org-name'
               value={orgData.name}
-              onChange={(e) =>
-                setOrgData({ ...orgData, name: e.target.value })
-              }
+              onChange={(e) => setOrgData({ ...orgData, name: e.target.value })}
             />
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="primary-color">Primary Color</Label>
-            <div className="flex gap-2">
+          <div className='space-y-2'>
+            <Label htmlFor='primary-color'>Primary Color</Label>
+            <div className='flex gap-2'>
               <Input
-                id="primary-color"
-                type="color"
+                id='primary-color'
+                type='color'
                 value={orgData.primaryColor}
                 onChange={(e) =>
                   setOrgData({ ...orgData, primaryColor: e.target.value })
                 }
-                className="w-20"
+                className='w-20'
               />
               <Input
                 value={orgData.primaryColor}
                 onChange={(e) =>
                   setOrgData({ ...orgData, primaryColor: e.target.value })
                 }
-                className="flex-1"
+                className='flex-1'
               />
             </div>
           </div>
@@ -100,19 +98,19 @@ export function OrganizationSection() {
       {/* User Management */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg font-semibold">
+          <CardTitle className='text-lg font-semibold'>
             User Management
           </CardTitle>
         </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="flex size-10 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900">
-                <IconUsers className="size-5 text-blue-600 dark:text-blue-400" />
+        <CardContent className='space-y-4'>
+          <div className='flex items-center justify-between'>
+            <div className='flex items-center gap-3'>
+              <div className='flex size-10 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900'>
+                <IconUsers className='size-5 text-blue-600 dark:text-blue-400' />
               </div>
               <div>
-                <p className="font-medium">Self-Registration</p>
-                <p className="text-sm text-muted-foreground">
+                <p className='font-medium'>Self-Registration</p>
+                <p className='text-muted-foreground text-sm'>
                   Allow users to create accounts without invitation
                 </p>
               </div>
@@ -127,14 +125,14 @@ export function OrganizationSection() {
 
           <Separator />
 
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="flex size-10 items-center justify-center rounded-full bg-purple-100 dark:bg-purple-900">
-                <IconLock className="size-5 text-purple-600 dark:text-purple-400" />
+          <div className='flex items-center justify-between'>
+            <div className='flex items-center gap-3'>
+              <div className='flex size-10 items-center justify-center rounded-full bg-purple-100 dark:bg-purple-900'>
+                <IconLock className='size-5 text-purple-600 dark:text-purple-400' />
               </div>
               <div>
-                <p className="font-medium">Email Domain Restriction</p>
-                <p className="text-sm text-muted-foreground">
+                <p className='font-medium'>Email Domain Restriction</p>
+                <p className='text-muted-foreground text-sm'>
                   Only allow emails from specific domains
                 </p>
               </div>

@@ -32,7 +32,11 @@ const REFRESH_BUFFER_MS = 5 * 60 * 1000;
 
 interface UseAuthRefreshOptions {
   /** Callback when refresh succeeds */
-  onSuccess?: (tokens: { access: string; refresh?: string; expiresAt?: string }) => void;
+  onSuccess?: (tokens: {
+    access: string;
+    refresh?: string;
+    expiresAt?: string;
+  }) => void;
   /** Callback when refresh fails (401) - typically triggers logout */
   onAuthError?: () => void;
   /** Whether to enable automatic refresh checking */
@@ -41,16 +45,17 @@ interface UseAuthRefreshOptions {
   refreshBufferMs?: number;
 }
 
-export function useAuthRefresh(options: UseAuthRefreshOptions = {}): UseAuthRefreshReturn {
+export function useAuthRefresh(
+  options: UseAuthRefreshOptions = {}
+): UseAuthRefreshReturn {
   const {
     onSuccess,
     onAuthError,
     enabled = true,
-    refreshBufferMs = REFRESH_BUFFER_MS,
+    refreshBufferMs = REFRESH_BUFFER_MS
   } = options;
 
   // Local state for tracking
-  const [isRefreshing, setIsRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [lastRefreshAt, setLastRefreshAt] = useState<Date | null>(null);
   const [refreshCount, setRefreshCount] = useState(0);
@@ -112,16 +117,20 @@ export function useAuthRefresh(options: UseAuthRefreshOptions = {}): UseAuthRefr
         retryCountRef.current = 0;
         setLastRefreshAt(new Date());
         setRefreshCount((prev) => prev + 1);
-        setIsRefreshing(false);
         setError(null);
 
         // Get the new tokens for callback
         const state = authStore.getState();
-        if (onSuccess && state.accessToken && state.refreshToken && state.tokenExpiry) {
+        if (
+          onSuccess &&
+          state.accessToken &&
+          state.refreshToken &&
+          state.tokenExpiry
+        ) {
           onSuccess({
             access: state.accessToken,
             refresh: state.refreshToken,
-            expiresAt: new Date(state.tokenExpiry).toISOString(),
+            expiresAt: new Date(state.tokenExpiry).toISOString()
           });
         }
         return true;
@@ -143,11 +152,11 @@ export function useAuthRefresh(options: UseAuthRefreshOptions = {}): UseAuthRefr
 
       return false;
     } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : 'Refresh failed';
+      const errorMessage =
+        err instanceof Error ? err.message : 'Refresh failed';
 
       // Check if it's a 401 error (invalid/expired refresh token)
       if (errorMessage.includes('401') || errorMessage.includes('expired')) {
-        setIsRefreshing(false);
         setError(errorMessage);
         onAuthError?.();
         return false;
@@ -167,7 +176,6 @@ export function useAuthRefresh(options: UseAuthRefreshOptions = {}): UseAuthRefr
         }, delay);
       } else {
         // Max retries exceeded
-        setIsRefreshing(false);
         setError(errorMessage);
         onAuthError?.();
       }
@@ -185,7 +193,6 @@ export function useAuthRefresh(options: UseAuthRefreshOptions = {}): UseAuthRefr
       retryCountRef.current = 0;
     }
 
-    setIsRefreshing(true);
     return refreshWithRetry();
   }, [refreshWithRetry]);
 
@@ -193,7 +200,6 @@ export function useAuthRefresh(options: UseAuthRefreshOptions = {}): UseAuthRefr
   const checkAndRefresh = useCallback(async (): Promise<boolean> => {
     const state = authStore.getState();
     if (customNeedsRefresh(state.tokenExpiry)) {
-      setIsRefreshing(true);
       return refreshWithRetry();
     }
     return true; // No refresh needed, consider it success
@@ -223,33 +229,22 @@ export function useAuthRefresh(options: UseAuthRefreshOptions = {}): UseAuthRefr
     };
   }, [enabled, checkAndRefresh]);
 
-  // Listen for 401 errors from store and trigger logout
+  // Sync with store state and listen for auth errors
   useEffect(() => {
     const unsubscribe = authStore.subscribe((state) => {
-      // If refresh error indicates auth failure, trigger logout
-      if (
-        state.refreshError &&
-        (state.refreshError.includes('401') || state.refreshError.includes('expired'))
-      ) {
+      if (state.refreshError) {
         setError(state.refreshError);
-        onAuthError?.();
+        if (
+          state.refreshError.includes('401') ||
+          state.refreshError.includes('expired')
+        ) {
+          onAuthError?.();
+        }
       }
     });
 
     return () => unsubscribe();
   }, [onAuthError]);
-
-  // Sync with store state
-  useEffect(() => {
-    const unsubscribe = authStore.subscribe((state) => {
-      setIsRefreshing(state.isRefreshing);
-      if (state.refreshError && !state.refreshError.includes('401')) {
-        setError(state.refreshError);
-      }
-    });
-
-    return () => unsubscribe();
-  }, []);
 
   // Get current token (auto-refresh if needed)
   const getAccessToken = useCallback(async (): Promise<string | null> => {
@@ -286,7 +281,6 @@ export function useAuthRefresh(options: UseAuthRefreshOptions = {}): UseAuthRefr
     authStore.getState().clearTokens();
 
     // Clear local state
-    setIsRefreshing(false);
     setError(null);
     setLastRefreshAt(null);
     setRefreshCount(0);
@@ -322,7 +316,7 @@ export function useAuthRefresh(options: UseAuthRefreshOptions = {}): UseAuthRefr
     clearAuth,
 
     // Utility
-    needsRefresh: () => customNeedsRefresh(currentState.tokenExpiry),
+    needsRefresh: () => customNeedsRefresh(currentState.tokenExpiry)
   };
 }
 

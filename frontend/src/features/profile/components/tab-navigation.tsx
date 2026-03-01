@@ -16,16 +16,22 @@ interface TabNavigationProps {
   userRole?: UserRole;
 }
 
-export function TabNavigation({ activeTab, onTabChange, userRole }: TabNavigationProps) {
+export function TabNavigation({
+  activeTab,
+  onTabChange,
+  userRole
+}: TabNavigationProps) {
   const TABS: Tab[] = [
     { id: 'essays', label: 'Activity' },
-    ...(userRole === 'student' ? [{ id: 'achievements', label: 'Achievements' } as Tab] : []),
-    { id: 'progress', label: 'Progress' },
+    ...(userRole === 'student'
+      ? [{ id: 'achievements', label: 'Achievements' } as Tab]
+      : []),
+    { id: 'progress', label: 'Progress' }
   ];
 
   return (
-    <div className="border-b border-slate-200 dark:border-slate-700">
-      <nav className="flex gap-6" aria-label="Profile tabs">
+    <div className='border-b border-slate-200 dark:border-slate-700'>
+      <nav className='flex gap-6' aria-label='Profile tabs'>
         {TABS.map((tab) => (
           <button
             key={tab.id}
@@ -38,13 +44,13 @@ export function TabNavigation({ activeTab, onTabChange, userRole }: TabNavigatio
             )}
             aria-current={activeTab === tab.id ? 'page' : undefined}
             aria-selected={activeTab === tab.id}
-            role="tab"
+            role='tab'
           >
             {tab.label}
             {activeTab === tab.id && (
               <span
-                className="absolute bottom-0 left-0 right-0 h-0.5 bg-indigo-600 dark:bg-indigo-400"
-                aria-hidden="true"
+                className='absolute right-0 bottom-0 left-0 h-0.5 bg-indigo-600 dark:bg-indigo-400'
+                aria-hidden='true'
               />
             )}
           </button>

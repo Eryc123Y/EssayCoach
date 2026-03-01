@@ -13,7 +13,7 @@ describe('classService', () => {
     class_year: 2025,
     class_status: 'active',
     class_archived_at: null,
-    class_size: 25,
+    class_size: 25
   };
 
   beforeEach(() => {
@@ -28,7 +28,7 @@ describe('classService', () => {
     it('fetches classes successfully', async () => {
       (global.fetch as any).mockResolvedValueOnce({
         ok: true,
-        json: async () => [mockClass],
+        json: async () => [mockClass]
       });
 
       const classes = await classService.listClasses();
@@ -39,7 +39,7 @@ describe('classService', () => {
     it('filters by status', async () => {
       (global.fetch as any).mockResolvedValueOnce({
         ok: true,
-        json: async () => [mockClass],
+        json: async () => [mockClass]
       });
 
       await classService.listClasses({ class_status: 'active' });
@@ -54,7 +54,7 @@ describe('classService', () => {
     it('fetches a single class', async () => {
       (global.fetch as any).mockResolvedValueOnce({
         ok: true,
-        json: async () => mockClass,
+        json: async () => mockClass
       });
 
       const cls = await classService.getClass(1);
@@ -66,12 +66,12 @@ describe('classService', () => {
     it('creates a new class', async () => {
       (global.fetch as any).mockResolvedValueOnce({
         ok: true,
-        json: async () => mockClass,
+        json: async () => mockClass
       });
 
       const cls = await classService.createClass({
         unit_id_unit: 'ENG101',
-        class_name: 'New Class',
+        class_name: 'New Class'
       });
 
       expect(cls.class_name).toBe('English Composition');
@@ -86,7 +86,7 @@ describe('classService', () => {
     it('joins a class with code', async () => {
       (global.fetch as any).mockResolvedValueOnce({
         ok: true,
-        json: async () => mockClass,
+        json: async () => mockClass
       });
 
       const cls = await classService.joinClass('ENG101');
@@ -101,7 +101,7 @@ describe('classService', () => {
     it('leaves a class', async () => {
       (global.fetch as any).mockResolvedValueOnce({
         ok: true,
-        json: async () => ({ success: true, message: 'Left class' }),
+        json: async () => ({ success: true, message: 'Left class' })
       });
 
       const result = await classService.leaveClass(1);
@@ -117,7 +117,7 @@ describe('classService', () => {
     it('fetches class students', async () => {
       (global.fetch as any).mockResolvedValueOnce({
         ok: true,
-        json: async () => [{ user_id: 1, user_email: 'student@example.com' }],
+        json: async () => [{ user_id: 1, user_email: 'student@example.com' }]
       });
 
       const students = await classService.getClassStudents(1);
@@ -129,7 +129,7 @@ describe('classService', () => {
     it('archives a class', async () => {
       (global.fetch as any).mockResolvedValueOnce({
         ok: true,
-        json: async () => ({ ...mockClass, class_status: 'archived' as const }),
+        json: async () => ({ ...mockClass, class_status: 'archived' as const })
       });
 
       const cls = await classService.archiveClass(1);
@@ -146,16 +146,16 @@ describe('classService', () => {
         created_count: 1,
         already_enrolled: [],
         newly_created: ['new@example.com'],
-        failed: [],
+        failed: []
       };
       (global.fetch as any).mockResolvedValueOnce({
         ok: true,
-        json: async () => mockResult,
+        json: async () => mockResult
       });
 
       const result = await classService.batchEnrollStudents({
         class_id: 1,
-        student_emails: ['existing@example.com', 'new@example.com'],
+        student_emails: ['existing@example.com', 'new@example.com']
       });
       expect(result.enrolled_count).toBe(2);
       expect(result.created_count).toBe(1);
@@ -174,16 +174,16 @@ describe('classService', () => {
         created_count: 0,
         already_enrolled: [],
         newly_created: [],
-        failed: ['bad-email'],
+        failed: ['bad-email']
       };
       (global.fetch as any).mockResolvedValueOnce({
         ok: true,
-        json: async () => mockResult,
+        json: async () => mockResult
       });
 
       const result = await classService.batchEnrollStudents({
         class_id: 1,
-        student_emails: ['bad-email'],
+        student_emails: ['bad-email']
       });
       expect(result.failed).toContain('bad-email');
     });
@@ -192,10 +192,13 @@ describe('classService', () => {
       (global.fetch as any).mockResolvedValueOnce({
         ok: false,
         status: 403,
-        json: async () => ({ message: 'Only admins can batch enroll students' }),
+        json: async () => ({ message: 'Only admins can batch enroll students' })
       });
       await expect(
-        classService.batchEnrollStudents({ class_id: 1, student_emails: ['x@y.com'] })
+        classService.batchEnrollStudents({
+          class_id: 1,
+          student_emails: ['x@y.com']
+        })
       ).rejects.toThrow();
     });
   });
@@ -207,17 +210,17 @@ describe('classService', () => {
         message: 'Lecturer invited',
         user_id: 55,
         email: 'newlecturer@example.com',
-        status: 'created' as const,
+        status: 'created' as const
       };
       (global.fetch as any).mockResolvedValueOnce({
         ok: true,
-        json: async () => mockResult,
+        json: async () => mockResult
       });
 
       const result = await classService.inviteLecturer({
         email: 'newlecturer@example.com',
         first_name: 'Dr',
-        last_name: 'Smith',
+        last_name: 'Smith'
       });
       expect(result.status).toBe('created');
       expect(result.user_id).toBe(55);
@@ -233,14 +236,16 @@ describe('classService', () => {
         message: 'Lecturer already exists',
         user_id: 10,
         email: 'existing@example.com',
-        status: 'existing' as const,
+        status: 'existing' as const
       };
       (global.fetch as any).mockResolvedValueOnce({
         ok: true,
-        json: async () => mockResult,
+        json: async () => mockResult
       });
 
-      const result = await classService.inviteLecturer({ email: 'existing@example.com' });
+      const result = await classService.inviteLecturer({
+        email: 'existing@example.com'
+      });
       expect(result.status).toBe('existing');
     });
 
@@ -248,7 +253,7 @@ describe('classService', () => {
       (global.fetch as any).mockResolvedValueOnce({
         ok: false,
         status: 403,
-        json: async () => ({ message: 'Forbidden' }),
+        json: async () => ({ message: 'Forbidden' })
       });
       await expect(
         classService.inviteLecturer({ email: 'lecturer@example.com' })

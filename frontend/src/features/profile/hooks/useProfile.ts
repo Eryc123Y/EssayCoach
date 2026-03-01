@@ -58,14 +58,15 @@ export function useProfile(
       const [statsData, badgesData, progressData] = await Promise.all([
         profileApi.getStats(userId),
         profileApi.getBadges(userId),
-        profileApi.getProgress(userId),
+        profileApi.getProgress(userId)
       ]);
 
       setStats(statsData);
       setBadges(badgesData);
       setProgress(progressData);
     } catch (err) {
-      const error = err instanceof Error ? err : new Error('Failed to fetch profile data');
+      const error =
+        err instanceof Error ? err : new Error('Failed to fetch profile data');
       setError(error);
     } finally {
       setLoading(false);
@@ -93,6 +94,6 @@ export function useProfile(
     progress,
     loading,
     error,
-    refresh,
+    refresh
   };
 }

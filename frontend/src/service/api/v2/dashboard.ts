@@ -2,7 +2,7 @@ import { request } from '@/service/request';
 import type {
   LecturerDashboardResponse,
   StudentDashboardResponse,
-  AdminDashboardResponse,
+  AdminDashboardResponse
 } from './types';
 
 const BASE_URL = '/api/v2/core';
@@ -16,7 +16,7 @@ export const dashboardService = {
   async getLecturerDashboard(): Promise<LecturerDashboardResponse> {
     return request<LecturerDashboardResponse>({
       url: `${BASE_URL}/dashboard/lecturer/`,
-      method: 'GET',
+      method: 'GET'
     });
   },
 
@@ -28,7 +28,7 @@ export const dashboardService = {
   async getStudentDashboard(): Promise<StudentDashboardResponse> {
     return request<StudentDashboardResponse>({
       url: `${BASE_URL}/dashboard/student/`,
-      method: 'GET',
+      method: 'GET'
     });
   },
 
@@ -40,7 +40,7 @@ export const dashboardService = {
   async getAdminDashboard(): Promise<AdminDashboardResponse> {
     return request<AdminDashboardResponse>({
       url: `${BASE_URL}/dashboard/admin/`,
-      method: 'GET',
+      method: 'GET'
     });
   },
 
@@ -50,11 +50,13 @@ export const dashboardService = {
    * @deprecated Use role-specific endpoints instead
    */
   async getDashboard(): Promise<
-    LecturerDashboardResponse | StudentDashboardResponse | AdminDashboardResponse
+    | LecturerDashboardResponse
+    | StudentDashboardResponse
+    | AdminDashboardResponse
   > {
     return request({
       url: `${BASE_URL}/dashboard/`,
-      method: 'GET',
+      method: 'GET'
     });
-  },
+  }
 };

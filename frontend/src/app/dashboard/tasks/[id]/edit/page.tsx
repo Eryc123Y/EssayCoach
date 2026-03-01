@@ -34,18 +34,22 @@ export default function EditTaskPage() {
   }, [taskId, userRole]);
 
   if (loading) {
-    return <div className="flex items-center justify-center h-64"><div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div></div>;
+    return (
+      <div className='flex h-64 items-center justify-center'>
+        <div className='border-primary h-8 w-8 animate-spin rounded-full border-b-2'></div>
+      </div>
+    );
   }
 
   if (!task) return null;
 
   return (
-    <div className="container mx-auto p-6 space-y-6">
+    <div className='container mx-auto space-y-6 p-6'>
       <TaskForm taskId={taskId} initialData={task} />
-      
+
       {(userRole === 'lecturer' || userRole === 'admin') && (
-        <div className="mt-8">
-          <h2 className="text-2xl font-bold mb-4">Submissions</h2>
+        <div className='mt-8'>
+          <h2 className='mb-4 text-2xl font-bold'>Submissions</h2>
           <TaskSubmissionsTable submissions={submissions} />
         </div>
       )}

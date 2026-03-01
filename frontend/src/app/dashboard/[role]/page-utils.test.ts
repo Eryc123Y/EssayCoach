@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { buildDashboardUrl, isAuthFailure, isDashboardRole } from './page-utils';
+import {
+  buildDashboardUrl,
+  isAuthFailure,
+  isDashboardRole
+} from './page-utils';
 
 describe('dashboard role page utils', () => {
   it('validates dashboard roles correctly', () => {

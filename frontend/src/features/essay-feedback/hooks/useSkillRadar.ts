@@ -34,10 +34,18 @@ export interface UseSkillRadarReturn {
   /** 平均分 */
   averageScore: number;
   /** 技能掌握等级 */
-  masteryLevel: 'Beginner' | 'Developing' | 'Proficient' | 'Advanced' | 'Expert';
+  masteryLevel:
+    | 'Beginner'
+    | 'Developing'
+    | 'Proficient'
+    | 'Advanced'
+    | 'Expert';
 }
 
-const SKILL_LABELS: Record<keyof Required<UseSkillRadarOptions>['skills'], string> = {
+const SKILL_LABELS: Record<
+  keyof Required<UseSkillRadarOptions>['skills'],
+  string
+> = {
   grammar: 'Grammar',
   logic: 'Logic',
   tone: 'Tone',
@@ -55,7 +63,9 @@ const SKILL_LABELS: Record<keyof Required<UseSkillRadarOptions>['skills'], strin
  * });
  * ```
  */
-export function useSkillRadar(options: UseSkillRadarOptions): UseSkillRadarReturn {
+export function useSkillRadar(
+  options: UseSkillRadarOptions
+): UseSkillRadarReturn {
   const { skills, averageSkills } = options;
 
   // Compute chart data for Recharts
@@ -90,7 +100,10 @@ export function useSkillRadar(options: UseSkillRadarOptions): UseSkillRadarRetur
   }, [chartData]);
 
   // Find bottom skill
-  const bottomSkill = React.useMemo<{ name: string; score: number } | null>(() => {
+  const bottomSkill = React.useMemo<{
+    name: string;
+    score: number;
+  } | null>(() => {
     if (chartData.length === 0) return null;
 
     let min = chartData[0];
@@ -111,7 +124,9 @@ export function useSkillRadar(options: UseSkillRadarOptions): UseSkillRadarRetur
   }, [chartData]);
 
   // Determine mastery level based on average score
-  const masteryLevel = React.useMemo<UseSkillRadarReturn['masteryLevel']>(() => {
+  const masteryLevel = React.useMemo<
+    UseSkillRadarReturn['masteryLevel']
+  >(() => {
     if (averageScore >= 90) return 'Expert';
     if (averageScore >= 75) return 'Advanced';
     if (averageScore >= 60) return 'Proficient';

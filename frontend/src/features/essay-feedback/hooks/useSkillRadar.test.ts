@@ -39,7 +39,9 @@ describe('useSkillRadar', () => {
 
   describe('Chart Data Transformation', () => {
     it('transforms skills object to chart data array', () => {
-      const { result } = renderHook(() => useSkillRadar({ skills: defaultSkills }));
+      const { result } = renderHook(() =>
+        useSkillRadar({ skills: defaultSkills })
+      );
 
       expect(result.current.chartData).toHaveLength(5);
       expect(result.current.chartData[0]).toHaveProperty('skill');
@@ -48,15 +50,25 @@ describe('useSkillRadar', () => {
     });
 
     it('uses correct skill labels', () => {
-      const { result } = renderHook(() => useSkillRadar({ skills: defaultSkills }));
+      const { result } = renderHook(() =>
+        useSkillRadar({ skills: defaultSkills })
+      );
 
       const skillNames = result.current.chartData.map((item) => item.skill);
 
-      expect(skillNames).toEqual(['Grammar', 'Logic', 'Tone', 'Structure', 'Vocabulary']);
+      expect(skillNames).toEqual([
+        'Grammar',
+        'Logic',
+        'Tone',
+        'Structure',
+        'Vocabulary'
+      ]);
     });
 
     it('preserves skill scores correctly', () => {
-      const { result } = renderHook(() => useSkillRadar({ skills: defaultSkills }));
+      const { result } = renderHook(() =>
+        useSkillRadar({ skills: defaultSkills })
+      );
 
       const scoresByName = result.current.chartData.reduce(
         (acc, item) => {
@@ -82,7 +94,9 @@ describe('useSkillRadar', () => {
         vocabulary: 101
       };
 
-      const { result } = renderHook(() => useSkillRadar({ skills: invalidSkills }));
+      const { result } = renderHook(() =>
+        useSkillRadar({ skills: invalidSkills })
+      );
 
       const scores = result.current.chartData.map((item) => item.score);
 
@@ -98,7 +112,9 @@ describe('useSkillRadar', () => {
         vocabulary: -100
       };
 
-      const { result } = renderHook(() => useSkillRadar({ skills: invalidSkills }));
+      const { result } = renderHook(() =>
+        useSkillRadar({ skills: invalidSkills })
+      );
 
       const scores = result.current.chartData.map((item) => item.score);
 
@@ -108,7 +124,9 @@ describe('useSkillRadar', () => {
 
   describe('Comparison Mode', () => {
     it('returns hasComparison=false when averageSkills is not provided', () => {
-      const { result } = renderHook(() => useSkillRadar({ skills: defaultSkills }));
+      const { result } = renderHook(() =>
+        useSkillRadar({ skills: defaultSkills })
+      );
 
       expect(result.current.hasComparison).toBe(false);
     });
@@ -140,7 +158,9 @@ describe('useSkillRadar', () => {
 
   describe('Top Skill Calculation', () => {
     it('identifies highest scoring skill', () => {
-      const { result } = renderHook(() => useSkillRadar({ skills: defaultSkills }));
+      const { result } = renderHook(() =>
+        useSkillRadar({ skills: defaultSkills })
+      );
 
       expect(result.current.topSkill).toEqual({
         name: 'Tone',
@@ -157,7 +177,9 @@ describe('useSkillRadar', () => {
         vocabulary: 88
       };
 
-      const { result } = renderHook(() => useSkillRadar({ skills: tiedSkills }));
+      const { result } = renderHook(() =>
+        useSkillRadar({ skills: tiedSkills })
+      );
 
       expect(result.current.topSkill).toEqual({
         name: 'Grammar',
@@ -174,7 +196,9 @@ describe('useSkillRadar', () => {
         vocabulary: 0
       };
 
-      const { result } = renderHook(() => useSkillRadar({ skills: emptySkills }));
+      const { result } = renderHook(() =>
+        useSkillRadar({ skills: emptySkills })
+      );
 
       // Should still return a skill even if all are 0
       expect(result.current.topSkill).toBeTruthy();
@@ -183,7 +207,9 @@ describe('useSkillRadar', () => {
 
   describe('Bottom Skill Calculation', () => {
     it('identifies lowest scoring skill', () => {
-      const { result } = renderHook(() => useSkillRadar({ skills: defaultSkills }));
+      const { result } = renderHook(() =>
+        useSkillRadar({ skills: defaultSkills })
+      );
 
       expect(result.current.bottomSkill).toEqual({
         name: 'Logic',
@@ -200,7 +226,9 @@ describe('useSkillRadar', () => {
         vocabulary: 88
       };
 
-      const { result } = renderHook(() => useSkillRadar({ skills: tiedSkills }));
+      const { result } = renderHook(() =>
+        useSkillRadar({ skills: tiedSkills })
+      );
 
       expect(result.current.bottomSkill).toEqual({
         name: 'Grammar',
@@ -217,7 +245,9 @@ describe('useSkillRadar', () => {
         vocabulary: 75
       };
 
-      const { result } = renderHook(() => useSkillRadar({ skills: equalSkills }));
+      const { result } = renderHook(() =>
+        useSkillRadar({ skills: equalSkills })
+      );
 
       expect(result.current.bottomSkill).toEqual({
         name: 'Grammar',
@@ -229,7 +259,9 @@ describe('useSkillRadar', () => {
   describe('Average Score Calculation', () => {
     it('calculates correct average score', () => {
       // (85 + 72 + 90 + 78 + 88) / 5 = 413 / 5 = 82.6 -> 83
-      const { result } = renderHook(() => useSkillRadar({ skills: defaultSkills }));
+      const { result } = renderHook(() =>
+        useSkillRadar({ skills: defaultSkills })
+      );
 
       expect(result.current.averageScore).toBe(83);
     });
@@ -258,7 +290,9 @@ describe('useSkillRadar', () => {
         vocabulary: 0
       };
 
-      const { result } = renderHook(() => useSkillRadar({ skills: zeroSkills }));
+      const { result } = renderHook(() =>
+        useSkillRadar({ skills: zeroSkills })
+      );
 
       expect(result.current.averageScore).toBe(0);
     });
@@ -272,7 +306,9 @@ describe('useSkillRadar', () => {
         vocabulary: 100
       };
 
-      const { result } = renderHook(() => useSkillRadar({ skills: perfectSkills }));
+      const { result } = renderHook(() =>
+        useSkillRadar({ skills: perfectSkills })
+      );
 
       expect(result.current.averageScore).toBe(100);
     });
@@ -288,7 +324,9 @@ describe('useSkillRadar', () => {
         vocabulary: 93
       };
 
-      const { result } = renderHook(() => useSkillRadar({ skills: expertSkills }));
+      const { result } = renderHook(() =>
+        useSkillRadar({ skills: expertSkills })
+      );
 
       expect(result.current.masteryLevel).toBe('Expert');
     });
@@ -302,7 +340,9 @@ describe('useSkillRadar', () => {
         vocabulary: 82
       };
 
-      const { result } = renderHook(() => useSkillRadar({ skills: advancedSkills }));
+      const { result } = renderHook(() =>
+        useSkillRadar({ skills: advancedSkills })
+      );
 
       expect(result.current.masteryLevel).toBe('Advanced');
     });
@@ -316,7 +356,9 @@ describe('useSkillRadar', () => {
         vocabulary: 68
       };
 
-      const { result } = renderHook(() => useSkillRadar({ skills: proficientSkills }));
+      const { result } = renderHook(() =>
+        useSkillRadar({ skills: proficientSkills })
+      );
 
       expect(result.current.masteryLevel).toBe('Proficient');
     });
@@ -330,7 +372,9 @@ describe('useSkillRadar', () => {
         vocabulary: 50
       };
 
-      const { result } = renderHook(() => useSkillRadar({ skills: developingSkills }));
+      const { result } = renderHook(() =>
+        useSkillRadar({ skills: developingSkills })
+      );
 
       expect(result.current.masteryLevel).toBe('Developing');
     });
@@ -344,7 +388,9 @@ describe('useSkillRadar', () => {
         vocabulary: 32
       };
 
-      const { result } = renderHook(() => useSkillRadar({ skills: beginnerSkills }));
+      const { result } = renderHook(() =>
+        useSkillRadar({ skills: beginnerSkills })
+      );
 
       expect(result.current.masteryLevel).toBe('Beginner');
     });
@@ -358,7 +404,9 @@ describe('useSkillRadar', () => {
         vocabulary: 90
       };
 
-      const { result } = renderHook(() => useSkillRadar({ skills: boundarySkills }));
+      const { result } = renderHook(() =>
+        useSkillRadar({ skills: boundarySkills })
+      );
 
       expect(result.current.masteryLevel).toBe('Expert');
     });
@@ -372,7 +420,9 @@ describe('useSkillRadar', () => {
         vocabulary: 75
       };
 
-      const { result } = renderHook(() => useSkillRadar({ skills: boundarySkills }));
+      const { result } = renderHook(() =>
+        useSkillRadar({ skills: boundarySkills })
+      );
 
       expect(result.current.masteryLevel).toBe('Advanced');
     });
@@ -386,7 +436,9 @@ describe('useSkillRadar', () => {
         vocabulary: 60
       };
 
-      const { result } = renderHook(() => useSkillRadar({ skills: boundarySkills }));
+      const { result } = renderHook(() =>
+        useSkillRadar({ skills: boundarySkills })
+      );
 
       expect(result.current.masteryLevel).toBe('Proficient');
     });
@@ -400,7 +452,9 @@ describe('useSkillRadar', () => {
         vocabulary: 40
       };
 
-      const { result } = renderHook(() => useSkillRadar({ skills: boundarySkills }));
+      const { result } = renderHook(() =>
+        useSkillRadar({ skills: boundarySkills })
+      );
 
       expect(result.current.masteryLevel).toBe('Developing');
     });
@@ -416,7 +470,9 @@ describe('useSkillRadar', () => {
         vocabulary: 0
       };
 
-      const { result } = renderHook(() => useSkillRadar({ skills: singleScoreSkills }));
+      const { result } = renderHook(() =>
+        useSkillRadar({ skills: singleScoreSkills })
+      );
 
       expect(result.current.topSkill).toEqual({ name: 'Grammar', score: 100 });
       expect(result.current.bottomSkill).toEqual({ name: 'Logic', score: 0 });
@@ -433,7 +489,9 @@ describe('useSkillRadar', () => {
         vocabulary: 60
       };
 
-      const { result } = renderHook(() => useSkillRadar({ skills: variedSkills }));
+      const { result } = renderHook(() =>
+        useSkillRadar({ skills: variedSkills })
+      );
 
       expect(result.current.topSkill).toEqual({ name: 'Grammar', score: 100 });
       expect(result.current.bottomSkill).toEqual({ name: 'Logic', score: 20 });
@@ -444,7 +502,9 @@ describe('useSkillRadar', () => {
 
   describe('Return Object Structure', () => {
     it('returns all required properties', () => {
-      const { result } = renderHook(() => useSkillRadar({ skills: defaultSkills }));
+      const { result } = renderHook(() =>
+        useSkillRadar({ skills: defaultSkills })
+      );
 
       expect(result.current).toHaveProperty('chartData');
       expect(result.current).toHaveProperty('hasComparison');
@@ -455,25 +515,33 @@ describe('useSkillRadar', () => {
     });
 
     it('returns chartData as array', () => {
-      const { result } = renderHook(() => useSkillRadar({ skills: defaultSkills }));
+      const { result } = renderHook(() =>
+        useSkillRadar({ skills: defaultSkills })
+      );
 
       expect(Array.isArray(result.current.chartData)).toBe(true);
     });
 
     it('returns hasComparison as boolean', () => {
-      const { result } = renderHook(() => useSkillRadar({ skills: defaultSkills }));
+      const { result } = renderHook(() =>
+        useSkillRadar({ skills: defaultSkills })
+      );
 
       expect(typeof result.current.hasComparison).toBe('boolean');
     });
 
     it('returns averageScore as number', () => {
-      const { result } = renderHook(() => useSkillRadar({ skills: defaultSkills }));
+      const { result } = renderHook(() =>
+        useSkillRadar({ skills: defaultSkills })
+      );
 
       expect(typeof result.current.averageScore).toBe('number');
     });
 
     it('returns masteryLevel as string', () => {
-      const { result } = renderHook(() => useSkillRadar({ skills: defaultSkills }));
+      const { result } = renderHook(() =>
+        useSkillRadar({ skills: defaultSkills })
+      );
 
       expect(typeof result.current.masteryLevel).toBe('string');
     });

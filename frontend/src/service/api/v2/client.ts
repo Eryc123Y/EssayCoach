@@ -5,23 +5,14 @@
  * with CSRF protection and secure error handling.
  */
 
+import { getCsrfToken } from '@/lib/auth';
+
 const BASE_URL = '/api/v2/core';
 
 /**
  * Request timeout in milliseconds
  */
 const REQUEST_TIMEOUT = 30000;
-
-/**
- * Get CSRF token from cookie
- * Django stores CSRF token in 'csrftoken' cookie
- */
-function getCsrfToken(): string | null {
-  if (typeof document === 'undefined') return null;
-
-  const match = document.cookie.match(/csrftoken=([^;]+)/);
-  return match ? match[1] : null;
-}
 
 /**
  * Create request headers with CSRF token for state-changing requests
@@ -61,7 +52,7 @@ async function fetchWithTimeout(
   try {
     const response = await fetch(url, {
       ...options,
-      signal: controller.signal,
+      signal: controller.signal
     });
     clearTimeout(timeoutId);
     return response;
@@ -106,14 +97,11 @@ export const api = {
   async get<T>(url: string): Promise<T> {
     const fullUrl = url.startsWith('/') ? url : `${BASE_URL}${url}`;
 
-    const response = await fetchWithTimeout(
-      fullUrl,
-      {
-        method: 'GET',
-        headers: createHeaders(true, false),
-        credentials: 'include', // Include cookies for auth
-      }
-    );
+    const response = await fetchWithTimeout(fullUrl, {
+      method: 'GET',
+      headers: createHeaders(true, false),
+      credentials: 'include' // Include cookies for auth
+    });
 
     if (!response.ok) {
       const errorText = await response.text();
@@ -127,15 +115,12 @@ export const api = {
   async post<T>(url: string, data: unknown): Promise<T> {
     const fullUrl = url.startsWith('/') ? url : `${BASE_URL}${url}`;
 
-    const response = await fetchWithTimeout(
-      fullUrl,
-      {
-        method: 'POST',
-        headers: createHeaders(true, true), // Include CSRF token
-        credentials: 'include',
-        body: JSON.stringify(data),
-      }
-    );
+    const response = await fetchWithTimeout(fullUrl, {
+      method: 'POST',
+      headers: createHeaders(true, true), // Include CSRF token
+      credentials: 'include',
+      body: JSON.stringify(data)
+    });
 
     if (!response.ok) {
       const errorText = await response.text();
@@ -154,15 +139,12 @@ export const api = {
   async patch<T>(url: string, data: unknown): Promise<T> {
     const fullUrl = url.startsWith('/') ? url : `${BASE_URL}${url}`;
 
-    const response = await fetchWithTimeout(
-      fullUrl,
-      {
-        method: 'PATCH',
-        headers: createHeaders(true, true), // Include CSRF token
-        credentials: 'include',
-        body: JSON.stringify(data),
-      }
-    );
+    const response = await fetchWithTimeout(fullUrl, {
+      method: 'PATCH',
+      headers: createHeaders(true, true), // Include CSRF token
+      credentials: 'include',
+      body: JSON.stringify(data)
+    });
 
     if (!response.ok) {
       const errorText = await response.text();
@@ -180,14 +162,11 @@ export const api = {
   async delete<T>(url: string): Promise<T> {
     const fullUrl = url.startsWith('/') ? url : `${BASE_URL}${url}`;
 
-    const response = await fetchWithTimeout(
-      fullUrl,
-      {
-        method: 'DELETE',
-        headers: createHeaders(true, true), // Include CSRF token
-        credentials: 'include',
-      }
-    );
+    const response = await fetchWithTimeout(fullUrl, {
+      method: 'DELETE',
+      headers: createHeaders(true, true), // Include CSRF token
+      credentials: 'include'
+    });
 
     if (!response.ok) {
       const errorText = await response.text();
@@ -200,5 +179,5 @@ export const api = {
     }
 
     return response.json();
-  },
+  }
 };

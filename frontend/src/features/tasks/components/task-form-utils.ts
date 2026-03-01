@@ -1,6 +1,8 @@
 export const OPTIONAL_SELECT_SENTINEL = 'none';
 
-export function toOptionalSelectValue(value: number | null | undefined): string {
+export function toOptionalSelectValue(
+  value: number | null | undefined
+): string {
   if (typeof value !== 'number') {
     return OPTIONAL_SELECT_SENTINEL;
   }
@@ -16,7 +18,10 @@ export function fromOptionalSelectValue(value: string): number | undefined {
   return Number.isNaN(parsed) ? undefined : parsed;
 }
 
-export function fromRequiredSelectValue(value: string, fallback: number): number {
+export function fromRequiredSelectValue(
+  value: string,
+  fallback: number
+): number {
   const parsed = Number.parseInt(value, 10);
   return Number.isNaN(parsed) ? fallback : parsed;
 }

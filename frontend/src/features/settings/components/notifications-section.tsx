@@ -10,11 +10,10 @@ import {
   IconBell,
   IconFile,
   IconClipboard,
-  IconCalendar,
+  IconCalendar
 } from '@tabler/icons-react';
 import type { UserPreferences } from '@/service/api/v2/types';
 import { toast } from 'sonner';
-
 
 interface NotificationsSectionProps {
   preferences: UserPreferences | null;
@@ -29,7 +28,7 @@ export function NotificationsSection({
   isLoading,
   isSaving,
   onUpdatePreferences,
-  userRole,
+  userRole
 }: NotificationsSectionProps) {
   const [localPrefs, setLocalPrefs] = useState<Partial<UserPreferences>>({});
   const [hasChanges, setHasChanges] = useState(false);
@@ -41,14 +40,14 @@ export function NotificationsSection({
           <CardTitle>Notification Preferences</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="animate-pulse space-y-4">
+          <div className='animate-pulse space-y-4'>
             {[1, 2, 3, 4, 5].map((i) => (
-              <div key={i} className="flex items-center justify-between">
-                <div className="space-y-2">
-                  <div className="h-4 w-32 rounded bg-muted" />
-                  <div className="h-3 w-48 rounded bg-muted" />
+              <div key={i} className='flex items-center justify-between'>
+                <div className='space-y-2'>
+                  <div className='bg-muted h-4 w-32 rounded' />
+                  <div className='bg-muted h-3 w-48 rounded' />
                 </div>
-                <div className="h-6 w-11 rounded-full bg-muted" />
+                <div className='bg-muted h-6 w-11 rounded-full' />
               </div>
             ))}
           </div>
@@ -84,21 +83,21 @@ export function NotificationsSection({
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-lg font-semibold">
+        <CardTitle className='text-lg font-semibold'>
           Notification Preferences
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-6">
-        <div className="space-y-4">
+      <CardContent className='space-y-6'>
+        <div className='space-y-4'>
           {/* Email Notifications */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="flex size-10 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900">
-                <IconMail className="size-5 text-blue-600 dark:text-blue-400" />
+          <div className='flex items-center justify-between'>
+            <div className='flex items-center gap-3'>
+              <div className='flex size-10 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900'>
+                <IconMail className='size-5 text-blue-600 dark:text-blue-400' />
               </div>
               <div>
-                <p className="font-medium">Email Notifications</p>
-                <p className="text-sm text-muted-foreground">
+                <p className='font-medium'>Email Notifications</p>
+                <p className='text-muted-foreground text-sm'>
                   Receive email updates about your account
                 </p>
               </div>
@@ -115,14 +114,14 @@ export function NotificationsSection({
           <Separator />
 
           {/* In-App Notifications */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="flex size-10 items-center justify-center rounded-full bg-purple-100 dark:bg-purple-900">
-                <IconBell className="size-5 text-purple-600 dark:text-purple-400" />
+          <div className='flex items-center justify-between'>
+            <div className='flex items-center gap-3'>
+              <div className='flex size-10 items-center justify-center rounded-full bg-purple-100 dark:bg-purple-900'>
+                <IconBell className='size-5 text-purple-600 dark:text-purple-400' />
               </div>
               <div>
-                <p className="font-medium">In-App Notifications</p>
-                <p className="text-sm text-muted-foreground">
+                <p className='font-medium'>In-App Notifications</p>
+                <p className='text-muted-foreground text-sm'>
                   Get notified within the application
                 </p>
               </div>
@@ -141,14 +140,14 @@ export function NotificationsSection({
           {/* Role-specific toggles */}
           {userRole === 'student' && (
             <>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="flex size-10 items-center justify-center rounded-full bg-green-100 dark:bg-green-900">
-                    <IconFile className="size-5 text-green-600 dark:text-green-400" />
+              <div className='flex items-center justify-between'>
+                <div className='flex items-center gap-3'>
+                  <div className='flex size-10 items-center justify-center rounded-full bg-green-100 dark:bg-green-900'>
+                    <IconFile className='size-5 text-green-600 dark:text-green-400' />
                   </div>
                   <div>
-                    <p className="font-medium">Submission Alerts</p>
-                    <p className="text-sm text-muted-foreground">
+                    <p className='font-medium'>Submission Alerts</p>
+                    <p className='text-muted-foreground text-sm'>
                       Get notified when you receive feedback
                     </p>
                   </div>
@@ -168,14 +167,14 @@ export function NotificationsSection({
 
           {userRole === 'lecturer' && (
             <>
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3">
-                  <div className="flex size-10 items-center justify-center rounded-full bg-orange-100 dark:bg-orange-900">
-                    <IconClipboard className="size-5 text-orange-600 dark:text-orange-400" />
+              <div className='flex items-center justify-between'>
+                <div className='flex items-center gap-3'>
+                  <div className='flex size-10 items-center justify-center rounded-full bg-orange-100 dark:bg-orange-900'>
+                    <IconClipboard className='size-5 text-orange-600 dark:text-orange-400' />
                   </div>
                   <div>
-                    <p className="font-medium">Grading Alerts</p>
-                    <p className="text-sm text-muted-foreground">
+                    <p className='font-medium'>Grading Alerts</p>
+                    <p className='text-muted-foreground text-sm'>
                       Get notified when students submit essays
                     </p>
                   </div>
@@ -194,14 +193,14 @@ export function NotificationsSection({
           )}
 
           {/* Weekly Digest */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="flex size-10 items-center justify-center rounded-full bg-indigo-100 dark:bg-indigo-900">
-                <IconCalendar className="size-5 text-indigo-600 dark:text-indigo-400" />
+          <div className='flex items-center justify-between'>
+            <div className='flex items-center gap-3'>
+              <div className='flex size-10 items-center justify-center rounded-full bg-indigo-100 dark:bg-indigo-900'>
+                <IconCalendar className='size-5 text-indigo-600 dark:text-indigo-400' />
               </div>
               <div>
-                <p className="font-medium">Weekly Digest</p>
-                <p className="text-sm text-muted-foreground">
+                <p className='font-medium'>Weekly Digest</p>
+                <p className='text-muted-foreground text-sm'>
                   Receive a weekly summary of activity
                 </p>
               </div>
@@ -217,11 +216,11 @@ export function NotificationsSection({
         </div>
 
         {hasChanges && (
-          <div className="flex gap-2 pt-4">
+          <div className='flex gap-2 pt-4'>
             <Button onClick={handleSave} disabled={isSaving}>
               {isSaving ? 'Saving...' : 'Save Changes'}
             </Button>
-            <Button variant="outline" onClick={handleReset}>
+            <Button variant='outline' onClick={handleReset}>
               Reset
             </Button>
           </div>

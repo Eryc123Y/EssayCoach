@@ -7,7 +7,7 @@ import { settingsService } from '../auth';
 
 // Mock the request module
 vi.mock('@/service/request', () => ({
-  request: vi.fn(),
+  request: vi.fn()
 }));
 
 const { request } = await import('@/service/request');
@@ -32,8 +32,8 @@ describe('settingsService', () => {
           grading_alerts: false,
           weekly_digest: false,
           language: 'en',
-          theme: 'system' as const,
-        },
+          theme: 'system' as const
+        }
       };
 
       vi.mocked(request).mockResolvedValue(mockPreferences);
@@ -42,7 +42,7 @@ describe('settingsService', () => {
 
       expect(request).toHaveBeenCalledWith({
         url: '/api/v2/auth/settings/preferences/',
-        method: 'GET',
+        method: 'GET'
       });
       expect(result).toEqual(mockPreferences);
     });
@@ -59,9 +59,9 @@ describe('settingsService', () => {
           grading_alerts: false,
           weekly_digest: true,
           language: 'zh',
-          theme: 'dark' as const,
+          theme: 'dark' as const
         },
-        message: 'Preferences updated successfully',
+        message: 'Preferences updated successfully'
       };
 
       vi.mocked(request).mockResolvedValue(mockResponse);
@@ -70,7 +70,7 @@ describe('settingsService', () => {
         email_notifications: false,
         weekly_digest: true,
         language: 'zh',
-        theme: 'dark',
+        theme: 'dark'
       });
 
       expect(request).toHaveBeenCalledWith({
@@ -80,8 +80,8 @@ describe('settingsService', () => {
           email_notifications: false,
           weekly_digest: true,
           language: 'zh',
-          theme: 'dark',
-        },
+          theme: 'dark'
+        }
       });
       expect(result).toEqual(mockResponse);
     });
@@ -96,22 +96,22 @@ describe('settingsService', () => {
           grading_alerts: false,
           weekly_digest: false,
           language: 'en',
-          theme: 'system',
-        },
+          theme: 'system'
+        }
       };
 
       vi.mocked(request).mockResolvedValue(mockResponse);
 
       await settingsService.updatePreferences({
-        email_notifications: false,
+        email_notifications: false
       });
 
       expect(request).toHaveBeenCalledWith({
         url: '/api/v2/auth/settings/preferences/',
         method: 'PUT',
         data: {
-          email_notifications: false,
-        },
+          email_notifications: false
+        }
       });
     });
   });
@@ -119,13 +119,13 @@ describe('settingsService', () => {
   describe('uploadAvatar', () => {
     it('should upload avatar successfully', async () => {
       const mockFile = new File(['test content'], 'avatar.png', {
-        type: 'image/png',
+        type: 'image/png'
       });
 
       const mockResponse = {
         success: true,
         avatar_url: '/media/avatars/123_abc123.png',
-        message: 'Avatar uploaded successfully',
+        message: 'Avatar uploaded successfully'
       };
 
       vi.mocked(request).mockResolvedValue(mockResponse);
@@ -135,7 +135,7 @@ describe('settingsService', () => {
       expect(request).toHaveBeenCalledWith(
         expect.objectContaining({
           url: '/api/v2/auth/settings/avatar/',
-          method: 'POST',
+          method: 'POST'
         })
       );
       expect(result).toEqual(mockResponse);
@@ -153,7 +153,7 @@ describe('settingsService', () => {
             ip_address: '192.168.1.1',
             created_at: '2024-01-01T00:00:00Z',
             last_activity: '2024-01-01T12:00:00Z',
-            is_current: true,
+            is_current: true
           },
           {
             session_key: 'def456',
@@ -161,9 +161,9 @@ describe('settingsService', () => {
             ip_address: '192.168.1.2',
             created_at: '2024-01-01T00:00:00Z',
             last_activity: '2024-01-01T10:00:00Z',
-            is_current: false,
-          },
-        ],
+            is_current: false
+          }
+        ]
       };
 
       vi.mocked(request).mockResolvedValue(mockSessions);
@@ -172,7 +172,7 @@ describe('settingsService', () => {
 
       expect(request).toHaveBeenCalledWith({
         url: '/api/v2/auth/settings/sessions/',
-        method: 'GET',
+        method: 'GET'
       });
       expect(result).toEqual(mockSessions);
     });
@@ -182,7 +182,7 @@ describe('settingsService', () => {
     it('should revoke session successfully', async () => {
       const mockResponse = {
         success: true,
-        message: 'Session revoked successfully',
+        message: 'Session revoked successfully'
       };
 
       vi.mocked(request).mockResolvedValue(mockResponse);
@@ -191,7 +191,7 @@ describe('settingsService', () => {
 
       expect(request).toHaveBeenCalledWith({
         url: '/api/v2/auth/settings/sessions/abc123/',
-        method: 'DELETE',
+        method: 'DELETE'
       });
       expect(result).toEqual(mockResponse);
     });
@@ -206,15 +206,15 @@ describe('settingsService', () => {
             login_time: '2024-01-01T12:00:00Z',
             ip_address: '192.168.1.1',
             device: 'Desktop',
-            success: true,
+            success: true
           },
           {
             login_time: '2024-01-01T10:00:00Z',
             ip_address: '192.168.1.2',
             device: 'Mobile',
-            success: true,
-          },
-        ],
+            success: true
+          }
+        ]
       };
 
       vi.mocked(request).mockResolvedValue(mockHistory);
@@ -223,7 +223,7 @@ describe('settingsService', () => {
 
       expect(request).toHaveBeenCalledWith({
         url: '/api/v2/auth/settings/login-history/',
-        method: 'GET',
+        method: 'GET'
       });
       expect(result).toEqual(mockHistory);
     });
@@ -233,7 +233,7 @@ describe('settingsService', () => {
     it('should change password successfully', async () => {
       const mockResponse = {
         success: true,
-        message: 'Password changed successfully',
+        message: 'Password changed successfully'
       };
 
       vi.mocked(request).mockResolvedValue(mockResponse);
@@ -241,7 +241,7 @@ describe('settingsService', () => {
       const result = await settingsService.changePassword({
         current_password: 'OldPassword123!',
         new_password: 'NewPassword456!',
-        new_password_confirm: 'NewPassword456!',
+        new_password_confirm: 'NewPassword456!'
       });
 
       expect(request).toHaveBeenCalledWith({
@@ -250,8 +250,8 @@ describe('settingsService', () => {
         data: {
           current_password: 'OldPassword123!',
           new_password: 'NewPassword456!',
-          new_password_confirm: 'NewPassword456!',
-        },
+          new_password_confirm: 'NewPassword456!'
+        }
       });
       expect(result).toEqual(mockResponse);
     });

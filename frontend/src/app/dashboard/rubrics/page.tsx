@@ -18,9 +18,9 @@ async function getRubrics() {
       method: 'GET',
       headers: {
         Authorization: `Bearer ${access}`,
-        'Content-Type': 'application/json',
+        'Content-Type': 'application/json'
       },
-      cache: 'no-store',
+      cache: 'no-store'
     });
 
     if (!response.ok) {
@@ -30,7 +30,10 @@ async function getRubrics() {
     const payload = await response.json();
     return Array.isArray(payload) ? payload : payload?.results || [];
   } catch (error) {
-    console.error('[getRubrics] Failed:', error instanceof Error ? error.message : 'Unknown error');
+    console.error(
+      '[getRubrics] Failed:',
+      error instanceof Error ? error.message : 'Unknown error'
+    );
     return [];
   }
 }
@@ -50,9 +53,9 @@ async function getCurrentUser() {
       method: 'GET',
       headers: {
         Authorization: `Bearer ${access}`,
-        'Content-Type': 'application/json',
+        'Content-Type': 'application/json'
       },
-      cache: 'no-store',
+      cache: 'no-store'
     });
 
     if (!response.ok) {
@@ -62,10 +65,15 @@ async function getCurrentUser() {
     const userInfo = await response.json();
     return {
       userId: userInfo.user_id,
-      role: (userInfo.user_role === 'teacher' ? 'lecturer' : userInfo.user_role) as 'student' | 'lecturer' | 'admin'
+      role: (userInfo.user_role === 'teacher'
+        ? 'lecturer'
+        : userInfo.user_role) as 'student' | 'lecturer' | 'admin'
     };
   } catch (error) {
-    console.error('[getCurrentUser] Failed:', error instanceof Error ? error.message : 'Unknown error');
+    console.error(
+      '[getCurrentUser] Failed:',
+      error instanceof Error ? error.message : 'Unknown error'
+    );
     redirect('/auth/sign-in');
   }
 }

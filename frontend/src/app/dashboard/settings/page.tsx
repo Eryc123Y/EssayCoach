@@ -5,7 +5,10 @@ import { useRouter } from 'next/navigation';
 import PageContainer from '@/components/layout/page-container';
 import { authService } from '@/service/api/v2/auth';
 import { useSettings } from '@/features/settings/hooks/useSettings';
-import { SettingsSidebar, type SettingsSection } from '@/features/settings/components/settings-sidebar';
+import {
+  SettingsSidebar,
+  type SettingsSection
+} from '@/features/settings/components/settings-sidebar';
 import { AccountSection } from '@/features/settings/components/account-section';
 import { SecuritySection } from '@/features/settings/components/security-section';
 import { NotificationsSection } from '@/features/settings/components/notifications-section';
@@ -19,7 +22,8 @@ import type { UserInfo } from '@/service/api/v2/types';
 
 export default function SettingsPage() {
   const router = useRouter();
-  const [currentSection, setCurrentSection] = useState<SettingsSection>('account');
+  const [currentSection, setCurrentSection] =
+    useState<SettingsSection>('account');
   const [user, setUser] = useState<UserInfo | null>(null);
   const [isUserLoading, setIsUserLoading] = useState(true);
 
@@ -36,7 +40,7 @@ export default function SettingsPage() {
     fetchUserInfo,
     updateUser,
     uploadAvatar,
-    changePassword,
+    changePassword
   } = useSettings();
 
   useEffect(() => {
@@ -56,7 +60,7 @@ export default function SettingsPage() {
               user_fname: parsed.firstName,
               user_lname: parsed.lastName,
               user_role: parsed.role,
-              is_active: true,
+              is_active: true
             });
           }
         }
@@ -80,13 +84,16 @@ export default function SettingsPage() {
     const updatedUser = await fetchUserInfo();
     if (updatedUser) {
       setUser(updatedUser);
-      localStorage.setItem('user_data', JSON.stringify({
-        id: updatedUser.user_id,
-        email: updatedUser.user_email,
-        firstName: updatedUser.user_fname,
-        lastName: updatedUser.user_lname,
-        role: updatedUser.user_role,
-      }));
+      localStorage.setItem(
+        'user_data',
+        JSON.stringify({
+          id: updatedUser.user_id,
+          email: updatedUser.user_email,
+          firstName: updatedUser.user_fname,
+          lastName: updatedUser.user_lname,
+          role: updatedUser.user_role
+        })
+      );
     }
   };
 
@@ -119,7 +126,12 @@ export default function SettingsPage() {
             isLoading={isLoading}
             isSaving={isSaving}
             onUpdatePreferences={updatePreferences}
-            userRole={user?.user_role === 'teacher' ? 'lecturer' : (user?.user_role as 'student' | 'lecturer' | 'admin') || 'student'}
+            userRole={
+              user?.user_role === 'teacher'
+                ? 'lecturer'
+                : (user?.user_role as 'student' | 'lecturer' | 'admin') ||
+                  'student'
+            }
           />
         );
       case 'display':
@@ -147,7 +159,7 @@ export default function SettingsPage() {
       notifications: 'Notification Settings',
       display: 'Display Settings',
       organization: 'Organization Settings',
-      api: 'API Keys',
+      api: 'API Keys'
     };
     return titles[currentSection];
   };
@@ -155,43 +167,47 @@ export default function SettingsPage() {
   if (isUserLoading) {
     return (
       <PageContainer>
-        <div className="flex h-full gap-6">
-          <div className="hidden w-64 flex-shrink-0 md:block">
-            <Skeleton className="h-full w-full" />
+        <div className='flex h-full gap-6'>
+          <div className='hidden w-64 flex-shrink-0 md:block'>
+            <Skeleton className='h-full w-full' />
           </div>
-          <div className="flex-1 space-y-6">
-            <Skeleton className="h-8 w-48" />
-            <Skeleton className="h-64 w-full" />
+          <div className='flex-1 space-y-6'>
+            <Skeleton className='h-8 w-48' />
+            <Skeleton className='h-64 w-full' />
           </div>
         </div>
       </PageContainer>
     );
   }
 
-  const userRole = user?.user_role === 'teacher' ? 'lecturer' : (user?.user_role as 'student' | 'lecturer' | 'admin') || 'student';
+  const userRole =
+    user?.user_role === 'teacher'
+      ? 'lecturer'
+      : (user?.user_role as 'student' | 'lecturer' | 'admin') || 'student';
 
   return (
     <PageContainer>
-      <div className="flex flex-col space-y-6">
+      <div className='flex flex-col space-y-6'>
         {/* Page Header */}
-        <div className="space-y-2">
-          <h1 className="text-3xl font-bold tracking-tight">Settings</h1>
-          <p className="text-muted-foreground">
+        <div className='space-y-2'>
+          <h1 className='text-3xl font-bold tracking-tight'>Settings</h1>
+          <p className='text-muted-foreground'>
             Manage your account preferences and settings.
           </p>
         </div>
 
         {/* Alert for incomplete features */}
         {userRole !== 'admin' && (
-          <Alert variant="default">
-            <IconAlertCircle className="size-4" />
+          <Alert variant='default'>
+            <IconAlertCircle className='size-4' />
             <AlertDescription>
-              Organization and API settings are only available for administrators.
+              Organization and API settings are only available for
+              administrators.
             </AlertDescription>
           </Alert>
         )}
 
-        <div className="flex gap-6">
+        <div className='flex gap-6'>
           {/* Sidebar Navigation */}
           <SettingsSidebar
             currentSection={currentSection}
@@ -200,10 +216,10 @@ export default function SettingsPage() {
           />
 
           {/* Main Content */}
-          <div className="flex-1 space-y-6">
-            <div className="space-y-2">
-              <h2 className="text-2xl font-semibold">{getSectionTitle()}</h2>
-              <p className="text-muted-foreground">
+          <div className='flex-1 space-y-6'>
+            <div className='space-y-2'>
+              <h2 className='text-2xl font-semibold'>{getSectionTitle()}</h2>
+              <p className='text-muted-foreground'>
                 {getSectionDescription(currentSection)}
               </p>
             </div>
@@ -223,7 +239,7 @@ function getSectionDescription(section: SettingsSection): string {
     notifications: 'Configure how and when you receive notifications.',
     display: 'Customize the appearance and language of the application.',
     organization: 'Manage organization branding and user management settings.',
-    api: 'Create and manage API keys for programmatic access.',
+    api: 'Create and manage API keys for programmatic access.'
   };
   return descriptions[section];
 }

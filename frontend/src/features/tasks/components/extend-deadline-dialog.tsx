@@ -9,7 +9,7 @@ import {
   DialogDescription,
   DialogFooter,
   DialogHeader,
-  DialogTitle,
+  DialogTitle
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -29,7 +29,7 @@ export function ExtendDeadlineDialog({
   task,
   open,
   onOpenChange,
-  onSuccess,
+  onSuccess
 }: ExtendDeadlineDialogProps) {
   const [newDeadline, setNewDeadline] = useState('');
   const [reason, setReason] = useState('');
@@ -58,7 +58,7 @@ export function ExtendDeadlineDialog({
     try {
       await taskService.extendDeadline(task.task_id, {
         new_deadline: new Date(newDeadline).toISOString(),
-        reason: reason.trim() || undefined,
+        reason: reason.trim() || undefined
       });
       toast.success('Deadline extended successfully');
       onOpenChange(false);
@@ -74,10 +74,10 @@ export function ExtendDeadlineDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className='sm:max-w-md'>
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <CalendarClock className="h-4 w-4" />
+          <DialogTitle className='flex items-center gap-2'>
+            <CalendarClock className='h-4 w-4' />
             Extend Deadline
           </DialogTitle>
           <DialogDescription>
@@ -86,23 +86,23 @@ export function ExtendDeadlineDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 py-2">
-          <div className="space-y-2">
-            <Label htmlFor="new-deadline">New Deadline *</Label>
+        <div className='space-y-4 py-2'>
+          <div className='space-y-2'>
+            <Label htmlFor='new-deadline'>New Deadline *</Label>
             <Input
-              id="new-deadline"
-              type="datetime-local"
+              id='new-deadline'
+              type='datetime-local'
               min={minDatetime}
               value={newDeadline}
               onChange={(e) => setNewDeadline(e.target.value)}
             />
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="extend-reason">Reason (optional)</Label>
+          <div className='space-y-2'>
+            <Label htmlFor='extend-reason'>Reason (optional)</Label>
             <Textarea
-              id="extend-reason"
-              placeholder="e.g. Medical leave, technical difficulties…"
+              id='extend-reason'
+              placeholder='e.g. Medical leave, technical difficulties…'
               value={reason}
               onChange={(e) => setReason(e.target.value)}
               rows={2}
@@ -111,18 +111,22 @@ export function ExtendDeadlineDialog({
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isLoading}>
+          <Button
+            variant='outline'
+            onClick={() => onOpenChange(false)}
+            disabled={isLoading}
+          >
             Cancel
           </Button>
           <Button onClick={handleSubmit} disabled={isLoading || !newDeadline}>
             {isLoading ? (
               <>
-                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                <Loader2 className='mr-2 h-4 w-4 animate-spin' />
                 Extending…
               </>
             ) : (
               <>
-                <CalendarClock className="mr-2 h-4 w-4" />
+                <CalendarClock className='mr-2 h-4 w-4' />
                 Extend Deadline
               </>
             )}

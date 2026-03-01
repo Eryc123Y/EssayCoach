@@ -13,7 +13,7 @@ import {
   createAuthStore,
   getJwtExpiry,
   needsRefresh,
-  _resetRefreshPromiseCache,
+  _resetRefreshPromiseCache
 } from '../authStore';
 
 // Mock fetch globally
@@ -31,7 +31,7 @@ function createMockJWT(
     sub: 'user-123',
     iat: now,
     exp: now + expiresInSeconds,
-    ...payload,
+    ...payload
   };
 
   const base64Header = btoa(JSON.stringify(header));
@@ -77,7 +77,11 @@ describe('authStore', () => {
     });
 
     it('should handle token without exp claim', () => {
-      const tokenWithoutExp = btoa(JSON.stringify({ alg: 'HS256' })) + '.' + btoa(JSON.stringify({ sub: 'user' })) + '.sig';
+      const tokenWithoutExp =
+        btoa(JSON.stringify({ alg: 'HS256' })) +
+        '.' +
+        btoa(JSON.stringify({ sub: 'user' })) +
+        '.sig';
       const expiry = getJwtExpiry(tokenWithoutExp);
       expect(expiry).toBeNull();
     });
@@ -151,7 +155,9 @@ describe('authStore', () => {
       expect(state.tokenExpiry).toBeDefined();
       if (state.tokenExpiry) {
         const expectedExpiry = Date.now() + 7200 * 1000;
-        expect(Math.abs(state.tokenExpiry - expectedExpiry)).toBeLessThan(10000);
+        expect(Math.abs(state.tokenExpiry - expectedExpiry)).toBeLessThan(
+          10000
+        );
       }
     });
   });
@@ -172,7 +178,9 @@ describe('authStore', () => {
         expect(state.tokenExpiry).toBeDefined();
         if (state.tokenExpiry) {
           expect(state.tokenExpiry).toBeGreaterThan(Date.now());
-          expect(state.tokenExpiry).toBeLessThanOrEqual(Date.now() + expiryInMs + 1000);
+          expect(state.tokenExpiry).toBeLessThanOrEqual(
+            Date.now() + expiryInMs + 1000
+          );
         }
         expect(state.isRefreshing).toBe(false);
         expect(state.refreshError).toBeNull();
@@ -244,8 +252,8 @@ describe('authStore', () => {
           json: async () => ({
             access: newAccessToken,
             refresh: 'new-refresh-token',
-            expires_at: new Date(Date.now() + 3600000).toISOString(),
-          }),
+            expires_at: new Date(Date.now() + 3600000).toISOString()
+          })
         });
 
         const now = Date.now();
@@ -257,7 +265,7 @@ describe('authStore', () => {
           refreshToken: 'old-refresh',
           tokenExpiry: expiredExpiry,
           isRefreshing: false,
-          refreshError: null,
+          refreshError: null
         });
 
         const result = await store.getState().refreshTokens();
@@ -269,7 +277,7 @@ describe('authStore', () => {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             credentials: 'include',
-            body: JSON.stringify({ refresh: 'old-refresh' }),
+            body: JSON.stringify({ refresh: 'old-refresh' })
           })
         );
 
@@ -288,15 +296,15 @@ describe('authStore', () => {
           json: async () => ({
             access: newAccessToken,
             refresh: newRefreshToken,
-            expires_at: new Date(Date.now() + 3600000).toISOString(),
-          }),
+            expires_at: new Date(Date.now() + 3600000).toISOString()
+          })
         });
 
         const store = createAuthStore();
         store.setState({
           accessToken: 'expired-token',
           refreshToken: 'old-refresh',
-          tokenExpiry: Date.now() - 1000,
+          tokenExpiry: Date.now() - 1000
         });
 
         await store.getState().refreshTokens();
@@ -315,15 +323,15 @@ describe('authStore', () => {
           json: async () => ({
             access: newAccessToken,
             refresh: 'new-refresh',
-            expires_at: expiresAt,
-          }),
+            expires_at: expiresAt
+          })
         });
 
         const store = createAuthStore();
         store.setState({
           accessToken: 'expired-token',
           refreshToken: 'old-refresh',
-          tokenExpiry: Date.now() - 1000,
+          tokenExpiry: Date.now() - 1000
         });
 
         await store.getState().refreshTokens();
@@ -333,7 +341,9 @@ describe('authStore', () => {
         if (state.tokenExpiry) {
           // Prefer ISO expiry from response when available.
           const expectedExpiryFromIso = new Date(expiresAt).getTime();
-          expect(Math.abs(state.tokenExpiry - expectedExpiryFromIso)).toBeLessThan(10000);
+          expect(
+            Math.abs(state.tokenExpiry - expectedExpiryFromIso)
+          ).toBeLessThan(10000);
         }
       });
 
@@ -345,15 +355,15 @@ describe('authStore', () => {
           status: 200,
           json: async () => ({
             access: newAccessToken,
-            refresh: 'new-refresh',
-          }),
+            refresh: 'new-refresh'
+          })
         });
 
         const store = createAuthStore();
         store.setState({
           accessToken: 'expired-token',
           refreshToken: 'old-refresh',
-          tokenExpiry: Date.now() - 1000,
+          tokenExpiry: Date.now() - 1000
         });
 
         await store.getState().refreshTokens();
@@ -362,7 +372,9 @@ describe('authStore', () => {
         expect(state.tokenExpiry).toBeDefined();
         if (state.tokenExpiry) {
           const expectedExpiry = Date.now() + 5400 * 1000;
-          expect(Math.abs(state.tokenExpiry - expectedExpiry)).toBeLessThan(10000);
+          expect(Math.abs(state.tokenExpiry - expectedExpiry)).toBeLessThan(
+            10000
+          );
         }
       });
     });
@@ -373,7 +385,7 @@ describe('authStore', () => {
         store.setState({
           accessToken: 'token',
           refreshToken: null,
-          tokenExpiry: Date.now() - 1000,
+          tokenExpiry: Date.now() - 1000
         });
 
         const result = await store.getState().refreshTokens();
@@ -394,7 +406,7 @@ describe('authStore', () => {
         store.setState({
           accessToken: 'token',
           refreshToken: 'refresh',
-          tokenExpiry: Date.now() - 1000,
+          tokenExpiry: Date.now() - 1000
         });
 
         // Start first refresh
@@ -413,14 +425,14 @@ describe('authStore', () => {
           status: 200,
           json: async () => ({
             access: 'new-access',
-            refresh: 'new-refresh',
-          }),
+            refresh: 'new-refresh'
+          })
         });
 
         // Both calls should resolve successfully
         const [firstResult, secondResult] = await Promise.all([
           firstRefresh,
-          secondRefresh,
+          secondRefresh
         ]);
 
         expect(firstResult).toBe(true);
@@ -434,7 +446,7 @@ describe('authStore', () => {
         store.setState({
           accessToken: 'valid-token',
           refreshToken: 'refresh',
-          tokenExpiry: Date.now() + 2 * 60 * 60 * 1000, // 2 hours
+          tokenExpiry: Date.now() + 2 * 60 * 60 * 1000 // 2 hours
         });
 
         const result = await store.getState().refreshTokens();
@@ -446,14 +458,14 @@ describe('authStore', () => {
       it('should handle 401 error (clear tokens)', async () => {
         mockFetch.mockResolvedValueOnce({
           ok: false,
-          status: 401,
+          status: 401
         });
 
         const store = createAuthStore();
         store.setState({
           accessToken: 'expired-token',
           refreshToken: 'old-refresh',
-          tokenExpiry: Date.now() - 1000,
+          tokenExpiry: Date.now() - 1000
         });
 
         const result = await store.getState().refreshTokens();
@@ -468,14 +480,14 @@ describe('authStore', () => {
       it('should handle non-401 errors', async () => {
         mockFetch.mockResolvedValueOnce({
           ok: false,
-          status: 500,
+          status: 500
         });
 
         const store = createAuthStore();
         store.setState({
           accessToken: 'expired-token',
           refreshToken: 'old-refresh',
-          tokenExpiry: Date.now() - 1000,
+          tokenExpiry: Date.now() - 1000
         });
 
         const result = await store.getState().refreshTokens();
@@ -495,7 +507,7 @@ describe('authStore', () => {
         store.setState({
           accessToken: 'expired-token',
           refreshToken: 'old-refresh',
-          tokenExpiry: Date.now() - 1000,
+          tokenExpiry: Date.now() - 1000
         });
 
         const result = await store.getState().refreshTokens();
@@ -511,14 +523,14 @@ describe('authStore', () => {
           status: 200,
           json: async () => {
             throw new Error('Invalid JSON');
-          },
+          }
         });
 
         const store = createAuthStore();
         store.setState({
           accessToken: 'expired-token',
           refreshToken: 'old-refresh',
-          tokenExpiry: Date.now() - 1000,
+          tokenExpiry: Date.now() - 1000
         });
 
         const result = await store.getState().refreshTokens();
@@ -569,7 +581,7 @@ describe('authStore', () => {
       store.setState({
         accessToken: 'expired-token',
         refreshToken: 'old-refresh',
-        tokenExpiry: Date.now() - 1000,
+        tokenExpiry: Date.now() - 1000
       });
 
       // Start first refresh
@@ -591,14 +603,14 @@ describe('authStore', () => {
         status: 200,
         json: async () => ({
           access: 'new-access',
-          refresh: 'new-refresh',
-        }),
+          refresh: 'new-refresh'
+        })
       });
 
       // Both should resolve successfully
       const [firstResult, secondResult] = await Promise.all([
         firstRefresh,
-        secondRefresh,
+        secondRefresh
       ]);
 
       expect(firstResult).toBe(true);

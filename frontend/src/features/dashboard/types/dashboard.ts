@@ -27,7 +27,7 @@ export type {
   AdminDashboardResponse,
 
   // Union type
-  DashboardResponse,
+  DashboardResponse
 } from '@/service/api/v2/types';
 
 // Local dashboard-specific types

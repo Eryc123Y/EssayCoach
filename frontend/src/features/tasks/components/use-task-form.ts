@@ -2,8 +2,14 @@
 
 import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 import { classService, rubricService, taskService } from '@/service/api/v2';
-import type { ClassItem, RubricListItem, Task, TaskCreateInput } from '@/service/api/v2/types';
+import type {
+  ClassItem,
+  RubricListItem,
+  Task,
+  TaskCreateInput
+} from '@/service/api/v2/types';
 
 type UseTaskFormInput = {
   taskId?: number;
@@ -28,7 +34,7 @@ const defaultFormData: TaskCreateInput = {
   task_instructions: '',
   class_id_class: undefined,
   task_status: 'draft',
-  task_allow_late_submission: false,
+  task_allow_late_submission: false
 };
 
 function toInitialFormData(initialData?: Task): TaskCreateInput {
@@ -44,7 +50,7 @@ function toInitialFormData(initialData?: Task): TaskCreateInput {
     task_instructions: initialData.task_instructions,
     class_id_class: initialData.class_id_class || undefined,
     task_status: initialData.task_status,
-    task_allow_late_submission: initialData.task_allow_late_submission,
+    task_allow_late_submission: initialData.task_allow_late_submission
   };
 }
 
@@ -61,12 +67,17 @@ async function saveTask(args: {
   await taskService.createTask(args.formData);
 }
 
-export function useTaskForm({ taskId, initialData }: UseTaskFormInput): UseTaskFormOutput {
+export function useTaskForm({
+  taskId,
+  initialData
+}: UseTaskFormInput): UseTaskFormOutput {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
   const [classes, setClasses] = useState<ClassItem[]>([]);
   const [rubrics, setRubrics] = useState<RubricListItem[]>([]);
-  const [formData, setFormData] = useState<TaskCreateInput>(toInitialFormData(initialData));
+  const [formData, setFormData] = useState<TaskCreateInput>(
+    toInitialFormData(initialData)
+  );
 
   useEffect(() => {
     setFormData(toInitialFormData(initialData));
@@ -77,7 +88,7 @@ export function useTaskForm({ taskId, initialData }: UseTaskFormInput): UseTaskF
       try {
         const [classesData, rubricsData] = await Promise.all([
           classService.listClasses(),
-          rubricService.fetchRubricList({ page_size: 100 }),
+          rubricService.fetchRubricList({ page_size: 100 })
         ]);
         setClasses(classesData);
         setRubrics(rubricsData.results || rubricsData);
@@ -97,8 +108,7 @@ export function useTaskForm({ taskId, initialData }: UseTaskFormInput): UseTaskF
         await saveTask({ taskId, initialData, formData });
         router.push('/dashboard/tasks');
       } catch (error) {
-        console.error('Failed to save task:', error);
-        alert('Failed to save task. Please try again.');
+        toast.error('Failed to save task. Please try again.');
       } finally {
         setLoading(false);
       }

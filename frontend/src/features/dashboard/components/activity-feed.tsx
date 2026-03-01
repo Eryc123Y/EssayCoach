@@ -7,7 +7,7 @@ import {
   IconFile,
   IconMessage,
   IconStar,
-  IconUserCheck,
+  IconUserCheck
 } from '@tabler/icons-react';
 
 interface ActivityFeedProps {
@@ -34,20 +34,20 @@ export function ActivityFeed({
   activities,
   title = 'Recent Activity',
   limit = 10,
-  emptyMessage = 'No recent activity.',
+  emptyMessage = 'No recent activity.'
 }: ActivityFeedProps) {
   const limitedActivities = activities.slice(0, limit);
 
   return (
-    <Card className="border-slate-200 bg-card shadow-sm dark:border-slate-800">
+    <Card className='bg-card border-slate-200 shadow-sm dark:border-slate-800'>
       <CardHeader>
-        <CardTitle className="text-lg font-semibold">{title}</CardTitle>
+        <CardTitle className='text-lg font-semibold'>{title}</CardTitle>
       </CardHeader>
       <CardContent>
         {limitedActivities.length === 0 ? (
           <EmptyState message={emptyMessage} />
         ) : (
-          <div className="space-y-4">
+          <div className='space-y-4'>
             {limitedActivities.map((activity) => (
               <ActivityItem key={activity.id} activity={activity} />
             ))}
@@ -70,20 +70,22 @@ function ActivityItem({ activity }: ActivityItemProps) {
   const icon = getActivityIcon(activity.type);
   const bgColor = getActivityBgColor(activity.type);
   const timeAgo = formatDistanceToNow(new Date(activity.timestamp), {
-    addSuffix: true,
+    addSuffix: true
   });
 
   return (
-    <div className="flex items-start gap-3">
-      <div className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${bgColor}`}>
+    <div className='flex items-start gap-3'>
+      <div
+        className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-full ${bgColor}`}
+      >
         {icon}
       </div>
-      <div className="flex-1 space-y-1">
-        <div className="flex items-center justify-between">
-          <p className="text-sm font-medium leading-none">{activity.title}</p>
-          <span className="text-xs text-muted-foreground">{timeAgo}</span>
+      <div className='flex-1 space-y-1'>
+        <div className='flex items-center justify-between'>
+          <p className='text-sm leading-none font-medium'>{activity.title}</p>
+          <span className='text-muted-foreground text-xs'>{timeAgo}</span>
         </div>
-        <p className="text-sm text-muted-foreground">{activity.description}</p>
+        <p className='text-muted-foreground text-sm'>{activity.description}</p>
       </div>
     </div>
   );
@@ -91,9 +93,9 @@ function ActivityItem({ activity }: ActivityItemProps) {
 
 function EmptyState({ message }: { message: string }) {
   return (
-    <div className="flex flex-col items-center justify-center py-8 text-center">
-      <IconFile className="mb-2 h-8 w-8 text-muted-foreground/50" />
-      <p className="text-sm text-muted-foreground">{message}</p>
+    <div className='flex flex-col items-center justify-center py-8 text-center'>
+      <IconFile className='text-muted-foreground/50 mb-2 h-8 w-8' />
+      <p className='text-muted-foreground text-sm'>{message}</p>
     </div>
   );
 }
@@ -105,15 +107,15 @@ function EmptyState({ message }: { message: string }) {
 function getActivityIcon(type: DashboardActivityItem['type']) {
   switch (type) {
     case 'submission':
-      return <IconFile className="h-4 w-4" />;
+      return <IconFile className='h-4 w-4' />;
     case 'feedback':
-      return <IconMessage className="h-4 w-4" />;
+      return <IconMessage className='h-4 w-4' />;
     case 'grade':
-      return <IconStar className="h-4 w-4" />;
+      return <IconStar className='h-4 w-4' />;
     case 'comment':
-      return <IconUserCheck className="h-4 w-4" />;
+      return <IconUserCheck className='h-4 w-4' />;
     default:
-      return <IconFile className="h-4 w-4" />;
+      return <IconFile className='h-4 w-4' />;
   }
 }
 
@@ -138,18 +140,18 @@ function getActivityBgColor(type: DashboardActivityItem['type']) {
 
 export function ActivityFeedSkeleton() {
   return (
-    <Card className="border-slate-200 bg-card shadow-sm dark:border-slate-800">
+    <Card className='bg-card border-slate-200 shadow-sm dark:border-slate-800'>
       <CardHeader>
-        <div className="h-5 w-32 animate-pulse rounded bg-slate-200 dark:bg-slate-700" />
+        <div className='h-5 w-32 animate-pulse rounded bg-slate-200 dark:bg-slate-700' />
       </CardHeader>
       <CardContent>
-        <div className="space-y-4">
+        <div className='space-y-4'>
           {[1, 2, 3, 4, 5].map((i) => (
-            <div key={i} className="flex items-start gap-3">
-              <div className="h-8 w-8 shrink-0 animate-pulse rounded-full bg-slate-200 dark:bg-slate-700" />
-              <div className="flex-1 space-y-2">
-                <div className="h-4 w-3/4 animate-pulse rounded bg-slate-200 dark:bg-slate-700" />
-                <div className="h-3 w-full animate-pulse rounded bg-slate-200 dark:bg-slate-700" />
+            <div key={i} className='flex items-start gap-3'>
+              <div className='h-8 w-8 shrink-0 animate-pulse rounded-full bg-slate-200 dark:bg-slate-700' />
+              <div className='flex-1 space-y-2'>
+                <div className='h-4 w-3/4 animate-pulse rounded bg-slate-200 dark:bg-slate-700' />
+                <div className='h-3 w-full animate-pulse rounded bg-slate-200 dark:bg-slate-700' />
               </div>
             </div>
           ))}
@@ -165,25 +167,25 @@ export function ActivityFeedSkeleton() {
 
 export function ActivityFeedError({
   error,
-  onRetry,
+  onRetry
 }: {
   error: Error;
   onRetry: () => void;
 }) {
   return (
-    <Card className="border-destructive/50 bg-destructive/5 shadow-sm">
-      <CardHeader className="border-destructive/50 bg-destructive/5">
-        <CardTitle className="text-lg font-semibold text-destructive">
+    <Card className='border-destructive/50 bg-destructive/5 shadow-sm'>
+      <CardHeader className='border-destructive/50 bg-destructive/5'>
+        <CardTitle className='text-destructive text-lg font-semibold'>
           Failed to Load Activity
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <p className="text-sm text-muted-foreground">
+        <p className='text-muted-foreground text-sm'>
           {error.message || 'An unexpected error occurred.'}
         </p>
         <button
           onClick={onRetry}
-          className="mt-4 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
+          className='bg-primary text-primary-foreground hover:bg-primary/90 mt-4 rounded-md px-4 py-2 text-sm font-medium'
         >
           Retry
         </button>

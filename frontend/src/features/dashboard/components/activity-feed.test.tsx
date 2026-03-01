@@ -17,24 +17,32 @@ import { render, screen, fireEvent } from '@testing-library/react';
 import {
   ActivityFeed,
   ActivityFeedSkeleton,
-  ActivityFeedError,
+  ActivityFeedError
 } from '@/features/dashboard/components/activity-feed';
 import type { DashboardActivityItem } from '@/service/api/v2/types';
 
 // Mock shadcn/ui components
 vi.mock('@/components/ui/card', () => ({
   Card: ({ children, className, ...props }: any) => (
-    <div data-testid="card" className={className} {...props}>{children}</div>
+    <div data-testid='card' className={className} {...props}>
+      {children}
+    </div>
   ),
   CardHeader: ({ children, className, ...props }: any) => (
-    <div data-testid="card-header" className={className} {...props}>{children}</div>
+    <div data-testid='card-header' className={className} {...props}>
+      {children}
+    </div>
   ),
   CardTitle: ({ children, className, ...props }: any) => (
-    <h4 data-testid="card-title" className={className} {...props}>{children}</h4>
+    <h4 data-testid='card-title' className={className} {...props}>
+      {children}
+    </h4>
   ),
   CardContent: ({ children, className, ...props }: any) => (
-    <div data-testid="card-content" className={className} {...props}>{children}</div>
-  ),
+    <div data-testid='card-content' className={className} {...props}>
+      {children}
+    </div>
+  )
 }));
 
 vi.mock('@/components/ui/badge', () => ({
@@ -42,7 +50,7 @@ vi.mock('@/components/ui/badge', () => ({
     <span className={className} data-variant={variant} {...props}>
       {children}
     </span>
-  ),
+  )
 }));
 
 vi.mock('@/components/ui/button', () => ({
@@ -50,7 +58,7 @@ vi.mock('@/components/ui/button', () => ({
     <button className={className} onClick={onClick} {...props}>
       {children}
     </button>
-  ),
+  )
 }));
 
 // Mock date-fns
@@ -66,7 +74,7 @@ vi.mock('date-fns', () => ({
     if (diffMins < 60) return `${diffMins} minutes ago`;
     if (diffHours < 24) return `${diffHours} hours ago`;
     return `${diffDays} days ago`;
-  }),
+  })
 }));
 
 // Mock activity data
@@ -77,7 +85,7 @@ const mockActivities: DashboardActivityItem[] = [
     title: 'Essay Submitted',
     description: 'You submitted "Narrative Essay" for grading',
     timestamp: new Date(Date.now() - 1000 * 60 * 30).toISOString(), // 30 mins ago
-    icon: 'file',
+    icon: 'file'
   },
   {
     id: 2,
@@ -85,7 +93,7 @@ const mockActivities: DashboardActivityItem[] = [
     title: 'Feedback Received',
     description: 'AI feedback is ready for "Critical Review"',
     timestamp: new Date(Date.now() - 1000 * 60 * 60 * 2).toISOString(), // 2 hours ago
-    icon: 'message',
+    icon: 'message'
   },
   {
     id: 3,
@@ -93,7 +101,7 @@ const mockActivities: DashboardActivityItem[] = [
     title: 'Essay Graded',
     description: '"Research Proposal" received a score of 88%',
     timestamp: new Date(Date.now() - 1000 * 60 * 60 * 24).toISOString(), // 1 day ago
-    icon: 'star',
+    icon: 'star'
   },
   {
     id: 4,
@@ -101,7 +109,7 @@ const mockActivities: DashboardActivityItem[] = [
     title: 'Comment Added',
     description: 'Lecturer commented on your essay',
     timestamp: new Date(Date.now() - 1000 * 60 * 60 * 48).toISOString(), // 2 days ago
-    icon: 'user-check',
+    icon: 'user-check'
   },
   {
     id: 5,
@@ -109,8 +117,8 @@ const mockActivities: DashboardActivityItem[] = [
     title: 'Draft Saved',
     description: 'Your draft "Persuasive Essay" was saved',
     timestamp: new Date(Date.now() - 1000 * 60 * 60 * 72).toISOString(), // 3 days ago
-    icon: 'file',
-  },
+    icon: 'file'
+  }
 ];
 
 describe('ActivityFeed', () => {
@@ -131,10 +139,7 @@ describe('ActivityFeed', () => {
 
     it('should render with custom title', () => {
       render(
-        <ActivityFeed
-          activities={mockActivities}
-          title="My Activity Feed"
-        />
+        <ActivityFeed activities={mockActivities} title='My Activity Feed' />
       );
 
       expect(screen.getByText('My Activity Feed')).toBeInTheDocument();
@@ -173,7 +178,7 @@ describe('ActivityFeed', () => {
         title: `Activity ${i + 1}`,
         description: `Description ${i + 1}`,
         timestamp: new Date().toISOString(),
-        icon: 'file',
+        icon: 'file'
       }));
 
       render(<ActivityFeed activities={manyActivities} />);
@@ -185,12 +190,7 @@ describe('ActivityFeed', () => {
     });
 
     it('should respect custom limit prop', () => {
-      render(
-        <ActivityFeed
-          activities={mockActivities}
-          limit={3}
-        />
-      );
+      render(<ActivityFeed activities={mockActivities} limit={3} />);
 
       expect(screen.getByText('Essay Submitted')).toBeInTheDocument();
       expect(screen.getByText('Feedback Received')).toBeInTheDocument();
@@ -199,12 +199,7 @@ describe('ActivityFeed', () => {
     });
 
     it('should show all activities when limit is higher than count', () => {
-      render(
-        <ActivityFeed
-          activities={mockActivities}
-          limit={20}
-        />
-      );
+      render(<ActivityFeed activities={mockActivities} limit={20} />);
 
       expect(screen.getByText('Draft Saved')).toBeInTheDocument();
     });
@@ -219,10 +214,7 @@ describe('ActivityFeed', () => {
 
     it('should display custom empty message', () => {
       render(
-        <ActivityFeed
-          activities={[]}
-          emptyMessage="You have no activity yet"
-        />
+        <ActivityFeed activities={[]} emptyMessage='You have no activity yet' />
       );
 
       expect(screen.getByText('You have no activity yet')).toBeInTheDocument();
@@ -246,8 +238,8 @@ describe('ActivityFeed', () => {
           title: 'New Submission',
           description: 'Essay submitted',
           timestamp: new Date().toISOString(),
-          icon: 'file',
-        },
+          icon: 'file'
+        }
       ];
 
       render(<ActivityFeed activities={submissionActivity} />);
@@ -264,8 +256,8 @@ describe('ActivityFeed', () => {
           title: 'Feedback Ready',
           description: 'Your essay has been graded',
           timestamp: new Date().toISOString(),
-          icon: 'message',
-        },
+          icon: 'message'
+        }
       ];
 
       render(<ActivityFeed activities={feedbackActivity} />);
@@ -281,8 +273,8 @@ describe('ActivityFeed', () => {
           title: 'Grade Posted',
           description: 'Score: 92/100',
           timestamp: new Date().toISOString(),
-          icon: 'star',
-        },
+          icon: 'star'
+        }
       ];
 
       render(<ActivityFeed activities={gradeActivity} />);
@@ -298,8 +290,8 @@ describe('ActivityFeed', () => {
           title: 'New Comment',
           description: 'Lecturer left a comment',
           timestamp: new Date().toISOString(),
-          icon: 'user-check',
-        },
+          icon: 'user-check'
+        }
       ];
 
       render(<ActivityFeed activities={commentActivity} />);
@@ -332,7 +324,9 @@ describe('ActivityFeed', () => {
       render(<ActivityFeed activities={mockActivities} />);
 
       // Each activity should have the layout structure
-      const activityItems = document.querySelectorAll('[class*="flex items-start gap"]');
+      const activityItems = document.querySelectorAll(
+        '[class*="flex items-start gap"]'
+      );
       expect(activityItems.length).toBe(5);
     });
   });
@@ -376,7 +370,9 @@ describe('ActivityFeedSkeleton', () => {
     render(<ActivityFeedSkeleton />);
 
     // Count skeleton activity rows
-    const activityRows = document.querySelectorAll('[class*="flex items-start gap"]');
+    const activityRows = document.querySelectorAll(
+      '[class*="flex items-start gap"]'
+    );
     expect(activityRows.length).toBe(5);
   });
 });
@@ -398,7 +394,9 @@ describe('ActivityFeedError', () => {
 
     render(<ActivityFeedError error={mockError} onRetry={onRetry} />);
 
-    expect(screen.getByText('An unexpected error occurred.')).toBeInTheDocument();
+    expect(
+      screen.getByText('An unexpected error occurred.')
+    ).toBeInTheDocument();
   });
 
   it('should call onRetry when retry button is clicked', () => {

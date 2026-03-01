@@ -9,7 +9,7 @@ import {
   IconBell,
   IconLayoutDashboard,
   IconBuilding,
-  IconKey,
+  IconKey
 } from '@tabler/icons-react';
 
 export type SettingsSection =
@@ -35,52 +35,54 @@ const navItems: {
   {
     id: 'account',
     label: 'Account',
-    icon: <IconUser className="size-4" />,
-    roles: ['student', 'lecturer', 'admin'],
+    icon: <IconUser className='size-4' />,
+    roles: ['student', 'lecturer', 'admin']
   },
   {
     id: 'security',
     label: 'Security',
-    icon: <IconShield className="size-4" />,
-    roles: ['student', 'lecturer', 'admin'],
+    icon: <IconShield className='size-4' />,
+    roles: ['student', 'lecturer', 'admin']
   },
   {
     id: 'notifications',
     label: 'Notifications',
-    icon: <IconBell className="size-4" />,
-    roles: ['student', 'lecturer', 'admin'],
+    icon: <IconBell className='size-4' />,
+    roles: ['student', 'lecturer', 'admin']
   },
   {
     id: 'display',
     label: 'Display',
-    icon: <IconLayoutDashboard className="size-4" />,
-    roles: ['student', 'lecturer', 'admin'],
+    icon: <IconLayoutDashboard className='size-4' />,
+    roles: ['student', 'lecturer', 'admin']
   },
   {
     id: 'organization',
     label: 'Organization',
-    icon: <IconBuilding className="size-4" />,
-    roles: ['admin'],
+    icon: <IconBuilding className='size-4' />,
+    roles: ['admin']
   },
   {
     id: 'api',
     label: 'API Keys',
-    icon: <IconKey className="size-4" />,
-    roles: ['admin'],
-  },
+    icon: <IconKey className='size-4' />,
+    roles: ['admin']
+  }
 ];
 
 export function SettingsSidebar({
   currentSection,
   onSectionChange,
-  userRole,
+  userRole
 }: SettingsSidebarProps) {
-  const filteredItems = navItems.filter((item) => item.roles.includes(userRole));
+  const filteredItems = navItems.filter((item) =>
+    item.roles.includes(userRole)
+  );
 
   return (
-    <aside className="w-64 flex-shrink-0 border-r border-border bg-sidebar">
-      <ScrollArea className="h-full py-4">
-        <nav className="space-y-1 px-3">
+    <aside className='border-border bg-sidebar w-64 flex-shrink-0 border-r'>
+      <ScrollArea className='h-full py-4'>
+        <nav className='space-y-1 px-3'>
           {filteredItems.map((item) => (
             <Button
               key={item.id}

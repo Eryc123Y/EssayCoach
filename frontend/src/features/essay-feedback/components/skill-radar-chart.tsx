@@ -115,7 +115,7 @@ export function SkillRadarChart({
           <CardDescription>{description}</CardDescription>
         </CardHeader>
         <CardContent style={{ height: minHeight }}>
-          <div className='flex h-full items-center justify-center text-muted-foreground'>
+          <div className='text-muted-foreground flex h-full items-center justify-center'>
             Loading chart...
           </div>
         </CardContent>
@@ -126,12 +126,10 @@ export function SkillRadarChart({
   return (
     <Card className='border-border/50 bg-card/50 backdrop-blur-sm transition-shadow hover:shadow-md'>
       <CardHeader>
-        <CardTitle className='text-lg font-semibold text-foreground'>
+        <CardTitle className='text-foreground text-lg font-semibold'>
           {title}
         </CardTitle>
-        <CardDescription className='text-sm'>
-          {description}
-        </CardDescription>
+        <CardDescription className='text-sm'>{description}</CardDescription>
       </CardHeader>
       <CardContent>
         <div style={{ height: minHeight }} className='w-full'>
@@ -202,14 +200,14 @@ export function SkillRadarChart({
         {/* Legend */}
         <div className='mt-4 flex items-center justify-center gap-4'>
           <div className='flex items-center gap-2'>
-            <div className='h-3 w-3 rounded-full bg-primary' />
+            <div className='bg-primary h-3 w-3 rounded-full' />
             <span className='text-muted-foreground text-xs font-medium'>
               Your Score
             </span>
           </div>
           {averageSkills && (
             <div className='flex items-center gap-2'>
-              <div className='h-3 w-3 rounded-full bg-muted-foreground opacity-50' />
+              <div className='bg-muted-foreground h-3 w-3 rounded-full opacity-50' />
               <span className='text-muted-foreground text-xs font-medium'>
                 Class Average
               </span>

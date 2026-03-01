@@ -205,7 +205,12 @@ export interface GradingQueueItem {
 export interface StudentEssay {
   id: number;
   title: string;
-  status: 'draft' | 'submitted' | 'ai_graded' | 'lecturer_reviewed' | 'returned';
+  status:
+    | 'draft'
+    | 'submitted'
+    | 'ai_graded'
+    | 'lecturer_reviewed'
+    | 'returned';
   submittedAt: string;
   score: number | null;
   unitName: string | null;

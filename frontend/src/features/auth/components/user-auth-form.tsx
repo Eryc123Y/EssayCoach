@@ -49,10 +49,10 @@ export default function UserAuthForm() {
         const err = await response.json().catch(() => ({}));
         throw new Error(err?.message || 'Request failed');
       }
-      
+
       // Get the response data including user info
       const result = await response.json();
-      
+
       // Store user data in localStorage for auth context
       if (result.user) {
         const userData = {
@@ -60,12 +60,15 @@ export default function UserAuthForm() {
           email: result.user.email || result.user.user_email,
           firstName: result.user.first_name || result.user.user_fname || '',
           lastName: result.user.last_name || result.user.user_lname || '',
-          role: (result.user.role || result.user.user_role || 'student') as 'student' | 'lecturer' | 'admin'
+          role: (result.user.role || result.user.user_role || 'student') as
+            | 'student'
+            | 'lecturer'
+            | 'admin'
         };
         localStorage.setItem('user_data', JSON.stringify(userData));
         window.dispatchEvent(new Event('essaycoach:user-updated'));
       }
-      
+
       toast.success('Signed in successfully');
       const target = callbackUrl || '/dashboard/overview';
       router.push(target);
@@ -75,133 +78,150 @@ export default function UserAuthForm() {
     }
   };
 
-
   return (
     <>
       <Form {...form}>
         <form
           onSubmit={form.handleSubmit(onSubmit)}
-          className="w-full space-y-5"
+          className='w-full space-y-5'
         >
           <FormField
             control={form.control}
-            name="email"
+            name='email'
             render={({ field }) => (
-              <FormItem className="space-y-2">
-                <FormLabel className="text-sm font-medium text-slate-700 dark:text-slate-300">Email</FormLabel>
+              <FormItem className='space-y-2'>
+                <FormLabel className='text-sm font-medium text-slate-700 dark:text-slate-300'>
+                  Email
+                </FormLabel>
                 <FormControl>
                   <Input
-                    type="email"
-                    placeholder="name@example.com"
+                    type='email'
+                    placeholder='name@example.com'
                     disabled={loading}
-                    className="h-11 border-slate-200 bg-white px-4 py-2 text-sm transition-all duration-200 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-slate-800 dark:bg-slate-950"
+                    className='h-11 border-slate-200 bg-white px-4 py-2 text-sm transition-all duration-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none dark:border-slate-800 dark:bg-slate-950'
                     {...field}
                   />
                 </FormControl>
-                <FormMessage className="text-xs" />
+                <FormMessage className='text-xs' />
               </FormItem>
             )}
           />
 
           <FormField
             control={form.control}
-            name="password"
+            name='password'
             render={({ field }) => (
-              <FormItem className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <FormLabel className="text-sm font-medium text-slate-700 dark:text-slate-300">Password</FormLabel>
+              <FormItem className='space-y-2'>
+                <div className='flex items-center justify-between'>
+                  <FormLabel className='text-sm font-medium text-slate-700 dark:text-slate-300'>
+                    Password
+                  </FormLabel>
                   <Link
-                    href="/auth/forgot-password"
-                    className="text-xs font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400"
+                    href='/auth/forgot-password'
+                    className='text-xs font-medium text-blue-600 hover:text-blue-700 dark:text-blue-400'
                   >
                     Forgot password?
                   </Link>
                 </div>
                 <FormControl>
                   <Input
-                    type="password"
-                    placeholder="••••••••"
+                    type='password'
+                    placeholder='••••••••'
                     disabled={loading}
-                    className="h-11 border-slate-200 bg-white px-4 py-2 text-sm transition-all duration-200 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 dark:border-slate-800 dark:bg-slate-950"
+                    className='h-11 border-slate-200 bg-white px-4 py-2 text-sm transition-all duration-200 focus:border-blue-500 focus:ring-2 focus:ring-blue-500/20 focus:outline-none dark:border-slate-800 dark:bg-slate-950'
                     {...field}
                   />
                 </FormControl>
-                <FormMessage className="text-xs" />
+                <FormMessage className='text-xs' />
               </FormItem>
             )}
           />
 
           <Button
             disabled={loading}
-            className="h-11 w-full bg-blue-600 text-sm font-medium text-white shadow-lg shadow-blue-600/25 transition-all duration-200 hover:bg-blue-700 hover:shadow-xl hover:shadow-blue-600/30 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-2"
-            type="submit"
+            className='h-11 w-full bg-blue-600 text-sm font-medium text-white shadow-lg shadow-blue-600/25 transition-all duration-200 hover:bg-blue-700 hover:shadow-xl hover:shadow-blue-600/30 focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 focus:outline-none dark:focus:ring-offset-2'
+            type='submit'
           >
             {loading ? (
-              <span className="flex items-center justify-center gap-2">
-                <svg className="h-4 w-4 animate-spin" viewBox="0 0 24 24">
-                  <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                  <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
+              <span className='flex items-center justify-center gap-2'>
+                <svg className='h-4 w-4 animate-spin' viewBox='0 0 24 24'>
+                  <circle
+                    className='opacity-25'
+                    cx='12'
+                    cy='12'
+                    r='10'
+                    stroke='currentColor'
+                    strokeWidth='4'
+                    fill='none'
+                  />
+                  <path
+                    className='opacity-75'
+                    fill='currentColor'
+                    d='M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z'
+                  />
                 </svg>
                 Signing in...
               </span>
             ) : (
-              "Sign In"
+              'Sign In'
             )}
           </Button>
         </form>
       </Form>
 
       {/* Quick-fill test accounts for debugging */}
-      <div className="mt-6 space-y-3">
-        <div className="text-center text-xs text-slate-400">— Quick Test Accounts —</div>
-        <div className="grid grid-cols-3 gap-2">
+      <div className='mt-6 space-y-3'>
+        <div className='text-center text-xs text-slate-400'>
+          — Quick Test Accounts —
+        </div>
+        <div className='grid grid-cols-3 gap-2'>
           <Button
-            type="button"
-            variant="outline"
-            size="sm"
+            type='button'
+            variant='outline'
+            size='sm'
             onClick={() => {
               form.setValue('email', 'student@example.com');
               form.setValue('password', 'student123');
               toast.success('Student account loaded');
             }}
-            className="text-xs"
+            className='text-xs'
           >
             Student
           </Button>
           <Button
-            type="button"
-            variant="outline"
-            size="sm"
+            type='button'
+            variant='outline'
+            size='sm'
             onClick={() => {
               form.setValue('email', 'lecturer@example.com');
               form.setValue('password', 'lecturer123');
               toast.success('Lecturer account loaded');
             }}
-            className="text-xs"
+            className='text-xs'
           >
             Lecturer
           </Button>
           <Button
-            type="button"
-            variant="outline"
-            size="sm"
+            type='button'
+            variant='outline'
+            size='sm'
             onClick={() => {
               form.setValue('email', 'admin@example.com');
               form.setValue('password', 'admin123');
               toast.success('Admin account loaded');
             }}
-            className="text-xs"
+            className='text-xs'
           >
             Admin
           </Button>
         </div>
       </div>
 
-      <p className="mt-4 text-center text-sm text-slate-500">
-        Don&apos;t have an account?{" "}
+      <p className='mt-4 text-center text-sm text-slate-500'>
+        Don&apos;t have an account?{' '}
         <Link
-          href="/auth/sign-up"
-          className="font-medium text-blue-600 hover:text-blue-700 hover:underline underline-offset-4 transition-colors dark:text-blue-400"
+          href='/auth/sign-up'
+          className='font-medium text-blue-600 underline-offset-4 transition-colors hover:text-blue-700 hover:underline dark:text-blue-400'
         >
           Sign up
         </Link>

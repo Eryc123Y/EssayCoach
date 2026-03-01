@@ -19,22 +19,30 @@ import type { DashboardUserInfo, DashboardStats } from '@/service/api/v2/types';
 // Mock shadcn/ui components
 vi.mock('@/components/ui/card', () => ({
   Card: ({ children, className, ...props }: any) => (
-    <article data-testid="card" className={className} {...props}>{children}</article>
+    <article data-testid='card' className={className} {...props}>
+      {children}
+    </article>
   ),
   CardHeader: ({ children, className, ...props }: any) => (
-    <div data-testid="card-header" className={className} {...props}>{children}</div>
+    <div data-testid='card-header' className={className} {...props}>
+      {children}
+    </div>
   ),
   CardTitle: ({ children, className, ...props }: any) => (
-    <h4 data-testid="card-title" className={className} {...props}>{children}</h4>
+    <h4 data-testid='card-title' className={className} {...props}>
+      {children}
+    </h4>
   ),
   CardContent: ({ children, className, ...props }: any) => (
-    <div data-testid="card-content" className={className} {...props}>{children}</div>
-  ),
+    <div data-testid='card-content' className={className} {...props}>
+      {children}
+    </div>
+  )
 }));
 
 // Mock date-fns
 vi.mock('date-fns', () => ({
-  format: vi.fn(() => 'Monday, January 1, 2024 · 10:00 AM'),
+  format: vi.fn(() => 'Monday, January 1, 2024 · 10:00 AM')
 }));
 
 // Mock data
@@ -42,27 +50,27 @@ const mockStudentUser: DashboardUserInfo = {
   id: 1,
   name: 'John Student',
   role: 'student',
-  email: 'john@example.com',
+  email: 'john@example.com'
 };
 
 const mockLecturerUser: DashboardUserInfo = {
   id: 2,
   name: 'Jane Lecturer',
   role: 'lecturer',
-  email: 'jane@example.com',
+  email: 'jane@example.com'
 };
 
 const mockAdminUser: DashboardUserInfo = {
   id: 3,
   name: 'Admin User',
   role: 'admin',
-  email: 'admin@example.com',
+  email: 'admin@example.com'
 };
 
 const mockStats: DashboardStats = {
   totalEssays: 25,
   averageScore: 85.5,
-  pendingGrading: 3,
+  pendingGrading: 3
 };
 
 describe('DashboardHeader', () => {
@@ -80,22 +88,23 @@ describe('DashboardHeader', () => {
         <DashboardHeader
           user={mockStudentUser}
           stats={mockStats}
-          role="student"
+          role='student'
         />
       );
 
-      expect(screen.getByText(/Good (morning|afternoon|evening), John/i)).toBeInTheDocument();
+      expect(
+        screen.getByText(/Good (morning|afternoon|evening), John/i)
+      ).toBeInTheDocument();
     });
 
     it('should show default welcome when name is null', () => {
       const userWithoutName = { ...mockStudentUser, name: '' };
 
-
       render(
         <DashboardHeader
           user={userWithoutName}
           stats={mockStats}
-          role="student"
+          role='student'
         />
       );
 
@@ -103,17 +112,22 @@ describe('DashboardHeader', () => {
     });
 
     it('should use first name only from full name', () => {
-      const userWithFullName = { ...mockStudentUser, name: 'John Michael Student' };
+      const userWithFullName = {
+        ...mockStudentUser,
+        name: 'John Michael Student'
+      };
 
       render(
         <DashboardHeader
           user={userWithFullName}
           stats={mockStats}
-          role="student"
+          role='student'
         />
       );
 
-      expect(screen.getByText(/Good (morning|afternoon|evening), John/i)).toBeInTheDocument();
+      expect(
+        screen.getByText(/Good (morning|afternoon|evening), John/i)
+      ).toBeInTheDocument();
     });
   });
 
@@ -123,7 +137,7 @@ describe('DashboardHeader', () => {
         <DashboardHeader
           user={mockStudentUser}
           stats={mockStats}
-          role="student"
+          role='student'
         />
       );
 
@@ -135,7 +149,7 @@ describe('DashboardHeader', () => {
         <DashboardHeader
           user={mockLecturerUser}
           stats={mockStats}
-          role="lecturer"
+          role='lecturer'
         />
       );
 
@@ -144,23 +158,14 @@ describe('DashboardHeader', () => {
 
     it('should display admin role badge', () => {
       render(
-        <DashboardHeader
-          user={mockAdminUser}
-          stats={mockStats}
-          role="admin"
-        />
+        <DashboardHeader user={mockAdminUser} stats={mockStats} role='admin' />
       );
 
       expect(screen.getByText('admin')).toBeInTheDocument();
     });
 
     it('should not display role badge when role is undefined', () => {
-      render(
-        <DashboardHeader
-          user={mockStudentUser}
-          stats={mockStats}
-        />
-      );
+      render(<DashboardHeader user={mockStudentUser} stats={mockStats} />);
 
       expect(screen.queryByText('student')).not.toBeInTheDocument();
       expect(screen.queryByText('lecturer')).not.toBeInTheDocument();
@@ -174,11 +179,13 @@ describe('DashboardHeader', () => {
         <DashboardHeader
           user={mockStudentUser}
           stats={mockStats}
-          role="student"
+          role='student'
         />
       );
 
-      expect(screen.getByText('Monday, January 1, 2024 · 10:00 AM')).toBeInTheDocument();
+      expect(
+        screen.getByText('Monday, January 1, 2024 · 10:00 AM')
+      ).toBeInTheDocument();
     });
   });
 
@@ -188,7 +195,7 @@ describe('DashboardHeader', () => {
         <DashboardHeader
           user={mockStudentUser}
           stats={mockStats}
-          role="student"
+          role='student'
         />
       );
 
@@ -207,7 +214,7 @@ describe('DashboardHeader', () => {
         <DashboardHeader
           user={mockStudentUser}
           stats={highScoreStats}
-          role="student"
+          role='student'
         />
       );
 
@@ -221,7 +228,7 @@ describe('DashboardHeader', () => {
         <DashboardHeader
           user={mockStudentUser}
           stats={lowScoreStats}
-          role="student"
+          role='student'
         />
       );
 
@@ -235,7 +242,7 @@ describe('DashboardHeader', () => {
         <DashboardHeader
           user={mockStudentUser}
           stats={nullScoreStats}
-          role="student"
+          role='student'
         />
       );
 
@@ -248,14 +255,14 @@ describe('DashboardHeader', () => {
       const lecturerStats = {
         totalEssays: 50,
         averageScore: 78,
-        pendingGrading: 12,
+        pendingGrading: 12
       };
 
       render(
         <DashboardHeader
           user={mockLecturerUser}
           stats={lecturerStats}
-          role="lecturer"
+          role='lecturer'
         />
       );
 
@@ -271,14 +278,14 @@ describe('DashboardHeader', () => {
       const lecturerStats = {
         totalEssays: 50,
         averageScore: null,
-        pendingGrading: 12,
+        pendingGrading: 12
       };
 
       render(
         <DashboardHeader
           user={mockLecturerUser}
           stats={lecturerStats}
-          role="lecturer"
+          role='lecturer'
         />
       );
 
@@ -291,15 +298,11 @@ describe('DashboardHeader', () => {
       const adminStats = {
         totalEssays: 500,
         averageScore: 82.3,
-        pendingGrading: 45,
+        pendingGrading: 45
       };
 
       render(
-        <DashboardHeader
-          user={mockAdminUser}
-          stats={adminStats}
-          role="admin"
-        />
+        <DashboardHeader user={mockAdminUser} stats={adminStats} role='admin' />
       );
 
       expect(screen.getByText('Total Essays')).toBeInTheDocument();
@@ -314,15 +317,11 @@ describe('DashboardHeader', () => {
       const adminStats = {
         totalEssays: 500,
         averageScore: null,
-        pendingGrading: 45,
+        pendingGrading: 45
       };
 
       render(
-        <DashboardHeader
-          user={mockAdminUser}
-          stats={adminStats}
-          role="admin"
-        />
+        <DashboardHeader user={mockAdminUser} stats={adminStats} role='admin' />
       );
 
       expect(screen.getByText('0')).toBeInTheDocument();
@@ -331,12 +330,7 @@ describe('DashboardHeader', () => {
 
   describe('Default Role (No Role Specified)', () => {
     it('should default to student stat cards when role is undefined', () => {
-      render(
-        <DashboardHeader
-          user={mockStudentUser}
-          stats={mockStats}
-        />
-      );
+      render(<DashboardHeader user={mockStudentUser} stats={mockStats} />);
 
       expect(screen.getByText('Average Score')).toBeInTheDocument();
       expect(screen.getByText('Pending Tasks')).toBeInTheDocument();
@@ -350,7 +344,7 @@ describe('DashboardHeader', () => {
         <DashboardHeader
           user={mockStudentUser}
           stats={mockStats}
-          role="student"
+          role='student'
         />
       );
 
@@ -364,7 +358,7 @@ describe('DashboardHeader', () => {
         <DashboardHeader
           user={mockStudentUser}
           stats={mockStats}
-          role="student"
+          role='student'
         />
       );
 
@@ -377,7 +371,7 @@ describe('DashboardHeader', () => {
         <DashboardHeader
           user={mockStudentUser}
           stats={mockStats}
-          role="student"
+          role='student'
         />
       );
 
@@ -392,7 +386,7 @@ describe('DashboardHeader', () => {
         <DashboardHeader
           user={mockStudentUser}
           stats={mockStats}
-          role="student"
+          role='student'
         />
       );
 
@@ -405,7 +399,7 @@ describe('DashboardHeader', () => {
         <DashboardHeader
           user={mockStudentUser}
           stats={mockStats}
-          role="student"
+          role='student'
         />
       );
 
@@ -423,7 +417,7 @@ describe('DashboardHeader', () => {
         <DashboardHeader
           user={mockStudentUser}
           stats={mockStats}
-          role="student"
+          role='student'
         />
       );
 
@@ -436,7 +430,7 @@ describe('DashboardHeader', () => {
         <DashboardHeader
           user={mockStudentUser}
           stats={mockStats}
-          role="student"
+          role='student'
         />
       );
 
@@ -451,7 +445,7 @@ describe('DashboardHeader', () => {
         <DashboardHeader
           user={mockStudentUser}
           stats={mockStats}
-          role="student"
+          role='student'
         />
       );
 
@@ -465,7 +459,7 @@ describe('DashboardHeader', () => {
         <DashboardHeader
           user={mockStudentUser}
           stats={mockStats}
-          role="student"
+          role='student'
         />
       );
 

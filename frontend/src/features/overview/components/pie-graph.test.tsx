@@ -1,11 +1,11 @@
 /**
  * PieGraph Component Tests
- * 
+ *
  * Tests for the grade distribution pie graph covering:
  * - Component rendering
  * - Chart data display
  * - Tooltip functionality
- * 
+ *
  * Run with: pnpm test -- pie-graph.test.tsx
  */
 
@@ -17,77 +17,106 @@ import { PieGraph } from './pie-graph';
 vi.mock('@/components/ui/chart', () => ({
   ChartConfig: {},
   ChartContainer: ({ children, config, className }: any) => (
-    <div data-testid="chart-container" className={className}>
+    <div data-testid='chart-container' className={className}>
       {children}
     </div>
   ),
   ChartTooltip: ({ children, content }: any) => (
-    <div data-testid="chart-tooltip">{content}{children}</div>
+    <div data-testid='chart-tooltip'>
+      {content}
+      {children}
+    </div>
   ),
   ChartTooltipContent: ({ indicator, className, hideLabel }: any) => (
-    <div data-testid="chart-tooltip-content" className={className}>
+    <div data-testid='chart-tooltip-content' className={className}>
       Tooltip Content {hideLabel && '(hideLabel)'}
     </div>
   ),
   ChartLegend: ({ children, content }: any) => (
-    <div data-testid="chart-legend">{content}{children}</div>
-  ),
-  ChartLegendContent: ({ className }: any) => (
-    <div data-testid="chart-legend-content" className={className}>
-      Legend Content
+    <div data-testid='chart-legend'>
+      {content}
+      {children}
     </div>
   ),
+  ChartLegendContent: ({ className }: any) => (
+    <div data-testid='chart-legend-content' className={className}>
+      Legend Content
+    </div>
+  )
 }));
 
 // Mock shadcn/ui card components
 vi.mock('@/components/ui/card', () => ({
   Card: ({ children, className, ...props }: any) => (
-    <div className={className} {...props}>{children}</div>
+    <div className={className} {...props}>
+      {children}
+    </div>
   ),
   CardContent: ({ children, className, ...props }: any) => (
-    <div className={className} {...props}>{children}</div>
+    <div className={className} {...props}>
+      {children}
+    </div>
   ),
   CardDescription: ({ children, className, ...props }: any) => (
-    <div className={className} {...props}>{children}</div>
+    <div className={className} {...props}>
+      {children}
+    </div>
   ),
   CardFooter: ({ children, className, ...props }: any) => (
-    <div className={className} {...props}>{children}</div>
+    <div className={className} {...props}>
+      {children}
+    </div>
   ),
   CardHeader: ({ children, className, ...props }: any) => (
-    <div className={className} {...props}>{children}</div>
+    <div className={className} {...props}>
+      {children}
+    </div>
   ),
   CardTitle: ({ children, className, ...props }: any) => (
-    <h2 className={className} {...props}>{children}</h2>
-  ),
+    <h2 className={className} {...props}>
+      {children}
+    </h2>
+  )
 }));
 
 // Mock recharts
 vi.mock('recharts', () => ({
-  Pie: ({ data, dataKey, nameKey, innerRadius, outerRadius, paddingAngle, label, children }: any) => (
-    <div 
-      data-testid="pie-chart" 
+  Pie: ({
+    data,
+    dataKey,
+    nameKey,
+    innerRadius,
+    outerRadius,
+    paddingAngle,
+    label,
+    children
+  }: any) => (
+    <div
+      data-testid='pie-chart'
       data-datakey={dataKey}
       data-namekey={nameKey}
       data-inner-radius={innerRadius}
       data-outer-radius={outerRadius}
       data-padding-angle={paddingAngle}
     >
-      {label && typeof label === 'function' && label({ viewBox: { cx: 100, cy: 100 } })}
+      {label &&
+        typeof label === 'function' &&
+        label({ viewBox: { cx: 100, cy: 100 } })}
       {children}
     </div>
   ),
   PieChart: ({ children, data }: any) => (
-    <div data-testid="pie-chart-wrapper" data-chart-data={JSON.stringify(data)}>
+    <div data-testid='pie-chart-wrapper' data-chart-data={JSON.stringify(data)}>
       {children}
     </div>
   ),
-  Sector: () => <div data-testid="sector" />,
+  Sector: () => <div data-testid='sector' />,
   Label: ({ content, viewBox }: any) => {
     if (content && typeof content === 'function') {
       return content({ viewBox });
     }
     return null;
-  },
+  }
 }));
 
 describe('PieGraph', () => {
@@ -135,7 +164,9 @@ describe('PieGraph', () => {
 
     it('displays card description', () => {
       expect(
-        screen.getByText(/Distribution of feedback issues in recent submissions/i)
+        screen.getByText(
+          /Distribution of feedback issues in recent submissions/i
+        )
       ).toBeInTheDocument();
     });
   });
@@ -180,7 +211,9 @@ describe('PieGraph', () => {
 
     it('has descriptive text for the distribution', () => {
       expect(
-        screen.getByText(/Distribution of feedback issues in recent submissions/i)
+        screen.getByText(
+          /Distribution of feedback issues in recent submissions/i
+        )
       ).toBeInTheDocument();
     });
   });

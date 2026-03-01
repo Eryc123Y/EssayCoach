@@ -18,7 +18,7 @@ export function useSettings() {
     updatePreferences,
     fetchSessions,
     revokeSession,
-    fetchLoginHistory,
+    fetchLoginHistory
   } = useSettingsStore();
 
   // Fetch current user info
@@ -39,21 +39,18 @@ export function useSettings() {
   }, [fetchPreferences, fetchSessions, fetchLoginHistory]);
 
   // Upload avatar
-  const uploadAvatar = useCallback(
-    async (file: File): Promise<string> => {
-      try {
-        const response = await settingsService.uploadAvatar(file);
-        if (response.success) {
-          return response.avatar_url;
-        }
-        throw new Error('Avatar upload failed');
-      } catch (error) {
-        console.error('Failed to upload avatar:', error);
-        throw error;
+  const uploadAvatar = useCallback(async (file: File): Promise<string> => {
+    try {
+      const response = await settingsService.uploadAvatar(file);
+      if (response.success) {
+        return response.avatar_url;
       }
-    },
-    []
-  );
+      throw new Error('Avatar upload failed');
+    } catch (error) {
+      console.error('Failed to upload avatar:', error);
+      throw error;
+    }
+  }, []);
 
   // Change password
   const changePassword = useCallback(
@@ -66,7 +63,7 @@ export function useSettings() {
         await settingsService.changePassword({
           current_password: currentPassword,
           new_password: newPassword,
-          new_password_confirm: newPasswordConfirm,
+          new_password_confirm: newPasswordConfirm
         });
       } catch (error) {
         console.error('Failed to change password:', error);
@@ -82,7 +79,7 @@ export function useSettings() {
       try {
         await authService.updateUser({
           first_name: data.user_fname,
-          last_name: data.user_lname,
+          last_name: data.user_lname
         });
       } catch (error) {
         console.error('Failed to update user info:', error);
@@ -111,6 +108,6 @@ export function useSettings() {
     fetchUserInfo,
     updateUser,
     uploadAvatar,
-    changePassword,
+    changePassword
   };
 }

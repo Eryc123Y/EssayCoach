@@ -77,9 +77,9 @@ export function RubricsClient({
     null
   );
   const [isDeleting, setIsDeleting] = useState(false);
-  const [visibilityTogglingId, setVisibilityTogglingId] = useState<number | null>(
-    null
-  );
+  const [visibilityTogglingId, setVisibilityTogglingId] = useState<
+    number | null
+  >(null);
   const [duplicatingId, setDuplicatingId] = useState<number | null>(null);
 
   const handleUploadSuccess = () => {
@@ -95,7 +95,8 @@ export function RubricsClient({
     setDeleteDialogOpen(true);
   };
 
-  const handleDeleteConfirm = async () => {    if (!rubricToDelete) return;
+  const handleDeleteConfirm = async () => {
+    if (!rubricToDelete) return;
 
     setIsDeleting(true);
     try {
@@ -243,14 +244,18 @@ export function RubricsClient({
                   </div>
                   <div>
                     <CardTitle>
-                      {filter === 'public' ? 'Public Rubrics' : filter === 'my' ? 'My Rubrics' : 'All Rubrics'}
+                      {filter === 'public'
+                        ? 'Public Rubrics'
+                        : filter === 'my'
+                          ? 'My Rubrics'
+                          : 'All Rubrics'}
                     </CardTitle>
                     <CardDescription>
                       {filter === 'public'
                         ? 'Rubrics shared with everyone'
                         : filter === 'my'
-                        ? 'Your personal rubrics'
-                        : 'View and manage all your rubrics'}
+                          ? 'Your personal rubrics'
+                          : 'View and manage all your rubrics'}
                     </CardDescription>
                   </div>
                 </div>
@@ -303,15 +308,15 @@ export function RubricsClient({
                     {filter === 'public'
                       ? 'No public rubrics yet'
                       : filter === 'my'
-                      ? 'No rubrics yet'
-                      : 'No rubrics yet'}
+                        ? 'No rubrics yet'
+                        : 'No rubrics yet'}
                   </h3>
                   <p className='text-muted-foreground mt-1 max-w-xs text-sm'>
                     {userRole === 'student'
                       ? 'Your lecturer has not shared any rubrics yet.'
                       : filter === 'public'
-                      ? 'Share your first rubric to make it available to students.'
-                      : 'Upload your first rubric using the form to get started with AI grading.'}
+                        ? 'Share your first rubric to make it available to students.'
+                        : 'Upload your first rubric using the form to get started with AI grading.'}
                   </p>
                 </div>
               ) : (
@@ -369,7 +374,9 @@ export function RubricsClient({
                                     variant='ghost'
                                     size='sm'
                                     onClick={() => handleDuplicate(rubric)}
-                                    disabled={duplicatingId === rubric.rubric_id}
+                                    disabled={
+                                      duplicatingId === rubric.rubric_id
+                                    }
                                     className='h-8 w-8 p-0 hover:bg-blue-50 hover:text-blue-600 dark:hover:bg-blue-900/20 dark:hover:text-blue-400'
                                   >
                                     {duplicatingId === rubric.rubric_id ? (
@@ -390,10 +397,13 @@ export function RubricsClient({
                                         rubric.visibility || 'private'
                                       )
                                     }
-                                    disabled={visibilityTogglingId === rubric.rubric_id}
+                                    disabled={
+                                      visibilityTogglingId === rubric.rubric_id
+                                    }
                                     className='h-8 w-8 p-0 hover:bg-amber-50 hover:text-amber-600 dark:hover:bg-amber-900/20 dark:hover:text-amber-400'
                                   >
-                                    {visibilityTogglingId === rubric.rubric_id ? (
+                                    {visibilityTogglingId ===
+                                    rubric.rubric_id ? (
                                       <Loader2 className='h-4 w-4 animate-spin' />
                                     ) : rubric.visibility === 'public' ? (
                                       <Lock className='h-4 w-4' />
@@ -431,7 +441,7 @@ export function RubricsClient({
                       >
                         <div className='mb-3 flex items-start justify-between'>
                           <div className='flex-1'>
-                            <div className='flex items-center gap-2 mb-2'>
+                            <div className='mb-2 flex items-center gap-2'>
                               <VisibilityBadge
                                 visibility={rubric.visibility || 'private'}
                               />
@@ -466,7 +476,9 @@ export function RubricsClient({
                                   rubric.visibility || 'private'
                                 )
                               }
-                              disabled={visibilityTogglingId === rubric.rubric_id}
+                              disabled={
+                                visibilityTogglingId === rubric.rubric_id
+                              }
                             >
                               {visibilityTogglingId === rubric.rubric_id ? (
                                 <Loader2 className='mr-1 h-4 w-4 animate-spin' />
@@ -475,7 +487,9 @@ export function RubricsClient({
                               ) : (
                                 <Globe className='mr-1 h-4 w-4' />
                               )}
-                              {rubric.visibility === 'public' ? 'Make Private' : 'Make Public'}
+                              {rubric.visibility === 'public'
+                                ? 'Make Private'
+                                : 'Make Public'}
                             </Button>
                           )}
                           <Button

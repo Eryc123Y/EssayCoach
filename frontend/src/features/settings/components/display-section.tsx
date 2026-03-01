@@ -8,14 +8,14 @@ import {
   SelectContent,
   SelectItem,
   SelectTrigger,
-  SelectValue,
+  SelectValue
 } from '@/components/ui/select';
 import { Separator } from '@/components/ui/separator';
 import {
   IconLanguage,
   IconMoon,
   IconSun,
-  IconDeviceLaptop,
+  IconDeviceLaptop
 } from '@tabler/icons-react';
 import type { UserPreferences } from '@/service/api/v2/types';
 import { toast } from 'sonner';
@@ -35,13 +35,13 @@ const LANGUAGES = [
   { value: 'fr', label: 'Français (French)' },
   { value: 'de', label: 'Deutsch (German)' },
   { value: 'ja', label: '日本語 (Japanese)' },
-  { value: 'ko', label: '한국어 (Korean)' },
+  { value: 'ko', label: '한국어 (Korean)' }
 ];
 
 const THEMES = [
   { value: 'light', label: 'Light', icon: IconSun },
   { value: 'dark', label: 'Dark', icon: IconMoon },
-  { value: 'system', label: 'System', icon: IconDeviceLaptop },
+  { value: 'system', label: 'System', icon: IconDeviceLaptop }
 ] as const;
 
 type ThemeValue = 'light' | 'dark' | 'system';
@@ -50,7 +50,7 @@ export function DisplaySection({
   preferences,
   isLoading,
   isSaving,
-  onUpdatePreferences,
+  onUpdatePreferences
 }: DisplaySectionProps) {
   const [localPrefs, setLocalPrefs] = useState<Partial<UserPreferences>>({});
   const [hasChanges, setHasChanges] = useState(false);
@@ -62,9 +62,9 @@ export function DisplaySection({
           <CardTitle>Display Preferences</CardTitle>
         </CardHeader>
         <CardContent>
-          <div className="animate-pulse space-y-4">
-            <div className="h-10 w-full rounded bg-muted" />
-            <div className="h-10 w-full rounded bg-muted" />
+          <div className='animate-pulse space-y-4'>
+            <div className='bg-muted h-10 w-full rounded' />
+            <div className='bg-muted h-10 w-full rounded' />
           </div>
         </CardContent>
       </Card>
@@ -103,20 +103,20 @@ export function DisplaySection({
   return (
     <Card>
       <CardHeader>
-        <CardTitle className="text-lg font-semibold">
+        <CardTitle className='text-lg font-semibold'>
           Display Preferences
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-6">
+      <CardContent className='space-y-6'>
         {/* Language Selection */}
-        <div className="space-y-3">
-          <div className="flex items-center gap-3">
-            <div className="flex size-10 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900">
-              <IconLanguage className="size-5 text-blue-600 dark:text-blue-400" />
+        <div className='space-y-3'>
+          <div className='flex items-center gap-3'>
+            <div className='flex size-10 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900'>
+              <IconLanguage className='size-5 text-blue-600 dark:text-blue-400' />
             </div>
             <div>
-              <p className="font-medium">Language</p>
-              <p className="text-sm text-muted-foreground">
+              <p className='font-medium'>Language</p>
+              <p className='text-muted-foreground text-sm'>
                 Select your preferred language
               </p>
             </div>
@@ -125,8 +125,8 @@ export function DisplaySection({
             value={currentPrefs.language}
             onValueChange={handleLanguageChange}
           >
-            <SelectTrigger className="w-full">
-              <SelectValue placeholder="Select language" />
+            <SelectTrigger className='w-full'>
+              <SelectValue placeholder='Select language' />
             </SelectTrigger>
             <SelectContent>
               {LANGUAGES.map((lang) => (
@@ -141,19 +141,19 @@ export function DisplaySection({
         <Separator />
 
         {/* Theme Selection */}
-        <div className="space-y-3">
-          <div className="flex items-center gap-3">
-            <div className="flex size-10 items-center justify-center rounded-full bg-purple-100 dark:bg-purple-900">
-              <IconMoon className="size-5 text-purple-600 dark:text-purple-400" />
+        <div className='space-y-3'>
+          <div className='flex items-center gap-3'>
+            <div className='flex size-10 items-center justify-center rounded-full bg-purple-100 dark:bg-purple-900'>
+              <IconMoon className='size-5 text-purple-600 dark:text-purple-400' />
             </div>
             <div>
-              <p className="font-medium">Theme</p>
-              <p className="text-sm text-muted-foreground">
+              <p className='font-medium'>Theme</p>
+              <p className='text-muted-foreground text-sm'>
                 Choose your preferred color theme
               </p>
             </div>
           </div>
-          <div className="grid grid-cols-3 gap-3">
+          <div className='grid grid-cols-3 gap-3'>
             {THEMES.map((theme) => {
               const Icon = theme.icon;
               const isSelected = currentPrefs.theme === theme.value;
@@ -187,11 +187,11 @@ export function DisplaySection({
         </div>
 
         {hasChanges && (
-          <div className="flex gap-2 pt-4">
+          <div className='flex gap-2 pt-4'>
             <Button onClick={handleSave} disabled={isSaving}>
               {isSaving ? 'Saving...' : 'Save Changes'}
             </Button>
-            <Button variant="outline" onClick={handleReset}>
+            <Button variant='outline' onClick={handleReset}>
               Reset
             </Button>
           </div>

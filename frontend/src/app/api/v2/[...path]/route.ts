@@ -9,7 +9,7 @@ const SAFE_FORWARD_HEADERS = [
   'origin',
   'referer',
   'x-csrftoken',
-  'x-requested-with',
+  'x-requested-with'
 ] as const;
 
 const SAFE_FORWARD_COOKIES = ['csrftoken', 'sessionid'] as const;

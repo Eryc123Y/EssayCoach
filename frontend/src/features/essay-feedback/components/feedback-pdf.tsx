@@ -16,10 +16,22 @@ import {
 Font.register({
   family: 'Roboto',
   fonts: [
-    { src: 'https://cdnjs.cloudflare.com/ajax/libs/ink/3.1.10/fonts/Roboto/roboto-light-webfont.ttf', fontWeight: 300 },
-    { src: 'https://cdnjs.cloudflare.com/ajax/libs/ink/3.1.10/fonts/Roboto/roboto-regular-webfont.ttf', fontWeight: 400 },
-    { src: 'https://cdnjs.cloudflare.com/ajax/libs/ink/3.1.10/fonts/Roboto/roboto-medium-webfont.ttf', fontWeight: 500 },
-    { src: 'https://cdnjs.cloudflare.com/ajax/libs/ink/3.1.10/fonts/Roboto/roboto-bold-webfont.ttf', fontWeight: 700 }
+    {
+      src: 'https://cdnjs.cloudflare.com/ajax/libs/ink/3.1.10/fonts/Roboto/roboto-light-webfont.ttf',
+      fontWeight: 300
+    },
+    {
+      src: 'https://cdnjs.cloudflare.com/ajax/libs/ink/3.1.10/fonts/Roboto/roboto-regular-webfont.ttf',
+      fontWeight: 400
+    },
+    {
+      src: 'https://cdnjs.cloudflare.com/ajax/libs/ink/3.1.10/fonts/Roboto/roboto-medium-webfont.ttf',
+      fontWeight: 500
+    },
+    {
+      src: 'https://cdnjs.cloudflare.com/ajax/libs/ink/3.1.10/fonts/Roboto/roboto-bold-webfont.ttf',
+      fontWeight: 700
+    }
   ]
 });
 
@@ -422,20 +434,6 @@ const getScoreBadge = (score: number): string => {
   return 'Needs Work';
 };
 
-// Convert insight type to style
-const getFeedbackStyle = (type: Insight['type']): string => {
-  switch (type) {
-    case 'critical':
-      return 'feedbackItemCritical';
-    case 'suggestion':
-      return 'feedbackItemSuggestion';
-    case 'strength':
-      return 'feedbackItemStrength';
-    case 'info':
-      return 'feedbackItemInfo';
-  }
-};
-
 // Get icon symbol for insight type
 const getInsightIcon = (type: Insight['type']): string => {
   switch (type) {
@@ -474,23 +472,27 @@ const RadarChart: React.FC<{ skills: SkillData }> = ({ skills }) => {
   const angleStep = (2 * Math.PI) / skillEntries.length;
 
   // Calculate polygon points for user scores
-  const userPoints = skillEntries.map(([skill, score], index) => {
-    const angle = index * angleStep - Math.PI / 2; // Start from top
-    const r = (score / maxScore) * radius;
-    const x = centerX + r * Math.cos(angle);
-    const y = centerY + r * Math.sin(angle);
-    return `${x},${y}`;
-  }).join(' ');
+  const userPoints = skillEntries
+    .map(([skill, score], index) => {
+      const angle = index * angleStep - Math.PI / 2; // Start from top
+      const r = (score / maxScore) * radius;
+      const x = centerX + r * Math.cos(angle);
+      const y = centerY + r * Math.sin(angle);
+      return `${x},${y}`;
+    })
+    .join(' ');
 
   // Calculate grid polygon points (for 25%, 50%, 75%, 100%)
   const renderGridPolygon = (percentage: number) => {
     const r = radius * percentage;
-    return skillEntries.map((_, index) => {
-      const angle = index * angleStep - Math.PI / 2;
-      const x = centerX + r * Math.cos(angle);
-      const y = centerY + r * Math.sin(angle);
-      return `${x},${y}`;
-    }).join(' ');
+    return skillEntries
+      .map((_, index) => {
+        const angle = index * angleStep - Math.PI / 2;
+        const x = centerX + r * Math.cos(angle);
+        const y = centerY + r * Math.sin(angle);
+        return `${x},${y}`;
+      })
+      .join(' ');
   };
 
   // Axis lines
@@ -505,7 +507,7 @@ const RadarChart: React.FC<{ skills: SkillData }> = ({ skills }) => {
         y1={centerY}
         x2={x}
         y2={y}
-        stroke="#e5e7eb"
+        stroke='#e5e7eb'
         strokeWidth={1}
       />
     );
@@ -531,7 +533,12 @@ const RadarChart: React.FC<{ skills: SkillData }> = ({ skills }) => {
         key={`label-${index}`}
         x={x}
         y={y}
-        style={{ fontSize: 8, fill: '#374151', textAnchor: 'middle', dominantBaseline: 'middle' }}
+        style={{
+          fontSize: 8,
+          fill: '#374151',
+          textAnchor: 'middle',
+          dominantBaseline: 'middle'
+        }}
       >
         {skillLabelMap[skill]}
       </Text>
@@ -539,14 +546,14 @@ const RadarChart: React.FC<{ skills: SkillData }> = ({ skills }) => {
   });
 
   return (
-    <Svg width="200" height="200" viewBox="0 0 200 200">
+    <Svg width='200' height='200' viewBox='0 0 200 200'>
       {/* Grid polygons */}
       {[0.25, 0.5, 0.75, 1].map((pct) => (
         <Polygon
           key={`grid-${pct}`}
           points={renderGridPolygon(pct)}
-          fill="none"
-          stroke="#e5e7eb"
+          fill='none'
+          stroke='#e5e7eb'
           strokeWidth={1}
         />
       ))}
@@ -557,9 +564,9 @@ const RadarChart: React.FC<{ skills: SkillData }> = ({ skills }) => {
       {/* User score polygon */}
       <Polygon
         points={userPoints}
-        fill="#3b82f6"
+        fill='#3b82f6'
         fillOpacity={0.2}
-        stroke="#3b82f6"
+        stroke='#3b82f6'
         strokeWidth={2}
       />
 
@@ -576,8 +583,8 @@ const RadarChart: React.FC<{ skills: SkillData }> = ({ skills }) => {
             cx={x}
             cy={y}
             r={4}
-            fill="#3b82f6"
-            stroke="#ffffff"
+            fill='#3b82f6'
+            stroke='#ffffff'
             strokeWidth={1}
           />
         );
@@ -610,12 +617,13 @@ export function FeedbackPDFDocument({ data }: FeedbackPDFDocumentProps) {
   return (
     <Document>
       {/* Page 1: Summary & Overview */}
-      <Page size="A4" style={styles.page}>
+      <Page size='A4' style={styles.page}>
         {/* Header */}
         <View style={styles.headerContainer}>
           <Text style={styles.headerTitle}>Essay Feedback Report</Text>
           <Text style={styles.headerSubtitle}>
-            AI-Powered Writing Analysis • Generated {new Date().toLocaleDateString()}
+            AI-Powered Writing Analysis • Generated{' '}
+            {new Date().toLocaleDateString()}
           </Text>
         </View>
 
@@ -625,9 +633,7 @@ export function FeedbackPDFDocument({ data }: FeedbackPDFDocumentProps) {
             <Text style={styles.studentName}>{studentName || 'Student'}</Text>
             <Text style={styles.studentEmail}>{studentEmail || 'N/A'}</Text>
           </View>
-          <Text style={styles.submissionDate}>
-            Submitted: {submissionDate}
-          </Text>
+          <Text style={styles.submissionDate}>Submitted: {submissionDate}</Text>
         </View>
 
         {/* Overall Score */}
@@ -665,7 +671,9 @@ export function FeedbackPDFDocument({ data }: FeedbackPDFDocumentProps) {
                     ]}
                   />
                 </View>
-                <Text style={styles.skillScore}>{item.score}/{item.fullMark}</Text>
+                <Text style={styles.skillScore}>
+                  {item.score}/{item.fullMark}
+                </Text>
               </View>
             ))}
           </View>
@@ -696,7 +704,9 @@ export function FeedbackPDFDocument({ data }: FeedbackPDFDocumentProps) {
                     </Text>
                   </View>
                   <Text style={styles.feedbackTitle}>{insight.title}</Text>
-                  <Text style={styles.feedbackDescription}>{insight.description}</Text>
+                  <Text style={styles.feedbackDescription}>
+                    {insight.description}
+                  </Text>
                 </View>
               ))}
             </View>
@@ -712,12 +722,16 @@ export function FeedbackPDFDocument({ data }: FeedbackPDFDocumentProps) {
               {rubricResults.map((rubric, index) => (
                 <View key={index} style={styles.rubricItem}>
                   <View style={styles.rubricHeader}>
-                    <Text style={styles.rubricName}>{rubric.criterionName}</Text>
+                    <Text style={styles.rubricName}>
+                      {rubric.criterionName}
+                    </Text>
                     <Text style={styles.rubricScore}>
                       {rubric.score}/{rubric.maxScore}
                     </Text>
                   </View>
-                  <Text style={styles.rubricLevel}>Level: {rubric.levelName}</Text>
+                  <Text style={styles.rubricLevel}>
+                    Level: {rubric.levelName}
+                  </Text>
                   <Text style={styles.rubricJustification}>
                     {rubric.justification}
                   </Text>
@@ -729,7 +743,9 @@ export function FeedbackPDFDocument({ data }: FeedbackPDFDocumentProps) {
 
         {/* Footer */}
         <View style={styles.footer}>
-          <Text>Generated by EssayCoach AI • Academic Precision Feedback System</Text>
+          <Text>
+            Generated by EssayCoach AI • Academic Precision Feedback System
+          </Text>
         </View>
       </Page>
     </Document>

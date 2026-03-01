@@ -132,7 +132,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     window.addEventListener('essaycoach:user-updated', handleAuthUserUpdated);
 
     return () => {
-      window.removeEventListener('essaycoach:user-updated', handleAuthUserUpdated);
+      window.removeEventListener(
+        'essaycoach:user-updated',
+        handleAuthUserUpdated
+      );
     };
   }, [syncUserFromStorage]);
 

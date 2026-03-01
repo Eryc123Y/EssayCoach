@@ -1,6 +1,6 @@
 /**
  * API Configuration
- * 
+ *
  * Controls API version switching for gradual migration from v1 to v2.
  * Set NEXT_PUBLIC_API_VERSION in .env.local to control which version is used.
  */
@@ -13,16 +13,16 @@ export const API_CONFIG = {
    * Can be overridden via NEXT_PUBLIC_API_VERSION environment variable
    */
   version: (process.env.NEXT_PUBLIC_API_VERSION || 'v2') as ApiVersion,
-  
+
   /**
    * Base URL for API requests
    */
   baseUrl: '/api',
-  
+
   /**
    * Backend API URL (for direct calls from Next.js API routes)
    */
-  backendUrl: process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000',
+  backendUrl: process.env.NEXT_PUBLIC_API_URL || 'http://127.0.0.1:8000'
 } as const;
 
 /**

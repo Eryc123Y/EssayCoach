@@ -20,48 +20,74 @@ import { SkillRadarChart } from './skill-radar-chart';
 vi.mock('@/components/ui/chart', () => ({
   ChartConfig: {},
   ChartContainer: ({ children, config, className }: any) => (
-    <div data-testid="chart-container" className={className}>
+    <div data-testid='chart-container' className={className}>
       {children}
     </div>
   ),
   ChartTooltip: ({ children, content }: any) => (
-    <div data-testid="chart-tooltip">{content}{children}</div>
-  ),
-  ChartTooltipContent: ({ indicator, className, formatter, labelFormatter }: any) => (
-    <div data-testid="chart-tooltip-content" className={className}>
-      Tooltip Content - {indicator}
+    <div data-testid='chart-tooltip'>
+      {content}
+      {children}
     </div>
   ),
+  ChartTooltipContent: ({
+    indicator,
+    className,
+    formatter,
+    labelFormatter
+  }: any) => (
+    <div data-testid='chart-tooltip-content' className={className}>
+      Tooltip Content - {indicator}
+    </div>
+  )
 }));
 
 // Mock shadcn/ui card components
 vi.mock('@/components/ui/card', () => ({
   Card: ({ children, className, ...props }: any) => (
-    <div data-testid="card" className={className} {...props}>{children}</div>
+    <div data-testid='card' className={className} {...props}>
+      {children}
+    </div>
   ),
   CardContent: ({ children, className, ...props }: any) => (
-    <div data-testid="card-content" className={className} {...props}>{children}</div>
+    <div data-testid='card-content' className={className} {...props}>
+      {children}
+    </div>
   ),
   CardDescription: ({ children, className, ...props }: any) => (
-    <div data-testid="card-description" className={className} {...props}>{children}</div>
+    <div data-testid='card-description' className={className} {...props}>
+      {children}
+    </div>
   ),
   CardHeader: ({ children, className, ...props }: any) => (
-    <div data-testid="card-header" className={className} {...props}>{children}</div>
+    <div data-testid='card-header' className={className} {...props}>
+      {children}
+    </div>
   ),
   CardTitle: ({ children, className, ...props }: any) => (
-    <div data-testid="card-title" className={className} {...props}>{children}</div>
-  ),
+    <div data-testid='card-title' className={className} {...props}>
+      {children}
+    </div>
+  )
 }));
 
 // Mock recharts
 vi.mock('recharts', () => ({
   PolarAngleAxis: ({ dataKey, tick, tickLine, axisLine }: any) => (
-    <div data-testid="polar-angle-axis" data-datakey={dataKey} />
+    <div data-testid='polar-angle-axis' data-datakey={dataKey} />
   ),
   PolarGrid: ({ stroke, strokeOpacity, strokeWidth }: any) => (
-    <div data-testid="polar-grid" data-stroke={stroke} />
+    <div data-testid='polar-grid' data-stroke={stroke} />
   ),
-  Radar: ({ name, dataKey, stroke, fill, strokeWidth, dot, animationDuration }: any) => (
+  Radar: ({
+    name,
+    dataKey,
+    stroke,
+    fill,
+    strokeWidth,
+    dot,
+    animationDuration
+  }: any) => (
     <div
       data-testid={`radar-${dataKey || name}`}
       data-name={name}
@@ -69,20 +95,20 @@ vi.mock('recharts', () => ({
     />
   ),
   RadarChart: ({ children, data, cx, cy, outerRadius, margin }: any) => (
-    <div data-testid="radar-chart" data-cx={cx} data-cy={cy}>
+    <div data-testid='radar-chart' data-cx={cx} data-cy={cy}>
       {children}
       {data?.map((item: any, idx: number) => (
-        <span key={idx} data-testid="chart-data-item">
+        <span key={idx} data-testid='chart-data-item'>
           {item.skill}
         </span>
       ))}
     </div>
   ),
   ResponsiveContainer: ({ children, debounce, width, height }: any) => (
-    <div data-testid="responsive-container" style={{ width, height }}>
+    <div data-testid='responsive-container' style={{ width, height }}>
       {children}
     </div>
-  ),
+  )
 }));
 
 const defaultSkills = {
@@ -200,7 +226,9 @@ describe('SkillRadarChart', () => {
         expect(screen.getByTestId('card-title')).toBeInTheDocument();
       });
 
-      expect(screen.getByTestId('card-title').textContent).toBe('Skill Mastery');
+      expect(screen.getByTestId('card-title').textContent).toBe(
+        'Skill Mastery'
+      );
     });
 
     it('displays default description', async () => {
@@ -219,7 +247,7 @@ describe('SkillRadarChart', () => {
       render(
         <SkillRadarChart
           skills={defaultSkills}
-          title="Writing Skills Analysis"
+          title='Writing Skills Analysis'
         />
       );
 
@@ -236,7 +264,7 @@ describe('SkillRadarChart', () => {
       render(
         <SkillRadarChart
           skills={defaultSkills}
-          description="Your essay performance breakdown"
+          description='Your essay performance breakdown'
         />
       );
 
@@ -262,10 +290,7 @@ describe('SkillRadarChart', () => {
 
     it('renders both score and average radars with averageSkills', async () => {
       render(
-        <SkillRadarChart
-          skills={defaultSkills}
-          averageSkills={averageSkills}
-        />
+        <SkillRadarChart skills={defaultSkills} averageSkills={averageSkills} />
       );
 
       await waitFor(() => {
@@ -275,10 +300,7 @@ describe('SkillRadarChart', () => {
 
     it('renders legend with both items in comparison mode', async () => {
       render(
-        <SkillRadarChart
-          skills={defaultSkills}
-          averageSkills={averageSkills}
-        />
+        <SkillRadarChart skills={defaultSkills} averageSkills={averageSkills} />
       );
 
       await waitFor(() => {

@@ -16,7 +16,7 @@ import type {
   SessionListResponse,
   LoginHistoryResponse,
   PasswordChangeRequest,
-  MessageResponse,
+  MessageResponse
 } from './types';
 
 const BASE_URL = '/api/v2';
@@ -24,7 +24,12 @@ const BASE_URL = '/api/v2';
 type AnyRecord = Record<string, any>;
 
 function unwrapData<T extends AnyRecord>(response: AnyRecord): T {
-  if (response && typeof response === 'object' && response.data && typeof response.data === 'object') {
+  if (
+    response &&
+    typeof response === 'object' &&
+    response.data &&
+    typeof response.data === 'object'
+  ) {
     return response.data as T;
   }
   return response as T;
@@ -35,7 +40,7 @@ export const authService = {
     const response = await request<AnyRecord>({
       url: `${BASE_URL}/auth/login-with-jwt/`,
       method: 'POST',
-      data,
+      data
     });
 
     const payload = unwrapData<AnyRecord>(response);
@@ -52,7 +57,7 @@ export const authService = {
       access,
       refresh,
       expiresAt,
-      user: normalizeUserInfo(rawUser),
+      user: normalizeUserInfo(rawUser)
     };
   },
 
@@ -60,7 +65,7 @@ export const authService = {
     const response = await request<AnyRecord>({
       url: `${BASE_URL}/auth/refresh/`,
       method: 'POST',
-      data: { refresh: refreshToken },
+      data: { refresh: refreshToken }
     });
 
     const payload = unwrapData<AnyRecord>(response);
@@ -75,14 +80,14 @@ export const authService = {
     return {
       access,
       refresh,
-      expiresAt,
+      expiresAt
     };
   },
 
   async getUserInfo(): Promise<UserInfo> {
     const response = await request<AnyRecord>({
       url: `${BASE_URL}/auth/me/`,
-      method: 'GET',
+      method: 'GET'
     });
 
     const payload = unwrapData<AnyRecord>(response);
@@ -90,11 +95,14 @@ export const authService = {
     return normalizeUserInfo(rawUser);
   },
 
-  async updateUser(data: { first_name?: string; last_name?: string }): Promise<UserInfo> {
+  async updateUser(data: {
+    first_name?: string;
+    last_name?: string;
+  }): Promise<UserInfo> {
     const response = await request<AnyRecord>({
       url: `${BASE_URL}/auth/me/`,
       method: 'PATCH',
-      data,
+      data
     });
 
     const payload = unwrapData<AnyRecord>(response);
@@ -106,9 +114,9 @@ export const authService = {
     await request({
       url: `${BASE_URL}/auth/logout/`,
       method: 'POST',
-      data: refreshToken ? { refresh: refreshToken } : undefined,
+      data: refreshToken ? { refresh: refreshToken } : undefined
     });
-  },
+  }
 };
 
 export const rubricService = {
@@ -120,14 +128,14 @@ export const rubricService = {
     return request<RubricListResponse>({
       url: `${BASE_URL}/core/rubrics/`,
       method: 'GET',
-      params,
+      params
     });
   },
 
   async fetchRubricDetail(rubricId: number): Promise<RubricDetail> {
     return request<RubricDetail>({
       url: `${BASE_URL}/core/rubrics/${rubricId}/detail_with_items/`,
-      method: 'GET',
+      method: 'GET'
     }).then((data) => {
       data.rubric_items = data.rubric_items ?? [];
       data.rubric_items.forEach((item) => {
@@ -141,7 +149,7 @@ export const rubricService = {
     return request<RubricListItem>({
       url: `${BASE_URL}/core/rubrics/`,
       method: 'POST',
-      data,
+      data
     });
   },
 
@@ -152,14 +160,14 @@ export const rubricService = {
     return request<RubricListItem>({
       url: `${BASE_URL}/core/rubrics/${rubricId}/`,
       method: 'PUT',
-      data,
+      data
     });
   },
 
   async deleteRubric(rubricId: number): Promise<void> {
     await request({
       url: `${BASE_URL}/core/rubrics/${rubricId}/`,
-      method: 'DELETE',
+      method: 'DELETE'
     });
   },
 
@@ -176,7 +184,7 @@ export const rubricService = {
     return request<RubricImportResponse>({
       url: `${BASE_URL}/core/rubrics/import_from_pdf_with_ai/`,
       method: 'POST',
-      data: formData,
+      data: formData
     });
   },
 
@@ -187,7 +195,7 @@ export const rubricService = {
     return request<RubricListResponse>({
       url: `${BASE_URL}/core/rubrics/public/`,
       method: 'GET',
-      params,
+      params
     });
   },
 
@@ -198,9 +206,9 @@ export const rubricService = {
     return request<RubricListItem>({
       url: `${BASE_URL}/core/rubrics/${rubricId}/visibility/`,
       method: 'PATCH',
-      data: { visibility },
+      data: { visibility }
     });
-  },
+  }
 };
 
 // =============================================================================
@@ -211,15 +219,17 @@ export const settingsService = {
   async getPreferences(): Promise<UserPreferencesResponse> {
     return request<UserPreferencesResponse>({
       url: `${BASE_URL}/auth/settings/preferences/`,
-      method: 'GET',
+      method: 'GET'
     });
   },
 
-  async updatePreferences(data: UserPreferencesInput): Promise<UserPreferencesResponse> {
+  async updatePreferences(
+    data: UserPreferencesInput
+  ): Promise<UserPreferencesResponse> {
     return request<UserPreferencesResponse>({
       url: `${BASE_URL}/auth/settings/preferences/`,
       method: 'PUT',
-      data,
+      data
     });
   },
 
@@ -230,28 +240,28 @@ export const settingsService = {
     return request<AvatarUploadResponse>({
       url: `${BASE_URL}/auth/settings/avatar/`,
       method: 'POST',
-      data: formData,
+      data: formData
     });
   },
 
   async getSessions(): Promise<SessionListResponse> {
     return request<SessionListResponse>({
       url: `${BASE_URL}/auth/settings/sessions/`,
-      method: 'GET',
+      method: 'GET'
     });
   },
 
   async revokeSession(sessionKey: string): Promise<MessageResponse> {
     return request<MessageResponse>({
       url: `${BASE_URL}/auth/settings/sessions/${sessionKey}/`,
-      method: 'DELETE',
+      method: 'DELETE'
     });
   },
 
   async getLoginHistory(): Promise<LoginHistoryResponse> {
     return request<LoginHistoryResponse>({
       url: `${BASE_URL}/auth/settings/login-history/`,
-      method: 'GET',
+      method: 'GET'
     });
   },
 
@@ -259,7 +269,7 @@ export const settingsService = {
     return request<MessageResponse>({
       url: `${BASE_URL}/auth/password-change/`,
       method: 'POST',
-      data,
+      data
     });
-  },
+  }
 };

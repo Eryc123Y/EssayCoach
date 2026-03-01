@@ -2,7 +2,14 @@
 
 import { useState } from 'react';
 import { classService } from '@/service/api/v2';
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle
+} from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -13,7 +20,11 @@ interface JoinClassDialogProps {
   onJoin: () => void;
 }
 
-export function JoinClassDialog({ open, onOpenChange, onJoin }: JoinClassDialogProps) {
+export function JoinClassDialog({
+  open,
+  onOpenChange,
+  onJoin
+}: JoinClassDialogProps) {
   const [joinCode, setJoinCode] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -26,7 +37,7 @@ export function JoinClassDialog({ open, onOpenChange, onJoin }: JoinClassDialogP
 
     setLoading(true);
     setError(null);
-    
+
     try {
       await classService.joinClass(joinCode.trim().toUpperCase());
       onJoin();
@@ -49,28 +60,28 @@ export function JoinClassDialog({ open, onOpenChange, onJoin }: JoinClassDialogP
           </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 py-4">
+        <div className='space-y-4 py-4'>
           {error && (
-            <div className="p-3 bg-destructive/10 text-destructive text-sm rounded-lg">
+            <div className='bg-destructive/10 text-destructive rounded-lg p-3 text-sm'>
               {error}
             </div>
           )}
-          
-          <div className="space-y-2">
-            <Label htmlFor="join-code">Join Code</Label>
+
+          <div className='space-y-2'>
+            <Label htmlFor='join-code'>Join Code</Label>
             <Input
-              id="join-code"
+              id='join-code'
               value={joinCode}
               onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
-              placeholder="e.g., ENG101"
-              className="uppercase tracking-wider text-center text-lg"
+              placeholder='e.g., ENG101'
+              className='text-center text-lg tracking-wider uppercase'
               maxLength={10}
             />
           </div>
         </div>
 
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
+          <Button variant='outline' onClick={() => onOpenChange(false)}>
             Cancel
           </Button>
           <Button onClick={handleJoin} disabled={loading}>

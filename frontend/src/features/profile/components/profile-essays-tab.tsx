@@ -25,7 +25,7 @@ function formatDate(dateString: string): string {
   return new Date(dateString).toLocaleDateString('en-US', {
     year: 'numeric',
     month: 'short',
-    day: 'numeric',
+    day: 'numeric'
   });
 }
 
@@ -55,36 +55,36 @@ const MOCK_ESSAYS: EssayListItem[] = [
     title: 'The Impact of Technology on Education',
     score: 85,
     submittedAt: '2025-02-20T10:00:00Z',
-    status: 'graded',
+    status: 'graded'
   },
   {
     id: 2,
     title: 'Climate Change: Causes and Solutions',
     score: 78,
     submittedAt: '2025-02-15T14:30:00Z',
-    status: 'graded',
+    status: 'graded'
   },
   {
     id: 3,
     title: 'The Role of Literature in Modern Society',
     score: 92,
     submittedAt: '2025-02-10T09:15:00Z',
-    status: 'graded',
+    status: 'graded'
   },
   {
     id: 4,
     title: 'Understanding Economic Globalization',
     score: null,
     submittedAt: '2025-02-25T16:45:00Z',
-    status: 'submitted',
+    status: 'submitted'
   },
   {
     id: 5,
     title: 'The Psychology of Learning',
     score: null,
     submittedAt: '2025-02-28T11:20:00Z',
-    status: 'draft',
-  },
+    status: 'draft'
+  }
 ];
 
 /**
@@ -92,51 +92,57 @@ const MOCK_ESSAYS: EssayListItem[] = [
  *
  * Displays user's essay submission history
  */
-export function ProfileEssaysTab({ stats, essays = MOCK_ESSAYS }: ProfileEssaysTabProps) {
+export function ProfileEssaysTab({
+  stats,
+  essays = MOCK_ESSAYS
+}: ProfileEssaysTabProps) {
   const totalEssays = essays.length;
   const gradedEssays = essays.filter((e) => e.status === 'graded');
   const avgScore =
     gradedEssays.length > 0
-      ? Math.round(gradedEssays.reduce((sum, e) => sum + (e.score || 0), 0) / gradedEssays.length)
+      ? Math.round(
+          gradedEssays.reduce((sum, e) => sum + (e.score || 0), 0) /
+            gradedEssays.length
+        )
       : null;
 
   return (
-    <div className="space-y-6">
+    <div className='space-y-6'>
       {/* Summary Stats */}
-      <div className="grid gap-4 sm:grid-cols-3">
-        <Card className="border-slate-200 dark:border-slate-700">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <IconFile className="h-5 w-5 text-blue-600" />
+      <div className='grid gap-4 sm:grid-cols-3'>
+        <Card className='border-slate-200 dark:border-slate-700'>
+          <CardContent className='pt-6'>
+            <div className='flex items-center gap-3'>
+              <IconFile className='h-5 w-5 text-blue-600' />
               <div>
-                <p className="text-sm text-slate-500">Total Essays</p>
-                <p className="text-xl font-bold text-slate-900 dark:text-white">
+                <p className='text-sm text-slate-500'>Total Essays</p>
+                <p className='text-xl font-bold text-slate-900 dark:text-white'>
                   {totalEssays}
                 </p>
               </div>
             </div>
           </CardContent>
         </Card>
-        <Card className="border-slate-200 dark:border-slate-700">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <IconTrendingUp className="h-5 w-5 text-emerald-600" />
+        <Card className='border-slate-200 dark:border-slate-700'>
+          <CardContent className='pt-6'>
+            <div className='flex items-center gap-3'>
+              <IconTrendingUp className='h-5 w-5 text-emerald-600' />
               <div>
-                <p className="text-sm text-slate-500">Graded</p>
-                <p className="text-xl font-bold text-slate-900 dark:text-white">
+                <p className='text-sm text-slate-500'>Graded</p>
+                <p className='text-xl font-bold text-slate-900 dark:text-white'>
                   {gradedEssays.length}
                 </p>
               </div>
             </div>
           </CardContent>
         </Card>
-        <Card className="border-slate-200 dark:border-slate-700">
-          <CardContent className="pt-6">
-            <div className="flex items-center gap-3">
-              <IconCalendar className="h-5 w-5 text-amber-600" />
+        <Card className='border-slate-200 dark:border-slate-700'>
+          <CardContent className='pt-6'>
+            <div className='flex items-center gap-3'>
+              <IconCalendar className='h-5 w-5 text-amber-600' />
               <div>
-                <p className="text-sm text-slate-500">Avg Score</p>
-                <p className="text-xl font-bold text-slate-900 dark:text-white">
+                <p className='text-sm text-slate-500'>Avg Score</p>
+                <p className='text-xl font-bold text-slate-900 dark:text-white'>
                   {avgScore !== null ? `${avgScore}%` : 'N/A'}
                 </p>
               </div>
@@ -146,47 +152,48 @@ export function ProfileEssaysTab({ stats, essays = MOCK_ESSAYS }: ProfileEssaysT
       </div>
 
       {/* Essay List */}
-      <Card className="border-slate-200 dark:border-slate-700">
+      <Card className='border-slate-200 dark:border-slate-700'>
         <CardHeader>
-          <CardTitle className="text-lg">Essay History</CardTitle>
+          <CardTitle className='text-lg'>Essay History</CardTitle>
         </CardHeader>
         <CardContent>
           {essays.length === 0 ? (
-            <div className="text-center py-8 text-slate-500">
-              <IconFile className="h-12 w-12 mx-auto mb-3 opacity-50" />
+            <div className='py-8 text-center text-slate-500'>
+              <IconFile className='mx-auto mb-3 h-12 w-12 opacity-50' />
               <p>No essays submitted yet</p>
             </div>
           ) : (
-            <div className="space-y-3">
+            <div className='space-y-3'>
               {essays.map((essay) => (
                 <div
                   key={essay.id}
-                  className="flex items-center justify-between p-4 rounded-lg border border-slate-200 hover:bg-slate-50 transition-colors dark:border-slate-700 dark:hover:bg-slate-800"
+                  className='flex items-center justify-between rounded-lg border border-slate-200 p-4 transition-colors hover:bg-slate-50 dark:border-slate-700 dark:hover:bg-slate-800'
                 >
-                  <div className="flex-1 min-w-0">
-                    <h4 className="font-medium text-slate-900 dark:text-white truncate">
+                  <div className='min-w-0 flex-1'>
+                    <h4 className='truncate font-medium text-slate-900 dark:text-white'>
                       {essay.title}
                     </h4>
-                    <p className="text-sm text-slate-500 mt-1">
+                    <p className='mt-1 text-sm text-slate-500'>
                       Submitted {formatDate(essay.submittedAt)}
                     </p>
                   </div>
-                  <div className="flex items-center gap-3">
+                  <div className='flex items-center gap-3'>
                     {essay.score !== null && (
                       <span
                         className={`text-lg font-semibold ${
                           essay.score >= 80
                             ? 'text-emerald-600'
                             : essay.score >= 60
-                            ? 'text-amber-600'
-                            : 'text-red-600'
+                              ? 'text-amber-600'
+                              : 'text-red-600'
                         }`}
                       >
                         {essay.score}%
                       </span>
                     )}
                     <Badge variant={getStatusVariant(essay.status)}>
-                      {essay.status.charAt(0).toUpperCase() + essay.status.slice(1)}
+                      {essay.status.charAt(0).toUpperCase() +
+                        essay.status.slice(1)}
                     </Badge>
                   </div>
                 </div>

@@ -21,8 +21,8 @@ async function fetchCurrentUser(token: string) {
     method: 'GET',
     headers: {
       Authorization: `Bearer ${token}`,
-      'Content-Type': 'application/json',
-    },
+      'Content-Type': 'application/json'
+    }
   });
 }
 
@@ -30,7 +30,10 @@ export async function GET(req: NextRequest) {
   try {
     const token = req.cookies.get('access_token')?.value;
     if (!token) {
-      return NextResponse.json({ message: 'Authentication required' }, { status: 401 });
+      return NextResponse.json(
+        { message: 'Authentication required' },
+        { status: 401 }
+      );
     }
 
     const response = await fetchCurrentUser(token);
@@ -45,8 +48,14 @@ export async function GET(req: NextRequest) {
 
     return NextResponse.json(normalizeUserInfo(payload ?? {}));
   } catch (error) {
-    console.error('[auth/me GET] Error:', error instanceof Error ? error.message : 'Unknown error');
-    return NextResponse.json({ message: 'Internal server error' }, { status: 500 });
+    console.error(
+      '[auth/me GET] Error:',
+      error instanceof Error ? error.message : 'Unknown error'
+    );
+    return NextResponse.json(
+      { message: 'Internal server error' },
+      { status: 500 }
+    );
   }
 }
 
@@ -54,7 +63,10 @@ export async function PATCH(req: NextRequest) {
   try {
     const token = req.cookies.get('access_token')?.value;
     if (!token) {
-      return NextResponse.json({ message: 'Authentication required' }, { status: 401 });
+      return NextResponse.json(
+        { message: 'Authentication required' },
+        { status: 401 }
+      );
     }
 
     const body = (await req.json().catch(() => ({}))) as AnyRecord;
@@ -79,21 +91,28 @@ export async function PATCH(req: NextRequest) {
       method: 'PATCH',
       headers: {
         Authorization: `Bearer ${token}`,
-        'Content-Type': 'application/json',
+        'Content-Type': 'application/json'
       },
-      body: JSON.stringify(updatePayload),
+      body: JSON.stringify(updatePayload)
     });
     const updateResult = await updateResponse.json().catch(() => null);
 
     if (!updateResponse.ok) {
       return NextResponse.json(
-        { message: getErrorMessage(updateResult, 'Failed to update current user') },
+        {
+          message: getErrorMessage(
+            updateResult,
+            'Failed to update current user'
+          )
+        },
         { status: updateResponse.status }
       );
     }
 
     const currentUserResponse = await fetchCurrentUser(token);
-    const currentUserPayload = await currentUserResponse.json().catch(() => null);
+    const currentUserPayload = await currentUserResponse
+      .json()
+      .catch(() => null);
 
     if (currentUserResponse.ok && currentUserPayload) {
       return NextResponse.json(normalizeUserInfo(currentUserPayload));
@@ -111,7 +130,13 @@ export async function PATCH(req: NextRequest) {
 
     return NextResponse.json({ message: 'User updated' });
   } catch (error) {
-    console.error('[auth/me PATCH] Error:', error instanceof Error ? error.message : 'Unknown error');
-    return NextResponse.json({ message: 'Internal server error' }, { status: 500 });
+    console.error(
+      '[auth/me PATCH] Error:',
+      error instanceof Error ? error.message : 'Unknown error'
+    );
+    return NextResponse.json(
+      { message: 'Internal server error' },
+      { status: 500 }
+    );
   }
 }

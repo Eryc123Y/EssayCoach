@@ -5,19 +5,22 @@ export async function POST(req: NextRequest) {
   // Call Django backend to invalidate token
   const apiUrl = getServerApiUrl();
   const token = req.cookies.get('access_token')?.value;
-  
+
   if (token) {
     try {
       await fetch(`${apiUrl}/api/v2/auth/logout/`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${token}`,
+          Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json'
         }
       });
     } catch (error) {
       // Continue with cookie clearing even if backend call fails
-      console.error('[Logout] Backend call failed:', error instanceof Error ? error.message : 'Unknown error');
+      console.error(
+        '[Logout] Backend call failed:',
+        error instanceof Error ? error.message : 'Unknown error'
+      );
     }
   }
 

@@ -11,7 +11,7 @@ import {
   TableCell,
   TableHead,
   TableHeader,
-  TableRow,
+  TableRow
 } from '@/components/ui/table';
 import {
   Dialog,
@@ -20,7 +20,7 @@ import {
   DialogFooter,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
+  DialogTrigger
 } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import {
@@ -29,7 +29,7 @@ import {
   IconTrash,
   IconCopy,
   IconEye,
-  IconEyeOff,
+  IconEyeOff
 } from '@tabler/icons-react';
 import { toast } from 'sonner';
 
@@ -50,8 +50,8 @@ export function ApiKeysSection() {
       key: 'sk_test_abc123xyz789',
       created: '2024-01-15',
       lastUsed: '2024-02-20',
-      isActive: true,
-    },
+      isActive: true
+    }
   ]);
   const [isNewKeyDialogOpen, setIsNewKeyDialogOpen] = useState(false);
   const [newKeyName, setNewKeyName] = useState('');
@@ -69,7 +69,7 @@ export function ApiKeysSection() {
       key: `sk_test_${Math.random().toString(36).substring(2, 15)}`,
       created: new Date().toISOString().split('T')[0],
       lastUsed: null,
-      isActive: true,
+      isActive: true
     };
 
     setApiKeys([...apiKeys, newKey]);
@@ -96,15 +96,15 @@ export function ApiKeysSection() {
   return (
     <Card>
       <CardHeader>
-        <div className="flex items-center justify-between">
-          <CardTitle className="text-lg font-semibold">API Keys</CardTitle>
+        <div className='flex items-center justify-between'>
+          <CardTitle className='text-lg font-semibold'>API Keys</CardTitle>
           <Dialog
             open={isNewKeyDialogOpen}
             onOpenChange={setIsNewKeyDialogOpen}
           >
             <DialogTrigger asChild>
               <Button>
-                <IconPlus className="mr-2 size-4" />
+                <IconPlus className='mr-2 size-4' />
                 Create New Key
               </Button>
             </DialogTrigger>
@@ -116,20 +116,20 @@ export function ApiKeysSection() {
                   to copy your key before closing this dialog.
                 </DialogDescription>
               </DialogHeader>
-              <div className="space-y-4 py-4">
-                <div className="space-y-2">
-                  <Label htmlFor="key-name">Key Name</Label>
+              <div className='space-y-4 py-4'>
+                <div className='space-y-2'>
+                  <Label htmlFor='key-name'>Key Name</Label>
                   <Input
-                    id="key-name"
+                    id='key-name'
                     value={newKeyName}
                     onChange={(e) => setNewKeyName(e.target.value)}
-                    placeholder="e.g., Production Key"
+                    placeholder='e.g., Production Key'
                   />
                 </div>
               </div>
               <DialogFooter>
                 <Button
-                  variant="outline"
+                  variant='outline'
                   onClick={() => setIsNewKeyDialogOpen(false)}
                 >
                   Cancel
@@ -142,10 +142,10 @@ export function ApiKeysSection() {
       </CardHeader>
       <CardContent>
         {apiKeys.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-8 text-center">
-            <IconKey className="mb-4 size-12 text-muted-foreground" />
-            <p className="text-muted-foreground">No API keys found</p>
-            <p className="text-sm text-muted-foreground">
+          <div className='flex flex-col items-center justify-center py-8 text-center'>
+            <IconKey className='text-muted-foreground mb-4 size-12' />
+            <p className='text-muted-foreground'>No API keys found</p>
+            <p className='text-muted-foreground text-sm'>
               Create a new key to access the API
             </p>
           </div>
@@ -158,55 +158,51 @@ export function ApiKeysSection() {
                 <TableHead>Created</TableHead>
                 <TableHead>Last Used</TableHead>
                 <TableHead>Status</TableHead>
-                <TableHead className="text-right">Actions</TableHead>
+                <TableHead className='text-right'>Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {apiKeys.map((apiKey) => (
                 <TableRow key={apiKey.id}>
-                  <TableCell className="font-medium">{apiKey.name}</TableCell>
-                  <TableCell className="flex items-center gap-2">
-                    <code className="relative rounded bg-muted px-2 py-1 text-sm font-mono">
-                      {showKey === apiKey.key
-                        ? apiKey.key
-                        : '••••••••••••••••'}
+                  <TableCell className='font-medium'>{apiKey.name}</TableCell>
+                  <TableCell className='flex items-center gap-2'>
+                    <code className='bg-muted relative rounded px-2 py-1 font-mono text-sm'>
+                      {showKey === apiKey.key ? apiKey.key : '••••••••••••••••'}
                     </code>
                     <Button
-                      variant="ghost"
-                      size="icon"
+                      variant='ghost'
+                      size='icon'
                       onClick={() => handleCopyKey(apiKey.key)}
                     >
-                      <IconCopy className="size-4" />
+                      <IconCopy className='size-4' />
                     </Button>
                     <Button
-                      variant="ghost"
-                      size="icon"
+                      variant='ghost'
+                      size='icon'
                       onClick={() => handleToggleKeyVisibility(apiKey.key)}
                     >
                       {showKey === apiKey.key ? (
-                        <IconEyeOff className="size-4" />
+                        <IconEyeOff className='size-4' />
                       ) : (
-                        <IconEye className="size-4" />
+                        <IconEye className='size-4' />
                       )}
                     </Button>
                   </TableCell>
                   <TableCell>{apiKey.created}</TableCell>
-                  <TableCell>
-                    {apiKey.lastUsed || 'Never used'}
-                  </TableCell>
+                  <TableCell>{apiKey.lastUsed || 'Never used'}</TableCell>
                   <TableCell>
                     <Badge variant={apiKey.isActive ? 'default' : 'secondary'}>
                       {apiKey.isActive ? 'Active' : 'Revoked'}
                     </Badge>
                   </TableCell>
-                  <TableCell className="text-right">
+                  <TableCell className='text-right'>
                     <Button
-                      variant="ghost"
-                      size="sm"
+                      variant='ghost'
+                      size='sm'
                       onClick={() => handleRevokeKey(apiKey.id)}
-                      className="text-destructive"
+                      className='text-destructive'
                     >
-                      <IconTrash className="size-4" />
+                      <IconTrash className='size-4' />
                     </Button>
                   </TableCell>
                 </TableRow>
@@ -215,9 +211,9 @@ export function ApiKeysSection() {
           </Table>
         )}
 
-        <div className="mt-4 rounded-md bg-blue-50 p-4 text-blue-700 dark:bg-blue-950 dark:text-blue-300">
-          <p className="text-sm font-medium">Security Notice</p>
-          <p className="mt-1 text-sm">
+        <div className='mt-4 rounded-md bg-blue-50 p-4 text-blue-700 dark:bg-blue-950 dark:text-blue-300'>
+          <p className='text-sm font-medium'>Security Notice</p>
+          <p className='mt-1 text-sm'>
             API keys have full access to your account. Never share your keys
             publicly or commit them to version control. Revoke any keys you no
             longer use.

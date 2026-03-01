@@ -1,14 +1,24 @@
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
-import { DashboardHeader, ActivityFeed, LecturerDashboard, StudentDashboard, AdminDashboard } from '@/features/dashboard';
+import {
+  DashboardHeader,
+  ActivityFeed,
+  LecturerDashboard,
+  StudentDashboard,
+  AdminDashboard
+} from '@/features/dashboard';
 import { getServerApiUrl } from '@/lib/server-api';
 import type {
   AdminDashboardResponse,
   DashboardRole,
   LecturerDashboardResponse,
-  StudentDashboardResponse,
+  StudentDashboardResponse
 } from '@/service/api/v2/types';
-import { fetchRoleDashboardData, isDashboardRole, type RoleDashboardData } from './page-utils';
+import {
+  fetchRoleDashboardData,
+  isDashboardRole,
+  type RoleDashboardData
+} from './page-utils';
 
 interface RoleDashboardPageProps {
   params: Promise<{
@@ -25,7 +35,9 @@ interface RoleDashboardPageProps {
  * - /dashboard/lecturer
  * - /dashboard/admin
  */
-export default async function RoleDashboardPage({ params }: RoleDashboardPageProps) {
+export default async function RoleDashboardPage({
+  params
+}: RoleDashboardPageProps) {
   const { role } = await params;
   const cookieStore = await cookies();
   const access = cookieStore.get('access_token')?.value;
@@ -52,7 +64,7 @@ export default async function RoleDashboardPage({ params }: RoleDashboardPagePro
   }
 
   return (
-    <div className="space-y-6">
+    <div className='space-y-6'>
       {/* Dashboard Header with Stats */}
       <DashboardHeader
         user={dashboardData.user}
@@ -65,20 +77,27 @@ export default async function RoleDashboardPage({ params }: RoleDashboardPagePro
       {/* Activity Feed (Common to all roles) */}
       <ActivityFeed
         activities={dashboardData.recentActivity}
-        title="Recent Activity"
+        title='Recent Activity'
         limit={5}
       />
     </div>
   );
 }
 
-function renderRoleSpecificDashboard(role: DashboardRole, dashboardData: RoleDashboardData) {
+function renderRoleSpecificDashboard(
+  role: DashboardRole,
+  dashboardData: RoleDashboardData
+) {
   if (role === 'student') {
-    return <StudentDashboard data={dashboardData as StudentDashboardResponse} />;
+    return (
+      <StudentDashboard data={dashboardData as StudentDashboardResponse} />
+    );
   }
 
   if (role === 'lecturer') {
-    return <LecturerDashboard data={dashboardData as LecturerDashboardResponse} />;
+    return (
+      <LecturerDashboard data={dashboardData as LecturerDashboardResponse} />
+    );
   }
 
   return <AdminDashboard data={dashboardData as AdminDashboardResponse} />;

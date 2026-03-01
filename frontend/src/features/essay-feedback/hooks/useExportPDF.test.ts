@@ -9,7 +9,9 @@ vi.mock('@react-pdf/renderer', async () => {
   return {
     ...actual,
     pdf: vi.fn(() => ({
-      toBlob: vi.fn(() => Promise.resolve(new Blob(['mock-pdf'], { type: 'application/pdf' })))
+      toBlob: vi.fn(() =>
+        Promise.resolve(new Blob(['mock-pdf'], { type: 'application/pdf' }))
+      )
     }))
   };
 });
@@ -30,9 +32,7 @@ describe('useExportPDF', () => {
     essayQuestion: 'Test Essay Question',
     essayContent: 'Test essay content',
     overallScore: 85,
-    scores: [
-      { category: 'Structure', score: 82, fullMark: 100 }
-    ],
+    scores: [{ category: 'Structure', score: 82, fullMark: 100 }],
     insights: [
       {
         id: '1',
@@ -80,12 +80,12 @@ describe('useExportPDF', () => {
       download: '',
       click: vi.fn()
     };
-    const createElementSpy = vi.spyOn(document, 'createElement').mockReturnValue(
-      mockLink as unknown as HTMLAnchorElement
-    );
-    const revokeObjectURLSpy = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(
-      vi.fn()
-    );
+    const createElementSpy = vi
+      .spyOn(document, 'createElement')
+      .mockReturnValue(mockLink as unknown as HTMLAnchorElement);
+    const revokeObjectURLSpy = vi
+      .spyOn(URL, 'revokeObjectURL')
+      .mockImplementation(vi.fn());
 
     await act(async () => {
       await result.current.generatePDF(mockData);
@@ -110,15 +110,17 @@ describe('useExportPDF', () => {
       download: '',
       click: vi.fn()
     };
-    const createElementSpy = vi.spyOn(document, 'createElement').mockReturnValue(
-      mockLink as unknown as HTMLAnchorElement
-    );
-    const revokeObjectURLSpy = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(
-      vi.fn()
-    );
+    const createElementSpy = vi
+      .spyOn(document, 'createElement')
+      .mockReturnValue(mockLink as unknown as HTMLAnchorElement);
+    const revokeObjectURLSpy = vi
+      .spyOn(URL, 'revokeObjectURL')
+      .mockImplementation(vi.fn());
 
     await act(async () => {
-      await result.current.generatePDF(mockData, { filename: 'custom-essay-report' });
+      await result.current.generatePDF(mockData, {
+        filename: 'custom-essay-report'
+      });
     });
 
     expect(mockLink.download).toBe('custom-essay-report.pdf');
@@ -137,12 +139,12 @@ describe('useExportPDF', () => {
       download: '',
       click: vi.fn()
     };
-    const createElementSpy = vi.spyOn(document, 'createElement').mockReturnValue(
-      mockLink as unknown as HTMLAnchorElement
-    );
-    const revokeObjectURLSpy = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(
-      vi.fn()
-    );
+    const createElementSpy = vi
+      .spyOn(document, 'createElement')
+      .mockReturnValue(mockLink as unknown as HTMLAnchorElement);
+    const revokeObjectURLSpy = vi
+      .spyOn(URL, 'revokeObjectURL')
+      .mockImplementation(vi.fn());
 
     await act(async () => {
       await result.current.generatePDF(mockData, { onSuccess: onSuccessMock });
@@ -159,9 +161,12 @@ describe('useExportPDF', () => {
     // Mock pdf() to throw error
     const { pdf } = await import('@react-pdf/renderer');
     vi.mocked(pdf).mockImplementationOnce(
-      () => ({
-        toBlob: vi.fn(() => Promise.reject(new Error('PDF generation failed')))
-      }) as any
+      () =>
+        ({
+          toBlob: vi.fn(() =>
+            Promise.reject(new Error('PDF generation failed'))
+          )
+        }) as any
     );
 
     const { result } = renderHook(() => useExportPDF());
@@ -187,19 +192,21 @@ describe('useExportPDF', () => {
       download: '',
       click: vi.fn()
     };
-    const createElementSpy = vi.spyOn(document, 'createElement').mockReturnValue(
-      mockLink as unknown as HTMLAnchorElement
-    );
-    const revokeObjectURLSpy = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(
-      vi.fn()
-    );
+    const createElementSpy = vi
+      .spyOn(document, 'createElement')
+      .mockReturnValue(mockLink as unknown as HTMLAnchorElement);
+    const revokeObjectURLSpy = vi
+      .spyOn(URL, 'revokeObjectURL')
+      .mockImplementation(vi.fn());
 
     await act(async () => {
       await result.current.generatePDF(mockData);
     });
 
     const { toast } = await import('sonner');
-    expect(toast.success).toHaveBeenCalledWith('PDF report exported successfully');
+    expect(toast.success).toHaveBeenCalledWith(
+      'PDF report exported successfully'
+    );
 
     // Cleanup
     createElementSpy.mockRestore();
@@ -209,9 +216,10 @@ describe('useExportPDF', () => {
   it('should show error toast on failed generation', async () => {
     const { pdf } = await import('@react-pdf/renderer');
     vi.mocked(pdf).mockImplementationOnce(
-      () => ({
-        toBlob: vi.fn(() => Promise.reject(new Error('Failed')))
-      }) as any
+      () =>
+        ({
+          toBlob: vi.fn(() => Promise.reject(new Error('Failed')))
+        }) as any
     );
 
     const { result } = renderHook(() => useExportPDF());
@@ -237,12 +245,12 @@ describe('useExportPDF', () => {
       download: '',
       click: vi.fn()
     };
-    const createElementSpy = vi.spyOn(document, 'createElement').mockReturnValue(
-      mockLink as unknown as HTMLAnchorElement
-    );
-    const revokeObjectURLSpy = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(
-      vi.fn()
-    );
+    const createElementSpy = vi
+      .spyOn(document, 'createElement')
+      .mockReturnValue(mockLink as unknown as HTMLAnchorElement);
+    const revokeObjectURLSpy = vi
+      .spyOn(URL, 'revokeObjectURL')
+      .mockImplementation(vi.fn());
 
     await act(async () => {
       await result.current.generatePDF(mockData);
@@ -277,12 +285,12 @@ describe('useExportPDF - Edge Cases', () => {
       download: '',
       click: vi.fn()
     };
-    const createElementSpy = vi.spyOn(document, 'createElement').mockReturnValue(
-      mockLink as unknown as HTMLAnchorElement
-    );
-    const revokeObjectURLSpy = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(
-      vi.fn()
-    );
+    const createElementSpy = vi
+      .spyOn(document, 'createElement')
+      .mockReturnValue(mockLink as unknown as HTMLAnchorElement);
+    const revokeObjectURLSpy = vi
+      .spyOn(URL, 'revokeObjectURL')
+      .mockImplementation(vi.fn());
 
     await act(async () => {
       await result.current.generatePDF(dataWithoutName);
@@ -314,12 +322,12 @@ describe('useExportPDF - Edge Cases', () => {
       download: '',
       click: vi.fn()
     };
-    const createElementSpy = vi.spyOn(document, 'createElement').mockReturnValue(
-      mockLink as unknown as HTMLAnchorElement
-    );
-    const revokeObjectURLSpy = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(
-      vi.fn()
-    );
+    const createElementSpy = vi
+      .spyOn(document, 'createElement')
+      .mockReturnValue(mockLink as unknown as HTMLAnchorElement);
+    const revokeObjectURLSpy = vi
+      .spyOn(URL, 'revokeObjectURL')
+      .mockImplementation(vi.fn());
 
     await act(async () => {
       await result.current.generatePDF(dataWithLongContent);
@@ -351,12 +359,12 @@ describe('useExportPDF - Edge Cases', () => {
       download: '',
       click: vi.fn()
     };
-    const createElementSpy = vi.spyOn(document, 'createElement').mockReturnValue(
-      mockLink as unknown as HTMLAnchorElement
-    );
-    const revokeObjectURLSpy = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(
-      vi.fn()
-    );
+    const createElementSpy = vi
+      .spyOn(document, 'createElement')
+      .mockReturnValue(mockLink as unknown as HTMLAnchorElement);
+    const revokeObjectURLSpy = vi
+      .spyOn(URL, 'revokeObjectURL')
+      .mockImplementation(vi.fn());
 
     await act(async () => {
       await result.current.generatePDF(dataWithoutSkills);
@@ -388,12 +396,12 @@ describe('useExportPDF - Edge Cases', () => {
       download: '',
       click: vi.fn()
     };
-    const createElementSpy = vi.spyOn(document, 'createElement').mockReturnValue(
-      mockLink as unknown as HTMLAnchorElement
-    );
-    const revokeObjectURLSpy = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(
-      vi.fn()
-    );
+    const createElementSpy = vi
+      .spyOn(document, 'createElement')
+      .mockReturnValue(mockLink as unknown as HTMLAnchorElement);
+    const revokeObjectURLSpy = vi
+      .spyOn(URL, 'revokeObjectURL')
+      .mockImplementation(vi.fn());
 
     await act(async () => {
       await result.current.generatePDF(dataWithoutRubrics);

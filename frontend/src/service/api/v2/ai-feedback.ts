@@ -2,7 +2,7 @@ import { request } from '@/service/request';
 import type {
   WorkflowRunRequest,
   WorkflowRunResponse,
-  WorkflowStatusResponse,
+  WorkflowStatusResponse
 } from './types';
 
 const BASE_URL = '/api/v2';
@@ -18,15 +18,15 @@ export const aiFeedbackService = {
         language: data.language || 'English',
         response_mode: data.response_mode || 'blocking',
         user_id: data.user_id,
-        rubric_id: data.rubric_id,
-      },
+        rubric_id: data.rubric_id
+      }
     });
   },
 
   async getWorkflowStatus(runId: string): Promise<WorkflowStatusResponse> {
     return request<WorkflowStatusResponse>({
       url: `${BASE_URL}/ai-feedback/agent/workflows/run/${runId}/status/`,
-      method: 'GET',
+      method: 'GET'
     });
   },
 
@@ -35,11 +35,11 @@ export const aiFeedbackService = {
       await this.analyzeEssay({
         essay_question: 'Test',
         essay_content: 'Test',
-        response_mode: 'blocking',
+        response_mode: 'blocking'
       });
       return true;
     } catch {
       return false;
     }
-  },
+  }
 };
