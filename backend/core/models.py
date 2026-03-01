@@ -230,8 +230,15 @@ class RubricLevelDesc(models.Model):
 
 class DeadlineExtension(models.Model):
     extension_id = models.AutoField(primary_key=True, db_comment="Unique identifier for deadline extension")
-    task_id_task = models.ForeignKey("Task", models.CASCADE, db_column="task_id_task", related_name="deadline_extensions")
-    user_id_user = models.ForeignKey("User", models.CASCADE, db_column="user_id_user", related_name="deadline_extensions")
+    task_id_task = models.ForeignKey(
+        "Task",
+        models.CASCADE,
+        db_column="task_id_task",
+        related_name="deadline_extensions",
+    )
+    user_id_user = models.ForeignKey(
+        "User", models.CASCADE, db_column="user_id_user", related_name="deadline_extensions"
+    )
     original_deadline = models.DateTimeField(db_comment="Original task deadline at time of extension")
     extended_deadline = models.DateTimeField(db_comment="New extended deadline for this student")
     reason = models.TextField(blank=True, default="", db_comment="Reason for extension")
@@ -373,7 +380,10 @@ class User(AbstractBaseUser, PermissionsMixin):
     preferences: models.JSONField = models.JSONField(
         default=dict,
         blank=True,
-        db_comment="User preferences: email_notifications, in_app_notifications, submission_alerts, grading_alerts, weekly_digest, language, theme",
+        db_comment=(
+            "User preferences: email_notifications, in_app_notifications, "
+            "submission_alerts, grading_alerts, weekly_digest, language, theme"
+        ),
     )
 
     objects = CoreUserManager()

@@ -13,6 +13,7 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 import os
 import secrets
 import sys
+from datetime import timedelta
 from pathlib import Path
 
 # Load environment variables from .env file in project root
@@ -87,7 +88,6 @@ CSRF_TRUSTED_ORIGINS = [
 ]
 
 # JWT settings for djangorestframework-simplejwt
-from datetime import timedelta
 
 SIMPLE_JWT = {
     "ACCESS_TOKEN_LIFETIME": timedelta(hours=24),
