@@ -7,20 +7,48 @@ copyright: 2024 EssayCoach Team
 repo_name: EssayCoach
 repo_url: https://github.com/Eryc123Y/EssayCoach
 edit_uri: edit/main/docs/
+exclude_docs: |
+  API_ENDPOINTS.md
+  API_V2_MIGRATION.md
+  CONTRIB.md
+  DATABASE_SCHEMA.md
+  DEPLOYMENT.md
+  DESIGN_PHILOSOPHY.md
+  ERD_DIAGRAM.md
+  MIGRATION_PREP.md
+  RUNBOOK.md
+  references.md
+  architecture/authentication.md
+  architecture/nix-environment.md
+  changelog/**
+  learnings/**
+  prd/**
+  troubleshooting/**
+  api-reference/endpoints 3.md
+  api-reference/endpoints 4.md
+not_in_nav: |
+  DB/DB-V2.md
+  backend/current-status.md
+  database/configuration.md
+  frontend/current-status.md
+  frontend/performance-optimization.md
+  plans/2026-02-27-profile-settings-sync-design.md
+  plans/2026-02-27-profile-settings-sync-plan.md
+  plans/dashboard-refactor-plan.md
 
 # Theme configuration optimized for developers
 theme:
   name: material
-  
+
   palette:
     - scheme: default
       primary: emerald
       accent: teal
-  
+
   font:
     text: Inter
     code: JetBrains Mono
-  
+
   features:
     - navigation.tabs
     - navigation.sections
@@ -36,16 +64,16 @@ theme:
     - content.action.edit
     - content.action.view
     - content.code.annotate
-  
+
   extra:
     social:
       - icon: fontawesome/brands/github
         link: https://github.com/eric-gt/EssayCoach
-    
+
   # Custom styling
   extra_css:
     - stylesheets/extra.css
-  
+
   # Custom JavaScript
   extra_javascript:
     - javascripts/extra.js
@@ -54,47 +82,47 @@ theme:
 nav:
   - Technical Overview: index.md
   - Platform Overview:
-    - Project Summary: EssayCoach Platform Summary.md
-    - Technical Summary: EssayCoach Platform Technical Project Summary.md
-    - Core Features: EssayCoach Platform Core Features and User Experience Flow.md
-    - Business Process: Business Process Workflow.md
+      - Project Summary: EssayCoach Platform Summary.md
+      - Technical Summary: EssayCoach Platform Technical Project Summary.md
+      - Core Features: EssayCoach Platform Core Features and User Experience Flow.md
+      - Business Process: Business Process Workflow.md
   - Architecture & Design:
-    - System Architecture: architecture/system-architecture.md
-    - Database Design: architecture/database-design.md
-    - API Specification: architecture/api-specification.md
-    - Dev Environment: architecture/development-environment.md
-    - Functional Modules: Functional Module Design.md
-    - Navigation Design: Navigation Bars Design.md
+      - System Architecture: architecture/system-architecture.md
+      - Database Design: architecture/database-design.md
+      - API Specification: architecture/api-specification.md
+      - Dev Environment: architecture/development-environment.md
+      - Functional Modules: Functional Module Design.md
+      - Navigation Design: Navigation Bars Design.md
   - Database Schema:
-    - Schema Overview: database/schema-overview.md
-    - ERD Diagram: database/erd-diagram.md
-    - Migration Strategy: database/migrations.md
-    - User Alignment: database/user-auth-alignment.md
-    - Database V3 Details: DB/DB-V3.md
+      - Schema Overview: database/schema-overview.md
+      - ERD Diagram: database/erd-diagram.md
+      - Migration Strategy: database/migrations.md
+      - User Alignment: database/user-auth-alignment.md
+      - Database V3 Details: DB/DB-V3.md
   - Backend Deep Dive:
-    - Django Models: backend/django-models.md
-    - Auth & Permissions: backend/auth-permissions.md
-    - Serializers & Views: backend/serializers-views.md
-    - Async Processing: backend/async-processing.md
-    - Testing Strategies: backend/testing.md
+      - Django Models: backend/django-models.md
+      - Auth & Permissions: backend/auth-permissions.md
+      - Serializers & Views: backend/serializers-views.md
+      - Async Processing: backend/async-processing.md
+      - Testing Strategies: backend/testing.md
   - API Reference:
       - Swagger UI: api-reference/swagger-ui.md
       - REST API: api-reference/endpoints.md
       - Database Models: backend/models/models.md
   - Frontend Architecture:
-    - Component Structure: frontend/component-structure.md
-    - State Management: frontend/state-management.md
-    - API Integration: frontend/api-integration.md
-    - Testing Patterns: frontend/testing.md
+      - Component Structure: frontend/component-structure.md
+      - State Management: frontend/state-management.md
+      - API Integration: frontend/api-integration.md
+      - Testing Patterns: frontend/testing.md
   - Development Guide:
-    - Environment Setup: development/environment-setup.md
-    - Debugging Guide: development/debugging.md
-    - Contributing: development/contributing.md
-    - Configuration: development/configuration.md
+      - Environment Setup: development/environment-setup.md
+      - Debugging Guide: development/debugging.md
+      - Contributing: development/contributing.md
+      - Configuration: development/configuration.md
   - Agentic Workflow:
-    - Agentic Design Plans: agentic-workflow/agentic-design.md
-    - Workflow Orchestration: agentic-workflow/workflow-orchestration.md
-    - Technique Stacks: agentic-workflow/technique-stacks.md
+      - Agentic Design Plans: agentic-workflow/agentic-design.md
+      - Workflow Orchestration: agentic-workflow/workflow-orchestration.md
+      - Technique Stacks: agentic-workflow/technique-stacks.md
 
 # Markdown extensions for technical content
 markdown_extensions:
@@ -134,7 +162,5 @@ plugins:
   - mermaid2:
       version: 10.6.1
       javascript: static/js/mermaid.min.js
-  - git-revision-date-localized:
-      type: datetime
   - minify:
       minify_html: true

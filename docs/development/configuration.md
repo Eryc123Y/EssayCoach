@@ -116,14 +116,14 @@ cd backend && uv run ruff check .
 
 ## Configuration File Responsibilities
 
-| File | Responsibility | Committed | Notes |
-|------|----------------|-----------|-------|
-| `pyproject.toml` | Python dependencies | Yes | Root project configuration |
-| `.env` | General configuration | Yes | Does not contain keys |
-| `.env.local` | Local overrides | No | Contains sensitive information |
-| `.env.example` | Configuration template | Yes | Provides default values |
-| `backend/.env` | Backend configuration | No | Django-specific settings |
-| `frontend/.env.local` | Frontend configuration | No | Next.js-specific settings |
+| File                  | Responsibility         | Committed | Notes                          |
+| --------------------- | ---------------------- | --------- | ------------------------------ |
+| `pyproject.toml`      | Python dependencies    | Yes       | Root project configuration     |
+| `.env`                | General configuration  | Yes       | Does not contain keys          |
+| `.env.local`          | Local overrides        | No        | Contains sensitive information |
+| `.env.example`        | Configuration template | Yes       | Provides default values        |
+| `backend/.env`        | Backend configuration  | No        | Django-specific settings       |
+| `frontend/.env.local` | Frontend configuration | No        | Next.js-specific settings      |
 
 ## Development Environment Configuration
 
@@ -131,7 +131,7 @@ See the [Environment Setup Guide](environment-setup.md) for complete development
 
 ## Related Files
 
-- [`.env.example`](../../.env.example) - Configuration template
+- `.env.example` - Configuration template
 - [Environment Setup Guide](environment-setup.md)
 - [Development Environment Architecture](../architecture/development-environment.md)
-- [Makefile](../../Makefile) - Command interface
+- `Makefile` - Command interface
