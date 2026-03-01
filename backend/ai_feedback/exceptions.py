@@ -8,49 +8,49 @@ application. All AI-related errors inherit from EssayAgentError.
 
 from __future__ import annotations
 
-from enum import Enum
+from enum import StrEnum, auto
 from typing import Any
 
 
-class ErrorCode(str, Enum):
+class ErrorCode(StrEnum):
     """Standardized error codes for AI feedback operations."""
 
     # Authentication & Configuration
-    AUTH_MISSING_API_KEY = "AUTH_MISSING_API_KEY"
-    AUTH_INVALID_API_KEY = "AUTH_INVALID_API_KEY"
-    CONFIG_MISSING = "CONFIG_MISSING"
-    CONFIG_INVALID = "CONFIG_INVALID"
+    AUTH_MISSING_API_KEY = auto()
+    AUTH_INVALID_API_KEY = auto()
+    CONFIG_MISSING = auto()
+    CONFIG_INVALID = auto()
 
     # Input Validation
-    INPUT_EMPTY_ESSAY = "INPUT_EMPTY_ESSAY"
-    INPUT_ESSAY_TOO_LONG = "INPUT_ESSAY_TOO_LONG"
-    INPUT_MISSING_REQUIRED = "INPUT_MISSING_REQUIRED"
-    INPUT_INVALID_FORMAT = "INPUT_INVALID_FORMAT"
+    INPUT_EMPTY_ESSAY = auto()
+    INPUT_ESSAY_TOO_LONG = auto()
+    INPUT_MISSING_REQUIRED = auto()
+    INPUT_INVALID_FORMAT = auto()
 
     # Resource Issues
-    RESOURCE_NOT_FOUND = "RESOURCE_NOT_FOUND"
-    RESOURCE_UPLOAD_FAILED = "RESOURCE_UPLOAD_FAILED"
-    RESOURCE_QUOTA_EXCEEDED = "RESOURCE_QUOTA_EXCEEDED"
+    RESOURCE_NOT_FOUND = auto()
+    RESOURCE_UPLOAD_FAILED = auto()
+    RESOURCE_QUOTA_EXCEEDED = auto()
 
     # API Errors
-    API_REQUEST_FAILED = "API_REQUEST_FAILED"
-    API_TIMEOUT = "API_TIMEOUT"
-    API_RATE_LIMITED = "API_RATE_LIMITED"
-    API_SERVER_ERROR = "API_SERVER_ERROR"
-    API_RESPONSE_INVALID = "API_RESPONSE_INVALID"
+    API_REQUEST_FAILED = auto()
+    API_TIMEOUT = auto()
+    API_RATE_LIMITED = auto()
+    API_SERVER_ERROR = auto()
+    API_RESPONSE_INVALID = auto()
 
     # Workflow Errors
-    WORKFLOW_NOT_FOUND = "WORKFLOW_NOT_FOUND"
-    WORKFLOW_EXECUTION_FAILED = "WORKFLOW_EXECUTION_FAILED"
-    WORKFLOW_CANCELLED = "WORKFLOW_CANCELLED"
+    WORKFLOW_NOT_FOUND = auto()
+    WORKFLOW_EXECUTION_FAILED = auto()
+    WORKFLOW_CANCELLED = auto()
 
     # Rubric Errors
-    RUBRIC_NOT_FOUND = "RUBRIC_NOT_FOUND"
-    RUBRIC_EMPTY = "RUBRIC_EMPTY"
-    RUBRIC_BUILD_FAILED = "RUBRIC_BUILD_FAILED"
+    RUBRIC_NOT_FOUND = auto()
+    RUBRIC_EMPTY = auto()
+    RUBRIC_BUILD_FAILED = auto()
 
     # General
-    UNKNOWN_ERROR = "UNKNOWN_ERROR"
+    UNKNOWN_ERROR = auto()
 
 
 class EssayAgentError(Exception):

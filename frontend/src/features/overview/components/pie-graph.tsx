@@ -112,6 +112,8 @@ export function PieGraph() {
               dataKey='count'
               nameKey='category'
               innerRadius={60}
+              outerRadius={80}
+              paddingAngle={2}
               strokeWidth={2}
               stroke='var(--background)'
             >

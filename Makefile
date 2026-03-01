@@ -1,4 +1,4 @@
-.PHONY: install dev dev-backend dev-frontend test lint clean db docs docs-generate docs-erd
+.PHONY: install dev dev-backend dev-frontend health health-check test test-performance lint clean db docs docs-generate docs-erd
 
 # Install all dependencies
 install:
@@ -16,11 +16,12 @@ dev: db
 	@echo "║  🌐 Frontend:    http://127.0.0.1:5100                        ║"
 	@echo "║  🔧 Backend:     http://127.0.0.1:8000                        ║"
 	@echo "║  📚 API Docs:    http://127.0.0.1:8000/api/docs/              ║"
+	@echo "║  📚 API v2 Docs: http://127.0.0.1:8000/api/v2/docs/           ║"
 	@echo "╠════════════════════════════════════════════════════════════════╣"
-	@echo "║  👤 Admin Login: admin@example.com / admin                    ║"
-	@echo "║  👨‍🎓 Test Users:  student1@example.com / student1               ║"
-	@echo "║                 student2@example.com / student2               ║"
-	@echo "║                 student3@example.com / student3               ║"
+	@echo "║  👤 Test Accounts:                                              ║"
+	@echo "║     admin@example.com    / admin123    (admin)                 ║"
+	@echo "║     lecturer@example.com / lecturer123 (lecturer)              ║"
+	@echo "║     student@example.com / student123  (student)               ║"
 	@echo "╠════════════════════════════════════════════════════════════════╣"
 	@echo "║  💡 Tip: Press Ctrl+C to stop all services                    ║"
 	@echo "╚════════════════════════════════════════════════════════════════╝"
@@ -30,13 +31,21 @@ dev: db
 # Start backend only
 dev-backend:
 	@echo "Starting Django backend on http://127.0.0.1:8000..."
-	@echo "📚 API Docs available at: http://127.0.0.1:8000/api/schema/"
+	@echo "📚 API v1 Docs: http://127.0.0.1:8000/api/docs/"
+	@echo "📚 API v2 Docs: http://127.0.0.1:8000/api/v2/docs/"
 	@cd backend && .venv/bin/python manage.py runserver 127.0.0.1:8000
 
 # Start frontend only
 dev-frontend:
 	@echo "Starting Next.js frontend on port 5100..."
 	@cd frontend && pnpm dev
+
+# Check and self-heal local dev services
+health:
+	@./scripts/dev/health-check.sh
+
+health-check:
+	@./scripts/dev/health-check.sh --check-only
 
 # Database management (Docker Compose)
 db:
@@ -74,16 +83,22 @@ seed-db:
 	@cd backend && .venv/bin/python manage.py seed_db
 	@echo ""
 	@echo "✅ Database seeded successfully!"
-	@echo "👤 Admin login: admin@example.com / admin"
-	@echo "👨‍🎓 Student logins: student1@example.com / student1, student2@example.com / student2, student3@example.com / student3"
+	@echo "👤 Test Accounts:"
+	@echo "   admin@example.com    / admin123    (admin)"
+	@echo "   lecturer@example.com / lecturer123 (lecturer)"
+	@echo "   student@example.com  / student123  (student)"
 
 # Testing
 test:
-	@echo "Running Python tests..."
-	@cd backend && .venv/bin/pytest
+	@echo "Running API v2 tests (excluding performance)..."
+	@cd backend && .venv/bin/pytest -m "not performance" -v --timeout=120
 	@echo ""
 	@echo "Running Node tests..."
 	@cd frontend && pnpm test
+
+test-performance:
+	@echo "Running API v2 performance tests..."
+	@cd backend && .venv/bin/pytest -m performance -v --timeout=120
 
 # Code quality
 lint:
@@ -109,7 +124,7 @@ format:
 
 typecheck:
 	@echo "Running Python type checking..."
-	@cd backend && .venv/bin/mypy .
+	@cd backend && .venv/bin/pyright
 
 # Build
 build:

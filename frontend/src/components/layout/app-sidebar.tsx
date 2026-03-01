@@ -32,6 +32,7 @@ import {
 import { UserAvatarProfile } from '@/components/user-avatar-profile';
 import { navItems } from '@/constants/data';
 import { useAuth } from '@/components/layout/simple-auth-context';
+import { Skeleton } from '@/components/ui/skeleton';
 import {
   IconBell,
   IconChevronRight,
@@ -54,34 +55,47 @@ export default function AppSidebar() {
   // Filter nav items based on user role
   const filteredNavItems = React.useMemo(() => {
     if (!user) {
-      console.log('[Sidebar Debug] No user found, returning empty nav items');
       return [];
     }
 
-    console.log('[Sidebar Debug] User found:', JSON.stringify(user));
-    console.log('[Sidebar Debug] User role:', user.role);
-
-    const result = navItems.filter((item) => {
+    return navItems.filter((item) => {
       if (!item.roles) {
-        console.log(
-          `[Sidebar Debug] ${item.title}: No role restriction, visible`
-        );
-        return true; // No role restriction, visible to all
+        return true;
       }
-
-      const isVisible = item.roles.includes(user.role);
-      console.log(
-        `[Sidebar Debug] ${item.title}: Roles=${JSON.stringify(item.roles)}, UserRole=${user.role}, Visible=${isVisible}`
-      );
-      return isVisible;
+      return item.roles.includes(user.role);
     });
-
-    console.log(
-      '[Sidebar Debug] Filtered nav items:',
-      result.map((i) => i.title)
-    );
-    return result;
   }, [user]);
+
+  // Show skeleton loading state while user data is being fetched
+  if (!user) {
+    return (
+      <Sidebar collapsible='icon'>
+        <SidebarHeader>
+          <Skeleton className='h-12 w-full' />
+        </SidebarHeader>
+        <SidebarContent>
+          <SidebarGroup>
+            <SidebarGroupLabel>
+              <Skeleton className='h-4 w-16' />
+            </SidebarGroupLabel>
+            <SidebarMenu>
+              {[1, 2, 3].map((i) => (
+                <SidebarMenuItem key={i}>
+                  <SidebarMenuButton>
+                    <Skeleton className='h-4 w-4' />
+                    <Skeleton className='h-4 w-24' />
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroup>
+        </SidebarContent>
+        <SidebarFooter>
+          <Skeleton className='h-12 w-full' />
+        </SidebarFooter>
+      </Sidebar>
+    );
+  }
 
   return (
     <Sidebar collapsible='icon'>

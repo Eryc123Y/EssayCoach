@@ -13,7 +13,17 @@ https://docs.djangoproject.com/en/4.2/ref/settings/
 import os
 import secrets
 import sys
+from datetime import timedelta
 from pathlib import Path
+
+# Load environment variables from .env file in project root
+try:
+    from dotenv import load_dotenv
+
+    env_path = Path(__file__).resolve().parent.parent.parent / ".env"
+    load_dotenv(env_path)
+except ImportError:
+    pass
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -45,16 +55,9 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "corsheaders",
-    "rest_framework",
-    "rest_framework.authtoken",  # For token-based authentication
-    "django_filters",
-    "drf_spectacular",  # OpenAPI 3.0 schema generation
     "django_extensions",  # Management commands including graph_models for ERD
-    # Custom Apps
+    # Custom Apps - API v2 (Ninja)
     "core",
-    "auth",
-    "analytics",
-    "ai_feedback",
 ]
 
 MIDDLEWARE = [
@@ -84,89 +87,41 @@ CSRF_TRUSTED_ORIGINS = [
     "http://127.0.0.1:3000",
 ]
 
-# Django REST Framework settings (DRF global)
-REST_FRAMEWORK = {
-    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.PageNumberPagination",
-    "PAGE_SIZE": 50,
-    "DATETIME_FORMAT": "%Y-%m-%d %H:%M:%S",
-    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
-    "DEFAULT_RENDERER_CLASSES": [
-        "rest_framework.renderers.JSONRenderer",
-        "rest_framework.renderers.BrowsableAPIRenderer",
-    ],
-    "DEFAULT_PARSER_CLASSES": [
-        "rest_framework.parsers.JSONParser",
-        "rest_framework.parsers.FormParser",
-        "rest_framework.parsers.MultiPartParser",
-    ],
-    "DEFAULT_PERMISSION_CLASSES": [
-        "rest_framework.permissions.IsAuthenticated",
-    ],
-    "DEFAULT_AUTHENTICATION_CLASSES": [
-        "rest_framework.authentication.SessionAuthentication",
-        "rest_framework.authentication.TokenAuthentication",
-    ]
-    + (["rest_framework.authentication.BasicAuthentication"] if IS_DEBUGGING else []),
+# JWT settings for djangorestframework-simplejwt
+
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(hours=24),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=7),
+    "ROTATE_REFRESH_TOKENS": True,  # Critical: Generate new refresh token on each use
+    "BLACKLIST_AFTER_ROTATION": True,  # Critical: Blacklist old refresh tokens
+    "UPDATE_LAST_LOGIN": True,
+    "ALGORITHM": "HS256",
+    "SIGNING_KEY": SECRET_KEY,
+    "VERIFYING_KEY": None,
+    "AUDIENCE": os.environ.get("JWT_AUDIENCE", "essaycoach-frontend"),
+    "ISSUER": os.environ.get("JWT_ISSUER", "essaycoach-backend"),
+    "JWK_URL": None,
+    "LEEWAY": 0,
+    "AUTH_HEADER_TYPES": ("Bearer",),
+    "AUTH_HEADER_NAME": "HTTP_AUTHORIZATION",
+    "USER_ID_FIELD": "user_id",
+    "USER_ID_CLAIM": "user_id",
+    "USER_AUTHENTICATION_RULE": "rest_framework_simplejwt.authentication.default_user_authentication_rule",
+    "AUTH_TOKEN_CLASSES": ("rest_framework_simplejwt.tokens.AccessToken",),
+    "TOKEN_TYPE_CLAIM": "token_type",
+    "JTI_CLAIM": "jti",
+    "SLIDING_TOKEN_REFRESH_EXP_CLAIM": "refresh_exp",
+    "SLIDING_TOKEN_LIFETIME": timedelta(minutes=5),
+    "SLIDING_TOKEN_REFRESH_LIFETIME": timedelta(days=1),
 }
 
-# drf-spectacular settings for OpenAPI 3.0 documentation
-SPECTACULAR_SETTINGS = {
-    "TITLE": "EssayCoach API",
-    "DESCRIPTION": (
-        "Comprehensive REST API documentation for EssayCoach - An intelligent "
-        "essay feedback platform that leverages AI to provide students with "
-        "instant, in-depth, multi-dimensional essay feedback."
-    ),
-    "VERSION": "1.0.0",
-    "SERVE_INCLUDE_SCHEMA": False,
-    "COMPONENT_SPLIT_REQUEST": True,
-    "SCHEMA_PATH_PREFIX": "/api/v1",
-    "AUTHENTICATION_WHITELIST": [
-        "rest_framework.authentication.SessionAuthentication",
-        "rest_framework.authentication.TokenAuthentication",
-    ]
-    + (["rest_framework.authentication.BasicAuthentication"] if IS_DEBUGGING else []),
-    "TAGS": [
-        {
-            "name": "Authentication",
-            "description": "User authentication and authorization endpoints",
-        },
-        {"name": "Users", "description": "User management endpoints"},
-        {
-            "name": "Courses",
-            "description": ("Course structure management (Units, Classes, Enrollments, Teaching Assignments)"),
-        },
-        {
-            "name": "Rubrics",
-            "description": (
-                "Rubric configuration and management (Marking Rubrics, Rubric Items, Rubric Level Descriptions)"
-            ),
-        },
-        {"name": "Tasks", "description": "Assignment and task management"},
-        {"name": "Submissions", "description": "Student submission management"},
-        {
-            "name": "Feedback",
-            "description": "Feedback and evaluation management (Feedbacks, Feedback Items)",
-        },
-    ],
-    "SWAGGER_UI_SETTINGS": {
-        "deepLinking": True,
-        "displayOperationId": True,
-        "filter": True,
-        "showExtensions": True,
-        "showCommonExtensions": True,
-    },
-    "REDOC": {
-        "hideHostname": False,
-        "showApiVersion": True,
-    },
-    "POSTPROCESSING_HOOKS": [
-        "drf_spectacular.hooks.postprocess_schema_enums",
-    ],
-    "ENUM_NAME_OVERRIDES": {
-        # Override enum names for better documentation
-    },
-}
+# Custom JWT settings for EssayCoach
+JWT_SECRET_KEY = SECRET_KEY
+JWT_ALGORITHM = "HS256"
+JWT_ACCESS_TOKEN_LIFETIME_HOURS = 24
+JWT_REFRESH_TOKEN_LIFETIME_DAYS = 7
+JWT_ISSUER = os.environ.get("JWT_ISSUER", "essaycoach-backend")
+JWT_AUDIENCE = os.environ.get("JWT_AUDIENCE", "essaycoach-frontend")
 
 ROOT_URLCONF = "essay_coach.urls"
 
@@ -256,7 +211,7 @@ AUTH_USER_MODEL = "core.User"
 
 # SiliconFlow AI Configuration (for rubric parsing)
 SILICONFLOW_API_KEY = os.environ.get("SILICONFLOW_API_KEY", "")
-SILICONFLOW_API_URL = "https://api.siliconflow.cn/v1/chat/completions"  # 使用正确的.cn域名
+SILICONFLOW_API_URL = "https://api.siliconflow.cn/v1/chat/completions"  # Use correct .cn domain for China region
 SILICONFLOW_MODEL = "Qwen/Qwen3-Next-80B-A3B-Instruct"
 
 # Logging Configuration

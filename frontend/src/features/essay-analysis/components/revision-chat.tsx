@@ -1,56 +1,82 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { Send, Bot, User, Sparkles } from 'lucide-react';
+import { Send, Bot, User, Sparkles, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { cn } from '@/lib/utils';
+import { fetchChatMessage } from '@/service/api/dify';
+import { toast } from 'sonner';
 
 interface Message {
   id: string;
   role: 'user' | 'assistant';
   content: string;
+  timestamp?: Date;
 }
 
-const MOCK_MESSAGES: Message[] = [
-  {
-    id: '1',
-    role: 'assistant',
-    content:
-      "Hi! I've analyzed your essay. I noticed some great points in your thesis, but the second paragraph could use more supporting evidence. How can I help you revise?"
-  }
-];
+// Store conversation ID for multi-turn context
+let conversationId: string | null = null;
 
 export function RevisionChat() {
-  const [messages, setMessages] = useState<Message[]>(MOCK_MESSAGES);
+  const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
 
-  const handleSend = () => {
+  // Get essay context from parent component or localStorage
+  const getEssayContext = () => {
+    // In a real implementation, this would come from props or a global store
+    // For now, we use a minimal context
+    return {
+      essay_id: undefined, // Would be passed from parent
+      conversation_id: conversationId || undefined
+    };
+  };
+
+  const handleSend = async () => {
     if (!input.trim()) return;
 
     const userMsg: Message = {
       id: Date.now().toString(),
       role: 'user',
-      content: input
+      content: input,
+      timestamp: new Date()
     };
 
     setMessages((prev) => [...prev, userMsg]);
     setInput('');
+    setIsLoading(true);
 
-    // Simulate AI response
-    setTimeout(() => {
+    try {
+      const response = await fetchChatMessage({
+        message: input,
+        context: getEssayContext()
+      });
+
       const aiMsg: Message = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
-        content:
-          "That's a good question. To strengthen your argument, consider adding a specific example from the text you're analyzing. Would you like me to suggest one?"
+        content: response.message,
+        timestamp: response.timestamp ? new Date(response.timestamp) : new Date()
       };
-      setMessages((prev) => [...prev, aiMsg]);
-    }, 1000);
+
+      // Store conversation ID for follow-up messages
+      if (response.message) {
+        setMessages((prev) => [...prev, aiMsg]);
+      }
+    } catch (error) {
+      const errorMessage = error instanceof Error ? error.message : 'Failed to send message';
+      toast.error(errorMessage);
+
+      // Remove the user message if API failed
+      setMessages((prev) => prev.filter((msg) => msg.id !== userMsg.id));
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -124,16 +150,26 @@ export function RevisionChat() {
             <Input
               value={input}
               onChange={(e) => setInput(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  handleSend();
+                }
+              }}
               placeholder='Ask about grammar, clarity, or style...'
               className='bg-background/80 border-muted focus-visible:ring-primary/30 flex-1 shadow-inner'
             />
             <Button
               type='submit'
               size='icon'
-              disabled={!input.trim()}
-              className='bg-primary shadow-primary/20 shadow-lg transition-transform hover:scale-105'
+              disabled={!input.trim() || isLoading}
+              className='bg-primary shadow-primary/20 shadow-lg transition-transform hover:scale-105 disabled:opacity-50'
             >
-              <Send className='h-4 w-4' />
+              {isLoading ? (
+                <Loader2 className='h-4 w-4 animate-spin' />
+              ) : (
+                <Send className='h-4 w-4' />
+              )}
             </Button>
           </form>
         </div>

@@ -23,13 +23,15 @@ export interface RubricDetail {
   rubric_desc: string;
   rubric_create_time: string;
   rubric_items: RubricItem[];
+  visibility?: 'public' | 'private';
 }
 
 export interface RubricListItem {
   rubric_id: number;
   rubric_desc: string;
   rubric_create_time: string;
-  user_id: number;
+  user_id_user: number;
+  visibility?: 'public' | 'private';
 }
 
 export interface RubricImportResponse {
@@ -69,7 +71,7 @@ export function uploadRubricPDF(
   }
 
   return request<RubricImportResponse>({
-    url: '/api/v1/core/rubrics/import_from_pdf_with_ai/',
+    url: '/api/v2/core/rubrics/import_from_pdf_with_ai/',
     method: 'POST',
     data: formData
   });
@@ -77,13 +79,14 @@ export function uploadRubricPDF(
 
 /**
  * Get list of all rubrics
+ * Note: Backend returns plain array, not paginated response
  */
 export function fetchRubricList(params?: {
   page?: number;
   page_size?: number;
-}): Promise<RubricListResponse> {
-  return request<RubricListResponse>({
-    url: '/api/v1/core/rubrics/',
+}): Promise<RubricListItem[]> {
+  return request<RubricListItem[]>({
+    url: '/api/v2/core/rubrics/',
     method: 'GET',
     params
   });
@@ -94,7 +97,7 @@ export function fetchRubricList(params?: {
  */
 export function fetchRubricDetail(rubricId: number): Promise<RubricDetail> {
   return request<RubricDetail>({
-    url: `/api/v1/core/rubrics/${rubricId}/detail_with_items/`,
+    url: `/api/v2/core/rubrics/${rubricId}/detail/`,
     method: 'GET'
   }).then((data) => {
     data.rubric_items = data.rubric_items ?? [];
@@ -110,7 +113,35 @@ export function fetchRubricDetail(rubricId: number): Promise<RubricDetail> {
  */
 export function deleteRubric(rubricId: number): Promise<void> {
   return request<void>({
-    url: `/api/v1/core/rubrics/${rubricId}/`,
+    url: `/api/v2/core/rubrics/${rubricId}/`,
     method: 'DELETE'
+  });
+}
+
+/**
+ * Get list of public rubrics (available to all users)
+ */
+export function fetchPublicRubrics(params?: {
+  page?: number;
+  page_size?: number;
+}): Promise<RubricListItem[]> {
+  return request<RubricListItem[]>({
+    url: '/api/v2/core/rubrics/public/',
+    method: 'GET',
+    params
+  });
+}
+
+/**
+ * Toggle rubric visibility (public/private)
+ */
+export function toggleRubricVisibility(
+  rubricId: number,
+  visibility: 'public' | 'private'
+): Promise<{ rubric_id: number; visibility: 'public' | 'private' }> {
+  return request<{ rubric_id: number; visibility: 'public' | 'private' }>({
+    url: `/api/v2/core/rubrics/${rubricId}/visibility/`,
+    method: 'PATCH',
+    data: { visibility }
   });
 }

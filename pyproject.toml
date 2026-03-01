@@ -22,6 +22,6 @@ target-version = ['py312']
 
 [dependency-groups]
 dev = [
-    "django-stubs>=4.2,<5.0",
-    "django-stubs-ext>=5.2.9",
+    "pytest>=9.0.2",
+    "pytest-django>=4.11.1",
 ]

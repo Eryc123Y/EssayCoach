@@ -2,7 +2,7 @@
 Response transformer for converting AI provider responses to standard format.
 
 This module provides transformers that convert responses from different AI
-providers (Dify, LangChain, etc.) into the standardized EssayAnalysisOutput
+providers (Dify, LangChain, etc.) into the standardized EssayAnalysisOut
 format used by EssayCoach.
 """
 
@@ -10,17 +10,15 @@ from __future__ import annotations
 
 from typing import Any
 
+from api_v2.ai_feedback.schemas import EssayAnalysisOut, FeedbackItemOut
+
 from .exceptions import APIError
 from .interfaces import WorkflowOutput, WorkflowStatus
-from .schemas import (
-    EssayAnalysisOutput,
-    FeedbackItem,
-)
 
 
 class ResponseTransformer:
     """
-    Transform AI provider responses to standard EssayAnalysisOutput format.
+    Transform AI provider responses to standard EssayAnalysisOut format.
 
     This class handles the conversion of raw responses from various AI
     providers into a consistent output format, regardless of the provider.
@@ -29,15 +27,15 @@ class ResponseTransformer:
     def __init__(self, provider_name: str = "unknown") -> None:
         self.provider_name = provider_name
 
-    def to_analysis_output(self, raw_response: dict[str, Any]) -> EssayAnalysisOutput:
+    def to_analysis_output(self, raw_response: dict[str, Any]) -> EssayAnalysisOut:
         """
-        Convert raw provider response to EssayAnalysisOutput.
+        Convert raw provider response to EssayAnalysisOut.
 
         Args:
             raw_response: Raw response from the AI provider
 
         Returns:
-            Standardized EssayAnalysisOutput
+            Standardized EssayAnalysisOut
 
         Raises:
             APIError: If the response cannot be parsed
@@ -56,7 +54,7 @@ class ResponseTransformer:
             # Calculate percentage
             percentage = (overall_score / total_possible * 100) if total_possible > 0 else 0
 
-            return EssayAnalysisOutput(
+            return EssayAnalysisOut(
                 overall_score=overall_score,
                 total_possible=total_possible,
                 percentage_score=round(percentage, 2),
@@ -103,7 +101,7 @@ class ResponseTransformer:
             finished_at=raw_response.get("finished_at"),
         )
 
-    def _parse_feedback_items(self, results: list[dict[str, Any]] | None) -> list[FeedbackItem]:
+    def _parse_feedback_items(self, results: list[dict[str, Any]] | None) -> list[FeedbackItemOut]:
         """Parse feedback items from results list."""
         if not results:
             return []
@@ -114,7 +112,7 @@ class ResponseTransformer:
                 continue
 
             items.append(
-                FeedbackItem(
+                FeedbackItemOut(
                     criterion_name=result.get("criterion", "Unknown Criterion"),
                     score=float(result.get("score", 0)),
                     max_score=float(result.get("max_score", 100)),
@@ -185,9 +183,9 @@ class DifyResponseTransformer(ResponseTransformer):
     def __init__(self) -> None:
         super().__init__(provider_name="dify")
 
-    def to_analysis_output(self, raw_response: dict[str, Any]) -> EssayAnalysisOutput:
+    def to_analysis_output(self, raw_response: dict[str, Any]) -> EssayAnalysisOut:
         """
-        Convert Dify-specific response to EssayAnalysisOutput.
+        Convert Dify-specific response to EssayAnalysisOut.
 
         Dify returns responses in a specific format with outputs nested
         under the 'data' key for some endpoints.
@@ -219,9 +217,9 @@ class LangChainResponseTransformer(ResponseTransformer):
     def __init__(self) -> None:
         super().__init__(provider_name="langchain")
 
-    def to_analysis_output(self, raw_response: dict[str, Any]) -> EssayAnalysisOutput:
+    def to_analysis_output(self, raw_response: dict[str, Any]) -> EssayAnalysisOut:
         """
-        Convert LangChain-specific response to EssayAnalysisOutput.
+        Convert LangChain-specific response to EssayAnalysisOut.
 
         LangChain responses have a different structure than Dify.
         """

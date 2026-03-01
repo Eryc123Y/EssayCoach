@@ -209,11 +209,28 @@ nitro.json
 /AGENTS.md
 .DS_Store
 
+# Claude Code configuration
+.claude/
+.skills/
+
+# Test screenshots
+*.png
+!frontend/src/**/*.png
+
+# Temporary folders
+tasks/
+temp/
+tmp/
+
 # Auto-generated documentation (build-only, not committed)
 docs/api-reference/endpoints.md
 docs/api-reference/endpoints 2.md
 docs/backend/models/models.md
 .doc_generator_cache.json
+.env
+backend/api_v1/
+.claude/settings.json
+.worktrees/
 
 # iCloud/Dropbox file sync conflict files
 * 2.*

@@ -2,7 +2,7 @@
 
 ## Overview
 
-The frontend integrates with the Django REST API using Axios with interceptors for authentication and error handling.
+The frontend integrates with the Django REST API using a lightweight `fetch` wrapper for authentication and error handling.
 
 ## API Client Setup
 
@@ -37,13 +37,32 @@ export const essayService = {
 
 ### Auth Service
 ```typescript
-// services/auth.service.ts
-export const authService = {
-  async login(credentials: LoginDto) {
-    return api.post('/api/auth/login/', credentials)
-  }
-}
+// frontend/src/service/api/auth.ts
+export const fetchLogin = (userName: string, password: string) =>
+  request<Api.Auth.LoginToken>({
+    url: '/auth/login',
+    method: 'POST',
+    data: { userName, password }
+  })
+
+export const fetchGetUserInfo = () =>
+  request<Api.Auth.UserInfo>({
+    url: '/auth/getUserInfo',
+    method: 'GET'
+  })
 ```
+
+### Next.js API Routes
+
+The frontend uses Next.js API routes as a lightweight proxy layer for auth endpoints:
+
+| Route | Purpose |
+|-------|---------|
+| `POST /auth/login` | Proxy to `/api/v1/auth/login/` |
+| `GET /auth/getUserInfo` | Proxy to `/api/v1/auth/me/` |
+| `GET /auth/error` | Frontend error simulation endpoint |
+
+> `refreshToken` is intentionally deferred and not implemented yet.
 
 ## Error Handling
 

@@ -20,6 +20,9 @@ import { Button } from '@/components/ui/button';
 import { ChevronLeft } from 'lucide-react';
 import { fetchDifyWorkflowRun } from '@/service/api/dify';
 import { useAuth } from '@/components/layout/simple-auth-context';
+// TODO: Implement useExportPDF hook
+// import { useExportPDF } from '@/features/essay-feedback/hooks/useExportPDF';
+import type { FeedbackPDFData, SkillData } from '@/features/essay-feedback/components/feedback-pdf';
 
 type AnalysisState = 'input' | 'analyzing' | 'results';
 
@@ -42,6 +45,60 @@ export default function AIAnalysisPage() {
 
   const { user } = useAuth();
   const searchParams = useSearchParams();
+  // TODO: Implement PDF export functionality
+  // const { generatePDF, isGenerating } = useExportPDF();
+  const isGenerating = false;
+
+  // Convert analysis result to PDF data format
+  const convertToPDFData = (): FeedbackPDFData | null => {
+    if (!essayData || !analysisResult || !user) return null;
+
+    // Convert scores to skills format for radar chart
+    const skills: SkillData = {
+      grammar: analysisResult.scores.find(s => s.category === 'Grammar')?.score || 0,
+      logic: analysisResult.scores.find(s => s.category === 'Content')?.score || 0,
+      tone: analysisResult.scores.find(s => s.category === 'Style')?.score || 0,
+      structure: analysisResult.scores.find(s => s.category === 'Structure')?.score || 0,
+      vocabulary: analysisResult.scores.find(s => s.category === 'Language')?.score || 0
+    };
+
+    // If we don't have all 5 skills, distribute scores evenly
+    if (skills.grammar === 0 && skills.logic === 0 && skills.tone === 0 &&
+        skills.structure === 0 && skills.vocabulary === 0) {
+      // Use available scores or default to overall score
+      const defaultScore = analysisResult.overallScore;
+      skills.grammar = analysisResult.scores[0]?.score || defaultScore;
+      skills.logic = analysisResult.scores[1]?.score || defaultScore;
+      skills.tone = analysisResult.scores[2]?.score || defaultScore;
+      skills.structure = analysisResult.scores[0]?.score || defaultScore;
+      skills.vocabulary = analysisResult.scores[1]?.score || defaultScore;
+    }
+
+    return {
+      studentName: `${user.firstName} ${user.lastName}`.trim() || 'Student',
+      studentEmail: user.email,
+      submissionDate: new Date().toISOString().split('T')[0],
+      essayQuestion: essayData.question,
+      essayContent: essayData.content,
+      overallScore: analysisResult.overallScore,
+      scores: analysisResult.scores,
+      skills,
+      insights: analysisResult.insights
+    };
+  };
+
+  const handleExportPDF = () => {
+    toast.error('PDF export feature is coming soon!');
+    // TODO: Implement PDF export
+    // const pdfData = convertToPDFData();
+    // if (!pdfData) {
+    //   toast.error('No analysis data available to export');
+    //   return;
+    // }
+    // await generatePDF(pdfData, {
+    //   filename: `essay-feedback-${new Date().toISOString().split('T')[0]}`
+    // });
+  };
 
   // Check for view=results URL parameter to show demo results
   useEffect(() => {
@@ -383,7 +440,13 @@ export default function AIAnalysisPage() {
                   </p>
                 </div>
                 <div className='flex gap-2'>
-                  <Button variant='outline'>Export PDF</Button>
+                  <Button
+                    variant='outline'
+                    onClick={handleExportPDF}
+                    disabled={isGenerating}
+                  >
+                    {isGenerating ? 'Exporting...' : 'Export PDF'}
+                  </Button>
                   <Button>Save to Portfolio</Button>
                 </div>
               </div>

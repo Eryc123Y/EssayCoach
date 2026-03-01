@@ -110,21 +110,22 @@ describe('AIAnalysisPage', () => {
   it('renders the essay submission form initially', () => {
     render(<AIAnalysisPage />);
 
-    expect(screen.getByText(/Essay Analysis/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/Essay Question/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/Content/i)).toBeInTheDocument();
-    expect(
-      screen.getByRole('button', { name: /Start AI Analysis/i })
-    ).toBeInTheDocument();
+    expect(screen.getByText(/Essay Practice/i)).toBeInTheDocument();
+    expect(screen.getByLabelText(/Essay Question \/ Topic/i)).toBeInTheDocument();
+    expect(screen.getByRole('button', { name: /Continue/i })).toBeInTheDocument();
   });
 
-  it('allows user input in question and content fields', () => {
+  it('allows user input in question and content fields', async () => {
     render(<AIAnalysisPage />);
 
-    const questionInput = screen.getByLabelText(/Essay Question/i);
-    const contentInput = screen.getByLabelText(/Content/i);
-
+    const questionInput = screen.getByLabelText(/Essay Question \/ Topic/i);
     fireEvent.change(questionInput, { target: { value: 'Test Question' } });
+    fireEvent.click(screen.getByRole('button', { name: /Continue/i }));
+
+    const contentInput = await screen.findByPlaceholderText(
+      /Paste or type your essay here/i
+    );
+
     fireEvent.change(contentInput, { target: { value: 'Test Essay Content' } });
 
     expect(questionInput).toHaveValue('Test Question');
@@ -139,16 +140,19 @@ describe('AIAnalysisPage', () => {
     render(<AIAnalysisPage />);
 
     // Fill form
-    fireEvent.change(screen.getByLabelText(/Essay Question/i), {
+    fireEvent.change(screen.getByLabelText(/Essay Question \/ Topic/i), {
       target: { value: 'Test Question' }
     });
-    fireEvent.change(screen.getByLabelText(/Content/i), {
+    fireEvent.click(screen.getByRole('button', { name: /Continue/i }));
+
+    fireEvent.change(await screen.findByPlaceholderText(/Paste or type your essay here/i), {
       target: { value: 'Test Essay Content' }
     });
+    fireEvent.click(screen.getByRole('button', { name: /Continue/i }));
 
     // Submit
     const submitBtn = screen.getByRole('button', {
-      name: /Start AI Analysis/i
+      name: /Analyze My Essay/i
     });
     expect(submitBtn).not.toBeDisabled();
     fireEvent.click(submitBtn);
@@ -160,7 +164,8 @@ describe('AIAnalysisPage', () => {
         essay_content: 'Test Essay Content',
         language: 'English',
         response_mode: 'blocking',
-        user_id: mockUser.id
+        user_id: mockUser.id,
+        rubric_id: undefined
       });
     });
   });
@@ -173,13 +178,16 @@ describe('AIAnalysisPage', () => {
 
     render(<AIAnalysisPage />);
 
-    fireEvent.change(screen.getByLabelText(/Essay Question/i), {
+    fireEvent.change(screen.getByLabelText(/Essay Question \/ Topic/i), {
       target: { value: 'Q' }
     });
-    fireEvent.change(screen.getByLabelText(/Content/i), {
+    fireEvent.click(screen.getByRole('button', { name: /Continue/i }));
+
+    fireEvent.change(await screen.findByPlaceholderText(/Paste or type your essay here/i), {
       target: { value: 'C' }
     });
-    fireEvent.click(screen.getByRole('button', { name: /Start AI Analysis/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Continue/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Analyze My Essay/i }));
 
     expect(screen.getByTestId('analysis-progress')).toBeInTheDocument();
     expect(screen.getByText('Loading...')).toBeInTheDocument();
@@ -192,13 +200,16 @@ describe('AIAnalysisPage', () => {
 
     render(<AIAnalysisPage />);
 
-    fireEvent.change(screen.getByLabelText(/Essay Question/i), {
+    fireEvent.change(screen.getByLabelText(/Essay Question \/ Topic/i), {
       target: { value: 'Q' }
     });
-    fireEvent.change(screen.getByLabelText(/Content/i), {
+    fireEvent.click(screen.getByRole('button', { name: /Continue/i }));
+
+    fireEvent.change(await screen.findByPlaceholderText(/Paste or type your essay here/i), {
       target: { value: 'C' }
     });
-    fireEvent.click(screen.getByRole('button', { name: /Start AI Analysis/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Continue/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Analyze My Essay/i }));
 
     // Wait for API to return
     await waitFor(() => {
@@ -243,13 +254,16 @@ describe('AIAnalysisPage', () => {
 
     render(<AIAnalysisPage />);
 
-    fireEvent.change(screen.getByLabelText(/Essay Question/i), {
+    fireEvent.change(screen.getByLabelText(/Essay Question \/ Topic/i), {
       target: { value: 'Q' }
     });
-    fireEvent.change(screen.getByLabelText(/Content/i), {
+    fireEvent.click(screen.getByRole('button', { name: /Continue/i }));
+
+    fireEvent.change(await screen.findByPlaceholderText(/Paste or type your essay here/i), {
       target: { value: 'C' }
     });
-    fireEvent.click(screen.getByRole('button', { name: /Start AI Analysis/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Continue/i }));
+    fireEvent.click(screen.getByRole('button', { name: /Analyze My Essay/i }));
 
     await waitFor(() => {
       expect(difyApi.fetchDifyWorkflowRun).toHaveBeenCalled();
@@ -258,7 +272,7 @@ describe('AIAnalysisPage', () => {
     // Expect toast error
     // Note: The toast mock might be called, but we assert on page state
     // The component sets state back to 'input' on error
-    expect(await screen.findByText(/Essay Analysis/i)).toBeInTheDocument();
+    expect(await screen.findByText(/Essay Practice/i)).toBeInTheDocument();
 
     consoleSpy.mockRestore();
   });

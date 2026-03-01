@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 
     from core.models import User
 
-logger = logging.getLogger(__name__)
+    logger = logging.getLogger(__name__)
 
 
 class RubricImportError(Exception):
@@ -29,7 +29,7 @@ class RubricImportError(Exception):
 class RubricManager:
     """Manage rubric import from AI-parsed PDF files.
 
-    Handles the complete workflow:
+    Handles complete workflow:
     1. Parse PDF using SiliconFlowRubricParser
     2. Detect if PDF is actually a rubric
     3. Validate rubric structure
@@ -46,7 +46,7 @@ class RubricManager:
 
         Args:
             pdf_file: Uploaded PDF file
-            user: User creating the rubric
+            user: User creating rubric
             rubric_name: Optional custom name (overrides AI-extracted name)
 
         Returns:
@@ -188,7 +188,6 @@ class RubricManager:
                     raise RubricImportError(
                         f"Level '{level.get('name')}' in dimension '{dimension.get('name')}' missing score range"
                     )
-                # Allow score_min == score_max only for "No submission" or "0" level
                 if level["score_min"] > level["score_max"]:
                     logger.error(
                         f"Invalid score range detected. Full AI response:\n"
@@ -198,7 +197,6 @@ class RubricManager:
                         f"Level '{level.get('name')}' has invalid score range: "
                         f"{level['score_min']}-{level['score_max']}"
                     )
-                # Allow 0-0 range for "No submission" levels
                 elif level["score_min"] == level["score_max"]:
                     level_name = level.get("name", "").lower()
                     level_desc = level.get("description", "").lower()
@@ -229,8 +227,8 @@ class RubricManager:
 
         Args:
             parsed_data: Validated parsed data
-            user: User creating the rubric
-            rubric_name: Name for the rubric
+            user: User creating rubric
+            rubric_name: Name for rubric
 
         Returns:
             Created MarkingRubric instance
@@ -269,7 +267,7 @@ class RubricManager:
             raise RubricImportError(f"Failed to save rubric to database: {e}") from e
 
     def generate_rubric_text(self, rubric: MarkingRubric) -> str:
-        """Generate a text representation of the rubric for AI processing.
+        """Generate a text representation of rubric for AI processing.
 
         Args:
             rubric: MarkingRubric instance
@@ -279,14 +277,11 @@ class RubricManager:
         """
         lines = [f"Rubric: {rubric.rubric_desc}\n"]
 
-        # Use prefetch_related to optimize database queries (Fix N+1 problem)
         items = RubricItem.objects.filter(rubric_id_marking_rubric=rubric).prefetch_related("level_descriptions")
 
         for item in items:
             lines.append(f"Dimension: {item.rubric_item_name} (Weight: {item.rubric_item_weight}%)")
 
-            # Sort in Python to avoid hitting DB again if possible, or use the prefetched set
-            # Since we need ordering, doing it in Python is efficient for small sets like rubric levels
             levels = sorted(
                 item.level_descriptions.all(),
                 key=lambda level: level.level_max_score,

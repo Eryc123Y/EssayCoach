@@ -8,7 +8,7 @@ import os
 import time
 from typing import TYPE_CHECKING, Any
 
-import PyPDF2
+import pypdf
 import requests
 from django.conf import settings
 
@@ -72,9 +72,7 @@ class SiliconFlowRubricParser:
             raise ValueError("SILICONFLOW_API_KEY is required")
 
         if "your-siliconflow-api-key" in self.api_key:
-            raise ValueError(
-                "SILICONFLOW_API_KEY is not configured (contains placeholder)"
-            )
+            raise ValueError("SILICONFLOW_API_KEY is not configured (contains placeholder)")
 
     def extract_text_from_pdf(self, pdf_file: UploadedFile) -> str:
         """Extract text content from uploaded PDF file.
@@ -102,21 +100,17 @@ class SiliconFlowRubricParser:
             )
             # endregion
             logger.info(f"Extracting text from PDF: {pdf_file.name}")
-            pdf_reader = PyPDF2.PdfReader(pdf_file)
+            pdf_reader = pypdf.PdfReader(pdf_file)
 
             text_parts = []
             for page_num, page in enumerate(pdf_reader.pages):
                 text = page.extract_text()
                 if text:
                     text_parts.append(text)
-                    logger.debug(
-                        f"Extracted {len(text)} chars from page {page_num + 1}"
-                    )
+                    logger.debug(f"Extracted {len(text)} chars from page {page_num + 1}")
 
             full_text = "\n\n".join(text_parts)
-            logger.info(
-                f"Total extracted text: {len(full_text)} characters from {len(text_parts)} pages"
-            )
+            logger.info(f"Total extracted text: {len(full_text)} characters from {len(text_parts)} pages")
 
             # region agent log
             _agent_debug_log(
@@ -259,9 +253,7 @@ CRITICAL RULES:
             "SSL configuration",
             {
                 "trust_env": session.trust_env,
-                "session_verify": session.verify
-                if hasattr(session, "verify")
-                else None,
+                "session_verify": session.verify if hasattr(session, "verify") else None,
                 "proxies_configured": False,
                 "proxies": {},
             },
@@ -323,12 +315,8 @@ CRITICAL RULES:
                     {
                         "url": self.api_url,
                         "has_proxies": bool(session.proxies),
-                        "proxies": dict(session.proxies)
-                        if hasattr(session, "proxies")
-                        else {},
-                        "session_verify": session.verify
-                        if hasattr(session, "verify")
-                        else None,
+                        "proxies": dict(session.proxies) if hasattr(session, "proxies") else {},
+                        "session_verify": session.verify if hasattr(session, "verify") else None,
                         "env_https_proxy": os.environ.get("HTTPS_PROXY"),
                         "env_http_proxy": os.environ.get("HTTP_PROXY"),
                         "env_socks_proxy": os.environ.get("SOCKS_PROXY"),
@@ -341,9 +329,7 @@ CRITICAL RULES:
                 # If HTTPS_PROXY is set to https://, requests will try to establish TLS
                 # with the proxy, which most proxies (including Clash) don't support,
                 # causing SSLEOFError.
-                response = session.post(
-                    self.api_url, headers=headers, json=payload, timeout=180
-                )
+                response = session.post(self.api_url, headers=headers, json=payload, timeout=180)
                 # region agent log
                 _agent_debug_log(
                     "H13",
@@ -351,9 +337,7 @@ CRITICAL RULES:
                     "POST request completed",
                     {
                         "status_code": response.status_code,
-                        "response_size": len(response.content)
-                        if hasattr(response, "content")
-                        else 0,
+                        "response_size": len(response.content) if hasattr(response, "content") else 0,
                     },
                 )
                 # endregion
@@ -367,9 +351,7 @@ CRITICAL RULES:
                         "error_type": type(ssl_err).__name__,
                         "error_message": str(ssl_err),
                         "error_args": ssl_err.args if hasattr(ssl_err, "args") else [],
-                        "proxies_used": session.proxies
-                        if hasattr(session, "proxies")
-                        else {},
+                        "proxies_used": session.proxies if hasattr(session, "proxies") else {},
                         "ssl_error_class": str(type(ssl_err)),
                         "ssl_error_repr": repr(ssl_err),
                     },
@@ -403,15 +385,9 @@ CRITICAL RULES:
                         "error_message": str(unexpected_err),
                         "error_class": str(type(unexpected_err)),
                         "error_repr": repr(unexpected_err),
-                        "is_request_exception": isinstance(
-                            unexpected_err, requests.exceptions.RequestException
-                        ),
-                        "is_ssl_error": isinstance(
-                            unexpected_err, requests.exceptions.SSLError
-                        ),
-                        "is_proxy_error": isinstance(
-                            unexpected_err, requests.exceptions.ProxyError
-                        ),
+                        "is_request_exception": isinstance(unexpected_err, requests.exceptions.RequestException),
+                        "is_ssl_error": isinstance(unexpected_err, requests.exceptions.SSLError),
+                        "is_proxy_error": isinstance(unexpected_err, requests.exceptions.ProxyError),
                     },
                 )
                 # endregion
@@ -442,9 +418,7 @@ CRITICAL RULES:
                 raise RubricParseError("API returned empty content")
 
             parsed_data = json.loads(content)
-            logger.info(
-                f"Successfully parsed rubric structure: is_rubric={parsed_data.get('is_rubric')}"
-            )
+            logger.info(f"Successfully parsed rubric structure: is_rubric={parsed_data.get('is_rubric')}")
 
             return parsed_data
 
@@ -463,9 +437,7 @@ CRITICAL RULES:
                     "proxies_dict": dict(proxies) if proxies else {},
                     "is_ssl_error": isinstance(e, requests.exceptions.SSLError),
                     "is_proxy_error": isinstance(e, requests.exceptions.ProxyError),
-                    "is_connection_error": isinstance(
-                        e, requests.exceptions.ConnectionError
-                    ),
+                    "is_connection_error": isinstance(e, requests.exceptions.ConnectionError),
                 },
             )
             # endregion
@@ -528,9 +500,7 @@ CRITICAL RULES:
                 {"text_length": len(text or ""), "min_required": 50},
             )
             # endregion
-            raise RubricParseError(
-                "PDF contains insufficient text (less than 50 characters)"
-            )
+            raise RubricParseError("PDF contains insufficient text (less than 50 characters)")
 
         # region agent log
         _agent_debug_log(
@@ -553,9 +523,7 @@ CRITICAL RULES:
                     "error_message": str(e),
                     "error_class": str(type(e)),
                     "error_repr": repr(e),
-                    "is_request_exception": isinstance(
-                        e, requests.exceptions.RequestException
-                    ),
+                    "is_request_exception": isinstance(e, requests.exceptions.RequestException),
                     "is_rubric_parse_error": isinstance(e, RubricParseError),
                 },
             )

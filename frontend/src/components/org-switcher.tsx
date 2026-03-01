@@ -3,6 +3,7 @@
 import * as React from 'react';
 
 import { Icons } from '@/components/icons';
+import { IconBook, IconChevronsDown } from '@tabler/icons-react';
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -41,7 +42,28 @@ export function OrgSwitcher({
   };
 
   if (!selectedClass) {
-    return null;
+    // Show placeholder when no classes are available
+    return (
+      <SidebarMenu>
+        <SidebarMenuItem>
+          <SidebarMenuButton size='lg' disabled className='opacity-60'>
+            <div className='flex w-full flex-col gap-1'>
+              <div className='flex items-center gap-2 px-0.5'>
+                <div className='bg-muted flex aspect-square size-5 items-center justify-center rounded-md'>
+                  <IconBook className='size-3.5 opacity-50' />
+                </div>
+                <span className='text-muted-foreground text-[10px] font-bold tracking-widest uppercase'>
+                  No Classes
+                </span>
+              </div>
+              <span className='text-muted-foreground/60 truncate text-[10px]'>
+                Contact administrator
+              </span>
+            </div>
+          </SidebarMenuButton>
+        </SidebarMenuItem>
+      </SidebarMenu>
+    );
   }
 
   return (
@@ -57,7 +79,7 @@ export function OrgSwitcher({
               <div className='flex w-full flex-col gap-1.5'>
                 <div className='flex items-center gap-2 px-0.5'>
                   <div className='bg-primary/10 text-primary flex aspect-square size-5 items-center justify-center rounded-md'>
-                    <Icons.classSwitcher className='size-3.5' />
+                    <IconBook className='size-3.5' />
                   </div>
                   <span className='text-muted-foreground/80 text-[10px] font-bold tracking-widest uppercase'>
                     Current Class
@@ -72,7 +94,7 @@ export function OrgSwitcher({
                       {selectedClass.unitCode}
                     </span>
                   </div>
-                  <Icons.chevronDown className='size-4 shrink-0 opacity-40 group-data-[collapsible=icon]:hidden' />
+                  <IconChevronsDown className='size-4 shrink-0 opacity-40 group-data-[collapsible=icon]:hidden' />
                 </div>
               </div>
             </SidebarMenuButton>

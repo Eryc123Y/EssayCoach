@@ -15,8 +15,8 @@ const META_THEME_COLORS = {
 };
 
 export const metadata: Metadata = {
-  title: 'Next Shadcn',
-  description: 'Basic dashboard with Next.js and Shadcn'
+  title: 'EssayCoach',
+  description: 'AI-powered essay feedback and learning platform'
 };
 
 export const viewport: Viewport = {

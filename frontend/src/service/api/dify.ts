@@ -10,7 +10,7 @@ import type {
  */
 export function fetchDifyWorkflowRun(data: DifyWorkflowRunRequest) {
   return request<DifyWorkflowRunResponse>({
-    url: '/api/v1/ai-feedback/agent/workflows/run/',
+    url: '/api/v2/ai-feedback/agent/workflows/run/',
     method: 'post',
     data
   });
@@ -21,6 +21,34 @@ export function fetchDifyWorkflowRun(data: DifyWorkflowRunRequest) {
  */
 export function fetchWorkflowStatus(workflowRunId: string) {
   return request<DifyWorkflowStatus>({
-    url: `/api/v1/ai-feedback/agent/workflows/run/${workflowRunId}/status/`
+    url: `/api/v2/ai-feedback/agent/workflows/run/${workflowRunId}/status/`
+  });
+}
+
+/**
+ * Chat with AI about essay
+ */
+export interface ChatMessageRequest {
+  message: string;
+  context?: {
+    essay_id?: string;
+    essay_question?: string;
+    essay_content?: string;
+    feedback_summary?: string;
+    conversation_id?: string;
+  };
+}
+
+export interface ChatMessageResponse {
+  message: string;
+  role: 'assistant' | 'system';
+  timestamp?: string;
+}
+
+export function fetchChatMessage(data: ChatMessageRequest) {
+  return request<ChatMessageResponse>({
+    url: '/api/v2/ai-feedback/chat/',
+    method: 'post',
+    data
   });
 }

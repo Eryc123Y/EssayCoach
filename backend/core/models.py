@@ -1,18 +1,20 @@
-# This is an auto-generated Django model module.
-# You'll have to do the following manually to clean this up:
-#   * Rearrange models' order
-#   * Make sure each model has one field with primary_key=True
-#   * Make sure each ForeignKey and OneToOneField has `on_delete` set to the desired behavior
-#   * Remove `managed = False` lines if you wish to allow Django to create, modify, and delete the table
-# Feel free to rename the models, but don't rename db_table values or field names.
 from __future__ import annotations
 
+import secrets
+import string
+from datetime import datetime
 from typing import TYPE_CHECKING, Any
 
 from django.contrib.auth.base_user import AbstractBaseUser, BaseUserManager
 from django.contrib.auth.models import PermissionsMixin
 from django.db import models
 from django.db.models import CheckConstraint, Q, UniqueConstraint
+
+
+def get_current_year() -> int:
+    """Return current year for use as default in model fields."""
+    return datetime.now().year
+
 
 if TYPE_CHECKING:
     pass
@@ -21,6 +23,37 @@ if TYPE_CHECKING:
 class Class(models.Model):
     class_id = models.SmallAutoField(primary_key=True, db_comment="Unique identifier for a class under a unit")
     unit_id_unit = models.ForeignKey("Unit", models.CASCADE, db_column="unit_id_unit")
+    class_name = models.CharField(
+        max_length=100, blank=False, default="", db_comment="Class name (e.g., CS101 Class A)"
+    )
+    class_desc = models.TextField(blank=True, null=True, db_comment="Class description")
+    class_join_code = models.CharField(
+        max_length=10,
+        unique=True,
+        blank=False,
+        default="",
+        db_comment="Student self-enrollment code",
+    )
+    class_term = models.CharField(
+        max_length=20,
+        choices=[
+            ("semester1", "Semester 1"),
+            ("semester2", "Semester 2"),
+            ("term1", "Term 1"),
+            ("term2", "Term 2"),
+            ("full_year", "Full Year"),
+        ],
+        default="full_year",
+        db_comment="Academic term",
+    )
+    class_year = models.PositiveSmallIntegerField(default=get_current_year, db_comment="Academic year")
+    class_status = models.CharField(
+        max_length=20,
+        choices=[("active", "Active"), ("archived", "Archived")],
+        default="active",
+        db_comment="Class status",
+    )
+    class_archived_at = models.DateTimeField(null=True, blank=True, db_comment="Archive timestamp")
     class_size = models.SmallIntegerField(default=0, db_comment="current number of students in the class")
 
     class Meta:
@@ -29,7 +62,33 @@ class Class(models.Model):
         db_table_comment = "A table for class entity"
         verbose_name = "class"
         verbose_name_plural = "classes"
-        constraints = [CheckConstraint(check=Q(class_size__gte=0), name="class_size_ck")]
+        constraints = [
+            CheckConstraint(check=Q(class_size__gte=0), name="class_size_ck"),
+            CheckConstraint(check=Q(class_status__in=["active", "archived"]), name="class_status_ck"),
+            CheckConstraint(check=Q(class_year__gte=2000) & Q(class_year__lte=2100), name="class_year_range_ck"),
+        ]
+        indexes = [
+            models.Index(fields=["unit_id_unit"], name="class_unit_idx"),
+            models.Index(fields=["class_join_code"], name="class_join_code_idx"),
+        ]
+
+    @classmethod
+    def _generate_unique_join_code(cls, length: int = 6) -> str:
+        """Generate a unique alphanumeric join code."""
+        alphabet = string.ascii_uppercase + string.digits
+        for _ in range(20):
+            code = "".join(secrets.choice(alphabet) for _ in range(length))
+            if not cls.objects.filter(class_join_code=code).exists():
+                return code
+        raise ValueError("Unable to generate a unique class join code")
+
+    def save(self, *args, **kwargs):
+        # Normalize provided codes and ensure a unique code always exists.
+        if self.class_join_code:
+            self.class_join_code = self.class_join_code.strip().upper()
+        if not self.class_join_code:
+            self.class_join_code = self._generate_unique_join_code()
+        super().save(*args, **kwargs)
 
 
 class Enrollment(models.Model):
@@ -101,11 +160,20 @@ class MarkingRubric(models.Model):
     user_id_user = models.ForeignKey("User", models.CASCADE, db_column="user_id_user")
     rubric_create_time = models.DateTimeField(auto_now_add=True, db_comment="timestamp when the rubirc is created")
     rubric_desc = models.CharField(max_length=100, blank=True, null=True, db_comment="description to the rubrics")
+    visibility = models.CharField(
+        max_length=10,
+        choices=[("public", "Public"), ("private", "Private")],
+        default="private",
+        db_comment="Whether this rubric is visible to all users (public) or only the creator (private)",
+    )
 
     class Meta:
         managed = True
         db_table = "marking_rubric"
         db_table_comment = "entity for a marking rubric. A marking rubric has many items."
+        indexes = [
+            models.Index(fields=["visibility"], name="marking_rubric_visibility_idx"),
+        ]
 
 
 class RubricItem(models.Model):
@@ -159,6 +227,43 @@ class RubricLevelDesc(models.Model):
         ]
 
 
+
+class DeadlineExtension(models.Model):
+    extension_id = models.AutoField(primary_key=True, db_comment="Unique identifier for deadline extension")
+    task_id_task = models.ForeignKey(
+        "Task",
+        models.CASCADE,
+        db_column="task_id_task",
+        related_name="deadline_extensions",
+    )
+    user_id_user = models.ForeignKey(
+        "User", models.CASCADE, db_column="user_id_user", related_name="deadline_extensions"
+    )
+    original_deadline = models.DateTimeField(db_comment="Original task deadline at time of extension")
+    extended_deadline = models.DateTimeField(db_comment="New extended deadline for this student")
+    reason = models.TextField(blank=True, default="", db_comment="Reason for extension")
+    granted_by = models.ForeignKey("User", models.CASCADE, db_column="granted_by", related_name="granted_extensions")
+    created_at = models.DateTimeField(auto_now_add=True, db_comment="When extension was granted")
+
+    class Meta:
+        managed = True
+        db_table = "deadline_extension"
+        db_table_comment = "Per-student deadline extensions for tasks"
+        constraints = [
+            models.UniqueConstraint(
+                fields=["task_id_task", "user_id_user"],
+                name="task_user_extension_uq",
+            ),
+            models.CheckConstraint(
+                check=models.Q(extended_deadline__gt=models.F("original_deadline")),
+                name="extension_after_original_ck",
+            ),
+        ]
+        indexes = [
+            models.Index(fields=["task_id_task"], name="extension_task_idx"),
+            models.Index(fields=["user_id_user"], name="extension_user_idx"),
+        ]
+
 class Submission(models.Model):
     submission_id = models.AutoField(primary_key=True, db_comment="unique identifier for submission")
     submission_time = models.DateTimeField(auto_now_add=True, db_comment="time/date of submission")
@@ -169,7 +274,7 @@ class Submission(models.Model):
     class Meta:
         managed = True
         db_table = "submission"
-        db_table_comment = "A weal entity for task submissions."
+        db_table_comment = "A weak entity for task submissions."
 
 
 class Task(models.Model):
@@ -178,6 +283,24 @@ class Task(models.Model):
     rubric_id_marking_rubric = models.ForeignKey(MarkingRubric, models.CASCADE, db_column="rubric_id_marking_rubric")
     task_publish_datetime = models.DateTimeField(auto_now_add=True, db_comment="time/date when the task is published")
     task_due_datetime = models.DateTimeField(db_comment="time/date when the task is due")
+    task_title = models.CharField(max_length=200, blank=False, db_comment="Task title")
+    task_desc = models.TextField(blank=True, null=True, db_comment="Short description")
+    task_instructions = models.TextField(blank=False, db_comment="Submission instructions")
+    class_id_class = models.ForeignKey(
+        "Class", models.CASCADE, db_column="class_id_class", db_comment="Link to class", blank=True, null=True
+    )
+    task_status = models.CharField(
+        max_length=20,
+        choices=[
+            ("draft", "Draft"),
+            ("published", "Published"),
+            ("unpublished", "Unpublished"),
+            ("archived", "Archived"),
+        ],
+        default="draft",
+        db_comment="Task status",
+    )
+    task_allow_late_submission = models.BooleanField(default=False, db_comment="Allow late submissions")
 
     class Meta:
         managed = True
@@ -187,7 +310,11 @@ class Task(models.Model):
             CheckConstraint(
                 check=Q(task_publish_datetime__lt=models.F("task_due_datetime")),
                 name="task_publish_time_task_due_time_ck",
-            )
+            ),
+            CheckConstraint(
+                check=Q(task_status__in=["draft", "published", "unpublished", "archived"]),
+                name="task_status_ck",
+            ),
         ]
 
 
@@ -250,12 +377,39 @@ class User(AbstractBaseUser, PermissionsMixin):
     is_active: models.BooleanField = models.BooleanField(default=True)
     is_staff: models.BooleanField = models.BooleanField(default=False)
     date_joined: models.DateTimeField = models.DateTimeField(auto_now_add=True)
+    preferences: models.JSONField = models.JSONField(
+        default=dict,
+        blank=True,
+        db_comment=(
+            "User preferences: email_notifications, in_app_notifications, "
+            "submission_alerts, grading_alerts, weekly_digest, language, theme"
+        ),
+    )
 
     objects = CoreUserManager()
 
     USERNAME_FIELD = "user_email"
     EMAIL_FIELD = "user_email"
     REQUIRED_FIELDS = []
+
+    def save(self, *args, **kwargs):
+        """Initialize preferences if not set."""
+        if not self.preferences:
+            self.preferences = self.get_default_preferences()
+        super().save(*args, **kwargs)
+
+    @staticmethod
+    def get_default_preferences() -> dict:
+        """Return default user preferences."""
+        return {
+            "email_notifications": True,
+            "in_app_notifications": True,
+            "submission_alerts": True,
+            "grading_alerts": False,
+            "weekly_digest": False,
+            "language": "en",
+            "theme": "system",
+        }
 
     class Meta:
         db_table = "user"
@@ -282,3 +436,50 @@ class User(AbstractBaseUser, PermissionsMixin):
 
     def get_short_name(self):
         return self.user_fname or self.user_email
+
+
+class Badge(models.Model):
+    """Badge/Achievement model for user accomplishments."""
+
+    badge_id = models.AutoField(primary_key=True, db_comment="Unique identifier for badge")
+    name = models.CharField(max_length=100, db_comment="Badge name")
+    description = models.CharField(max_length=200, db_comment="Badge description")
+    icon = models.CharField(max_length=50, db_comment="Icon name for display")
+    criteria = models.JSONField(default=dict, db_comment="Criteria to earn this badge")
+    created_at = models.DateTimeField(auto_now_add=True, db_comment="Badge creation time")
+
+    class Meta:
+        managed = True
+        db_table = "badge"
+        db_table_comment = "Achievement badges for users"
+        verbose_name = "badge"
+        verbose_name_plural = "badges"
+
+    def __str__(self):
+        return self.name
+
+
+class UserBadge(models.Model):
+    """UserBadge model linking users to earned badges."""
+
+    user_badge_id = models.AutoField(primary_key=True, db_comment="Unique identifier for user badge")
+    user_id_user = models.ForeignKey("User", models.CASCADE, db_column="user_id_user")
+    badge_id_badge = models.ForeignKey("Badge", models.CASCADE, db_column="badge_id_badge")
+    earned_at = models.DateTimeField(auto_now_add=True, db_comment="Time when badge was earned")
+
+    class Meta:
+        managed = True
+        db_table = "user_badge"
+        db_table_comment = "User earned badges"
+        constraints = [
+            UniqueConstraint(
+                fields=["user_id_user", "badge_id_badge"],
+                name="user_badge_unique",
+            )
+        ]
+        indexes = [
+            models.Index(fields=["user_id_user"], name="user_badge_user_idx"),
+        ]
+
+    def __str__(self):
+        return f"{self.user_id_user} - {self.badge_id_badge}"

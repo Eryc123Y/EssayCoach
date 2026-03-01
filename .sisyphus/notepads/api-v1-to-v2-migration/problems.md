@@ -1,0 +1,2 @@
+- 2026-02-13: Unresolved environment/application registration problem blocks Django system checks when importing shared `core.models` via `manage.py check`.
+- 2026-02-13: Current blocker after `core` bootstrap fix is duplicate Django app labels (`core`) between `api_v1.core` and shared `core`; system checks cannot complete until labels are disambiguated.

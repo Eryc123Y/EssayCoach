@@ -13,26 +13,11 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from datetime import datetime
-from enum import Enum
 from pathlib import Path
 from typing import Any
 
-
-class ResponseMode(str, Enum):
-    """Response mode for workflow execution."""
-
-    BLOCKING = "blocking"
-    STREAMING = "streaming"
-
-
-class WorkflowStatus(str, Enum):
-    """Status of a workflow execution."""
-
-    PENDING = "pending"
-    RUNNING = "running"
-    SUCCEEDED = "succeeded"
-    FAILED = "failed"
-    CANCELLED = "cancelled"
+# Import from centralized type kernel instead of local definitions.
+from api_v2.types.enums import ResponseMode, WorkflowStatus
 
 
 @dataclass

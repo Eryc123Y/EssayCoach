@@ -3,27 +3,19 @@ import { NavItem } from '@/types';
 // Navigation items with role-based access control
 // roles: which user roles can see this item
 // If roles is undefined, the item is visible to all
+// NOTE: Some items link to pages that are not yet implemented - marked with TODO
 export const navItems: NavItem[] = [
-  // Dashboard - visible to all
+  // Dashboard - visible to all (redirects to role-specific dashboard)
   {
     title: 'Dashboard',
-    url: '/dashboard/overview',
+    url: '/dashboard',
     icon: 'dashboard',
     isActive: false,
     shortcut: ['d', 'd'],
     items: [],
     roles: ['student', 'lecturer', 'admin']
   },
-  // Assignments - visible to all
-  {
-    title: 'Assignments',
-    url: '/dashboard/assignments',
-    icon: 'clipboard',
-    shortcut: ['a', 'a'],
-    isActive: false,
-    items: [],
-    roles: ['student', 'lecturer', 'admin']
-  },
+
   // Essay Analysis - visible to all
   {
     title: 'Essay Analysis',
@@ -34,46 +26,76 @@ export const navItems: NavItem[] = [
     items: [],
     roles: ['student', 'lecturer', 'admin']
   },
-  // Rubrics - only lecturer and admin
+  // Rubrics - visible to all roles (students can view public rubrics)
   {
     title: 'Rubrics',
     url: '/dashboard/rubrics',
-    icon: 'book', // Using 'book' icon for rubrics (different from 'clipboard' used by Assignments)
+    icon: 'book',
     shortcut: ['r', 'r'],
     isActive: false,
     items: [],
-    roles: ['lecturer', 'admin']
+    roles: ['student', 'lecturer', 'admin']
   },
-  // Library - only lecturer and admin
+  // Tasks (Assignments) - PRD-09
   {
-    title: 'Library',
-    url: '/dashboard/library',
-    icon: 'library',
-    shortcut: ['l', 'b'],
+    title: 'Tasks',
+    url: '/dashboard/tasks',
+    icon: 'clipboard',
+    shortcut: ['a', 'a'],
     isActive: false,
     items: [],
-    roles: ['lecturer', 'admin']
+    roles: ['student', 'lecturer', 'admin']
   },
-  // Analytics - only admin
+  // Classes - PRD-10
   {
-    title: 'Analytics',
-    url: '/dashboard/analytics',
-    icon: 'chart',
-    shortcut: ['g', 'g'],
-    isActive: false,
-    items: [],
-    roles: ['admin']
-  },
-  // User Management - only admin
-  {
-    title: 'User Management',
-    url: '/dashboard/users',
+    title: 'Classes',
+    url: '/dashboard/classes',
     icon: 'users',
-    shortcut: ['u', 'u'],
+    shortcut: ['c', 'c'],
     isActive: false,
     items: [],
-    roles: ['admin']
+    roles: ['student', 'lecturer', 'admin']
   }
+  // TODO: Assignments - PRD-09 Not implemented yet
+  // {
+  //   title: 'Assignments',
+  //   url: '/dashboard/assignments',
+  //   icon: 'clipboard',
+  //   shortcut: ['a', 'a'],
+  //   isActive: false,
+  //   items: [],
+  //   roles: ['student', 'lecturer', 'admin']
+  // },
+  // TODO: Library - PRD-11 Not implemented yet
+  // {
+  //   title: 'Library',
+  //   url: '/dashboard/library',
+  //   icon: 'library',
+  //   shortcut: ['l', 'b'],
+  //   isActive: false,
+  //   items: [],
+  //   roles: ['lecturer', 'admin']
+  // },
+  // TODO: Analytics - PRD-12 Not implemented yet
+  // {
+  //   title: 'Analytics',
+  //   url: '/dashboard/analytics',
+  //   icon: 'chart',
+  //   shortcut: ['g', 'g'],
+  //   isActive: false,
+  //   items: [],
+  //   roles: ['admin']
+  // },
+  // TODO: User Management - PRD-13 Not implemented yet
+  // {
+  //   title: 'User Management',
+  //   url: '/dashboard/users',
+  //   icon: 'users',
+  //   shortcut: ['u', 'u'],
+  //   isActive: false,
+  //   items: [],
+  //   roles: ['admin']
+  // }
 ];
 
 export interface RecentSubmission {
