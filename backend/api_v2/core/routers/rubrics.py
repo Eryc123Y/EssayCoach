@@ -8,11 +8,13 @@ from ninja.errors import HttpError
 from ninja.files import UploadedFile
 
 from api_v2.schemas.base import PaginationParams, SuccessResponse
+from api_v2.types.enums import UserRole
 from api_v2.types.ids import (
     RubricId,
     RubricItemId,
 )
 from api_v2.utils.auth import JWTAuth
+from api_v2.utils.permissions import has_role
 from core.models import (
     MarkingRubric,
     RubricItem,
@@ -54,8 +56,17 @@ def paginate(queryset, params: PaginationParams):
         return {"count": total, "results": list(queryset[start:end])}
 
 
-
 router = Router(tags=["Rubrics"], auth=JWTAuth())
+
+
+def _check_rubric_owner_or_admin(request: HttpRequest, rubric: MarkingRubric, action: str) -> None:
+    user = request.auth
+    if has_role(user, [UserRole.ADMIN]):
+        return
+    if has_role(user, [UserRole.LECTURER]) and rubric.user_id_user_id == user.user_id:
+        return
+    raise HttpError(403, f"You do not have permission to {action} this rubric")
+
 
 # =============================================================================
 # MarkingRubrics
@@ -423,7 +434,12 @@ def list_rubric_items(request: HttpRequest, filters: RubricItemFilterParams = Ru
 
 @router.post("/rubric-items/", response=RubricItemOut)
 def create_rubric_item(request: HttpRequest, data: RubricItemIn):
-    rubric = MarkingRubric.objects.get(rubric_id=data.rubric_id_marking_rubric)
+    try:
+        rubric = MarkingRubric.objects.get(rubric_id=data.rubric_id_marking_rubric)
+    except MarkingRubric.DoesNotExist:
+        raise HttpError(404, "Rubric not found")
+
+    _check_rubric_owner_or_admin(request, rubric, "modify")
     item = RubricItem.objects.create(
         rubric_id_marking_rubric=rubric,
         rubric_item_name=data.rubric_item_name,
@@ -444,6 +460,7 @@ def get_rubric_item(request: HttpRequest, item_id: RubricItemId):
 def update_rubric_item(request: HttpRequest, item_id: RubricItemId, data: RubricItemIn):
     try:
         item = RubricItem.objects.get(rubric_item_id=item_id)
+        _check_rubric_owner_or_admin(request, item.rubric_id_marking_rubric, "modify")
         item.rubric_item_name = data.rubric_item_name
         item.rubric_item_weight = data.rubric_item_weight
         item.save()
@@ -456,6 +473,7 @@ def update_rubric_item(request: HttpRequest, item_id: RubricItemId, data: Rubric
 def delete_rubric_item(request: HttpRequest, item_id: RubricItemId) -> SuccessResponse:
     try:
         item = RubricItem.objects.get(rubric_item_id=item_id)
+        _check_rubric_owner_or_admin(request, item.rubric_id_marking_rubric, "modify")
         item.delete()
         return SuccessResponse(success=True)
     except RubricItem.DoesNotExist:
@@ -475,7 +493,12 @@ def list_rubric_levels(request: HttpRequest, filters: RubricLevelDescFilterParam
 
 @router.post("/rubric-levels/", response=RubricLevelDescOut)
 def create_rubric_level(request: HttpRequest, data: RubricLevelDescIn):
-    item = RubricItem.objects.get(rubric_item_id=data.rubric_item_id_rubric_item)
+    try:
+        item = RubricItem.objects.get(rubric_item_id=data.rubric_item_id_rubric_item)
+    except RubricItem.DoesNotExist:
+        raise HttpError(404, "Rubric item not found")
+
+    _check_rubric_owner_or_admin(request, item.rubric_id_marking_rubric, "modify")
     level = RubricLevelDesc.objects.create(
         rubric_item_id_rubric_item=item,
         level_min_score=data.level_min_score,
@@ -497,6 +520,7 @@ def get_rubric_level(request: HttpRequest, level_id: int):
 def update_rubric_level(request: HttpRequest, level_id: int, data: RubricLevelDescIn):
     try:
         level = RubricLevelDesc.objects.get(level_desc_id=level_id)
+        _check_rubric_owner_or_admin(request, level.rubric_item_id_rubric_item.rubric_id_marking_rubric, "modify")
         level.level_min_score = data.level_min_score
         level.level_max_score = data.level_max_score
         level.level_desc = data.level_desc
@@ -510,11 +534,11 @@ def update_rubric_level(request: HttpRequest, level_id: int, data: RubricLevelDe
 def delete_rubric_level(request: HttpRequest, level_id: int) -> SuccessResponse:
     try:
         level = RubricLevelDesc.objects.get(level_desc_id=level_id)
+        _check_rubric_owner_or_admin(request, level.rubric_item_id_rubric_item.rubric_id_marking_rubric, "modify")
         level.delete()
         return SuccessResponse(success=True)
     except RubricLevelDesc.DoesNotExist:
         raise HttpError(404, "Rubric level not found")
-
 
 
 @router.post("/rubrics/{rubric_id}/duplicate/", response=RubricDetailOut)
@@ -528,8 +552,11 @@ def duplicate_rubric(request: HttpRequest, rubric_id: RubricId, data: RubricDupl
     except MarkingRubric.DoesNotExist:
         raise HttpError(404, "Rubric not found")
 
-    if source_rubric.visibility == "private" and \
-       source_rubric.user_id_user_id != user.user_id and user.user_role != "admin":
+    if (
+        source_rubric.visibility == "private"
+        and source_rubric.user_id_user_id != user.user_id
+        and user.user_role != "admin"
+    ):
         raise HttpError(403, "Cannot duplicate a private rubric you don't own")
 
     new_rubric = RubricService.duplicate_rubric(source_rubric, user, data.rubric_desc, data.visibility)

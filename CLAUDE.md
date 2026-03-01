@@ -4,7 +4,11 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 > **IMPORTANT**: This file is the single source of truth for project status. Update it after every significant code change to reflect the current state and next priorities.
 >
-- **Last Updated**: 2026-03-01 (CLAUDE.md audit & cleanup complete)
+- **Last Updated**: 2026-03-01 (merge-readiness wave complete: security blockers remediated and full verification matrix green)
+- **Incremental Update**: 2026-03-01 (zero-risk merge review completed: lint/typecheck/test/build/health-check passing, merge decision record approved)
+- **Incremental Update**: 2026-03-01 (sensitive mutation endpoints now enforce role and owner checks where applicable; targeted backend RBAC suites passing)
+- **Incremental Update**: 2026-03-01 (JWT contract hardening: backend now emits `user_role`+`role` with issuer/audience; frontend validation now has no hardcoded JWT secret fallback)
+- **Incremental Update**: 2026-03-01 (frontend `/api/v2/[...path]` proxy now uses explicit safe-header allowlist and cookie-derived Authorization)
 - **Incremental Update**: 2026-02-28 (Frontend service layer for PRD-09/10/06 advanced actions complete; PRD-06 Rubrics verified complete)
 - **Incremental Update**: 2026-02-28 (Backend Python type-system refactor completed, PRD 11-14 modules bootstrapped)
 - **Incremental Update**: 2026-02-27 (Dashboard Overview route fix + Task/Class backend hardening + Rubrics SSR URL fix + health-check workflow + real Chrome DevTools validation + typed-architecture roadmap)
@@ -42,7 +46,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - **Check All**: `make lint`
 - **Auto-fix All**: `make lint-fix`
 - **Format Code**: `make format`
-- **Python Type Check**: `make typecheck` (runs mypy)
+- **Python Type Check**: `make typecheck` (runs backend pyright)
 
 ### Documentation
 - **Build Docs**: `make docs-build` (generates OpenAPI schema and MkDocs)
@@ -116,6 +120,7 @@ The `docs/prd/` directory contains an explicit contract for code generation:
 - **Backend Python Type System Refactor** ✅ Complete 2026-02-28 (API v2 schemas, PRDs 11-14 types)
 - **Dashboard Overview Route Hardening** ✅ Complete 2026-02-27 (PRD-04 follow-up)
 - **Task/Class Backend Hardening** ✅ Complete 2026-02-27 (PRD-09/10 follow-up)
+- **API v2 Core RBAC Write-Path Hardening** ✅ Complete 2026-03-01 (classes/units/tasks/submissions-feedback/rubric item-level mutation checks)
 - **Rubrics SSR Fetch Fix** ✅ Complete 2026-02-27
 - **Auth Proxy/Service Consolidation** ✅ Complete 2026-02-27 (v2)
 - **Profile & Settings Sync** ✅ Complete 2026-02-27 (Phase 2)
@@ -515,13 +520,16 @@ During Dashboard Phase 2 implementation, key learnings included:
 **Resolved Issues**: Security audit 2026-02-25: All 5 high findings resolved. See `docs/learnings/dashboard-frontend-phase2-code-review.md` for full report.
 ---
 
-## Latest Validation Snapshot (2026-02-27)
+## Latest Validation Snapshot (2026-03-01)
 
 ### Automated Validation
-- Frontend targeted test: `cd frontend && pnpm test src/app/dashboard/overview/page.test.tsx` -> **PASS (38/38)**
-- Backend task/class CRUD: `cd backend && uv run pytest api_v2/tests/test_task_class_crud.py -q` -> **PASS (16 passed)**
-- Backend task/class actions: `cd backend && uv run pytest api_v2/tests/test_task_class_actions.py -q` -> **PASS (21 passed)**
-- Health check command: `make health-check` -> **PASS (backend OK, frontend OK)**
+- `make lint` -> **PASS** (warnings only, no blocking errors)
+- `make typecheck` -> **PASS** (pyright: 0 errors)
+- `make test` -> **PASS**
+  - Backend: **307 passed**
+  - Frontend: **637 passed**
+- `make build` -> **PASS**
+- `make health-check` -> **PASS** (backend OK, frontend OK)
 
 ### Real Browser Validation (Chrome DevTools)
 - URL: `http://127.0.0.1:5100/auth/sign-in/`
@@ -561,6 +569,8 @@ During Dashboard Phase 2 implementation, key learnings included:
 | Issue | Location | Status |
 |-------|----------|--------|
 | v2 proxy hardcoded URL | `frontend/src/app/api/v2/[...path]/route.ts:3` | ✅ Resolved (Uses `getServerApiUrl()` from `@/lib/server-api` — reads `NEXT_PUBLIC_API_URL`) |
+| v2 proxy unfiltered inbound header forwarding / auth boundary bypass risk | `frontend/src/app/api/v2/[...path]/route.ts` | ✅ Resolved 2026-03-01 (explicit safe-header allowlist + cookie-derived Authorization; no unauthenticated client `Authorization` pass-through) |
+| Missing RBAC checks on sensitive v2 core write endpoints | `backend/api_v2/core/routers/{classes,units,tasks,submissions,rubrics}.py` | ✅ Resolved 2026-03-01 (least-privilege role checks + owner checks for submissions/feedback and rubric item-level mutation paths) |
 
 
 
@@ -578,4 +588,3 @@ During Dashboard Phase 2 implementation, key learnings included:
 - **`D2C_IMPLEMENTATION_CONTRACT_STANDARD.md`**: Design-to-code contract template
 
 ---
-

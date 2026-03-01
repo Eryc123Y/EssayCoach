@@ -4,7 +4,6 @@
  * Tests for the grade distribution pie graph covering:
  * - Component rendering
  * - Chart data display
- * - Legend functionality
  * - Tooltip functionality
  * 
  * Run with: pnpm test -- pie-graph.test.tsx
@@ -25,9 +24,9 @@ vi.mock('@/components/ui/chart', () => ({
   ChartTooltip: ({ children, content }: any) => (
     <div data-testid="chart-tooltip">{content}{children}</div>
   ),
-  ChartTooltipContent: ({ indicator, className }: any) => (
+  ChartTooltipContent: ({ indicator, className, hideLabel }: any) => (
     <div data-testid="chart-tooltip-content" className={className}>
-      Tooltip Content
+      Tooltip Content {hideLabel && '(hideLabel)'}
     </div>
   ),
   ChartLegend: ({ children, content }: any) => (
@@ -58,26 +57,37 @@ vi.mock('@/components/ui/card', () => ({
     <div className={className} {...props}>{children}</div>
   ),
   CardTitle: ({ children, className, ...props }: any) => (
-    <div className={className} {...props}>{children}</div>
+    <h2 className={className} {...props}>{children}</h2>
   ),
 }));
 
 // Mock recharts
 vi.mock('recharts', () => ({
-  Pie: ({ data, dataKey, cx, cy, innerRadius, outerRadius, paddingAngle, label }: any) => (
+  Pie: ({ data, dataKey, nameKey, innerRadius, outerRadius, paddingAngle, label, children }: any) => (
     <div 
       data-testid="pie-chart" 
       data-datakey={dataKey}
+      data-namekey={nameKey}
       data-inner-radius={innerRadius}
       data-outer-radius={outerRadius}
-    />
+      data-padding-angle={paddingAngle}
+    >
+      {label && typeof label === 'function' && label({ viewBox: { cx: 100, cy: 100 } })}
+      {children}
+    </div>
   ),
   PieChart: ({ children, data }: any) => (
-    <div data-testid="pie-chart-wrapper">
+    <div data-testid="pie-chart-wrapper" data-chart-data={JSON.stringify(data)}>
       {children}
     </div>
   ),
   Sector: () => <div data-testid="sector" />,
+  Label: ({ content, viewBox }: any) => {
+    if (content && typeof content === 'function') {
+      return content({ viewBox });
+    }
+    return null;
+  },
 }));
 
 describe('PieGraph', () => {
@@ -120,27 +130,13 @@ describe('PieGraph', () => {
     });
 
     it('displays card title', () => {
-      expect(screen.getByText(/Grade Distribution/i)).toBeInTheDocument();
+      expect(screen.getByText(/Common Error Categories/i)).toBeInTheDocument();
     });
 
     it('displays card description', () => {
       expect(
-        screen.getByText(/Distribution across rubric categories/i)
+        screen.getByText(/Distribution of feedback issues in recent submissions/i)
       ).toBeInTheDocument();
-    });
-  });
-
-  describe('Legend', () => {
-    beforeEach(() => {
-      render(<PieGraph />);
-    });
-
-    it('renders chart legend', () => {
-      expect(screen.getByTestId('chart-legend')).toBeInTheDocument();
-    });
-
-    it('renders legend content', () => {
-      expect(screen.getByTestId('chart-legend-content')).toBeInTheDocument();
     });
   });
 
@@ -163,14 +159,11 @@ describe('PieGraph', () => {
       render(<PieGraph />);
     });
 
-    it('has card styling', () => {
+    it('has container styling', () => {
       const chartContainer = screen.getByTestId('chart-container');
-      expect(chartContainer).toBeInTheDocument();
-    });
-
-    it('has responsive layout', () => {
-      const chartContainer = screen.getByTestId('chart-container');
-      expect(chartContainer.className).toContain('aspect-auto');
+      expect(chartContainer.className).toContain('mx-auto');
+      expect(chartContainer.className).toContain('h-[250px]');
+      expect(chartContainer.className).toContain('aspect-square');
     });
   });
 
@@ -180,12 +173,15 @@ describe('PieGraph', () => {
     });
 
     it('has descriptive title for screen readers', () => {
-      const title = screen.getByText(/Grade Distribution/i);
-      expect(title.tagName.toLowerCase()).toMatch(/h[1-6]/);
+      expect(
+        screen.getByRole('heading', { name: /Common Error Categories/i })
+      ).toBeInTheDocument();
     });
 
-    it('has legend for color interpretation', () => {
-      expect(screen.getByTestId('chart-legend-content')).toBeInTheDocument();
+    it('has descriptive text for the distribution', () => {
+      expect(
+        screen.getByText(/Distribution of feedback issues in recent submissions/i)
+      ).toBeInTheDocument();
     });
   });
 
@@ -194,11 +190,16 @@ describe('PieGraph', () => {
       render(<PieGraph />);
     });
 
-    it('may display additional info in footer', () => {
-      // Footer is optional based on implementation
-      const footer = screen.queryByTestId(/footer/i);
-      // Test passes regardless of footer presence
-      expect(footer).toBeInTheDocument();
+    it('displays structure attention message', () => {
+      expect(
+        screen.getByText(/Structure needs attention/i)
+      ).toBeInTheDocument();
+    });
+
+    it('displays based on last essays message', () => {
+      expect(
+        screen.getByText(/Based on last 5 graded essays/i)
+      ).toBeInTheDocument();
     });
   });
 });

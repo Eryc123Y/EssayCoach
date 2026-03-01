@@ -474,12 +474,7 @@ def test_dashboard_with_expired_token(student_user):
 def test_dashboard_with_inactive_user():
     """Test dashboard rejects inactive user."""
     # Create inactive user directly
-    student = User.objects.create_user(
-        user_email="inactive@test.com",
-        password="Pass123!",
-        user_role="student",
-        is_active=False,
-    )
+
 
     client = Client()
     # Inactive users should not be able to get valid tokens

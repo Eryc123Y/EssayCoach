@@ -5,11 +5,12 @@ from ninja import Query, Router
 from ninja.errors import HttpError
 
 from api_v2.schemas.base import PaginationParams, SuccessResponse
+from api_v2.types.enums import UserRole
 from api_v2.types.ids import (
     TaskId,
 )
 from api_v2.utils.auth import JWTAuth
-from api_v2.utils.permissions import IsAdminOrLecturer
+from api_v2.utils.permissions import IsAdminOrLecturer, has_role
 from core.models import (
     Class,
     MarkingRubric,
@@ -46,8 +47,12 @@ def paginate(queryset, params: PaginationParams):
         return {"count": total, "results": list(queryset[start:end])}
 
 
-
 router = Router(tags=["Tasks"], auth=JWTAuth())
+
+
+def _check_admin_or_lecturer(request: HttpRequest) -> None:
+    IsAdminOrLecturer().check(request)
+
 
 # =============================================================================
 # Tasks
@@ -66,7 +71,7 @@ def list_tasks(
 
 @router.post("/tasks/", response=TaskOut)
 def create_task(request: HttpRequest, data: TaskIn):
-    IsAdminOrLecturer().check(request)
+    _check_admin_or_lecturer(request)
 
     try:
         unit = Unit.objects.get(unit_id=data.unit_id_unit)
@@ -109,6 +114,7 @@ def get_task(request: HttpRequest, task_id: TaskId):
 
 @router.put("/tasks/{task_id}/", response=TaskOut)
 def update_task(request: HttpRequest, task_id: TaskId, data: TaskIn):
+    _check_admin_or_lecturer(request)
     try:
         task = Task.objects.get(task_id=task_id)
         if data.unit_id_unit:
@@ -131,6 +137,7 @@ def update_task(request: HttpRequest, task_id: TaskId, data: TaskIn):
 
 @router.delete("/tasks/{task_id}/", response=SuccessResponse)
 def delete_task(request: HttpRequest, task_id: TaskId) -> SuccessResponse:
+    _check_admin_or_lecturer(request)
     try:
         task = Task.objects.get(task_id=task_id)
         task.delete()
@@ -147,9 +154,7 @@ def delete_task(request: HttpRequest, task_id: TaskId) -> SuccessResponse:
 @router.post("/tasks/{task_id}/publish/", response=TaskOut)
 def publish_task(request: HttpRequest, task_id: TaskId):
     """Publish a task (lecturer/admin only)."""
-    user = request.auth
-    if user.user_role not in ["lecturer", "admin"]:
-        raise HttpError(403, "Only lecturers or admins can publish tasks")
+    _check_admin_or_lecturer(request)
     try:
         task = Task.objects.get(task_id=task_id)
         task.task_status = "published"
@@ -162,9 +167,7 @@ def publish_task(request: HttpRequest, task_id: TaskId):
 @router.post("/tasks/{task_id}/unpublish/", response=TaskOut)
 def unpublish_task(request: HttpRequest, task_id: TaskId):
     """Unpublish a task (lecturer/admin only)."""
-    user = request.auth
-    if user.user_role not in ["lecturer", "admin"]:
-        raise HttpError(403, "Only lecturers or admins can unpublish tasks")
+    _check_admin_or_lecturer(request)
     try:
         task = Task.objects.get(task_id=task_id)
         task.task_status = "unpublished"
@@ -189,13 +192,12 @@ def get_task_submissions(request: HttpRequest, task_id: TaskId):
         raise HttpError(404, "Task not found")
 
 
-
 # --- Task Actions (PRD-09) ---
 @router.post("/tasks/{task_id}/duplicate/", response=TaskOut)
 def duplicate_task(request: HttpRequest, task_id: TaskId, data: TaskDuplicateIn):
     """Duplicate an existing task. Admins and lecturers only."""
     user = request.auth
-    if user.user_role not in ["admin", "lecturer"]:
+    if not has_role(user, [UserRole.ADMIN, UserRole.LECTURER]):
         raise HttpError(403, "Only admins or lecturers can duplicate tasks")
     try:
         source_task = Task.objects.get(task_id=task_id)
@@ -208,9 +210,7 @@ def duplicate_task(request: HttpRequest, task_id: TaskId, data: TaskDuplicateIn)
         except Class.DoesNotExist:
             raise HttpError(400, "Target class does not exist")
 
-    new_task = TaskService.duplicate_task(
-        source_task, user, data.class_id_class, data.task_title, data.task_deadline
-    )
+    new_task = TaskService.duplicate_task(source_task, user, data.class_id_class, data.task_title, data.task_deadline)
     return new_task
 
 
@@ -218,7 +218,7 @@ def duplicate_task(request: HttpRequest, task_id: TaskId, data: TaskDuplicateIn)
 def extend_task_deadline(request: HttpRequest, task_id: TaskId, data: TaskExtendIn):
     """Extend the deadline for a specific task. Admins and lecturers only."""
     user = request.auth
-    if user.user_role not in ["admin", "lecturer"]:
+    if not has_role(user, [UserRole.ADMIN, UserRole.LECTURER]):
         raise HttpError(403, "Only admins or lecturers can extend tasks")
     try:
         task = Task.objects.get(task_id=task_id)
@@ -231,12 +231,8 @@ def extend_task_deadline(request: HttpRequest, task_id: TaskId, data: TaskExtend
         except User.DoesNotExist:
             raise HttpError(404, "Student not found")
 
-        extension = TaskService.extend_deadline_per_student(
-            task, student, data.new_deadline, data.reason, user
-        )
+        extension = TaskService.extend_deadline_per_student(task, student, data.new_deadline, data.reason, user)
         return {"task": task, "extension": extension}
     else:
         task = TaskService.extend_deadline_global(task, data.new_deadline)
         return {"task": task, "extension": None}
-
-

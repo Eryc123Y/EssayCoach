@@ -394,7 +394,7 @@ class TestProfileIntegration:
         # Create submissions with feedback
         now = timezone.now()
         for i in range(3):
-            submission = Submission.objects.create(
+            Submission.objects.create(
                 task_id_task=task,
                 user_id_user=student_user,
                 submission_txt=f"Essay {i + 1}",

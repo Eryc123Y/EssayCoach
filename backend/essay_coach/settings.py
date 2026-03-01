@@ -98,8 +98,8 @@ SIMPLE_JWT = {
     "ALGORITHM": "HS256",
     "SIGNING_KEY": SECRET_KEY,
     "VERIFYING_KEY": None,
-    "AUDIENCE": None,
-    "ISSUER": None,
+    "AUDIENCE": os.environ.get("JWT_AUDIENCE", "essaycoach-frontend"),
+    "ISSUER": os.environ.get("JWT_ISSUER", "essaycoach-backend"),
     "JWK_URL": None,
     "LEEWAY": 0,
     "AUTH_HEADER_TYPES": ("Bearer",),
@@ -120,6 +120,8 @@ JWT_SECRET_KEY = SECRET_KEY
 JWT_ALGORITHM = "HS256"
 JWT_ACCESS_TOKEN_LIFETIME_HOURS = 24
 JWT_REFRESH_TOKEN_LIFETIME_DAYS = 7
+JWT_ISSUER = os.environ.get("JWT_ISSUER", "essaycoach-backend")
+JWT_AUDIENCE = os.environ.get("JWT_AUDIENCE", "essaycoach-frontend")
 
 ROOT_URLCONF = "essay_coach.urls"
 

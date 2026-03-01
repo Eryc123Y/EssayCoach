@@ -258,7 +258,7 @@ def test_dashboard_with_real_data():
         submission_txt="This is a realistic essay submission for testing.",
     )
 
-    feedback = Feedback.objects.create(
+    Feedback.objects.create(
         submission_id_submission=submission,
         user_id_user=student,
     )

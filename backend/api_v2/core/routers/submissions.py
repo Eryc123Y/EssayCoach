@@ -5,11 +5,14 @@ from ninja import Router
 from ninja.errors import HttpError
 
 from api_v2.schemas.base import PaginationParams, SuccessResponse
+from api_v2.types.enums import UserRole
 from api_v2.types.ids import (
     FeedbackId,
     RubricItemId,
     SubmissionId,
 )
+from api_v2.utils.auth import JWTAuth
+from api_v2.utils.permissions import IsAdminOrLecturer, has_role
 from core.models import (
     Feedback,
     FeedbackItem,
@@ -19,7 +22,6 @@ from core.models import (
     User,
 )
 
-from api_v2.utils.auth import JWTAuth
 from ..schemas import (
     FeedbackFilterParams,
     FeedbackIn,
@@ -31,8 +33,6 @@ from ..schemas import (
     SubmissionIn,
     SubmissionOut,
 )
-
-
 
 
 def paginate(queryset, params: PaginationParams):
@@ -50,8 +50,30 @@ def paginate(queryset, params: PaginationParams):
         return {"count": total, "results": list(queryset[start:end])}
 
 
-
 router = Router(tags=["Submissions"], auth=JWTAuth())
+
+
+def _check_admin_or_lecturer(request: HttpRequest) -> None:
+    IsAdminOrLecturer().check(request)
+
+
+def _check_submission_write_permission(request: HttpRequest, submission: Submission) -> None:
+    user = request.auth
+    if has_role(user, [UserRole.ADMIN, UserRole.LECTURER]):
+        return
+    if has_role(user, [UserRole.STUDENT]) and submission.user_id_user_id == user.user_id:
+        return
+    raise HttpError(403, "You do not have permission to modify this submission")
+
+
+def _check_feedback_write_permission(request: HttpRequest, feedback: Feedback) -> None:
+    user = request.auth
+    if has_role(user, [UserRole.ADMIN]):
+        return
+    if has_role(user, [UserRole.LECTURER]) and feedback.user_id_user_id == user.user_id:
+        return
+    raise HttpError(403, "You do not have permission to modify this feedback")
+
 
 # =============================================================================
 # Submissions
@@ -66,6 +88,10 @@ def list_submissions(request: HttpRequest, filters: SubmissionFilterParams = Sub
 
 @router.post("/submissions/", response=SubmissionOut)
 def create_submission(request: HttpRequest, data: SubmissionIn):
+    request_user = request.auth
+    if has_role(request_user, [UserRole.STUDENT]) and request_user.user_id != data.user_id_user:
+        raise HttpError(403, "Students can only create submissions for themselves")
+
     task = Task.objects.get(task_id=data.task_id_task)
     user = User.objects.get(user_id=data.user_id_user)
     submission = Submission.objects.create(
@@ -88,6 +114,7 @@ def get_submission(request: HttpRequest, submission_id: SubmissionId):
 def update_submission(request: HttpRequest, submission_id: SubmissionId, data: SubmissionIn):
     try:
         submission = Submission.objects.get(submission_id=submission_id)
+        _check_submission_write_permission(request, submission)
         submission.submission_txt = data.submission_txt
         submission.save()
         return submission
@@ -99,6 +126,7 @@ def update_submission(request: HttpRequest, submission_id: SubmissionId, data: S
 def delete_submission(request: HttpRequest, submission_id: SubmissionId) -> SuccessResponse:
     try:
         submission = Submission.objects.get(submission_id=submission_id)
+        _check_submission_write_permission(request, submission)
         submission.delete()
         return SuccessResponse(success=True)
     except Submission.DoesNotExist:
@@ -118,6 +146,11 @@ def list_feedbacks(request: HttpRequest, filters: FeedbackFilterParams = Feedbac
 
 @router.post("/feedbacks/", response=FeedbackOut)
 def create_feedback(request: HttpRequest, data: FeedbackIn):
+    _check_admin_or_lecturer(request)
+    request_user = request.auth
+    if has_role(request_user, [UserRole.LECTURER]) and request_user.user_id != data.user_id_user:
+        raise HttpError(403, "Lecturers can only create feedback as themselves")
+
     submission = Submission.objects.get(submission_id=data.submission_id_submission)
     user = User.objects.get(user_id=data.user_id_user)
     feedback = Feedback.objects.create(
@@ -139,6 +172,7 @@ def get_feedback(request: HttpRequest, feedback_id: FeedbackId):
 def delete_feedback(request: HttpRequest, feedback_id: FeedbackId) -> SuccessResponse:
     try:
         feedback = Feedback.objects.get(feedback_id=feedback_id)
+        _check_feedback_write_permission(request, feedback)
         feedback.delete()
         return SuccessResponse(success=True)
     except Feedback.DoesNotExist:
@@ -158,7 +192,9 @@ def list_feedback_items(request: HttpRequest, filters: FeedbackItemFilterParams 
 
 @router.post("/feedback-items/", response=FeedbackItemOut)
 def create_feedback_item(request: HttpRequest, data: FeedbackItemIn):
+    _check_admin_or_lecturer(request)
     feedback = Feedback.objects.get(feedback_id=data.feedback_id_feedback)
+    _check_feedback_write_permission(request, feedback)
     rubric_item = RubricItem.objects.get(rubric_item_id=data.rubric_item_id_rubric_item)
     item = FeedbackItem.objects.create(
         feedback_id_feedback=feedback,
@@ -182,6 +218,7 @@ def get_feedback_item(request: HttpRequest, item_id: RubricItemId):
 def update_feedback_item(request: HttpRequest, item_id: RubricItemId, data: FeedbackItemIn):
     try:
         item = FeedbackItem.objects.get(feedback_item_id=item_id)
+        _check_feedback_write_permission(request, item.feedback_id_feedback)
         item.feedback_item_score = data.feedback_item_score
         item.feedback_item_comment = data.feedback_item_comment
         item.feedback_item_source = data.feedback_item_source
@@ -195,9 +232,8 @@ def update_feedback_item(request: HttpRequest, item_id: RubricItemId, data: Feed
 def delete_feedback_item(request: HttpRequest, item_id: RubricItemId) -> SuccessResponse:
     try:
         item = FeedbackItem.objects.get(feedback_item_id=item_id)
+        _check_feedback_write_permission(request, item.feedback_id_feedback)
         item.delete()
         return SuccessResponse(success=True)
     except FeedbackItem.DoesNotExist:
         raise HttpError(404, "Feedback item not found")
-
-

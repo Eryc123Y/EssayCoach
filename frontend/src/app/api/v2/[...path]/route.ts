@@ -3,6 +3,41 @@ import { getServerApiUrl } from '@/lib/server-api';
 
 const DJANGO_API_URL = getServerApiUrl();
 
+const SAFE_FORWARD_HEADERS = [
+  'accept',
+  'content-type',
+  'origin',
+  'referer',
+  'x-csrftoken',
+  'x-requested-with',
+] as const;
+
+const SAFE_FORWARD_COOKIES = ['csrftoken', 'sessionid'] as const;
+
+function buildProxyHeaders(req: NextRequest, backendHost: string): Headers {
+  const headers = new Headers();
+
+  for (const headerName of SAFE_FORWARD_HEADERS) {
+    const value = req.headers.get(headerName);
+    if (value) {
+      headers.set(headerName, value);
+    }
+  }
+
+  headers.set('Host', backendHost);
+
+  const safeCookies = SAFE_FORWARD_COOKIES.flatMap((cookieName) => {
+    const value = req.cookies.get(cookieName)?.value;
+    return value ? [`${cookieName}=${value}`] : [];
+  });
+
+  if (safeCookies.length > 0) {
+    headers.set('Cookie', safeCookies.join('; '));
+  }
+
+  return headers;
+}
+
 async function proxy(
   req: NextRequest,
   { params }: { params: Promise<{ path: string[] }> }
@@ -25,10 +60,7 @@ async function proxy(
   const targetUrl = `${backendUrl.origin}/api/v2/${pathString}/${querySuffix}`;
 
   const token = req.cookies.get('access_token')?.value;
-  const headers = new Headers(req.headers);
-
-  // Set Host header based on environment URL
-  headers.set('Host', backendUrl.host);
+  const headers = buildProxyHeaders(req, backendUrl.host);
 
   if (token) {
     headers.set('Authorization', `Bearer ${token}`);

@@ -12,9 +12,16 @@
 import { jwtVerify, errors } from 'jose';
 
 // JWT Configuration - matches backend settings
-const JWT_SECRET = process.env.JWT_SECRET || 'django-insecure-default-key-change-in-production';
 const JWT_ISSUER = 'essaycoach-backend';
 const JWT_AUDIENCE = 'essaycoach-frontend';
+
+function getJwtSecret(): string | null {
+  const secret = process.env.JWT_SECRET;
+  if (typeof secret === 'string' && secret.trim().length > 0) {
+    return secret;
+  }
+  return null;
+}
 
 // Valid roles in the system
 export type UserRole = 'student' | 'lecturer' | 'admin';
@@ -48,11 +55,19 @@ export interface TokenValidationResult {
 export async function validateAndDecodeToken(
   token: string
 ): Promise<TokenValidationResult> {
+  const jwtSecret = getJwtSecret();
+  if (!jwtSecret) {
+    return {
+      valid: false,
+      error: 'Server auth misconfiguration: JWT secret is not configured',
+    };
+  }
+
   try {
     // Verify signature and standard claims
     const verified = await jwtVerify(
       token,
-      new TextEncoder().encode(JWT_SECRET),
+      new TextEncoder().encode(jwtSecret),
       {
         issuer: JWT_ISSUER,
         audience: JWT_AUDIENCE,
@@ -60,14 +75,13 @@ export async function validateAndDecodeToken(
       }
     );
 
-    // Extract and validate user_role claim
-    const userRole = verified.payload.user_role;
+    const userRole = verified.payload.user_role ?? verified.payload.role;
     const validRoles = ['student', 'lecturer', 'admin', 'teacher'] as const;
 
     if (!userRole || typeof userRole !== 'string') {
       return {
         valid: false,
-        error: 'Invalid token: missing user_role claim',
+        error: 'Invalid token: missing role claim',
       };
     }
 
@@ -118,7 +132,7 @@ export async function validateAndDecodeToken(
 export function extractRoleFromPayload(
   payload: Record<string, unknown>
 ): UserRole | null {
-  const userRole = payload.user_role;
+  const userRole = payload.user_role ?? payload.role;
   const validRoles = ['student', 'lecturer', 'admin', 'teacher'] as const;
 
   if (!userRole || typeof userRole !== 'string') {

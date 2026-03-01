@@ -12,6 +12,7 @@ from api_v2.schemas.base import PaginationParams, SuccessResponse
 from api_v2.types.ids import (
     UserId,
 )
+from api_v2.utils.auth import JWTAuth
 from core.models import (
     Class,
     Enrollment,
@@ -23,7 +24,6 @@ from core.models import (
     UserBadge,
 )
 
-from api_v2.utils.auth import JWTAuth
 from ..schemas import (
     BadgeOut,
     ClassDetailOut,
@@ -35,8 +35,6 @@ from ..schemas import (
     UserStatsOut,
     UserUpdateIn,
 )
-
-
 
 
 def paginate(queryset, params: PaginationParams):

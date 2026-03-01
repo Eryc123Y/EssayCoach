@@ -120,7 +120,7 @@ format:
 
 typecheck:
 	@echo "Running Python type checking..."
-	@cd backend && .venv/bin/mypy .
+	@cd backend && .venv/bin/pyright
 
 # Build
 build:

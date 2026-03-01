@@ -7,13 +7,14 @@ from ninja import Query, Router
 from ninja.errors import HttpError
 
 from api_v2.schemas.base import PaginationParams, SuccessResponse
+from api_v2.types.enums import UserRole
 from api_v2.types.ids import (
     ClassId,
     EnrollmentId,
     UserId,
 )
 from api_v2.utils.auth import JWTAuth
-from api_v2.utils.permissions import IsAdminOrLecturer
+from api_v2.utils.permissions import IsAdminOrLecturer, has_role
 from core.models import (
     Class,
     Enrollment,
@@ -55,8 +56,18 @@ def paginate(queryset, params: PaginationParams):
         return {"count": total, "results": list(queryset[start:end])}
 
 
-
 router = Router(tags=["Classes"], auth=JWTAuth())
+
+
+def _check_admin_or_lecturer(request: HttpRequest) -> None:
+    IsAdminOrLecturer().check(request)
+
+
+def _check_student(request: HttpRequest) -> None:
+    user = request.auth
+    if not has_role(user, [UserRole.STUDENT]):
+        raise HttpError(403, "Only students can perform this action")
+
 
 # =============================================================================
 # Classes
@@ -96,6 +107,7 @@ def create_class(request: HttpRequest, data: ClassIn):
 @router.post("/classes/join/", response=ClassOut)
 def join_class_by_code(request: HttpRequest, join_code: str):
     """Student joins a class using join code."""
+    _check_student(request)
     user = request.auth
     try:
         class_obj = Class.objects.get(class_join_code=join_code.upper())
@@ -130,6 +142,7 @@ def get_class(request: HttpRequest, class_id: ClassId):
 
 @router.put("/classes/{class_id}/", response=ClassOut)
 def update_class(request: HttpRequest, class_id: ClassId, data: ClassIn):
+    _check_admin_or_lecturer(request)
     try:
         class_obj = Class.objects.get(class_id=class_id)
         if data.unit_id_unit:
@@ -153,6 +166,7 @@ def update_class(request: HttpRequest, class_id: ClassId, data: ClassIn):
 
 @router.delete("/classes/{class_id}/", response=SuccessResponse)
 def delete_class(request: HttpRequest, class_id: ClassId) -> SuccessResponse:
+    _check_admin_or_lecturer(request)
     try:
         class_obj = Class.objects.get(class_id=class_id)
         class_obj.delete()
@@ -174,6 +188,7 @@ def list_enrollments(request: HttpRequest, filters: EnrollmentFilterParams = Enr
 
 @router.post("/enrollments/", response=EnrollmentOut)
 def create_enrollment(request: HttpRequest, data: EnrollmentIn):
+    _check_admin_or_lecturer(request)
     enrollment = Enrollment.objects.create(**data.dict())
     return enrollment
 
@@ -188,6 +203,7 @@ def get_enrollment(request: HttpRequest, enrollment_id: EnrollmentId):
 
 @router.delete("/enrollments/{enrollment_id}/", response=SuccessResponse)
 def delete_enrollment(request: HttpRequest, enrollment_id: EnrollmentId) -> SuccessResponse:
+    _check_admin_or_lecturer(request)
     try:
         enrollment = Enrollment.objects.get(enrollment_id=enrollment_id)
         enrollment.delete()
@@ -209,6 +225,7 @@ def list_teaching_assignments(request: HttpRequest, params: PaginationParams = P
 
 @router.post("/teaching-assignments/", response=TeachingAssnOut)
 def create_teaching_assignment(request: HttpRequest, data: TeachingAssnIn):
+    _check_admin_or_lecturer(request)
     user = User.objects.get(user_id=data.user_id_user)
     class_obj = Class.objects.get(class_id=data.class_id_class)
     assignment = TeachingAssn.objects.create(
@@ -228,6 +245,7 @@ def get_teaching_assignment(request: HttpRequest, assignment_id: int):
 
 @router.delete("/teaching-assignments/{assignment_id}/", response=SuccessResponse)
 def delete_teaching_assignment(request: HttpRequest, assignment_id: int) -> SuccessResponse:
+    _check_admin_or_lecturer(request)
     try:
         assignment = TeachingAssn.objects.get(teaching_assn_id=assignment_id)
         assignment.delete()
@@ -255,6 +273,7 @@ def get_class_students(request: HttpRequest, class_id: ClassId):
 @router.post("/classes/{class_id}/students/", response=UserOut)
 def add_student_to_class(request: HttpRequest, class_id: ClassId, user_id: UserId):
     """Add a student to a class (admin/lecturer only)."""
+    _check_admin_or_lecturer(request)
     try:
         class_obj = Class.objects.get(class_id=class_id)
         student = User.objects.get(user_id=user_id)
@@ -281,6 +300,7 @@ def add_student_to_class(request: HttpRequest, class_id: ClassId, user_id: UserI
 @router.delete("/classes/{class_id}/students/{user_id}/", response=SuccessResponse)
 def remove_student_from_class(request: HttpRequest, class_id: ClassId, user_id: UserId) -> SuccessResponse:
     """Remove a student from a class (admin/lecturer only)."""
+    _check_admin_or_lecturer(request)
     try:
         class_obj = Class.objects.get(class_id=class_id)
         enrollment = Enrollment.objects.get(user_id_user_id=user_id, class_id_class=class_obj)
@@ -299,10 +319,7 @@ def remove_student_from_class(request: HttpRequest, class_id: ClassId, user_id: 
 @router.post("/classes/{class_id}/archive/", response=ClassOut)
 def archive_class(request: HttpRequest, class_id: ClassId):
     """Archive a class."""
-
-    user = request.auth
-    if user.user_role not in ["lecturer", "admin"]:
-        raise HttpError(403, "Only lecturers or admins can archive classes")
+    _check_admin_or_lecturer(request)
     try:
         class_obj = Class.objects.get(class_id=class_id)
         class_obj.class_status = "archived"
@@ -316,9 +333,8 @@ def archive_class(request: HttpRequest, class_id: ClassId):
 @router.delete("/classes/{class_id}/leave/", response=SuccessResponse)
 def leave_class(request: HttpRequest, class_id: ClassId) -> SuccessResponse:
     """Student leaves a class."""
+    _check_student(request)
     user = request.auth
-    if user.user_role != "student":
-        raise HttpError(403, "Only students can leave a class")
 
     try:
         class_obj = Class.objects.get(class_id=class_id)
@@ -340,7 +356,6 @@ def leave_class(request: HttpRequest, class_id: ClassId) -> SuccessResponse:
         raise HttpError(404, "Class not found")
 
 
-
 # --- Class Actions (PRD-10) ---
 @router.post("/admin/classes/batch-enroll/", response=BatchEnrollResultOut)
 def batch_enroll_students(request: HttpRequest, data: BatchEnrollIn):
@@ -349,7 +364,7 @@ def batch_enroll_students(request: HttpRequest, data: BatchEnrollIn):
     Admin only.
     """
     user = request.auth
-    if user.user_role != "admin":
+    if not has_role(user, [UserRole.ADMIN]):
         raise HttpError(403, "Only admins can batch enroll students")
 
     try:
@@ -371,7 +386,7 @@ def invite_lecturer(request: HttpRequest, data: InviteLecturerIn):
     Admin only.
     """
     user = request.auth
-    if user.user_role != "admin":
+    if not has_role(user, [UserRole.ADMIN]):
         raise HttpError(403, "Only admins can invite lecturers")
 
     result = EnrollmentService.invite_lecturer(data.email, data.first_name, data.last_name)
@@ -381,5 +396,5 @@ def invite_lecturer(request: HttpRequest, data: InviteLecturerIn):
         "message": "Lecturer invited successfully",
         "user_id": result["user"].user_id,
         "email": result["user"].user_email,
-        "status": result["status"]
+        "status": result["status"],
     }

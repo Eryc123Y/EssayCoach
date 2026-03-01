@@ -368,6 +368,12 @@ describe('Auth API Integration', () => {
         user_lname: 'User',
         user_role: 'student' as const,
         is_active: true,
+        // Normalized fields added by normalizeUserInfo
+        id: 1,
+        email: 'test@example.com',
+        first_name: 'Test',
+        last_name: 'User',
+        role: 'student',
       };
 
       mockFetch.mockResolvedValueOnce({

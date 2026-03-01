@@ -18,7 +18,7 @@ if TYPE_CHECKING:
     from core.models import User
 
 
-class PermissionDenied(HttpError):
+class PermissionDeniedError(HttpError):
     """Custom exception for permission denied errors."""
 
     def __init__(self, message: str = "You do not have permission to perform this action."):
@@ -55,7 +55,10 @@ def check_role(request: HttpRequest, roles: list[str | UserRole]) -> None:
     """
     user = getattr(request, "auth", None)
     if not has_role(user, roles):
-        raise PermissionDenied(f"This action requires one of the following roles: {', '.join(str(r) for r in roles)}")
+        raise PermissionDeniedError(
+            f"This action requires one of the following roles: "
+            f"{', '.join(str(r) for r in roles)}"
+        )
 
 
 class IsAdminOrLecturer:
@@ -144,7 +147,7 @@ class IsOwnerOrAdmin:
         """
         user = getattr(request, "auth", None)
         if not user:
-            raise PermissionDenied("Authentication required")
+            raise PermissionDeniedError("Authentication required")
 
         # Admin can do anything
         if has_role(user, [UserRole.ADMIN]):
@@ -154,7 +157,7 @@ class IsOwnerOrAdmin:
         if target_user_id is not None and user.user_id == target_user_id:
             return
 
-        raise PermissionDenied("You can only modify your own account")
+        raise PermissionDeniedError("You can only modify your own account")
 
 
 def check_admin_or_lecturer(request: HttpRequest) -> None:

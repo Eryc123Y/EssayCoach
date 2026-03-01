@@ -29,16 +29,26 @@ _token_blacklist: set[str] = set()
 
 
 def get_jwt_secret() -> str:
-    """Get JWT secret from settings or use a default for development."""
+    """Get JWT secret from settings."""
     secret = getattr(settings, "JWT_SECRET_KEY", None)
     if not secret:
-        secret = getattr(settings, "SECRET_KEY", "dev-secret-key-change-in-production")
+        secret = getattr(settings, "SECRET_KEY", None)
+    if not secret:
+        raise RuntimeError("JWT secret is not configured")
     return secret
 
 
 def get_jwt_algorithm() -> str:
     """Get JWT algorithm from settings."""
     return getattr(settings, "JWT_ALGORITHM", "HS256")
+
+
+def get_jwt_issuer() -> str:
+    return getattr(settings, "JWT_ISSUER", "essaycoach-backend")
+
+
+def get_jwt_audience() -> str:
+    return getattr(settings, "JWT_AUDIENCE", "essaycoach-frontend")
 
 
 def get_token_lifetime() -> timedelta:
@@ -87,7 +97,9 @@ def create_jwt_pair(user: User) -> JWTPair:
     # Set custom claims
     refresh["user_id"] = user.user_id
     refresh["email"] = user.user_email
-    refresh["role"] = user.user_role or "student"
+    role = user.user_role or "student"
+    refresh["role"] = role
+    refresh["user_role"] = role
 
     # Get access token from refresh token
     access = refresh.access_token
@@ -149,16 +161,35 @@ def verify_jwt_token(token: str) -> dict | None:
         if jti and _is_token_blacklisted(jti):
             return None
 
-        return dict(access_token)
+        payload = dict(access_token)
+        role = payload.get("user_role") or payload.get("role")
+        if not role or not isinstance(role, str):
+            return None
+
+        payload["user_role"] = role
+        payload["role"] = role
+        return payload
     except (TokenError, jwt.InvalidTokenError, Exception):
         pass
 
     # Fallback to manual verification
     try:
+        decode_kwargs: dict[str, object] = {
+            "key": get_jwt_secret(),
+            "algorithms": [get_jwt_algorithm()],
+        }
+
+        issuer = get_jwt_issuer()
+        if issuer:
+            decode_kwargs["issuer"] = issuer
+
+        audience = get_jwt_audience()
+        if audience:
+            decode_kwargs["audience"] = audience
+
         payload = jwt.decode(
             token,
-            get_jwt_secret(),
-            algorithms=[get_jwt_algorithm()],
+            **decode_kwargs,
         )
 
         # Check if token is blacklisted
@@ -166,6 +197,12 @@ def verify_jwt_token(token: str) -> dict | None:
         if jti and _is_token_blacklisted(jti):
             return None
 
+        role = payload.get("user_role") or payload.get("role")
+        if not role or not isinstance(role, str):
+            return None
+
+        payload["user_role"] = role
+        payload["role"] = role
         return payload
     except jwt.InvalidTokenError:
         return None
