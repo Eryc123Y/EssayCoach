@@ -1,10 +1,7 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
-import type {
-  DashboardRole,
-  DashboardResponse,
-} from '@/service/api/v2/types';
+import { useState, useEffect, useCallback, useRef } from 'react';
+import type { DashboardRole, DashboardResponse } from '@/service/api/v2/types';
 import { api } from '@/service/api/v2/client';
 
 export interface UseDashboardDataReturn {
@@ -14,6 +11,14 @@ export interface UseDashboardDataReturn {
   refresh: () => Promise<void>;
   role: DashboardRole;
 }
+
+const ENDPOINTS: Record<DashboardRole, string> = {
+  student: '/core/dashboard/student/',
+  lecturer: '/core/dashboard/lecturer/',
+  admin: '/core/dashboard/admin/'
+};
+
+const MAX_RETRIES = 3;
 
 /**
  * Hook for fetching role-specific dashboard data
@@ -42,58 +47,59 @@ export function useDashboardData(
   const [data, setData] = useState<DashboardResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
-  const [retryCount, setRetryCount] = useState(0);
+  const retryCountRef = useRef(0);
+  const loadingRef = useRef(false);
+  const retryTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  const MAX_RETRIES = 3;
-
-  // Determine endpoint based on role
-  const getEndpoint = useCallback((userRole: DashboardRole): string => {
-    switch (userRole) {
-      case 'student':
-        return '/core/dashboard/student/';
-      case 'lecturer':
-        return '/core/dashboard/lecturer/';
-      case 'admin':
-        return '/core/dashboard/admin/';
-      default:
-        return '/core/dashboard/student/';
+  const fetchData = useCallback(async () => {
+    // Cancel any pending retry before starting a new fetch
+    if (retryTimeoutRef.current !== null) {
+      clearTimeout(retryTimeoutRef.current);
+      retryTimeoutRef.current = null;
     }
-  }, []);
 
-  // Fetch dashboard data
-  const fetchData = useCallback(
-    async (isRetry = false) => {
-      try {
-        setLoading(true);
-        setError(null);
+    setLoading(true);
+    loadingRef.current = true;
 
-        const endpoint = getEndpoint(role);
-        const response = await api.get<DashboardResponse>(endpoint);
+    try {
+      const endpoint = ENDPOINTS[role] ?? ENDPOINTS.student;
+      const response = await api.get<DashboardResponse>(endpoint);
 
-        setData(response);
-        setRetryCount(0); // Reset retry count on success
-      } catch (err) {
-        const error = err instanceof Error ? err : new Error('Failed to fetch dashboard data');
-        setError(error);
+      setData(response);
+      setError(null);
+      retryCountRef.current = 0;
+    } catch (err) {
+      const fetchError =
+        err instanceof Error ? err : new Error('Failed to fetch dashboard data');
+      setError(fetchError);
 
-        if (!isRetry && retryCount < MAX_RETRIES - 1) {
-          setRetryCount((prev) => prev + 1);
-          await fetchData(true);
-        }
-      } finally {
-        setLoading(false);
+      if (retryCountRef.current < MAX_RETRIES - 1) {
+        const delay = Math.pow(2, retryCountRef.current) * 500; // 500ms, 1s, 2s
+        retryCountRef.current += 1;
+        retryTimeoutRef.current = setTimeout(() => fetchData(), delay);
       }
-    },
-    [role, getEndpoint, retryCount]
-  );
+    } finally {
+      loadingRef.current = false;
+      setLoading(false);
+    }
+  }, [role]);
 
-  // Refresh function for manual refresh
   const refresh = useCallback(async () => {
-    setRetryCount(0);
+    retryCountRef.current = 0;
     await fetchData();
   }, [fetchData]);
 
-  // Initial fetch and retry on failure
+  // Cancel retry timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (retryTimeoutRef.current !== null) {
+        clearTimeout(retryTimeoutRef.current);
+        retryTimeoutRef.current = null;
+      }
+    };
+  }, []);
+
+  // Initial fetch
   useEffect(() => {
     if (options?.enabled === false) {
       setLoading(false);
@@ -116,20 +122,19 @@ export function useDashboardData(
     }
 
     const intervalId = setInterval(() => {
-      // Only refresh if not already loading
-      if (!loading) {
+      if (!loadingRef.current) {
         fetchData();
       }
     }, refreshInterval);
 
     return () => clearInterval(intervalId);
-  }, [fetchData, loading, options?.refreshInterval, options?.enabled]);
+  }, [fetchData, options?.refreshInterval, options?.enabled]);
 
   return {
     data,
     loading,
     error,
     refresh,
-    role,
+    role
   };
 }

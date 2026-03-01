@@ -20,14 +20,14 @@ import { api } from '@/service/api/v2/client';
 import type {
   DashboardResponse,
   DashboardRole,
-  StudentDashboardResponse,
+  StudentDashboardResponse
 } from '@/service/api/v2/types';
 
 // Mock the API client
 vi.mock('@/service/api/v2/client', () => ({
   api: {
-    get: vi.fn(),
-  },
+    get: vi.fn()
+  }
 }));
 
 const mockApiGet = api.get as ReturnType<typeof vi.fn>;
@@ -38,7 +38,7 @@ const mockStudentResponse: DashboardResponse = {
     id: 1,
     name: 'John Student',
     role: 'student',
-    email: 'john@example.com',
+    email: 'john@example.com'
   },
   stats: {
     totalEssays: 5,
@@ -47,10 +47,10 @@ const mockStudentResponse: DashboardResponse = {
     essaysSubmitted: 5,
     avgScore: 82.5,
     improvementTrend: 'up',
-    feedbackReceived: 12,
+    feedbackReceived: 12
   },
   myEssays: [],
-  recentActivity: [],
+  recentActivity: []
 };
 
 const mockLecturerResponse: DashboardResponse = {
@@ -58,7 +58,7 @@ const mockLecturerResponse: DashboardResponse = {
     id: 2,
     name: 'Jane Lecturer',
     role: 'lecturer',
-    email: 'jane@example.com',
+    email: 'jane@example.com'
   },
   stats: {
     totalEssays: 12,
@@ -67,11 +67,11 @@ const mockLecturerResponse: DashboardResponse = {
     essaysReviewedToday: 12,
     pendingReviews: 5,
     activeClasses: 3,
-    avgGradingTime: 25,
+    avgGradingTime: 25
   },
   classes: [],
   gradingQueue: [],
-  recentActivity: [],
+  recentActivity: []
 };
 
 const mockAdminResponse: DashboardResponse = {
@@ -79,7 +79,7 @@ const mockAdminResponse: DashboardResponse = {
     id: 3,
     name: 'Admin User',
     role: 'admin',
-    email: 'admin@example.com',
+    email: 'admin@example.com'
   },
   stats: {
     averageScore: 82.3,
@@ -89,15 +89,15 @@ const mockAdminResponse: DashboardResponse = {
     activeLecturers: 300,
     totalClasses: 45,
     totalEssays: 5000,
-    systemHealth: 'healthy',
+    systemHealth: 'healthy'
   },
   recentActivity: [],
   systemStatus: {
     database: 'healthy',
     submissionsLast24h: 125,
     feedbacksLast24h: 98,
-    activeUsers: 450,
-  },
+    activeUsers: 450
+  }
 };
 
 describe('useDashboardData', () => {
@@ -200,16 +200,24 @@ describe('useDashboardData', () => {
     it('should clear error on successful fetch', async () => {
       mockApiGet
         .mockRejectedValueOnce(new Error('Network error'))
-        .mockRejectedValueOnce(new Error('Network error'))
-        .mockResolvedValueOnce(mockStudentResponse);
+        .mockResolvedValue(mockStudentResponse);
 
-      const { result, rerender } = renderHook(() => useDashboardData('student'));
+      const { result } = renderHook(() => useDashboardData('student'));
 
-      rerender();
-
+      // Initial fetch fails — error should be set
       await waitFor(() => {
-        expect(result.current.error).toBeNull();
+        expect(result.current.loading).toBe(false);
       });
+
+      // Wait for retry at 500ms to succeed and clear the error
+      await waitFor(
+        () => {
+          expect(result.current.error).toBeNull();
+        },
+        { timeout: 2000 }
+      );
+
+      expect(result.current.data).toEqual(mockStudentResponse);
     });
   });
 
@@ -237,7 +245,9 @@ describe('useDashboardData', () => {
       });
 
       expect(result.current.error).toBeInstanceOf(Error);
-      expect(result.current.error?.message).toBe('Failed to fetch dashboard data');
+      expect(result.current.error?.message).toBe(
+        'Failed to fetch dashboard data'
+      );
     });
 
     it('should set data to null on error', async () => {
@@ -257,7 +267,7 @@ describe('useDashboardData', () => {
     it('should refresh data when refresh() is called', async () => {
       const updatedResponse: DashboardResponse = {
         ...mockStudentResponse,
-        stats: { ...mockStudentResponse.stats, essaysSubmitted: 10 },
+        stats: { ...mockStudentResponse.stats, essaysSubmitted: 10 }
       };
 
       mockApiGet
@@ -271,7 +281,10 @@ describe('useDashboardData', () => {
         expect(result.current.loading).toBe(false);
       });
 
-      expect((result.current.data as StudentDashboardResponse | null)?.stats.essaysSubmitted).toBe(5);
+      expect(
+        (result.current.data as StudentDashboardResponse | null)?.stats
+          .essaysSubmitted
+      ).toBe(5);
 
       // Call refresh
       await act(async () => {
@@ -280,7 +293,10 @@ describe('useDashboardData', () => {
 
       // Should have called API twice
       expect(mockApiGet).toHaveBeenCalledTimes(2);
-      expect((result.current.data as StudentDashboardResponse | null)?.stats.essaysSubmitted).toBe(10);
+      expect(
+        (result.current.data as StudentDashboardResponse | null)?.stats
+          .essaysSubmitted
+      ).toBe(10);
     });
 
     it('should recover after manual refresh following failure', async () => {
@@ -302,7 +318,9 @@ describe('useDashboardData', () => {
       });
 
       await waitFor(() => {
-        expect(mockApiGet.mock.calls.length).toBeGreaterThan(callsBeforeRefresh);
+        expect(mockApiGet.mock.calls.length).toBeGreaterThan(
+          callsBeforeRefresh
+        );
       });
 
       expect(result.current.error).toBeNull();
@@ -401,7 +419,10 @@ describe('useDashboardData', () => {
     it('should not auto-refresh if loading', async () => {
       // Mock a slow response
       mockApiGet.mockImplementation(
-        () => new Promise((resolve) => setTimeout(() => resolve(mockStudentResponse), 100))
+        () =>
+          new Promise((resolve) =>
+            setTimeout(() => resolve(mockStudentResponse), 100)
+          )
       );
 
       renderHook(() => useDashboardData('student', { refreshInterval: 50 }));
@@ -421,7 +442,9 @@ describe('useDashboardData', () => {
     it('should clear interval on unmount', async () => {
       mockApiGet.mockResolvedValue(mockStudentResponse);
 
-      const { unmount } = renderHook(() => useDashboardData('student', { refreshInterval: 30000 }));
+      const { unmount } = renderHook(() =>
+        useDashboardData('student', { refreshInterval: 30000 })
+      );
       await act(async () => {
         await Promise.resolve();
       });
@@ -452,7 +475,9 @@ describe('useDashboardData', () => {
     });
 
     it('should not fetch when enabled is false', () => {
-      const { result } = renderHook(() => useDashboardData('student', { enabled: false }));
+      const { result } = renderHook(() =>
+        useDashboardData('student', { enabled: false })
+      );
 
       expect(mockApiGet).not.toHaveBeenCalled();
       expect(result.current.loading).toBe(false);
@@ -461,9 +486,14 @@ describe('useDashboardData', () => {
     it('should not auto-refresh when enabled is false', async () => {
       mockApiGet.mockResolvedValue(mockStudentResponse);
 
-      const { rerender } = renderHook((props: { enabled: boolean; refreshInterval: number }) =>
-        useDashboardData('student', { enabled: true, refreshInterval: 30000 })
-      , { initialProps: { enabled: true, refreshInterval: 30000 } });
+      const { rerender } = renderHook(
+        (props: { enabled: boolean; refreshInterval: number }) =>
+          useDashboardData('student', {
+            enabled: true,
+            refreshInterval: 30000
+          }),
+        { initialProps: { enabled: true, refreshInterval: 30000 } }
+      );
 
       await act(async () => {
         await Promise.resolve();
@@ -499,6 +529,14 @@ describe('useDashboardData', () => {
   });
 
   describe('Retry Logic', () => {
+    beforeEach(() => {
+      vi.useFakeTimers();
+    });
+
+    afterEach(() => {
+      vi.useRealTimers();
+    });
+
     it('should retry on failure with exponential backoff', async () => {
       mockApiGet
         .mockRejectedValueOnce(new Error('Error 1'))
@@ -507,9 +545,18 @@ describe('useDashboardData', () => {
 
       renderHook(() => useDashboardData('student'));
 
-      await waitFor(() => {
-        expect(mockApiGet.mock.calls.length).toBeGreaterThanOrEqual(2);
-      }, { timeout: 5000 });
+      // Wait for first failure
+      await act(async () => {
+        await Promise.resolve();
+      });
+
+      expect(mockApiGet).toHaveBeenCalledTimes(1);
+
+      // Advance past first retry delay (500ms)
+      await act(async () => {
+        vi.advanceTimersByTime(500);
+        await Promise.resolve();
+      });
 
       expect(mockApiGet.mock.calls.length).toBeGreaterThanOrEqual(2);
     });
@@ -519,11 +566,39 @@ describe('useDashboardData', () => {
 
       const { result } = renderHook(() => useDashboardData('student'));
 
-      await waitFor(() => {
-        expect(result.current.error).toBeInstanceOf(Error);
-      }, { timeout: 5000 });
+      // First attempt
+      await act(async () => {
+        await Promise.resolve();
+      });
 
+      expect(result.current.error).toBeInstanceOf(Error);
+      expect(mockApiGet).toHaveBeenCalledTimes(1);
+
+      // Advance past retry 1 (500ms)
+      await act(async () => {
+        vi.advanceTimersByTime(500);
+        await Promise.resolve();
+      });
+
+      expect(mockApiGet).toHaveBeenCalledTimes(2);
+
+      // Advance past retry 2 (1000ms)
+      await act(async () => {
+        vi.advanceTimersByTime(1000);
+        await Promise.resolve();
+      });
+
+      expect(mockApiGet).toHaveBeenCalledTimes(3);
       expect(mockApiGet.mock.calls.length).toBeGreaterThanOrEqual(2);
+
+      // No more retries — advance well past any possible delay
+      await act(async () => {
+        vi.advanceTimersByTime(10000);
+        await Promise.resolve();
+      });
+
+      // Should still be 3 (max retries exhausted)
+      expect(mockApiGet).toHaveBeenCalledTimes(3);
     });
 
     it('should reset retry count on success', async () => {
@@ -533,9 +608,17 @@ describe('useDashboardData', () => {
 
       const { result } = renderHook(() => useDashboardData('student'));
 
-      // Wait for success
-      await waitFor(() => {
-        expect(result.current.loading).toBe(false);
+      // First attempt fails
+      await act(async () => {
+        await Promise.resolve();
+      });
+
+      expect(mockApiGet).toHaveBeenCalledTimes(1);
+
+      // Advance past first retry delay (500ms) — retry succeeds
+      await act(async () => {
+        vi.advanceTimersByTime(500);
+        await Promise.resolve();
       });
 
       // Should have recovered
@@ -549,7 +632,6 @@ describe('useDashboardData', () => {
       // Test the internal backoff calculation
       // BASE_DELAY = 1000ms, multiplier = 2^retry, cap = 10000ms
       // Retry 0: 1000ms, Retry 1: 2000ms, Retry 2: 4000ms, Retry 3+: 8000ms (capped)
-
       // This is tested implicitly through the retry behavior
       // The actual delay calculation happens internally
     });
@@ -576,7 +658,7 @@ describe('useDashboardData', () => {
           id: 1,
           name: 'Test',
           role: 'student',
-          email: 'test@example.com',
+          email: 'test@example.com'
         },
         stats: {
           totalEssays: 0,
@@ -585,10 +667,10 @@ describe('useDashboardData', () => {
           essaysSubmitted: 0,
           avgScore: null,
           improvementTrend: 'stable',
-          feedbackReceived: 0,
+          feedbackReceived: 0
         },
         myEssays: [],
-        recentActivity: [],
+        recentActivity: []
       };
 
       mockApiGet.mockResolvedValue(emptyResponse);
