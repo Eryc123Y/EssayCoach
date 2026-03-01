@@ -91,7 +91,7 @@ seed-db:
 # Testing
 test:
 	@echo "Running API v2 tests..."
-	@cd backend && .venv/bin/pytest api_v2/ -v --timeout=120
+	@cd backend && .venv/bin/pytest -v --timeout=120
 	@echo ""
 	@echo "Running Node tests..."
 	@cd frontend && pnpm test

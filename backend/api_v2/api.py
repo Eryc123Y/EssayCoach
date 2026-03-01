@@ -36,7 +36,7 @@ api_v2 = NinjaAPI(
 
     ## Authentication
     All endpoints require authentication via:
-    - **Token Authentication**: `Authorization: Token <your-token>`
+    - **JWT Bearer Authentication**: `Authorization: Bearer <access-token>`
     - **Session Authentication**: For browser-based access
 
     ## Features

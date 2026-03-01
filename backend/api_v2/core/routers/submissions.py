@@ -8,7 +8,7 @@ from api_v2.schemas.base import PaginationParams, SuccessResponse
 from api_v2.types.enums import UserRole
 from api_v2.types.ids import (
     FeedbackId,
-    RubricItemId,
+    FeedbackItemId,
     SubmissionId,
 )
 from api_v2.utils.auth import JWTAuth
@@ -92,8 +92,16 @@ def create_submission(request: HttpRequest, data: SubmissionIn):
     if has_role(request_user, [UserRole.STUDENT]) and request_user.user_id != data.user_id_user:
         raise HttpError(403, "Students can only create submissions for themselves")
 
-    task = Task.objects.get(task_id=data.task_id_task)
-    user = User.objects.get(user_id=data.user_id_user)
+    try:
+        task = Task.objects.get(task_id=data.task_id_task)
+    except Task.DoesNotExist:
+        raise HttpError(400, "Task not found")
+
+    try:
+        user = User.objects.get(user_id=data.user_id_user)
+    except User.DoesNotExist:
+        raise HttpError(400, "User not found")
+
     submission = Submission.objects.create(
         task_id_task=task,
         user_id_user=user,
@@ -151,8 +159,16 @@ def create_feedback(request: HttpRequest, data: FeedbackIn):
     if has_role(request_user, [UserRole.LECTURER]) and request_user.user_id != data.user_id_user:
         raise HttpError(403, "Lecturers can only create feedback as themselves")
 
-    submission = Submission.objects.get(submission_id=data.submission_id_submission)
-    user = User.objects.get(user_id=data.user_id_user)
+    try:
+        submission = Submission.objects.get(submission_id=data.submission_id_submission)
+    except Submission.DoesNotExist:
+        raise HttpError(400, "Submission not found")
+
+    try:
+        user = User.objects.get(user_id=data.user_id_user)
+    except User.DoesNotExist:
+        raise HttpError(400, "User not found")
+
     feedback = Feedback.objects.create(
         submission_id_submission=submission,
         user_id_user=user,
@@ -193,9 +209,17 @@ def list_feedback_items(request: HttpRequest, filters: FeedbackItemFilterParams 
 @router.post("/feedback-items/", response=FeedbackItemOut)
 def create_feedback_item(request: HttpRequest, data: FeedbackItemIn):
     _check_admin_or_lecturer(request)
-    feedback = Feedback.objects.get(feedback_id=data.feedback_id_feedback)
+    try:
+        feedback = Feedback.objects.get(feedback_id=data.feedback_id_feedback)
+    except Feedback.DoesNotExist:
+        raise HttpError(400, "Feedback not found")
+
     _check_feedback_write_permission(request, feedback)
-    rubric_item = RubricItem.objects.get(rubric_item_id=data.rubric_item_id_rubric_item)
+    try:
+        rubric_item = RubricItem.objects.get(rubric_item_id=data.rubric_item_id_rubric_item)
+    except RubricItem.DoesNotExist:
+        raise HttpError(400, "Rubric item not found")
+
     item = FeedbackItem.objects.create(
         feedback_id_feedback=feedback,
         rubric_item_id_rubric_item=rubric_item,
@@ -207,7 +231,7 @@ def create_feedback_item(request: HttpRequest, data: FeedbackItemIn):
 
 
 @router.get("/feedback-items/{item_id}/", response=FeedbackItemOut)
-def get_feedback_item(request: HttpRequest, item_id: RubricItemId):
+def get_feedback_item(request: HttpRequest, item_id: FeedbackItemId):
     try:
         return FeedbackItem.objects.get(feedback_item_id=item_id)
     except FeedbackItem.DoesNotExist:
@@ -215,7 +239,7 @@ def get_feedback_item(request: HttpRequest, item_id: RubricItemId):
 
 
 @router.put("/feedback-items/{item_id}/", response=FeedbackItemOut)
-def update_feedback_item(request: HttpRequest, item_id: RubricItemId, data: FeedbackItemIn):
+def update_feedback_item(request: HttpRequest, item_id: FeedbackItemId, data: FeedbackItemIn):
     try:
         item = FeedbackItem.objects.get(feedback_item_id=item_id)
         _check_feedback_write_permission(request, item.feedback_id_feedback)
@@ -229,7 +253,7 @@ def update_feedback_item(request: HttpRequest, item_id: RubricItemId, data: Feed
 
 
 @router.delete("/feedback-items/{item_id}/", response=SuccessResponse)
-def delete_feedback_item(request: HttpRequest, item_id: RubricItemId) -> SuccessResponse:
+def delete_feedback_item(request: HttpRequest, item_id: FeedbackItemId) -> SuccessResponse:
     try:
         item = FeedbackItem.objects.get(feedback_item_id=item_id)
         _check_feedback_write_permission(request, item.feedback_id_feedback)

@@ -118,15 +118,24 @@ def update_task(request: HttpRequest, task_id: TaskId, data: TaskIn):
     try:
         task = Task.objects.get(task_id=task_id)
         if data.unit_id_unit:
-            task.unit_id_unit = Unit.objects.get(unit_id=data.unit_id_unit)
+            try:
+                task.unit_id_unit = Unit.objects.get(unit_id=data.unit_id_unit)
+            except Unit.DoesNotExist:
+                raise HttpError(400, "Unit not found")
         if data.rubric_id_marking_rubric:
-            task.rubric_id_marking_rubric = MarkingRubric.objects.get(rubric_id=data.rubric_id_marking_rubric)
+            try:
+                task.rubric_id_marking_rubric = MarkingRubric.objects.get(rubric_id=data.rubric_id_marking_rubric)
+            except MarkingRubric.DoesNotExist:
+                raise HttpError(400, "Rubric not found")
         task.task_due_datetime = data.task_due_datetime
         task.task_title = data.task_title
         task.task_desc = data.task_desc
         task.task_instructions = data.task_instructions
         if data.class_id_class is not None:
-            task.class_id_class_id = data.class_id_class
+            try:
+                task.class_id_class = Class.objects.get(class_id=data.class_id_class)
+            except Class.DoesNotExist:
+                raise HttpError(400, "Class not found")
         task.task_status = data.task_status
         task.task_allow_late_submission = data.task_allow_late_submission
         task.save()

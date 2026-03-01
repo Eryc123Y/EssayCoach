@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import logging
 from datetime import UTC, datetime, timedelta
+from threading import Lock
 from typing import TYPE_CHECKING
 
 import jwt
@@ -26,6 +27,7 @@ logger = logging.getLogger(__name__)
 # In-memory token blacklist (for single-instance deployments)
 # In production, use Redis or database-backed storage
 _token_blacklist: set[str] = set()
+_token_blacklist_lock = Lock()
 
 
 def get_jwt_secret() -> str:
@@ -132,12 +134,14 @@ def _get_token_jti(token: str) -> str | None:
 
 def _is_token_blacklisted(jti: str) -> bool:
     """Check if a token JTI is blacklisted."""
-    return jti in _token_blacklist
+    with _token_blacklist_lock:
+        return jti in _token_blacklist
 
 
 def _add_to_blacklist(jti: str) -> None:
     """Add a token JTI to the blacklist."""
-    _token_blacklist.add(jti)
+    with _token_blacklist_lock:
+        _token_blacklist.add(jti)
 
 
 def verify_jwt_token(token: str) -> dict | None:

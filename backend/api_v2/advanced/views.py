@@ -47,7 +47,8 @@ def batch_delete(request, data: BatchDeleteIn):
     if not model_class:
         raise HttpError(400, f"Unknown resource: {data.resource}")
 
-    deleted_count = model_class.objects.filter(**{f"{data.resource}_id__in": data.ids}).delete()[0]
+    pk_name = _get_primary_key_field(model_class)
+    deleted_count = model_class.objects.filter(**{f"{pk_name}__in": data.ids}).delete()[0]
 
     return BatchOperationOut(
         success=True,
@@ -68,7 +69,8 @@ def batch_update(request, data: BatchUpdateIn):
     if not model_class:
         raise HttpError(400, f"Unknown resource: {data.resource}")
 
-    updated_count = model_class.objects.filter(**{f"{data.resource}_id__in": data.ids}).update(**data.fields)
+    pk_name = _get_primary_key_field(model_class)
+    updated_count = model_class.objects.filter(**{f"{pk_name}__in": data.ids}).update(**data.fields)
 
     return BatchOperationOut(
         success=True,
