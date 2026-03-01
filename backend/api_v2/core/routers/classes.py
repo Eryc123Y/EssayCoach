@@ -1,8 +1,7 @@
 from __future__ import annotations
 
-from datetime import datetime
-
 from django.http import HttpRequest
+from django.utils import timezone
 from ninja import Query, Router
 from ninja.errors import HttpError
 
@@ -15,6 +14,7 @@ from api_v2.types.ids import (
 )
 from api_v2.utils.auth import JWTAuth
 from api_v2.utils.permissions import IsAdminOrLecturer, has_role
+from api_v2.utils.types import paginate
 from core.models import (
     Class,
     Enrollment,
@@ -39,22 +39,6 @@ from ..schemas import (
     TeachingAssnOut,
     UserOut,
 )
-
-
-def paginate(queryset, params: PaginationParams):
-    if isinstance(queryset, list):
-        # Already a list (from .values())
-        total = len(queryset)
-        start = (params.page - 1) * params.page_size
-        end = start + params.page_size
-        return {"count": total, "results": queryset[start:end]}
-    else:
-        # QuerySet
-        total = queryset.count()
-        start = (params.page - 1) * params.page_size
-        end = start + params.page_size
-        return {"count": total, "results": list(queryset[start:end])}
-
 
 router = Router(tags=["Classes"], auth=JWTAuth())
 
@@ -323,7 +307,7 @@ def archive_class(request: HttpRequest, class_id: ClassId):
     try:
         class_obj = Class.objects.get(class_id=class_id)
         class_obj.class_status = "archived"
-        class_obj.class_archived_at = datetime.now()
+        class_obj.class_archived_at = timezone.now()
         class_obj.save()
         return class_obj
     except Class.DoesNotExist:

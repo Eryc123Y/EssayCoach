@@ -121,6 +121,29 @@ def paginate_queryset(queryset, page: int, page_size: int) -> dict:
     }
 
 
+def paginate(queryset, params) -> dict:
+    """Paginate a queryset or list using PaginationParams.
+
+    Accepts both Django QuerySets and plain lists.
+
+    Args:
+        queryset: Django queryset or list to paginate
+        params: PaginationParams schema with ``page`` and ``page_size``
+
+    Returns:
+        Dict with ``count`` and ``results`` keys.
+    """
+    if isinstance(queryset, list):
+        total = len(queryset)
+        start = (params.page - 1) * params.page_size
+        end = start + params.page_size
+        return {"count": total, "results": queryset[start:end]}
+    total = queryset.count()
+    start = (params.page - 1) * params.page_size
+    end = start + params.page_size
+    return {"count": total, "results": list(queryset[start:end])}
+
+
 def format_success_response(data: dict | None = None, message: str | None = None) -> dict:
     """Format a standard success response.
 

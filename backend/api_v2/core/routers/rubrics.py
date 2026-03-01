@@ -15,12 +15,12 @@ from api_v2.types.ids import (
 )
 from api_v2.utils.auth import JWTAuth
 from api_v2.utils.permissions import has_role
+from api_v2.utils.types import paginate
 from core.models import (
     MarkingRubric,
     RubricItem,
     RubricLevelDesc,
 )
-from core.models import RubricLevelDesc as RubricLevelDescModel
 from core.services import RubricService
 
 from ..schemas import (
@@ -39,22 +39,6 @@ from ..schemas import (
     RubricLevelDescOut,
     RubricVisibilityUpdate,
 )
-
-
-def paginate(queryset, params: PaginationParams):
-    if isinstance(queryset, list):
-        # Already a list (from .values())
-        total = len(queryset)
-        start = (params.page - 1) * params.page_size
-        end = start + params.page_size
-        return {"count": total, "results": queryset[start:end]}
-    else:
-        # QuerySet
-        total = queryset.count()
-        start = (params.page - 1) * params.page_size
-        end = start + params.page_size
-        return {"count": total, "results": list(queryset[start:end])}
-
 
 router = Router(tags=["Rubrics"], auth=JWTAuth())
 
@@ -261,8 +245,8 @@ def get_rubric_detail(request: HttpRequest, rubric_id: RubricId):
         rubric_items = list(RubricItem.objects.filter(rubric_id_marking_rubric=rubric))
 
         rubric_item_ids = [item.rubric_item_id for item in rubric_items]
-        levels = RubricLevelDescModel.objects.filter(rubric_item_id_rubric_item_id__in=rubric_item_ids)
-        levels_by_item: dict[int, list[RubricLevelDescModel]] = {}
+        levels = RubricLevelDesc.objects.filter(rubric_item_id_rubric_item_id__in=rubric_item_ids)
+        levels_by_item: dict[int, list[RubricLevelDesc]] = {}
         for level in levels:
             levels_by_item.setdefault(level.rubric_item_id_rubric_item_id, []).append(level)
 

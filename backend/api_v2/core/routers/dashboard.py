@@ -9,7 +9,6 @@ from django.utils import timezone
 from ninja import Router
 from ninja.errors import HttpError
 
-from api_v2.schemas.base import PaginationParams
 from api_v2.types.ids import (
     RubricItemId,
 )
@@ -37,23 +36,6 @@ from ..schemas import (
     SystemStatusOut,
 )
 
-
-def paginate(queryset, params: PaginationParams):
-    if isinstance(queryset, list):
-        # Already a list (from .values())
-        total = len(queryset)
-        start = (params.page - 1) * params.page_size
-        end = start + params.page_size
-        return {"count": total, "results": queryset[start:end]}
-    else:
-        # QuerySet
-        total = queryset.count()
-        start = (params.page - 1) * params.page_size
-        end = start + params.page_size
-        return {"count": total, "results": list(queryset[start:end])}
-
-
-
 router = Router(tags=["Dashboard"], auth=JWTAuth())
 
 # =============================================================================
@@ -66,10 +48,9 @@ def _to_float(value) -> float | None:
 
 
 def _build_dashboard_user_info(user: User) -> DashboardUserInfoOut:
-    full_name = f"{user.user_fname or ''} {user.user_lname or ''}".strip()
     return DashboardUserInfoOut(
         id=user.user_id,
-        name=full_name or user.user_email,
+        name=user.get_full_name() or user.user_email,
         role=user.user_role or "student",
         email=user.user_email,
     )

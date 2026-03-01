@@ -13,6 +13,7 @@ from api_v2.types.ids import (
     UserId,
 )
 from api_v2.utils.auth import JWTAuth
+from api_v2.utils.types import paginate
 from core.models import (
     Class,
     Enrollment,
@@ -35,23 +36,6 @@ from ..schemas import (
     UserStatsOut,
     UserUpdateIn,
 )
-
-
-def paginate(queryset, params: PaginationParams):
-    if isinstance(queryset, list):
-        # Already a list (from .values())
-        total = len(queryset)
-        start = (params.page - 1) * params.page_size
-        end = start + params.page_size
-        return {"count": total, "results": queryset[start:end]}
-    else:
-        # QuerySet
-        total = queryset.count()
-        start = (params.page - 1) * params.page_size
-        end = start + params.page_size
-        return {"count": total, "results": list(queryset[start:end])}
-
-
 
 router = Router(tags=["Users"], auth=JWTAuth())
 

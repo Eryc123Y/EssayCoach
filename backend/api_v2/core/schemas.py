@@ -8,6 +8,7 @@ from ninja import FilterLookup, FilterSchema, Schema  # FieldLookup replaces Fie
 from ninja.orm import ModelSchema
 from pydantic import EmailStr, Field, field_validator
 
+from api_v2.schemas.base import PaginationParams as PaginationParams  # noqa: F401 — re-export for backwards compat
 from api_v2.types.enums import (
     ClassStatus,
     ClassTerm,
@@ -570,13 +571,6 @@ class TeachingAssnFilterParams(FilterSchema):
 
     user_id_user: UserId | None = None
     class_id_class: ClassId | None = None
-
-
-class PaginationParams(Schema):
-    """Pagination parameters for list endpoints."""
-
-    page: int = Field(1, ge=1)
-    page_size: int = Field(50, ge=1, le=100)
 
 
 class UserFilterParams(FilterSchema):

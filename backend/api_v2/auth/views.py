@@ -52,7 +52,7 @@ def _user_to_schema(user: User) -> UserOut:
         username=user.user_email,
         first_name=user.user_fname,
         last_name=user.user_lname,
-        name=f"{user.user_fname or ''} {user.user_lname or ''}".strip() or user.user_email,
+        name=user.get_full_name() or user.user_email,
         avatar=None,
         role=user.user_role or "student",
         status=user.user_status or "active",
@@ -60,15 +60,19 @@ def _user_to_schema(user: User) -> UserOut:
     )
 
 
-@router.post("/register/", response=AuthResponseWithRefresh)
-def register(request: HttpRequest, data: UserRegistrationIn) -> AuthResponseWithRefresh:
-    if data.password != data.password_confirm:
+def _validate_password_pair(password: str, confirm: str) -> None:
+    """Validate that passwords match and meet Django's password requirements."""
+    if password != confirm:
         raise HttpError(400, "Password fields didn't match")
-
     try:
-        validate_password(data.password)
+        validate_password(password)
     except ValidationError as e:
         raise HttpError(400, f"Password validation failed: {', '.join(e.messages)}")
+
+
+@router.post("/register/", response=AuthResponseWithRefresh)
+def register(request: HttpRequest, data: UserRegistrationIn) -> AuthResponseWithRefresh:
+    _validate_password_pair(data.password, data.password_confirm)
 
     if User.objects.filter(user_email=data.email).exists():
         raise HttpError(409, "Email is already registered")
@@ -96,8 +100,8 @@ def register(request: HttpRequest, data: UserRegistrationIn) -> AuthResponseWith
     )
 
 
-@router.post("/login/", response=AuthResponseWithRefresh)
-def login(request: HttpRequest, data: UserLoginIn) -> AuthResponseWithRefresh:
+def _perform_login(request: HttpRequest, data: UserLoginIn) -> AuthResponseWithRefresh:
+    """Shared login logic for both /login/ and /login-with-jwt/ endpoints."""
     user = authenticate(request, username=data.email, password=data.password)
 
     if not user:
@@ -120,6 +124,11 @@ def login(request: HttpRequest, data: UserLoginIn) -> AuthResponseWithRefresh:
         },
         message="Login successful",
     )
+
+
+@router.post("/login/", response=AuthResponseWithRefresh)
+def login(request: HttpRequest, data: UserLoginIn) -> AuthResponseWithRefresh:
+    return _perform_login(request, data)
 
 
 @router.post("/logout/", response=MessageResponse, auth=TokenAuth())
@@ -165,13 +174,7 @@ def password_change(request: HttpRequest, data: PasswordChangeIn) -> MessageResp
     if not user.check_password(data.current_password):
         raise HttpError(400, "Current password is incorrect")
 
-    if data.new_password != data.new_password_confirm:
-        raise HttpError(400, "Password fields didn't match")
-
-    try:
-        validate_password(data.new_password)
-    except ValidationError as e:
-        raise HttpError(400, f"Password validation failed: {', '.join(e.messages)}")
+    _validate_password_pair(data.new_password, data.new_password_confirm)
 
     user.set_password(data.new_password)
     user.save()
@@ -181,13 +184,7 @@ def password_change(request: HttpRequest, data: PasswordChangeIn) -> MessageResp
 
 @router.post("/password-reset/", response=MessageResponse)
 def password_reset(request: HttpRequest, data: PasswordResetIn) -> MessageResponse:
-    if data.new_password != data.new_password_confirm:
-        raise HttpError(400, "Password fields didn't match")
-
-    try:
-        validate_password(data.new_password)
-    except ValidationError as e:
-        raise HttpError(400, f"Password validation failed: {', '.join(e.messages)}")
+    _validate_password_pair(data.new_password, data.new_password_confirm)
 
     try:
         user = User.objects.get(user_email=data.email)
@@ -202,34 +199,8 @@ def password_reset(request: HttpRequest, data: PasswordResetIn) -> MessageRespon
 
 @router.post("/login-with-jwt/", response=AuthResponseWithRefresh)
 def login_with_jwt(request: HttpRequest, data: UserLoginIn) -> AuthResponseWithRefresh:
-    """
-    Login and receive JWT access + refresh tokens.
-
-    This endpoint returns both access and refresh tokens for use with JWT authentication.
-    """
-    user = authenticate(request, username=data.email, password=data.password)
-
-    if not user:
-        try:
-            existing_user = User.objects.get(user_email=data.email)
-            if existing_user.check_password(data.password) and not existing_user.is_active:
-                raise HttpError(423, "Account is locked. Please contact administrator.")
-        except User.DoesNotExist:
-            pass
-        raise HttpError(401, "Invalid email or password")
-
-    # Create JWT token pair
-    jwt_pair = create_jwt_pair(user)
-
-    return AuthResponseWithRefresh(
-        data={
-            "token": jwt_pair.access,
-            "refresh": jwt_pair.refresh,
-            "expires_at": jwt_pair.expires_at.isoformat(),
-            "user": _user_to_schema(user),
-        },
-        message="Login successful",
-    )
+    """Login and receive JWT access + refresh tokens."""
+    return _perform_login(request, data)
 
 
 @router.post("/refresh/", response=RefreshTokenOut)
