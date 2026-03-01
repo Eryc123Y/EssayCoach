@@ -137,7 +137,7 @@ def chat_with_ai(request: HttpRequest, data: ChatMessageIn) -> ChatMessageOut:
     """Chat with AI about essay feedback using Dify chat API."""
     try:
         client = DifyClient()
-        user = request.user
+        user = request.auth
         user_id = str(getattr(user, "user_id", user.id))
         context = data.context or {}
         response = _call_dify_chat(
