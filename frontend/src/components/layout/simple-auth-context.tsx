@@ -5,6 +5,7 @@ import React, {
   useContext,
   useEffect,
   useMemo,
+  useCallback,
   useState
 } from 'react';
 
@@ -77,41 +78,63 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [currentClassId, setCurrentClassId] = useState<number | null>(null);
   const [isInitialized, setIsInitialized] = useState(false);
 
+  const syncUserFromStorage = useCallback(() => {
+    const storedUser = getUserData();
+
+    if (storedUser) {
+      setUser(storedUser);
+      setIsInitialized(true);
+      return;
+    }
+
+    // No stored user, check if access_token cookie exists via server endpoint
+    checkAuthStatus()
+      .then((isLoggedIn) => {
+        if (isLoggedIn) {
+          // User has valid token but no stored data, fetch user info
+          return fetch('/api/v2/core/users/me/')
+            .then((res) => res.json())
+            .then((data) => {
+              const user: SimpleUser = {
+                id: String(data.user_id || data.id),
+                email: data.user_email || data.email,
+                firstName: data.user_fname || data.first_name || '',
+                lastName: data.user_lname || data.last_name || '',
+                role: (data.user_role || data.role || 'student') as UserRole
+              };
+              setUser(user);
+              setUserData(user); // Cache in localStorage
+            })
+            .catch(() => setUser(null));
+        }
+        return undefined;
+      })
+      .finally(() => {
+        setIsInitialized(true);
+      });
+  }, []);
+
   // Read user info from localStorage - run on mount
   // Note: We use localStorage because user cookies are now httpOnly for security
   useEffect(() => {
-    function readUserFromStorage() {
-      const storedUser = getUserData();
+    syncUserFromStorage();
+  }, [syncUserFromStorage]);
 
-      if (storedUser) {
-        setUser(storedUser);
-      } else {
-        // No stored user, check if access_token cookie exists via server endpoint
-        checkAuthStatus().then((isLoggedIn) => {
-          if (isLoggedIn) {
-            // User has valid token but no stored data, fetch user info
-            fetch('/api/v2/core/users/me/')
-              .then((res) => res.json())
-              .then((data) => {
-                const user: SimpleUser = {
-                  id: String(data.user_id || data.id),
-                  email: data.user_email || data.email,
-                  firstName: data.user_fname || data.first_name || '',
-                  lastName: data.user_lname || data.last_name || '',
-                  role: (data.user_role || data.role || 'student') as UserRole
-                };
-                setUser(user);
-                setUserData(user); // Cache in localStorage
-              })
-              .catch(() => setUser(null));
-          }
-        });
-      }
-      setIsInitialized(true);
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return;
     }
 
-    readUserFromStorage();
-  }, []);
+    const handleAuthUserUpdated = () => {
+      syncUserFromStorage();
+    };
+
+    window.addEventListener('essaycoach:user-updated', handleAuthUserUpdated);
+
+    return () => {
+      window.removeEventListener('essaycoach:user-updated', handleAuthUserUpdated);
+    };
+  }, [syncUserFromStorage]);
 
   // Fetch user's accessible classes - run when user is set
   useEffect(() => {

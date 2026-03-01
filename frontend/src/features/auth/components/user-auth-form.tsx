@@ -63,6 +63,7 @@ export default function UserAuthForm() {
           role: (result.user.role || result.user.user_role || 'student') as 'student' | 'lecturer' | 'admin'
         };
         localStorage.setItem('user_data', JSON.stringify(userData));
+        window.dispatchEvent(new Event('essaycoach:user-updated'));
       }
       
       toast.success('Signed in successfully');
