@@ -78,23 +78,14 @@ LOGGING = {
 - Check preflight OPTIONS requests
 
 ### 404 Error on API Calls
-If the frontend receives a 404 error when calling `/api/v1/...`, it is likely due to a proxy or rewrite misconfiguration.
+If the frontend receives a 404 error when calling `/api/v2/...`, it is usually a proxy path or backend route mismatch.
 
 **Fix:**
-1. **Next.js Rewrites**: Ensure `frontend/next.config.ts` has the correct rewrite rules to proxy requests to the backend.
-   ```typescript
-   async rewrites() {
-     return [
-       {
-         source: '/api/v1/:path*',
-         destination: `${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000'}/api/v1/:path*`,
-       },
-     ];
-   }
-   ```
-2. **Django CORS**: Ensure `backend/essay_coach/settings.py` allows the frontend origin and that `CorsMiddleware` is at the top of the middleware list.
+1. **Use API Route Handler Proxy**: Ensure requests go through `frontend/src/app/api/v2/[...path]/route.ts`.
+2. **Check Backend API Prefix**: Ensure backend routes are mounted under `/api/v2/`.
+3. **Django CORS**: Ensure `backend/essay_coach/settings.py` allows the frontend origin and `CorsMiddleware` is near the top of middleware.
    ```python
-   CORS_ALLOWED_ORIGINS = ["http://localhost:3000"] # Match your frontend port
+   CORS_ALLOWED_ORIGINS = ["http://127.0.0.1:5100", "http://localhost:5100"]
    MIDDLEWARE = [
        "corsheaders.middleware.CorsMiddleware",
        # ...
@@ -105,7 +96,7 @@ If the frontend receives a 404 error when calling `/api/v1/...`, it is likely du
 If you encounter a `500 Internal Server Error` when submitting an essay, it is likely due to missing or misconfigured Dify environment variables.
 
 **Symptoms:**
-- Frontend error: `Request to /api/v1/ai-feedback/agent/workflows/run/ failed with status 500`
+- Frontend error: `Request to /api/v2/ai-feedback/agent/workflows/run/ failed with status 500`
 - Backend logs show error related to `DifyClientError`.
 
 **Fix:**
@@ -132,7 +123,7 @@ If you encounter a `500 Internal Server Error` when submitting an essay, it is l
   "type": "node",
   "request": "launch",
   "name": "Debug Frontend",
-  "url": "http://localhost:5173"
+  "url": "http://127.0.0.1:5100"
 }
 ```
 

@@ -4,6 +4,8 @@
 
 A comprehensive security audit was conducted using OpenAI Codex, identifying 9 critical issues across the EssayCoach codebase. This document summarizes the findings, fixes applied, and lessons learned.
 
+> Historical note: references to `api_v1` paths in this learning record describe the code state at review time.
+
 ## Review Team
 
 - **Team Lead**: team-lead

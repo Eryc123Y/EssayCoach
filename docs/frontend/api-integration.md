@@ -1,76 +1,42 @@
-# API Integration
+# Frontend API Integration (v2)
 
 ## Overview
 
-The frontend integrates with the Django REST API using a lightweight `fetch` wrapper for authentication and error handling.
+The frontend uses a server-side proxy route for backend communication:
 
-## API Client Setup
+- Proxy route: `frontend/src/app/api/v2/[...path]/route.ts`
+- Backend API prefix: `/api/v2/`
 
-The frontend uses a centralized request utility that reads the base URL from environment variables.
+This keeps auth token handling on the server side and avoids exposing sensitive headers directly from browser code.
 
-```typescript
-// frontend/src/service/request.ts
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL || '';
-```
+## Environment Configuration
 
-### Configuration
-Ensure you have a `.env.local` file in the `frontend/` directory with the following:
+Create `frontend/.env.local`:
+
 ```bash
-NEXT_PUBLIC_API_URL=http://localhost:8000
+NEXT_PUBLIC_API_URL=http://127.0.0.1:8000
 ```
 
-## Service Modules
+## Request Flow
 
-### Essay Service
-```typescript
-// services/essay.service.ts
-export const essayService = {
-  async createEssay(data: CreateEssayDto) {
-    return api.post('/api/essays/', data)
-  },
-  
-  async getEssays() {
-    return api.get('/api/essays/')
-  }
-}
-```
+1. Frontend code requests `/api/v2/...`.
+2. Route handler forwards request to backend `${NEXT_PUBLIC_API_URL}/api/v2/...`.
+3. Proxy reads `access_token` cookie and injects `Authorization: Bearer <token>`.
+4. Response is streamed back to frontend.
 
-### Auth Service
-```typescript
-// frontend/src/service/api/auth.ts
-export const fetchLogin = (userName: string, password: string) =>
-  request<Api.Auth.LoginToken>({
-    url: '/auth/login',
-    method: 'POST',
-    data: { userName, password }
-  })
+## Auth Integration
 
-export const fetchGetUserInfo = () =>
-  request<Api.Auth.UserInfo>({
-    url: '/auth/getUserInfo',
-    method: 'GET'
-  })
-```
-
-### Next.js API Routes
-
-The frontend uses Next.js API routes as a lightweight proxy layer for auth endpoints:
-
-| Route | Purpose |
-|-------|---------|
-| `POST /auth/login` | Proxy to `/api/v1/auth/login/` |
-| `GET /auth/getUserInfo` | Proxy to `/api/v1/auth/me/` |
-| `GET /auth/error` | Frontend error simulation endpoint |
-
-> `refreshToken` is intentionally deferred and not implemented yet.
+- Login endpoint: `POST /api/v2/auth/login/`
+- Current user endpoint: `GET /api/v2/auth/me/`
+- JWT refresh endpoint: `POST /api/v2/auth/refresh/`
 
 ## Error Handling
 
-- Global error handling with toast notifications
-- Network error handling
-- Authentication error redirects
-- Validation error display
+- 401: token missing/expired, or auth header invalid.
+- 502: backend unavailable or invalid backend URL config.
+- 500: server-side failure in backend route.
 
-## Development Notes
+## Notes
 
-[This section will be expanded with actual implementation details]
+- The proxy only forwards a safe allowlist of headers and cookies.
+- Direct client-provided `Authorization` headers are not trusted for backend pass-through.

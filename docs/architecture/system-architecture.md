@@ -246,7 +246,7 @@ interface NavItem {
 
 The frontend retrieves the user's enrolled and assigned classes via a role-aware API endpoint:
 
-**Endpoint**: `GET /api/v1/core/users/me/classes/`
+**Endpoint**: `GET /api/v2/core/users/me/classes/`
 
 **Response** (Student):
 ```json
@@ -286,7 +286,7 @@ sequenceDiagram
     participant Backend
 
     User->>Frontend: Login
-    Frontend->>Backend: POST /api/v1/auth/login/
+    Frontend->>Backend: POST /api/v2/auth/login/
     Backend-->>Frontend: Tokens + user role
     Frontend->>AuthContext: Set user, role, classes
     

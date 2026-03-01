@@ -11,6 +11,7 @@
 This guide documents the performance optimizations applied to the EssayCoach frontend, following Vercel's React best practices. The optimizations focus on eliminating waterfalls, reducing bundle size, and improving server-side performance.
 
 **Key Results**:
+
 - ✅ **First Contentful Paint (FCP)**: ~2.5s → ~1.2s (**52% faster**)
 - ✅ **Time to Interactive (TTI)**: ~4.0s → ~2.5s (**37% faster**)
 - ✅ **Initial Bundle Size**: ~250KB → ~180KB (**28% reduction**)
@@ -21,16 +22,18 @@ This guide documents the performance optimizations applied to the EssayCoach fro
 ## Changes Implemented
 
 ### 1. Server Component Migration (Phase 2)
+
 **File**: `src/app/dashboard/rubrics/page.tsx`
 
 #### Before: Client Component (Waterfall Pattern)
+
 ```typescript
 'use client';
 
 export default function RubricsPage() {
   const [rubrics, setRubrics] = useState<RubricListItem[]>([]);
   const [loading, setLoading] = useState(true);
-  
+
   useEffect(() => {
     // ❌ Waterfall: Page loads → JS downloads → React mounts → useEffect runs → API call → Render
     fetchRubricList().then(data => {
@@ -38,20 +41,22 @@ export default function RubricsPage() {
       setLoading(false);
     });
   }, []);
-  
+
   if (loading) return <Skeleton />;
-  
+
   return <RubricTable data={rubrics} />;
 }
 ```
 
 **Problems**:
+
 - ❌ User sees blank page while JS loads (2-3 seconds)
 - ❌ SEO issues (search bots see empty HTML)
 - ❌ Poor Core Web Vitals (FCP, LCP)
 - ❌ Extra round trip (HTML → JS → API → HTML)
 
 #### After: Server Component (Zero Waterfall)
+
 ```typescript
 // ✅ No 'use client' directive - this is a Server Component
 import { fetchRubricList } from '@/service/api/v2';
@@ -61,7 +66,7 @@ export const revalidate = 60; // ISR: revalidate every 60 seconds
 export default async function RubricsPage() {
   // ✅ Data fetched on server during request
   const rubrics = await fetchRubricList();
-  
+
   // ✅ HTML sent with pre-rendered content
   return (
     <div>
@@ -75,6 +80,7 @@ export default async function RubricsPage() {
 ```
 
 **Benefits**:
+
 - ✅ **Instant content** - HTML arrives with data already embedded
 - ✅ **Better SEO** - search bots see full content immediately
 - ✅ **Faster FCP** - no JavaScript required for initial render
@@ -82,6 +88,7 @@ export default async function RubricsPage() {
 - ✅ **Progressive enhancement** - works without JavaScript
 
 #### Migration Checklist
+
 - [ ] Remove `'use client'` directive from page
 - [ ] Move data fetching from `useEffect` to component body
 - [ ] Keep interactive parts in separate Client Component
@@ -89,12 +96,14 @@ export default async function RubricsPage() {
 - [ ] Update page tests to handle Server Component rendering
 
 #### When NOT to Use Server Components
+
 - ❌ Component uses browser-only APIs (window, document, localStorage)
 - ❌ Component needs React state/hooks (useState, useEffect)
 - ❌ Component handles user events directly (onClick, onChange)
 - ❌ Component uses `useRouter` for client-side navigation
 
 **Keep these as Client Components** (use `'use client'`):
+
 - Forms with local state
 - Interactive modals/dialogs
 - Real-time updates (WebSocket connections)
@@ -105,13 +114,16 @@ export default async function RubricsPage() {
 ### 2. Dynamic Imports for Heavy Components (Phase 3)
 
 ### 2. Dynamic Imports for Heavy Components (Phase 3)
+
 **New Files**:
+
 - `src/components/ui/animated-table-wrapper.tsx`
 - `src/components/ui/animated-table.tsx`
 
 #### Problem: Heavy Libraries in Initial Bundle
 
 **Before**: All heavy libraries (framer-motion, recharts) bundled in main chunk
+
 ```
 main.js (250KB)
 ├── React + React DOM
@@ -146,6 +158,7 @@ export const AnimatedTableWrapper = dynamic(
 ```
 
 **Usage in page**:
+
 ```typescript
 // Instead of: import { AnimatedTableWrapper } from '@/components/ui/animated-table';
 import { AnimatedTableWrapper } from '@/components/ui/animated-table-wrapper';
@@ -160,6 +173,7 @@ export default function RubricsPage() {
 ```
 
 #### Benefits:
+
 - ✅ **Bundle size reduction**: 50KB saved on initial load
 - ✅ **Faster TTI**: Less JavaScript to parse and execute
 - ✅ **On-demand loading**: Only loads when user reaches rubrics page
@@ -168,6 +182,7 @@ export default function RubricsPage() {
 #### When to Use Dynamic Imports
 
 **Use for**:
+
 - ✅ Animation libraries (framer-motion, react-spring)
 - ✅ Charting libraries (recharts, victory, nivo)
 - ✅ PDF viewers (react-pdf, pdf.js)
@@ -175,6 +190,7 @@ export default function RubricsPage() {
 - ✅ Heavy third-party widgets (chat, maps)
 
 **Avoid for**:
+
 - ❌ Small components (< 5KB)
 - ❌ Components used on most pages
 - ❌ Critical above-the-fold content
@@ -182,6 +198,7 @@ export default function RubricsPage() {
 #### Advanced: Preloading on Hover
 
 For even better perceived performance, preload on hover:
+
 ```typescript
 // In parent component
 const [isHovering, setIsHovering] = useState(false);
@@ -189,7 +206,7 @@ const [isHovering, setIsHovering] = useState(false);
 useEffect(() => {
   if (isHovering) {
     // Start loading when user hovers over the trigger
-    import('./heavy-component');
+    import("./heavy-component");
   }
 }, [isHovering]);
 ```
@@ -203,6 +220,7 @@ useEffect(() => {
 #### Principle: Minimize Client-Side JavaScript
 
 **Rule of Thumb**: Keep as much code on the server as possible. Only use Client Components when you need:
+
 - State (`useState`, `useReducer`)
 - Effects (`useEffect`, `useLayoutEffect`)
 - Event handlers (`onClick`, `onChange`)
@@ -234,20 +252,20 @@ export default function RubricsPage() {
   const [rubrics, setRubrics] = useState([]);
   const [loading, setLoading] = useState(true);
   const [deleteId, setDeleteId] = useState<number | null>(null);
-  
+
   // ❌ useEffect for data fetching
   useEffect(() => {
     fetch('/api/v2/core/rubrics/')
       .then(r => r.json())
       .then(data => setRubrics(data));
   }, []);
-  
+
   // ❌ Event handlers
   const handleDelete = (id: number) => {
     fetch(`/api/v2/core/rubrics/${id}/`, { method: 'DELETE' });
     setRubrics(rubrics.filter(r => r.id !== id));
   };
-  
+
   // ❌ Everything re-renders on any state change
   return (
     <div>
@@ -261,6 +279,7 @@ export default function RubricsPage() {
 ```
 
 **Issues**:
+
 - ❌ 50KB+ of JavaScript sent to browser before showing content
 - ❌ Data fetching happens AFTER page loads
 - ❌ All state logic runs in browser
@@ -272,13 +291,13 @@ export default function RubricsPage() {
 export default async function RubricsPage() {
   // ✅ Data fetched on server
   const rubrics = await fetchRubricList();
-  
+
   // ✅ HTML rendered on server
   return (
     <div>
       <h1>Rubrics</h1>
       <p>{rubrics.length} rubrics found</p>
-      
+
       {/* ✅ Only interactive parts in client component */}
       <RubricsClient initialRubrics={rubrics} />
     </div>
@@ -292,13 +311,13 @@ export function RubricsClient({ initialRubrics }: { initialRubrics: RubricListIt
   // ✅ Minimal client state (only what's needed for interaction)
   const [rubrics, setRubrics] = useState(initialRubrics);
   const [deleteId, setDeleteId] = useState<number | null>(null);
-  
+
   // ✅ Event handlers only
   const handleDelete = async (id: number) => {
     await fetch(`/api/v2/core/rubrics/${id}/`, { method: 'DELETE' });
     setRubrics(rubrics.filter(r => r.id !== id));
   };
-  
+
   return (
     <div>
       <Button onClick={() => setDeleteId(1)}>Delete</Button>
@@ -311,6 +330,7 @@ export function RubricsClient({ initialRubrics }: { initialRubrics: RubricListIt
 ```
 
 **Benefits**:
+
 - ✅ **Server code stays on server** - data fetching, business logic
 - ✅ **Client code is minimal** - only interaction logic shipped
 - ✅ **Faster page load** - HTML arrives with content, JS loads in background
@@ -323,14 +343,16 @@ export function RubricsClient({ initialRubrics }: { initialRubrics: RubricListIt
 #### Problem: Barrel Imports Increase Bundle Size
 
 **Before** (bad):
+
 ```typescript
-import * as RadixUI from '@radix-ui/react-dialog';
+import * as RadixUI from "@radix-ui/react-dialog";
 // ❌ Imports entire library (all components) even if you only use Dialog
 ```
 
 **After** (good):
+
 ```typescript
-import { Dialog, DialogTrigger, DialogContent } from '@radix-ui/react-dialog';
+import { Dialog, DialogTrigger, DialogContent } from "@radix-ui/react-dialog";
 // ✅ Only imports the specific components you use
 ```
 
@@ -360,11 +382,11 @@ const RubricRow = React.memo(function RubricRow({ rubric }: { rubric: RubricList
 function RubricsPage({ rubrics }: { rubrics: RubricListItem[] }) {
   // ❌ Recalculates on every render
   const sortedRubrics = rubrics.sort((a, b) => a.name.localeCompare(b.name));
-  
+
   // ✅ Memoized - only recalculates when rubrics changes
-  const sortedRubrics = useMemo(() => 
-    rubrics.sort((a, b) => a.name.localeCompare(b.name)), 
-    [rubrics]
+  const sortedRubrics = useMemo(
+    () => rubrics.sort((a, b) => a.name.localeCompare(b.name)),
+    [rubrics],
   );
 }
 ```
@@ -374,26 +396,31 @@ function RubricsPage({ rubrics }: { rubrics: RubricListItem[] }) {
 ## Performance Rules Applied
 
 ### ✅ async-parallel
+
 **Rule**: Use Promise.all() for independent operations in Server Components  
 **Applied**: Data fetching happens in parallel with component rendering  
 **Impact**: No blocking, concurrent data loading
 
 ### ✅ bundle-dynamic-imports
+
 **Rule**: Use `next/dynamic` for heavy components  
 **Applied**: framer-motion components loaded dynamically with `ssr: false`  
 **Impact**: 50KB reduction in initial bundle
 
 ### ✅ server-cache-react
+
 **Rule**: Use `React.cache()` or `revalidate` for per-request deduplication  
 **Applied**: `export const revalidate = 60` on Server Component  
 **Impact**: ISR caching reduces database load by 95%+
 
 ### ✅ server-parallel-fetching
+
 **Rule**: Restructure components to parallelize fetches  
 **Applied**: Server Component fetches all data before render  
 **Impact**: Eliminates waterfall dependencies
 
 ### ✅ rendering-conditional-render
+
 **Rule**: Use ternary operator, not `&&` for conditionals  
 **Applied**: Existing code already follows this pattern  
 **Impact**: Avoids React hydration mismatches
@@ -403,15 +430,18 @@ function RubricsPage({ rubrics }: { rubrics: RubricListItem[] }) {
 ## Files Modified/Created
 
 ### New Files
+
 1. ✅ `src/components/ui/animated-table-wrapper.tsx` - Dynamic import wrapper
 2. ✅ `src/components/ui/animated-table.tsx` - Placeholder component
 3. ✅ `src/app/dashboard/rubrics/_components/RubricsClient.tsx` - Client logic extraction
 
 ### Modified Files
+
 1. ✅ `src/app/dashboard/rubrics/page.tsx` → Server Component (was Client Component)
 2. ✅ `docs/frontend/performance-optimization.md` ← This guide
 
 ### Removed (Redundant)
+
 1. ✅ `src/app/dashboard/rubrics/[id] 2/` - Duplicate directory
 2. ✅ `src/features/essay-analysis/components 2/`
 3. ✅ `src/features/essay-feedback/components 2/`
@@ -423,13 +453,16 @@ function RubricsPage({ rubrics }: { rubrics: RubricListItem[] }) {
 ## Testing & Verification
 
 ### Build Verification
+
 ```bash
 cd frontend
 npm run build
 ```
+
 **Expected**: ✅ Build succeeds with no TypeScript errors
 
 ### Bundle Size Analysis
+
 ```bash
 # Install analyzer if not present
 npm install -D @next/bundle-analyzer
@@ -437,9 +470,11 @@ npm install -D @next/bundle-analyzer
 # Analyze bundle
 npm run analyze
 ```
+
 **Check**: Initial chunk size should be < 200KB
 
 ### Lighthouse Audit
+
 ```bash
 # Start production server
 npm start
@@ -447,30 +482,34 @@ npm start
 # Run Lighthouse (requires Chrome)
 npx lighthouse http://localhost:3000/dashboard/rubrics --preset=desktop
 ```
+
 **Target Scores**:
+
 - ✅ Performance: 85+
 - ✅ First Contentful Paint: < 1.5s
 - ✅ Time to Interactive: < 2.5s
 
 ### TypeScript Linting
+
 ```bash
 npm run lint
 ```
+
 **Expected**: ✅ No errors (warnings are acceptable)
 
 ---
 
 ## Expected Performance Gains
 
-| Metric | Before (Client) | After (Server) | Improvement |
-|--------|-----------------|----------------|-------------|
-| **First Contentful Paint** | 2.5s | 1.2s | **52% faster** ⬇️ |
-| **Time to Interactive** | 4.0s | 2.5s | **37% faster** ⬇️ |
-| **Initial Bundle Size** | 250KB | 180KB | **28% smaller** ⬇️ |
-| **Lighthouse Score** | 65 | 85+ | **+20 points** ⬆️ |
-| **Time to First Byte** | 800ms | 200ms | **75% faster** ⬇️ |
+| Metric                     | Before (Client) | After (Server) | Improvement        |
+| -------------------------- | --------------- | -------------- | ------------------ |
+| **First Contentful Paint** | 2.5s            | 1.2s           | **52% faster** ⬇️  |
+| **Time to Interactive**    | 4.0s            | 2.5s           | **37% faster** ⬇️  |
+| **Initial Bundle Size**    | 250KB           | 180KB          | **28% smaller** ⬇️ |
+| **Lighthouse Score**       | 65              | 85+            | **+20 points** ⬆️  |
+| **Time to First Byte**     | 800ms           | 200ms          | **75% faster** ⬇️  |
 
-*Note: Numbers are estimates based on typical Next.js Server Component migrations. Actual results may vary based on content size and network conditions.*
+_Note: Numbers are estimates based on typical Next.js Server Component migrations. Actual results may vary based on content size and network conditions._
 
 ---
 
@@ -482,10 +521,8 @@ Apply the same Server Component pattern to these pages:
 
 1. **`/dashboard/essays/page.tsx`** (if exists)
    - Expected savings: 30-40KB bundle reduction
-   
 2. **`/dashboard/submissions/page.tsx`** (if exists)
    - Expected savings: 25-35KB bundle reduction
-   
 3. **`/dashboard/students/page.tsx`** (if exists)
    - Expected savings: 20-30KB bundle reduction
 
@@ -502,12 +539,12 @@ Apply the same Server Component pattern to these pages:
 
 Identify pages using these libraries and apply dynamic imports:
 
-| Library | Size | Pages to optimize | Priority |
-|---------|------|-------------------|----------|
-| `framer-motion` | 50KB | All animated pages | 🔴 High |
-| `recharts` | 30KB | Analytics pages | 🔴 High |
-| `react-pdf` | 100KB | PDF viewer pages | 🟡 Medium |
-| `kbar` | 20KB | Command palette | 🟢 Low |
+| Library         | Size  | Pages to optimize  | Priority  |
+| --------------- | ----- | ------------------ | --------- |
+| `framer-motion` | 50KB  | All animated pages | 🔴 High   |
+| `recharts`      | 30KB  | Analytics pages    | 🔴 High   |
+| `react-pdf`     | 100KB | PDF viewer pages   | 🟡 Medium |
+| `kbar`          | 20KB  | Command palette    | 🟢 Low    |
 
 ---
 
@@ -536,20 +573,26 @@ Identify pages using these libraries and apply dynamic imports:
 ### Common Issues
 
 #### 1. "Hooks can't be used in Server Components"
+
 **Solution**: Move hook logic to Client Component. Hooks (`useState`, `useEffect`) only work in components with `'use client'`.
 
 #### 2. "Module not found: Can't resolve 'fs' in browser"
+
 **Solution**: Don't use Node.js modules (fs, path, crypto) in components that might be rendered on client. Move to separate utility or use conditional imports.
 
 #### 3. "Hydration mismatch errors"
+
 **Cause**: Server rendered HTML doesn't match client-side React.  
-**Solution**: 
+**Solution**:
+
 - Ensure no browser-only APIs in Server Components
 - Use `useEffect` for client-only operations
 - Check for `window` or `document` access in Server Components
 
 #### 4. "Dynamic import failed"
+
 **Solution**: Check that the import path is correct and the component has default export if needed:
+
 ```typescript
 // Component must have default export or named export
 export default function MyComponent() { ... }
@@ -567,20 +610,24 @@ export function MyComponent() { ... }
 
 ---
 
-*This document follows the [EssayCoach Documentation Standards](../CONTRIBUTING.md)*
+_This document follows the [EssayCoach Documentation Standards](../development/contributing.md)_
 
 ## Performance Rules Applied
 
 ### ✅ async-parallel - Use Promise.all() for independent operations
+
 - Server Component fetches data in parallel with rendering
 
-### ✅ bundle-dynamic-imports - Use next/dynamic for heavy components  
+### ✅ bundle-dynamic-imports - Use next/dynamic for heavy components
+
 - Motion components loaded dynamically
 
 ### ✅ server-cache-react - Use React.cache() for per-request deduplication
+
 - Server Component caching with `revalidate = 60`
 
 ### ✅ rendering-conditional-render - Use ternary, not && for conditionals
+
 - Already present in original code
 
 ## Files Modified/Created
@@ -592,30 +639,34 @@ export function MyComponent() { ... }
 ## Next Steps for Complete Optimization
 
 ### High Priority (Do Next)
+
 1. **Apply same pattern to other pages**:
    - `/dashboard/essays/page.tsx`
    - `/dashboard/submissions/page.tsx`
    - `/dashboard/students/page.tsx`
 
 2. **Dynamic imports for heavy libraries**:
+
    ```typescript
    // For recharts
-   const ChartComponent = dynamic(() => import('./Chart'), { ssr: false });
-   
+   const ChartComponent = dynamic(() => import("./Chart"), { ssr: false });
+
    // For PDF viewer
-   const PDFViewer = dynamic(() => import('react-pdf'), { ssr: false });
+   const PDFViewer = dynamic(() => import("react-pdf"), { ssr: false });
    ```
 
 3. **Bundle barrel import optimization**:
+
    ```typescript
    // Before (slow)
-   import * as RadixUI from '@radix-ui/react-dialog';
-   
+   import * as RadixUI from "@radix-ui/react-dialog";
+
    // After (fast)
-   import { Dialog, DialogTrigger } from '@radix-ui/react-dialog';
+   import { Dialog, DialogTrigger } from "@radix-ui/react-dialog";
    ```
 
 ### Medium Priority
+
 4. **Image optimization**:
    - Replace `<img>` with Next.js `<Image>` component
    - Add proper `sizes` and `priority` attributes
@@ -623,19 +674,20 @@ export function MyComponent() { ... }
 5. **Font optimization**:
    - Use `next/font` instead of external font loading
 
-### Low Priority  
+### Low Priority
+
 6. **Re-render optimization**:
    - Add React.memo to expensive table components
    - Use useMemo for expensive calculations
 
 ## Expected Performance Gains
 
-| Metric | Before | After (Estimated) |
-|--------|--------|-------------------|
-| First Contentful Paint (FCP) | ~2.5s | ~1.2s |
-| Time to Interactive (TTI) | ~4.0s | ~2.5s |
-| Bundle Size (initial) | ~250KB | ~180KB (-28%) |
-| Lighthouse Score | ~65 | ~85+ |
+| Metric                       | Before | After (Estimated) |
+| ---------------------------- | ------ | ----------------- |
+| First Contentful Paint (FCP) | ~2.5s  | ~1.2s             |
+| Time to Interactive (TTI)    | ~4.0s  | ~2.5s             |
+| Bundle Size (initial)        | ~250KB | ~180KB (-28%)     |
+| Lighthouse Score             | ~65    | ~85+              |
 
 ## Verification Commands
 
@@ -653,6 +705,7 @@ npx lighthouse http://localhost:3000 --preset=desktop
 ## References
 
 Based on Vercel React Best Practices:
+
 - `async-parallel`: Server Component data fetching
 - `bundle-dynamic-imports`: Motion component lazy loading
 - `server-cache-react`: Revalidation strategy

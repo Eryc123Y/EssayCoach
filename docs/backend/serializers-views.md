@@ -382,9 +382,8 @@ The serializer ensures `language` and `response_mode` default to valid values an
 
 The new endpoints are:
 
-- `POST /api/v1/ai-feedback/agent/workflows/run/` – triggers the default workflow while sending the DSL inputs. The response includes `workflow_run_id`, `task_id`, `data`, and the input payload.
-- `GET /api/v1/ai-feedback/agent/workflows/run/{workflow_run_id}/status/` – proxies Dify’s `/workflows/run/{workflow_run_id}` endpoint so the frontend can poll for `status`, `outputs`, and token usage.
-- `GET /api/v2/ai-feedback/agent/workflows/run/{workflow_run_id}/status/` – v2 namespace for the same workflow status payload.
+- `POST /api/v2/ai-feedback/agent/workflows/run/` – triggers the default workflow while sending the DSL inputs. The response includes `workflow_run_id`, `task_id`, `data`, and the input payload.
+- `GET /api/v2/ai-feedback/agent/workflows/run/{workflow_run_id}/status/` – proxies Dify’s `/workflows/run/{workflow_run_id}` endpoint so the frontend can poll for `status`, `outputs`, and token usage.
 
 Each view is decorated with `extend_schema` to render precise request/response documentation in Swagger (matching the `auth`/`core` style), helping frontend developers know exactly how to format the JSON body and what to expect back.
 

@@ -160,6 +160,11 @@ cd frontend && pnpm test
 
 ## 🤝 Contributing
 
+For current contributor and operations documentation:
+
+- `docs/CONTRIB.md` (development workflow, scripts, env setup, test flow)
+- `docs/RUNBOOK.md` (deployment, monitoring, troubleshooting, rollback)
+
 1. Fork repository
 2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
 3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)

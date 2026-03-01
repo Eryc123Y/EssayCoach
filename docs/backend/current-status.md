@@ -6,7 +6,7 @@ EssayCoach 后端基于 Django 4.2 构建，目前已完成核心业务逻辑、
 ## 2. 技术栈 (Technology Stack)
 | 组件 | 技术 | 状态 |
 |------|------|------|
-| **Web 框架** | Python 3.12 + Django 4.2 + DRF | ✅ 核心已就绪 |
+| **Web 框架** | Python 3.12 + Django 4.2 + Django Ninja (API v2) | ✅ 核心已就绪 |
 | **数据库** | PostgreSQL 14+ | ✅ 已配置并运行 |
 | **API 文档** | drf-spectacular (OpenAPI 3.0) | ✅ 已集成 |
 | **身份验证** | Token & Session Auth | ✅ 已实现 |
@@ -30,11 +30,11 @@ EssayCoach 后端基于 Django 4.2 构建，目前已完成核心业务逻辑、
 - **提交与反馈**: `Submission` (论文提交), `Feedback` (整体反馈), `FeedbackItem` (针对评分项的细化反馈)。
 
 ## 5. 已实现的 API 接口
-所有核心模型均已通过 Django REST Framework 暴露 RESTful 接口：
-- `GET/POST /api/v1/core/users/`
-- `GET/POST /api/v1/core/tasks/`
-- `GET/POST /api/v1/core/submissions/`
-- `GET/POST /api/v1/core/marking-rubrics/`
+所有核心模型均已通过 API v2 暴露 RESTful 接口：
+- `GET/POST /api/v2/core/users/`
+- `GET/POST /api/v2/core/tasks/`
+- `GET/POST /api/v2/core/submissions/`
+- `GET/POST /api/v2/core/rubrics/`
 - ... 以及其他关联表的 CRUD 接口。
 
 ## 6. 当前面临的挑战与缺口 (Gaps & Issues)

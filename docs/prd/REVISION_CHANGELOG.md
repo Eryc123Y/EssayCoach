@@ -2,6 +2,8 @@
 
 > **Revision Date:** 2026-02-15
 > **Purpose:** Align all PRD documents with actual backend implementation
+>
+> **Historical note:** Any `/api/v1/` text in the "Before" column is intentional historical context.
 
 ---
 

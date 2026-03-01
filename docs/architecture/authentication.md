@@ -1,191 +1,75 @@
-# Hybrid Token Authentication Architecture
+# Authentication Architecture (v2)
 
 ## Overview
 
-EssayCoach implements a **Hybrid Token Authentication** system that combines:
-- **HttpOnly Cookie-based storage** on the frontend (Next.js)
-- **Token-based authentication** in the backend (Django REST Framework)
-- **Custom API Route Proxy** for secure token forwarding
+EssayCoach uses a hybrid authentication model:
 
-## Architecture Flow
+- Access/refresh tokens are stored in secure httpOnly cookies.
+- Frontend server proxy forwards authenticated requests to backend API v2.
+- Backend validates JWT and applies role-based access control.
 
-```
-┌─────────────────┐         ┌─────────────────────────┐         ┌─────────────────┐
-│   Frontend      │         │   Next.js API Route    │         │   Backend (Django)│
-│   (Next.js 15)  │         │   Proxy Handler         │         │   (Django 4.2)  │
-└────────┬────────┘         └───────────┬─────────────┘         └────────┬────────┘
-         │                            │                                 │
-         │ 1. User logs in           │                                 │
-         ├────────────────────────────>│                                 │
-         │                            │                                 │
-         │ 2. Server sets cookie        │                                 │
-         │    (access_token)          │                                 │
-         │    httpOnly: true          │                                 │
-         │    secure: true            │                                 │
-         │                            │                                 │
-         │                            │ 3. Client requests          │
-         │                            │    /api/v1/...             │
-         │                            ├─────────────────────────────>│
-         │                            │                                 │
-         │                            │ 4. Proxy reads cookie        │
-         │                            │    from request.cookies     │
-         │                            │                                 │
-         │                            │ 5. Extract token            │
-         │                            │    from access_token       │
-         │                            │                                 │
-         │                            │ 6. Inject Authorization    │
-         │                            │    header:                  │
-         │                            │    Authorization: Token ... │
-         │                            │                                 │
-         │                            │ 7. Forward to Django        │
-         │                            ├────────────────────────────────────>│
-         │                            │                                 │
-         │ 8. Django validates token  │<──────────────────────────────┤
-         │    via TokenAuthentication    │                                 │
-         │                            │                                 │
-         │ 9. Response returns         │<──────────────────────────────────┤
-         │                            │                                 │
-         ├─────────────────────────────┤                                 │
-         │                            │                                 │
+## Request Flow
+
+```text
+Browser UI -> Next.js Route Handler (/api/v2/[...path]) -> Django API v2
 ```
 
-## Component Details
+1. User signs in through `/api/v2/auth/login/`.
+2. Frontend stores tokens in cookies (`access_token`, `refresh_token`).
+3. Client calls `/api/v2/...` in Next.js app.
+4. Proxy route reads `access_token` from cookies.
+5. Proxy injects `Authorization: Bearer <token>` to backend request.
+6. Backend validates JWT and resolves `request.auth` user.
 
-### Frontend (Next.js 15)
+## Frontend Proxy
 
-**Location**: `frontend/src/app/api/v1/[...path]/route.ts`
+- File: `frontend/src/app/api/v2/[...path]/route.ts`
+- Behavior:
+  - Uses backend base URL from `getServerApiUrl()`.
+  - Forwards only safe headers (`accept`, `content-type`, `origin`, `referer`, `x-csrftoken`, `x-requested-with`).
+  - Forwards only safe cookies (`csrftoken`, `sessionid`).
+  - Derives Authorization from `access_token` cookie (does not trust client-supplied Authorization header).
 
-**Role**: Acts as a secure proxy that bridges HttpOnly cookies to standard HTTP headers.
+## Backend Auth
 
-**Key Functions**:
-1. **Cookie Reading**: Extracts `access_token` from `request.cookies`
-2. **Token Injection**: Converts cookie to `Authorization: Token <token_value>` header
-3. **Request Forwarding**: Proxies requests to Django backend at `http://127.0.0.1:8000`
-4. **Response Proxying**: Returns Django responses transparently to client
+- API root: `backend/api_v2/api.py` (`/api/v2/`)
+- Auth implementation:
+  - `backend/api_v2/utils/jwt_auth.py`
+  - `backend/api_v2/utils/auth.py`
+- Common auth-protected modules:
+  - `/api/v2/ai-feedback/*`
+  - `/api/v2/core/*`
+  - `/api/v2/auth/settings/*`
 
-**Security Benefits**:
-- **HttpOnly Cookies**: Prevents client-side JavaScript access (XSS protection)
-- **Secure Flag**: Ensures cookies are only sent over HTTPS (production)
-- **No Client-Side Token Exposure**: Frontend components never read auth tokens directly
+## Required Environment
 
-### Backend (Django 4.2 + DRF)
+Backend (`.env`):
 
-**Authentication Backend**: `TokenAuthentication` from Django REST Framework
-
-**Configuration** (backend/essay_coach/settings.py):
-```python
-REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': [
-        'rest_framework.authentication.TokenAuthentication',
-        # Additional backends can be prioritized
-    ],
-    'DEFAULT_PERMISSION_CLASSES': [
-        'rest_framework.permissions.IsAuthenticated',
-    ],
-}
-```
-
-**Token Flow**:
-1. Backend receives `Authorization: Token <token_value>` header from proxy
-2. DRF `TokenAuthentication` validates token against database
-3. If valid, `request.user` is populated
-4. If invalid, returns `401 Unauthorized`
-5. Protected views require `@permission_classes([IsAuthenticated])`
-
-## Why Not Next.js Rewrites?
-
-**Question**: Why use API Route Handlers instead of Next.js `rewrites` in `next.config.ts`?
-
-**Answer**: `rewrites` **cannot inject custom headers** (like Authorization tokens).
-
-**Technical Explanation**:
-- `rewrites` only supports URL pattern matching and path rewriting
-- `rewrites` cannot modify request headers
-- `rewrites` cannot read cookies and convert them to headers
-- API Route Handlers have full access to `NextRequest` object
-- API Route Handlers can modify headers before proxying
-
-**Impact**:
-- ❌ **With rewrites**: Tokens would be exposed to client-side JavaScript (security risk)
-- ✅ **With API Route Proxy**: Tokens remain HttpOnly and server-side only
-
-## Security Considerations
-
-### Current Implementation (MVP)
-- ✅ HttpOnly cookies prevent XSS token theft
-- ✅ Tokens never exposed to client-side JavaScript
-- ✅ Backend validates every request
-- ⚠️ Tokens currently have no expiration (future enhancement)
-- ⚠️ No refresh token mechanism (future enhancement)
-
-### Recommended Enhancements (Production)
-1. **Token Expiration**: Implement short-lived access tokens (e.g., 15 minutes)
-2. **Refresh Tokens**: Add refresh token mechanism for automatic token renewal
-3. **CSRF Protection**: Add CSRF tokens for state-changing operations
-4. **Middleware Validation**: Add Next.js middleware for route-level authentication checks
-5. **Rate Limiting**: Implement rate limiting on authentication endpoints
-
-## Configuration Requirements
-
-### Environment Variables
-
-**Backend** (.env):
 ```bash
-# No additional config required for TokenAuthentication
-# Tokens stored in Django's default `authtoken_token` table
+SECRET_KEY=your-secret
+ALLOWED_HOSTS=localhost,127.0.0.1
 ```
 
-**Frontend** (frontend/.env.local):
+Frontend (`frontend/.env.local`):
+
 ```bash
-# Backend URL for API proxy
 NEXT_PUBLIC_API_URL=http://127.0.0.1:8000
 ```
 
-### Port Configuration
+## Common Failure Modes
 
-- **Frontend**: Port 5100 (configurable)
-- **Backend**: Port 8000 (standard Django dev server)
-- **PostgreSQL**: Port 5432 (development)
+### 401 Unauthorized
 
-## Troubleshooting Common Issues
+- Check `access_token` cookie exists.
+- Check token is not expired.
+- Check backend receives `Authorization: Bearer ...` via proxy.
 
-### Issue: "Failed to fetch" 401 Unauthorized
+### 502 from proxy
 
-**Symptoms**: API requests return 401 status code
+- `NEXT_PUBLIC_API_URL` invalid or backend unavailable.
+- Verify backend service is reachable at configured host/port.
 
-**Possible Causes**:
-1. `access_token` cookie not set
-2. Token expired (if expiration implemented)
-3. Token manually deleted from database
-4. API Route proxy not forwarding headers correctly
+### CSRF issues on mutating requests
 
-**Debugging Steps**:
-1. Check browser DevTools Application → Cookies for `access_token`
-2. Verify API Route handler logs token extraction
-3. Verify Django receives `Authorization` header in server logs
-4. Test token directly via Django Admin: `http://localhost:8000/admin/`
-
-### Issue: "CORS policy: No 'Access-Control-Allow-Origin' header"
-
-**Symptoms**: Browser blocks cross-origin requests
-
-**Solution**: Ensure CORS is configured in Django settings:
-```python
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:5100",
-    "http://127.0.0.1:5100",
-]
-```
-
-## Related Documentation
-
-- [Django REST Framework Authentication](https://www.django-rest-framework.org/api-guide/authentication/)
-- [Next.js API Routes](https://nextjs.org/docs/app/building-your-application/routing/route-handlers)
-- [HTTP Cookies Security](https://oweb.org/en-us/articles/set-cookie-secure-httponly-flag)
-
-## Version History
-
-- **v1.0** (Jan 2026): Initial Hybrid Token Authentication implementation
-  - API Route proxy for token injection
-  - HttpOnly cookie storage
-  - Django TokenAuthentication backend
+- Ensure `csrftoken` cookie exists.
+- Ensure `X-CSRFToken` is forwarded by frontend request layer.

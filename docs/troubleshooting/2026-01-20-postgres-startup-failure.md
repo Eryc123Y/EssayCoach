@@ -181,7 +181,7 @@ pg_ctl -D .dev_pg status
 
 ## 📋 相关文档
 
-- [AGENTS.md - Troubleshooting Rules](../../AGENTS.md)
+- [CLAUDE.md - Troubleshooting Rules](../../CLAUDE.md)
 - [frontend/README.md - Development Guide](../../frontend/README.md)
 - [docs/architecture/system-architecture.md - System Architecture](../../docs/architecture/system-architecture.md)
 
@@ -199,7 +199,7 @@ pg_ctl -D .dev_pg status
 - [ ] 验证 PostgreSQL 状态：`pg-connect`（应成功连接）
 - [ ] 运行数据库迁移：`python manage.py migrate`
 - [ ] 填充测试数据：`python manage.py seed_db`
-- [ ] 访问 http://localhost:8000/api/v1/（应返回 API 根页面）
+- [ ] 访问 http://localhost:8000/api/v2/docs/（应返回 API 文档页面）
 
 ---
 

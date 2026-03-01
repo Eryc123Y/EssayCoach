@@ -7,7 +7,7 @@ Welcome to the technical documentation for EssayCoach, an AI-powered essay coach
 EssayCoach is designed as a modern web application with the following architecture:
 
 - **Frontend**: Next.js 15 + React 19 + TypeScript + Tailwind CSS with shadcn/ui components
-- **Backend**: Django REST Framework with PostgreSQL database
+- **Backend**: Django API v2 (Django Ninja) with PostgreSQL database
 - **Development Environment**: uv and Docker Compose for fast, consistent setups
 - **Deployment**: Docker containers with CI/CD pipelines
 
@@ -72,9 +72,8 @@ This documentation is organized for developers and contributors:
 
 ## 🧠 Dify Agent Workflow APIs
 
-- **Run workflow**: `POST /api/v1/ai-feedback/agent/workflows/run/` accepts `essay_question`, `essay_content`, optional `language`, `response_mode`, and `user_id`. The server uploads `rubric.pdf` once and attaches it as the `essay_rubric` file input required by the DSL.
-- **Check status (v1)**: `GET /api/v1/ai-feedback/agent/workflows/run/{workflow_run_id}/status/` returns the current `status`, `outputs`, and token usage so UI components know when streaming/blocking runs complete.
-- **Check status (v2)**: `GET /api/v2/ai-feedback/agent/workflows/run/{workflow_run_id}/status/` returns the same status payload under the v2 API namespace.
+- **Run workflow**: `POST /api/v2/ai-feedback/agent/workflows/run/` accepts `essay_question`, `essay_content`, optional `language`, `response_mode`, and `user_id`. The server uploads `rubric.pdf` once and attaches it as the `essay_rubric` file input required by the DSL.
+- **Check status**: `GET /api/v2/ai-feedback/agent/workflows/run/{workflow_run_id}/status/` returns current `status`, `outputs`, and token usage for workflow polling.
 - **Note**: Only send `inputs`, `response_mode`, and `user_id` when starting a workflow.
 - These endpoints mirror the Essay Agent DSL described in `docs/agentic-workflow/*.md` and are documented via drf-spectacular so frontend developers see the exact request schema.
 
@@ -85,5 +84,5 @@ This documentation is organized for developers and contributors:
 - [Database Design](database/schema-overview.md)
 - [Database Configuration](database/configuration.md)
 - [Agentic Workflow](agentic-workflow/agentic-design.md)
-- [Project Roadmap](planning/roadmap.md)
-- [Architecture TODO](planning/architecture-todo.md)
+- [Project Plan](plans/dashboard-refactor-plan.md)
+- [Latest Sync Plan](plans/2026-02-27-profile-settings-sync-plan.md)
