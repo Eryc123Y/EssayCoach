@@ -102,3 +102,28 @@ jobs:
       - name: Build
         working-directory: ./frontend
         run: pnpm build
+
+  docs-build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: false
+
+      - name: Install backend dependencies
+        run: |
+          cd backend
+          uv sync --no-dev
+
+      - name: Build docs
+        run: make docs-build

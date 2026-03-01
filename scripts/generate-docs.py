@@ -11,17 +11,13 @@ import json
 import logging
 import os
 import sys
-import time
 from datetime import datetime
 from pathlib import Path
-from urllib.error import URLError, HTTPError
-from urllib.request import urlopen, Request
+from urllib.error import HTTPError, URLError
+from urllib.request import Request, urlopen
 
 # Django setup for model introspection
 import django
-from django.conf import settings
-from django.core.management import call_command
-from django.db import models
 
 # Configure logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
@@ -33,6 +29,7 @@ class DocumentationGenerator:
 
     # Output directories relative to project root
     OUTPUT_DIRS = {"api_reference": "docs/api-reference", "backend_models": "docs/backend/models"}
+    OPENAPI_SCHEMA_FILE = "docs/api-reference/openapi-schema.json"
 
     # Cache file for idempotency check
     CACHE_FILE = ".doc_generator_cache.json"
@@ -91,7 +88,7 @@ class DocumentationGenerator:
         except IOError as e:
             logger.warning(f"Failed to save cache: {e}")
 
-    def _is_current(self, output_file: str) -> bool:
+    def _is_current(self, output_file: str, source_files: list[str] | None = None) -> bool:
         """Check if output file is current using timestamp comparison."""
         output_path = self.project_root / output_file
         if not output_path.exists():
@@ -101,11 +98,12 @@ class DocumentationGenerator:
         output_mtime = output_path.stat().st_mtime
 
         # Check if any source files are newer
-        source_files = [
-            "backend/essay_coach/settings.py",
-            "backend/core/models.py",
-            "backend/core/views.py",
-        ]
+        if source_files is None:
+            source_files = [
+                "backend/essay_coach/settings.py",
+                "backend/core/models.py",
+                "backend/core/views.py",
+            ]
 
         for source_file in source_files:
             source_path = self.project_root / source_file
@@ -124,30 +122,6 @@ class DocumentationGenerator:
             sys.path.insert(0, str(backend_path))
 
         os.environ.setdefault("DJANGO_SETTINGS_MODULE", "essay_coach.settings")
-
-        # Configure Django settings using the real backend configuration
-        if not settings.configured:
-            settings.configure(
-                DEBUG=False,
-                DATABASES={
-                    "default": {
-                        "ENGINE": "django.db.backends.sqlite3",
-                        "NAME": ":memory:",
-                    }
-                },
-                INSTALLED_APPS=[
-                    "django.contrib.contenttypes",
-                    "django.contrib.auth",
-                    "core",
-                    "auth",
-                    "analytics",
-                    "ai_feedback",
-                ],
-                SECRET_KEY="dummy-key-for-docs-generation",
-                USE_TZ=True,
-                DEFAULT_AUTO_FIELD="django.db.models.BigAutoField",
-            )
-
         django.setup()
 
     def _test_django_connection(self) -> bool:
@@ -558,20 +532,36 @@ class DocumentationGenerator:
 
         return schema, use_template
 
-    def _resolve_schema_ref(self, schema: dict, ref: str, components: dict) -> dict | None:
+    def _load_local_openapi_schema(self) -> dict | None:
+        """Load OpenAPI schema JSON from local docs output if available."""
+        schema_path = self.project_root / self.OPENAPI_SCHEMA_FILE
+        if not schema_path.exists():
+            return None
+
+        try:
+            with open(schema_path) as schema_file:
+                loaded_schema = json.load(schema_file)
+            if isinstance(loaded_schema, dict):
+                return loaded_schema
+            logger.warning(f"Local OpenAPI schema is not an object: {schema_path}")
+            return None
+        except (json.JSONDecodeError, OSError) as error:
+            logger.warning(f"Could not read local OpenAPI schema {schema_path}: {error}")
+            return None
+
+    def _resolve_schema_ref(self, ref: str, components: dict) -> dict | None:
         """Resolve a $ref reference to its actual schema definition."""
         if not ref.startswith("#/"):
             return None
 
         try:
             parts = ref.replace("#/", "").split("/")
-            current = components
+            current: object = {"components": components}
             for part in parts:
-                if part in current:
-                    current = current[part]
-                else:
+                if not isinstance(current, dict) or part not in current:
                     return None
-            return current
+                current = current[part]
+            return current if isinstance(current, dict) else None
         except (KeyError, TypeError):
             return None
 
@@ -586,7 +576,7 @@ class DocumentationGenerator:
             json_content = content["application/json"]
             schema = json_content.get("schema", {})
             if "$ref" in schema:
-                resolved = self._resolve_schema_ref(schema["$ref"], schema["$ref"], components)
+                resolved = self._resolve_schema_ref(schema["$ref"], components)
                 if resolved:
                     return resolved.get("title", schema["$ref"].split("/")[-1])
                 return schema["$ref"].split("/")[-1]
@@ -612,9 +602,7 @@ class DocumentationGenerator:
                     json_content = content["application/json"]
                     schema = json_content.get("schema", {})
                     if "$ref" in schema:
-                        resolved = self._resolve_schema_ref(
-                            schema["$ref"], schema["$ref"], components
-                        )
+                        resolved = self._resolve_schema_ref(schema["$ref"], components)
                         if resolved:
                             response_info.append(
                                 f"{status_code}: {resolved.get('title', 'Response')}"
@@ -717,16 +705,22 @@ class DocumentationGenerator:
         output.append(f"Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}\n")
         output.append("---\n\n")
 
-        # Fetch OpenAPI schema from the backend
-        schema_url = "http://127.0.0.1:8000/api/schema/"
-        schema, use_template = self._fetch_openapi_schema(schema_url)
+        schema = self._load_local_openapi_schema()
+
+        if schema:
+            output.extend(self._parse_openapi_schema(schema))
+            return "".join(output)
+
+        # Fallback to fetching from running backend if local schema is missing
+        schema_url = "http://127.0.0.1:8000/api/v2/openapi.json"
+        fetched_schema, use_template = self._fetch_openapi_schema(schema_url)
 
         if use_template:
             # Fallback to template structure
             output.append(self._generate_template_documentation())
-        elif schema:
+        elif fetched_schema:
             # Parse OpenAPI schema and generate documentation
-            output.extend(self._parse_openapi_schema(schema))
+            output.extend(self._parse_openapi_schema(fetched_schema))
 
         return "".join(output)
 
@@ -1012,7 +1006,7 @@ class DocumentationGenerator:
 
         # Generate model documentation
         model_file = self.OUTPUT_DIRS["backend_models"] + "/models.md"
-        if self._is_current(model_file):
+        if self._is_current(model_file, source_files=["backend/core/models.py"]):
             logger.info(f"Model documentation is current: {model_file}")
         else:
             logger.info(f"Generating model documentation: {model_file}")
@@ -1039,7 +1033,7 @@ class DocumentationGenerator:
 
         # Generate API documentation
         api_file = self.OUTPUT_DIRS["api_reference"] + "/endpoints.md"
-        if self._is_current(api_file):
+        if self._is_current(api_file, source_files=[self.OPENAPI_SCHEMA_FILE]):
             logger.info(f"API documentation is current: {api_file}")
         else:
             logger.info(f"Generating API documentation: {api_file}")
@@ -1069,7 +1063,7 @@ class DocumentationGenerator:
 
         # Generate ERD documentation
         erd_file = "docs/database/erd-diagram.md"
-        if self._is_current(erd_file):
+        if self._is_current(erd_file, source_files=["backend/core/models.py"]):
             logger.info(f"ERD documentation is current: {erd_file}")
         else:
             logger.info(f"Generating ERD documentation: {erd_file}")
@@ -1120,13 +1114,21 @@ Examples:
         action="store_true",
         help="Preview what would be generated without creating files",
     )
+    parser.add_argument(
+        "--erd-only",
+        action="store_true",
+        help="Generate only the ERD documentation",
+    )
 
     args = parser.parse_args()
 
     # Create generator and run
     generator = DocumentationGenerator(verbose=args.verbose, dry_run=args.dry_run)
 
-    success = generator.generate()
+    if args.erd_only:
+        success = generator.generate_erd()
+    else:
+        success = generator.generate()
 
     # Exit with appropriate code
     sys.exit(0 if success else 1)

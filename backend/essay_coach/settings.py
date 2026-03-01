@@ -211,10 +211,15 @@ AUTH_USER_MODEL = "core.User"
 
 # SiliconFlow AI Configuration (for rubric parsing)
 SILICONFLOW_API_KEY = os.environ.get("SILICONFLOW_API_KEY", "")
-SILICONFLOW_API_URL = "https://api.siliconflow.cn/v1/chat/completions"  # Use correct .cn domain for China region
+SILICONFLOW_API_URL = (
+    "https://api.siliconflow.cn/v1/chat/completions"  # Use correct .cn domain for China region
+)
 SILICONFLOW_MODEL = "Qwen/Qwen3-Next-80B-A3B-Instruct"
 
 # Logging Configuration
+LOG_DIR = BASE_DIR / "logs"
+LOG_DIR.mkdir(parents=True, exist_ok=True)
+
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
@@ -235,7 +240,7 @@ LOGGING = {
         "file": {
             "class": "logging.handlers.RotatingFileHandler",
             "formatter": "verbose",
-            "filename": str(BASE_DIR / "logs" / "essaycoach.log"),
+            "filename": str(LOG_DIR / "essaycoach.log"),
             "maxBytes": 10 * 1024 * 1024,  # 10MB
             "backupCount": 5,
             "encoding": "utf-8",

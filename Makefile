@@ -1,5 +1,8 @@
 .PHONY: install dev dev-backend dev-frontend health health-check test test-performance lint clean db docs docs-generate docs-erd
 
+BACKEND_PYTHON := backend/.venv/bin/python
+MKDOCS_CMD := uv run --with mkdocs==1.6.1 --with mkdocs-material==9.5.50 --with mkdocs-mermaid2-plugin==1.2.1 --with mkdocs-minify-plugin==0.8.0 mkdocs
+
 # Install all dependencies
 install:
 	@echo "Installing Python dependencies (in backend .venv)..."
@@ -156,28 +159,28 @@ docker-logs-pg:
 	@docker compose logs -f postgres
 
 # Documentation
-docs-generate:
+docs-generate: docs-api
 	@echo "Generating documentation..."
-	@python scripts/generate-docs.py
+	@$(BACKEND_PYTHON) scripts/generate-docs.py
 
 docs-api:
 	@echo "Generating OpenAPI schema JSON..."
-	@.venv/bin/python backend/manage.py generate_openapi_schema --output docs/api-reference/openapi-schema.json
+	@cd backend && .venv/bin/python manage.py shell -c "import json; from pathlib import Path; from api_v2.api import api_v2; output = Path('../docs/api-reference/openapi-schema.json'); output.parent.mkdir(parents=True, exist_ok=True); output.write_text(json.dumps(api_v2.get_openapi_schema(), indent=2, ensure_ascii=False), encoding='utf-8')"
 	@echo "OpenAPI schema generated at docs/api-reference/openapi-schema.json"
 
 docs-erd:
 	@echo "Generating ERD diagram..."
-	@python scripts/generate-docs.py --erd-only
+	@$(BACKEND_PYTHON) scripts/generate-docs.py --erd-only
 
 docs-build: docs-api
 	@echo "Building documentation..."
-	@python scripts/generate-docs.py
-	@.venv/bin/mkdocs build
+	@$(BACKEND_PYTHON) scripts/generate-docs.py
+	@$(MKDOCS_CMD) build
 	@echo ""
 	@echo "✅ Documentation built successfully!"
 	@echo "📚 Output: site/"
 
 docs: docs-api
-	@echo "Starting documentation server..."
-	@python scripts/generate-docs.py
-	@.venv/bin/mkdocs serve
+	@echo "Starting documentation server on http://127.0.0.1:8001..."
+	@$(BACKEND_PYTHON) scripts/generate-docs.py
+	@$(MKDOCS_CMD) serve --dev-addr=127.0.0.1:8001
