@@ -213,6 +213,10 @@ nitro.json
 .claude/
 .skills/
 
+# oh-my-codex / OMX local state
+.omc/
+.omx/
+
 # Test screenshots
 *.png
 !frontend/src/**/*.png
