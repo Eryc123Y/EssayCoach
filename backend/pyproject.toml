@@ -16,6 +16,9 @@ dependencies = [
     "typing-extensions[dev]>=4.0.0",
     "django-ninja>=1.0,<2.0",
     "djangorestframework-simplejwt>=5.5.1",
+    "langgraph>=0.2.45,<0.3",
+    "langchain-core>=0.3.30,<0.4",
+    "langchain-openai>=0.2.11,<0.3",
 ]
 
 [project.optional-dependencies]

@@ -4,7 +4,9 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 > **IMPORTANT**: This file is the single source of truth for project status. Update it after every significant code change to reflect the current state and next priorities.
 >
-- **Last Updated**: 2026-03-01 (merge-readiness wave complete: security blockers remediated and full verification matrix green)
+- **Last Updated**: 2026-04-12 (optional LangGraph essay agent behind `ESSAY_AGENT_PROVIDER`; default remains Dify)
+- **Incremental Update**: 2026-04-12 (essay workflow: `ESSAY_AGENT_PROVIDER=langgraph` uses in-repo LangGraph + OpenAI structured output; `get_essay_agent()` in `backend/ai_feedback/agent_factory.py`; revision chat still Dify-only)
+- **Incremental Update**: 2026-03-01 (merge-readiness wave complete: security blockers remediated and full verification matrix green)
 - **Incremental Update**: 2026-03-01 (zero-risk merge review completed: lint/typecheck/test/build/health-check passing, merge decision record approved)
 - **Incremental Update**: 2026-03-01 (sensitive mutation endpoints now enforce role and owner checks where applicable; targeted backend RBAC suites passing)
 - **Incremental Update**: 2026-03-01 (JWT contract hardening: backend now emits `user_role`+`role` with issuer/audience; frontend validation now has no hardcoded JWT secret fallback)
@@ -411,7 +413,10 @@ When updating CLAUDE.md:
 **Backend** (`.env` at project root - NOT in backend/):
 - `SECRET_KEY` or `DJANGO_SECRET_KEY`: Django secret key
 - `DEBUG`: Set to `True` for development
-- `DIFY_API_KEY`: API key for Dify AI service
+- `DIFY_API_KEY`: API key for Dify AI service (essay analyze when `ESSAY_AGENT_PROVIDER=dify`; chat still uses Dify)
+- `ESSAY_AGENT_PROVIDER`: `dify` (default) or `langgraph` / `langchain` for essay analyze workflow (`backend/ai_feedback/agent_factory.py`)
+- `OPENAI_API_KEY`: Required when `ESSAY_AGENT_PROVIDER=langgraph`
+- `OPENAI_MODEL`: Optional OpenAI model id for LangGraph path (default `gpt-4o-mini`)
 - `JWT_SECRET`: Secret for JWT token signing
 - `POSTGRES_DB`: Database name (default: essaycoach)
 - `POSTGRES_USER`: DB username (default: postgres)
