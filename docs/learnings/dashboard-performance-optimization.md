@@ -974,7 +974,7 @@ export function observePerformance() {
 - [ ] Verify database query optimization (target: <5 queries) - 0.5h
 - [ ] Load test with 50 concurrent users - 0.5h
 - [ ] Document final metrics in this file - 0.5h
-- [ ] Update CLAUDE.md with performance status - 0.5h
+- [ ] Update root AGENTS.md with performance status - 0.5h
 
 **Total Phase 3**: ~3 hours
 

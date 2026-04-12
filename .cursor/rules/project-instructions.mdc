@@ -1,0 +1,6 @@
+---
+description: Canonical project + agent instructions for EssayCoach
+alwaysApply: true
+---
+
+Use **root `AGENTS.md`** as the single source of truth for commands, architecture, status, priorities, env vars, and gotchas. `CLAUDE.md` is only a short redirect; do not duplicate long-form content there—update **`AGENTS.md`** after significant changes.

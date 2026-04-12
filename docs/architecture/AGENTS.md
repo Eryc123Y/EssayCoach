@@ -14,7 +14,7 @@
 
 ## CONVENTIONS
 - Use these docs for mental models and terminology, not as stronger truth than current code.
-- When architecture docs and code disagree, prefer `CLAUDE.md`, root `AGENTS.md`, and the live implementation.
+- When architecture docs and code disagree, prefer root `AGENTS.md` and the live implementation.
 - Keep updates focused on durable architecture concepts; feature-specific change logs belong in `docs/learnings/`.
 
 ## ANTI-PATTERNS
