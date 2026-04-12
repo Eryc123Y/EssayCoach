@@ -129,3 +129,10 @@ sequenceDiagram
     Agg->>Agg: Synthesize Feedback
     Agg-->>User: Final Report (Structured JSON/Markdown)
 ```
+
+---
+
+## Related documentation
+
+- **Implementation plan, API contracts, and migration phases**: [AI Agent Migration (LangGraph)](../architecture/agent-migration.md) — canonical doc for Dify → LangGraph work, `WorkflowRunOut` / `EssayAnalysisOut`, and memory strategy.
+- Detailed orchestration pseudo-code and an alternate mermaid sketch previously lived in `workflow-orchestration.md` (removed as redundant); see **Appendix B** in the migration doc for state sketches.

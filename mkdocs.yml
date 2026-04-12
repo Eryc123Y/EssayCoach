@@ -90,6 +90,7 @@ nav:
       - System Architecture: architecture/system-architecture.md
       - Database Design: architecture/database-design.md
       - API Specification: architecture/api-specification.md
+      - AI Agent Migration (LangGraph): architecture/agent-migration.md
       - Dev Environment: architecture/development-environment.md
       - Functional Modules: Functional Module Design.md
       - Navigation Design: Navigation Bars Design.md
@@ -121,8 +122,6 @@ nav:
       - Configuration: development/configuration.md
   - Agentic Workflow:
       - Agentic Design Plans: agentic-workflow/agentic-design.md
-      - Workflow Orchestration: agentic-workflow/workflow-orchestration.md
-      - Technique Stacks: agentic-workflow/technique-stacks.md
 
 # Markdown extensions for technical content
 markdown_extensions:

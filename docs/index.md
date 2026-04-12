@@ -2,18 +2,18 @@
 
 Welcome to the technical documentation for EssayCoach, an AI-powered essay coaching platform built with a Next.js frontend and Django backend.
 
-## 🏗️ Architecture Overview
+## Architecture overview
 
 EssayCoach is designed as a modern web application with the following architecture:
 
 - **Frontend**: Next.js 15 + React 19 + TypeScript + Tailwind CSS with shadcn/ui components
-- **Backend**: Django REST Framework with PostgreSQL database
+- **Backend**: Django 4.x + **API v2 (Django Ninja)** with PostgreSQL (DRF retained for JWT/simplejwt only)
 - **Development Environment**: uv and Docker Compose for fast, consistent setups
 - **Deployment**: Docker containers with CI/CD pipelines
 
-## 🚀 Quick Start for Developers
+## Quick start for developers
 
-### Environment Setup
+### Environment setup
 
 Install dependencies and start services:
 
@@ -29,16 +29,16 @@ This sets up:
 - Frontend development tools (Node.js, pnpm, Next.js)
 - All documentation tools (MkDocs, material theme)
 
-### Start Documentation Server
+### Start documentation server
 
 ```bash
 make docs
 ```
 (or `uv run mkdocs serve`)
 
-Visit <http://127.0.0.1:8000> to view the documentation locally.
+Visit <http://127.0.0.1:8001> to view the documentation locally (`make docs` serves MkDocs on port 8001; Django dev uses port 8000).
 
-## 📁 Documentation Structure
+## Documentation structure
 
 This documentation is organized for developers and contributors:
 
@@ -48,42 +48,40 @@ This documentation is organized for developers and contributors:
 - **Backend Deep Dive**: Django models, serializers, views, and async processing
 - **Frontend Architecture**: Next.js component structure and state management
 - **Performance Optimization**: [Frontend Performance Guide](frontend/performance-optimization.md) - Vercel React best practices applied
-- **Agentic Workflow**: Plans for agentic design, orchestration, and technique stacks
-- **Project Planning**: Roadmaps, architecture tasks, and development plans
+- **Agentic workflow**: [Agentic design](agentic-workflow/agentic-design.md) and [AI agent migration (LangGraph)](architecture/agent-migration.md)
+- **Project status / roadmap**: see repo root `CLAUDE.md` (not all planning docs are published here)
 - **Development Guide**: Setup instructions and contribution guidelines
 
-## 🔄 Development Workflow
+## Development workflow
 
-1. Make changes to documentation in the `docs/` directory
+1. Make changes to the documentation in the `docs/` directory
 2. Test locally with `mkdocs serve`
 3. Submit PR to main branch
 4. Documentation automatically deploys to GitHub Pages on merge
 
-## 📊 Technical Stack
+## Technical stack
 
 | Component | Technology | Purpose |
 |-----------|------------|---------|
 | Frontend | Next.js + React + TypeScript | Server-rendered React UI |
-| Backend | Django REST Framework | RESTful API server |
+| Backend | Django + Django Ninja (`api_v2`) | JSON API + OpenAPI |
 | Database | PostgreSQL 17 | Primary data store |
 | Dev Environment | uv + Docker Compose | Reproducible builds |
 | Documentation | MkDocs Material | Technical documentation |
 | Testing | Pytest + Vitest | Comprehensive test suite |
 
-## 🧠 Dify Agent Workflow APIs
+## AI feedback (API v2)
 
-- **Run workflow**: `POST /api/v1/ai-feedback/agent/workflows/run/` accepts `essay_question`, `essay_content`, optional `language`, `response_mode`, and `user_id`. The server uploads `rubric.pdf` once and attaches it as the `essay_rubric` file input required by the DSL.
-- **Check status (v1)**: `GET /api/v1/ai-feedback/agent/workflows/run/{workflow_run_id}/status/` returns the current `status`, `outputs`, and token usage so UI components know when streaming/blocking runs complete.
-- **Check status (v2)**: `GET /api/v2/ai-feedback/agent/workflows/run/{workflow_run_id}/status/` returns the same status payload under the v2 API namespace.
-- **Note**: Only send `inputs`, `response_mode`, and `user_id` when starting a workflow.
-- These endpoints mirror the Essay Agent DSL described in `docs/agentic-workflow/*.md` and are documented via drf-spectacular so frontend developers see the exact request schema.
+- **Run workflow**: `POST /api/v2/ai-feedback/agent/workflows/run/` — body includes `essay_question`, `essay_content`, optional `language`, `response_mode`, `user_id`, `rubric_id` (see `backend/api_v2/ai_feedback/schemas.py`).
+- **Status**: `GET /api/v2/ai-feedback/agent/workflows/run/{workflow_run_id}/status/` — progress and `EssayAnalysisOut` when complete.
+- **Chat**: `POST /api/v2/ai-feedback/chat/` — revision assistant (implementation evolving).
+- **Provider**: Dify backs these routes today; target stack is **LangGraph** — see [AI agent migration](architecture/agent-migration.md). OpenAPI: `docs/api-reference/openapi-schema.json` and the Swagger page in the nav.
 
-## 🔗 Useful Links
+## Useful links
 
-- [GitHub Repository](https://github.com/your-org/EssayCoach)
+- [GitHub Repository](https://github.com/Eryc123Y/EssayCoach)
 - [System Architecture](architecture/system-architecture.md)
 - [Database Design](database/schema-overview.md)
 - [Database Configuration](database/configuration.md)
-- [Agentic Workflow](agentic-workflow/agentic-design.md)
-- [Project Roadmap](planning/roadmap.md)
-- [Architecture TODO](planning/architecture-todo.md)
+- [Agentic design](agentic-workflow/agentic-design.md)
+- [AI agent migration (LangGraph)](architecture/agent-migration.md)
