@@ -33,7 +33,7 @@ docs/
 ## ANTI-PATTERNS
 - Do not treat learnings docs as newer than actual code without verifying.
 - Do not edit generated assets to “fix” source problems upstream.
-- Do not rely on older frontend/backend READMEs when `CLAUDE.md` or current code contradicts them.
+- Do not rely on older frontend/backend READMEs when root `AGENTS.md` or current code contradicts them.
 
 ## COMMANDS
 ```bash
@@ -47,4 +47,4 @@ make docs-erd
 - `prd/`, `learnings/`, and `troubleshooting/` are internal-facing working docs and are excluded from the public MkDocs site.
 - `docs/static/js/mermaid.min.js` is vendor output; ignore it for repo guidance.
 - The docs tree is large, but only a few subareas need behavioral guidance.
-- Some architecture docs still describe older v1/DRF-era flows; always cross-check with `CLAUDE.md` and current route files.
+- Some architecture docs still describe older v1/DRF-era flows; always cross-check with root `AGENTS.md` and current route files.

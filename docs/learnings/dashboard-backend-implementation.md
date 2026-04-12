@@ -462,4 +462,4 @@ curl -X GET "http://localhost:8000/api/v2/core/dashboard/" \
 - [Django ORM Optimization Guide](https://docs.djangoproject.com/en/5.0/topics/db/optimization/)
 - [Django Ninja Documentation](https://django-ninja.dev/)
 - [PRD-04 Dashboard Overview](../prd/04-dashboard-overview.md)
-- [CLAUDE.md Dashboard Refactor Status](../../CLAUDE.md)
+- [AGENTS.md — dashboard / project status](../../AGENTS.md)

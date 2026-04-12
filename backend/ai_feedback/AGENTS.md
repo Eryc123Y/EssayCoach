@@ -19,7 +19,7 @@
 - This module may depend on core models for rubric lookup, but it should stay isolated from general API/router concerns.
 
 ## MIGRATION CONTEXT
-- This is the P0 migration surface called out in `CLAUDE.md`.
+- This is the P0 migration surface called out in root `AGENTS.md`.
 - Existing API shape should remain stable for the frontend while internals change from Dify to custom agents.
 - If adding new agent code, make the transition path obvious from current Dify behaviors to future provider-neutral abstractions.
 

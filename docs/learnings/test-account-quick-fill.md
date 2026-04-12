@@ -103,4 +103,4 @@ Consider adding an environment variable check:
 ## Related Learnings
 
 - `docs/learnings/sidebar-fix-implementation.md` - Previous sidebar fix
-- `CLAUDE.md` - Test accounts section
+- Root `AGENTS.md` — Test accounts section

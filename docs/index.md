@@ -49,7 +49,7 @@ This documentation is organized for developers and contributors:
 - **Frontend Architecture**: Next.js component structure and state management
 - **Performance Optimization**: [Frontend Performance Guide](frontend/performance-optimization.md) - Vercel React best practices applied
 - **Agentic workflow**: [Agentic design](agentic-workflow/agentic-design.md) and [AI agent migration (LangGraph)](architecture/agent-migration.md)
-- **Project status / roadmap**: see repo root `CLAUDE.md` (not all planning docs are published here)
+- **Project status / roadmap**: see repo root `AGENTS.md` (not all planning docs are published here)
 - **Development Guide**: Setup instructions and contribution guidelines
 
 ## Development workflow

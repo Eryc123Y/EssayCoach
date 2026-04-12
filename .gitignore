@@ -176,6 +176,8 @@ frontend/.env.local
 !.vscode/extensions.json
 .idea
 .cursor/*
+!.cursor/rules/
+!.cursor/rules/**
 *.suo
 *.ntvs*
 *.njsproj
@@ -206,7 +208,6 @@ coverage/
 .nitro/
 nitro.json
 .output/
-/AGENTS.md
 .DS_Store
 
 # Claude Code configuration

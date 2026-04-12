@@ -25,7 +25,7 @@
 ### All Team Members Must:
 1. **Create learnings doc** in `docs/learnings/` for their work
 2. **Follow existing patterns** in `docs/learnings/README.md`
-3. **Update CLAUDE.md** when completing significant milestones
+3. **Update root AGENTS.md** when completing significant milestones
 
 ### Documentation Template
 ```markdown

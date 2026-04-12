@@ -24,4 +24,4 @@
 
 ## NOTES
 - This directory is dense because many February 2026 implementation waves logged detailed retrospectives.
-- For current truth, pair a learning doc with `CLAUDE.md` and the referenced source files.
+- For current truth, pair a learning doc with root `AGENTS.md` and the referenced source files.

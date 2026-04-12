@@ -12,6 +12,7 @@ from django.http import HttpRequest
 from ninja import Router
 from ninja.errors import HttpError
 
+from ai_feedback.agent_factory import get_essay_agent
 from ai_feedback.dify_client import DifyClient
 from ai_feedback.exceptions import (
     APIServerError,
@@ -21,12 +22,15 @@ from ai_feedback.exceptions import (
     RubricError,
     WorkflowError,
 )
-from ai_feedback.interfaces import ResponseMode, WorkflowInput
+from ai_feedback.interfaces import ResponseMode, WorkflowInput, WorkflowOutput
+from ai_feedback.response_transformer import DifyResponseTransformer
+from api_v2.types.enums import WorkflowStatus
 
 from ..utils.auth import JWTAuth
 from .schemas import (
     ChatMessageIn,
     ChatMessageOut,
+    EssayAnalysisOut,
     WorkflowDataOut,
     WorkflowInputsOut,
     WorkflowRunIn,
@@ -39,22 +43,39 @@ logger = logging.getLogger(__name__)
 router = Router(tags=["AI Feedback"], auth=JWTAuth())
 
 
+def _essay_analysis_from_workflow_output(wf: WorkflowOutput, provider: str) -> EssayAnalysisOut | None:
+    """Normalize provider-specific workflow outputs to EssayAnalysisOut for status responses."""
+    if wf.outputs is None or wf.status != WorkflowStatus.SUCCEEDED:
+        return None
+    if provider == "langgraph":
+        try:
+            return EssayAnalysisOut.model_validate(wf.outputs)
+        except Exception:
+            logger.exception("Failed to validate LangGraph outputs as EssayAnalysisOut")
+            return None
+    try:
+        return DifyResponseTransformer().to_analysis_output({"outputs": wf.outputs})
+    except Exception:
+        logger.exception("Failed to transform Dify workflow outputs to EssayAnalysisOut")
+        return None
+
+
 @router.post(
     "/agent/workflows/run/",
     response=WorkflowRunOut,
-    summary="Run the Essay Agent Dify workflow",
+    summary="Run the Essay Agent workflow",
     description="""
-    Triggers the Essay Agent workflow using Dify. Provide `essay_question` and
-    `essay_content`; the API automatically handles rubric upload.
+    Triggers essay analysis. Default provider is **Dify** (`ESSAY_AGENT_PROVIDER=dify` or unset).
+    Set `ESSAY_AGENT_PROVIDER=langgraph` to use the in-repo LangGraph + OpenAI path (`OPENAI_API_KEY` required).
 
-    Optional `language` and `response_mode` (blocking or streaming) are supported.
-    Uses EssayAgentInterface for provider-agnostic architecture.
+    Provide `essay_question` and `essay_content`; rubric is resolved from `rubric_id` or the user's library.
+    Optional `language` and `response_mode` (blocking or streaming) are supported where the provider allows it.
     """,
 )
 def run_workflow(request: HttpRequest, data: WorkflowRunIn) -> WorkflowRunOut:
     """Run AI workflow for essay analysis."""
     try:
-        client = DifyClient()
+        agent = get_essay_agent()
 
         response_mode = ResponseMode(data.response_mode)
 
@@ -67,10 +88,17 @@ def run_workflow(request: HttpRequest, data: WorkflowRunIn) -> WorkflowRunOut:
             response_mode=response_mode,
         )
 
-        result = client.analyze_essay(workflow_input)
+        result = agent.analyze_essay(workflow_input)
 
         status_value = result.status.value if hasattr(result.status, "value") else result.status
-        logger.info(f"Dify workflow result - run_id: {result.run_id}, status: {status_value}")
+        logger.info(
+            "Essay workflow result provider=%s run_id=%s status=%s",
+            agent.provider_name,
+            result.run_id,
+            status_value,
+        )
+        usage = result.token_usage or {}
+        total_tokens = usage.get("total_tokens") if isinstance(usage, dict) else None
 
         return WorkflowRunOut(
             workflow_run_id=result.run_id,
@@ -81,7 +109,7 @@ def run_workflow(request: HttpRequest, data: WorkflowRunIn) -> WorkflowRunOut:
                 outputs=result.outputs,
                 error=result.error_message,
                 elapsed_time=result.elapsed_time_seconds,
-                total_tokens=result.token_usage.get("total_tokens") if result.token_usage else None,
+                total_tokens=total_tokens,
                 total_steps=None,
                 created_at=int(result.created_at.timestamp()) if result.created_at else None,
                 finished_at=int(result.finished_at.timestamp()) if result.finished_at else None,
@@ -178,41 +206,40 @@ def chat_with_ai(request: HttpRequest, data: ChatMessageIn) -> ChatMessageOut:
     description="""
     Get the status and results of a workflow run by its ID.
 
-    This endpoint polls Dify to check the current status of a workflow execution.
-    Returns status, outputs, error message, and timing information.
+    Uses the configured essay agent (`ESSAY_AGENT_PROVIDER`). For Dify, this polls the provider;
+    for LangGraph, completed runs are resolved from the application cache.
     """,
 )
 def get_workflow_status(request: HttpRequest, workflow_run_id: str) -> WorkflowStatusOut:
     """Get the status of a workflow run."""
     try:
-        client = DifyClient()
-        result = client.get_workflow_run(workflow_run_id)
-
-        status = result.get("status", "unknown")
-        outputs = result.get("outputs")
-        error = result.get("error")
-        elapsed_time = result.get("elapsed_time")
-        total_tokens = result.get("total_tokens")
-        created_at_ts = result.get("created_at")
-        finished_at_ts = result.get("finished_at")
-
-        from datetime import datetime
-
-        created_at = datetime.fromtimestamp(created_at_ts) if created_at_ts else None
-        finished_at = datetime.fromtimestamp(finished_at_ts) if finished_at_ts else None
+        agent = get_essay_agent()
+        wf = agent.get_workflow_status(workflow_run_id)
+        analysis = _essay_analysis_from_workflow_output(wf, agent.provider_name)
+        token_usage: dict = {}
+        if wf.token_usage and isinstance(wf.token_usage, dict):
+            token_usage = dict(wf.token_usage)
+        elif wf.token_usage:
+            token_usage = {"usage": wf.token_usage}
 
         return WorkflowStatusOut(
             workflow_run_id=workflow_run_id,
-            task_id=result.get("id", workflow_run_id),
-            status=status,
-            outputs=outputs,
-            error_message=error,
-            elapsed_time_seconds=elapsed_time,
-            token_usage={"total_tokens": total_tokens} if total_tokens else {},
-            created_at=created_at,
-            finished_at=finished_at,
-            tracing=result.get("tracing", {}),
+            task_id=wf.task_id,
+            status=wf.status,
+            outputs=analysis,
+            error_message=wf.error_message,
+            elapsed_time_seconds=wf.elapsed_time_seconds,
+            token_usage=token_usage,
+            created_at=wf.created_at,
+            finished_at=wf.finished_at,
+            tracing={},
         )
+
+    except WorkflowError as exc:
+        if "not found" in str(exc).lower():
+            raise HttpError(404, str(exc)) from None
+        logger.error("Workflow status error: %s", exc)
+        raise HttpError(500, str(exc)) from None
 
     except APITimeoutError as exc:
         logger.error(f"Workflow status API timeout: {exc}")

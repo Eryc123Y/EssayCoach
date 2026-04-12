@@ -169,7 +169,7 @@ The **typed essay result** the UI relies on is `**EssayAnalysisOut`**: `overall_
 
 ## 10. References
 
-- Project status and commands: `CLAUDE.md`
+- Project status and commands: root `AGENTS.md`
 - Ninja schemas: `backend/api_v2/ai_feedback/schemas.py`
 - Target multi-agent diagrams and CRAG narrative: `docs/agentic-workflow/agentic-design.md`
 - LangChain long-term memory (stores, namespaces): [LangChain docs — Long-term memory](https://docs.langchain.com/oss/python/langchain/long-term-memory)
