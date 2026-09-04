@@ -19,7 +19,7 @@ backend/
 | Settings / URLs | `essay_coach/` | project config root |
 | Models / services | `core/AGENTS.md` | centralized ORM + service guidance |
 | v2 endpoints | `api_v2/AGENTS.md` | router/schema/RBAC guidance |
-| AI provider logic | `ai_feedback/AGENTS.md` | Dify now, agent migration next |
+| AI provider logic | `ai_feedback/AGENTS.md` | provider factory and interface contracts |
 | Seed data | `core/management/commands/seed_db.py` | test accounts |
 
 ## LOCAL CONVENTIONS
@@ -32,7 +32,7 @@ backend/
 ## ANTI-PATTERNS
 - Do not add new API v1 code.
 - Do not duplicate enum literals across models/schemas when `api_v2/types/enums.py` already owns them.
-- Do not start backend work without PostgreSQL running (`make db`).
+- Database-backed execution requires PostgreSQL (`make db`); read-only inspection and rules edits do not require starting services.
 
 ## COMMANDS
 ```bash

@@ -1,12 +1,15 @@
 # AI_FEEDBACK KNOWLEDGE BASE
 
 ## OVERVIEW
-`backend/ai_feedback/` is the provider-facing essay-analysis integration layer. It currently wraps Dify, but the project priority is migrating this area to a custom agent architecture.
+`backend/ai_feedback/` is the provider-facing essay-analysis integration layer.
+Read `agent_factory.py` and the API caller to determine the selected provider;
+the Dify and optional LangGraph paths are product behavior, separate from Codex.
 
 ## WHERE TO LOOK
 | Task | Location | Notes |
 |---|---|---|
-| Current provider client | `dify_client.py` | active implementation |
+| Provider selection | `agent_factory.py` | configured essay-analysis backend |
+| Dify provider client | `dify_client.py` | provider-specific implementation |
 | Abstraction contracts | `interfaces.py` | provider-neutral workflow interfaces |
 | Error model | `exceptions.py` | unified exception hierarchy |
 | Output shaping | `response_transformer.py` | provider response normalization |
@@ -19,7 +22,7 @@
 - This module may depend on core models for rubric lookup, but it should stay isolated from general API/router concerns.
 
 ## MIGRATION CONTEXT
-- This is the P0 migration surface called out in root `AGENTS.md`.
+- Do not treat an old migration priority as authorization to change providers or models.
 - Existing API shape should remain stable for the frontend while internals change from Dify to custom agents.
 - If adding new agent code, make the transition path obvious from current Dify behaviors to future provider-neutral abstractions.
 
