@@ -11,7 +11,6 @@ import type {
   StudentDashboardResponse,
   StudentEssay
 } from '@/service/api/v2/types';
-import { format } from 'date-fns';
 import {
   IconFile,
   IconClock,
@@ -198,7 +197,9 @@ function EssayItem({
         <div className='text-muted-foreground flex items-center gap-4 text-xs'>
           <span className='flex items-center gap-1'>
             <IconClock className='h-3 w-3' />
-            {format(new Date(essay.submittedAt), 'MMM d, y')}
+            {new Intl.DateTimeFormat(locale === 'zh' ? 'zh-CN' : 'en-US', {
+              year: 'numeric', month: 'short', day: 'numeric'
+            }).format(new Date(essay.submittedAt))}
           </span>
           {essay.unitName && (
             <span>
