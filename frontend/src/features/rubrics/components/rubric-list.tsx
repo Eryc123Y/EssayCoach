@@ -1,5 +1,7 @@
 'use client';
 
+import { localized } from '@/locales';
+
 import { useState, useEffect } from 'react';
 import { usePreferences } from '@/components/layout/preference-provider';
 import { useRouter } from 'next/navigation';
@@ -69,7 +71,7 @@ export function RubricsClient({
 }: RubricsClientProps) {
   const router = useRouter();
   const { locale } = usePreferences();
-  const t = (en: string, zh: string) => locale === 'zh' ? zh : en;
+  const t = (en: string, zh?: string) => localized(locale, en, zh);
   const [rubrics, setRubrics] = useState<RubricListItem[]>(initialRubrics);
   useEffect(() => setRubrics(initialRubrics), [initialRubrics]);
   const [filter, setFilter] = useState<FilterType>('all');
@@ -109,7 +111,7 @@ export function RubricsClient({
       setDeleteDialogOpen(false);
       setRubricToDelete(null);
     } catch (error: any) {
-      toast.error(error.message || t('Could not delete rubric', '无法删除量表'));
+      toast.error(error.message || t('ui.couldNotDeleteRubric'));
     } finally {
       setIsDeleting(false);
     }
@@ -122,7 +124,7 @@ export function RubricsClient({
       toast.success(t(`Rubric "${rubric.rubric_desc}" duplicated`, `已复制量表“${rubric.rubric_desc}”`));
       router.refresh();
     } catch (error: any) {
-      toast.error(error.message || t('Could not duplicate rubric', '无法复制量表'));
+      toast.error(error.message || t('ui.couldNotDuplicateRubric'));
     } finally {
       setDuplicatingId(null);
     }
@@ -151,7 +153,7 @@ export function RubricsClient({
 
       toast.success(t(`Rubric is now ${newVisibility}`, newVisibility === 'public' ? '量表已公开' : '量表已设为私有'));
     } catch (error: any) {
-      toast.error(error.message || t('Could not update visibility', '无法更新可见范围'));
+      toast.error(error.message || t('ui.couldNotUpdateVisibility'));
     } finally {
       setVisibilityTogglingId(null);
     }
@@ -190,15 +192,15 @@ export function RubricsClient({
         <div className='flex flex-wrap items-start justify-between gap-4'>
           <div>
             <h1 className='text-foreground text-3xl font-bold tracking-tight'>
-              {t('Rubric Library', '评分量表库')}
+              {t('ui.rubricLibrary743df9')}
             </h1>
             <p className='text-muted-foreground max-w-2xl text-lg'>
               {userRole === 'student'
-                ? t('Explore public rubrics and build a private study guide.', '浏览公开量规，并创建自己的私人学习量规。')
-                : t('Manage grading criteria for your classes.', '管理班级作文评分标准。')}
+                ? t('ui.explorePublicRubricsAndBuildAPrivateStudyGuide')
+                : t('ui.manageGradingCriteriaForYourClasses')}
             </p>
           </div>
-          <Button onClick={() => router.push('/dashboard/rubrics/new')}><Plus size={16} /> {t('Create rubric', '创建量规')}</Button>
+          <Button onClick={() => router.push('/dashboard/rubrics/new')}><Plus size={16} /> {t('ui.createRubric')}</Button>
         </div>
       </div>
 
@@ -225,14 +227,14 @@ export function RubricsClient({
                   </div>
                   <div>
                     <CardTitle>
-                      {filter === 'public' ? t('Public Rubrics', '公开量表') : filter === 'my' ? t('My Rubrics', '我的量表') : t('All Rubrics', '全部量表')}
+                      {filter === 'public' ? t('ui.publicRubrics') : filter === 'my' ? t('ui.myRubrics') : t('ui.allRubrics')}
                     </CardTitle>
                     <CardDescription>
                       {filter === 'public'
-                        ? t('Rubrics shared with everyone', '所有人可查看的量表')
+                        ? t('ui.rubricsSharedWithEveryone')
                         : filter === 'my'
-                        ? t('Your personal rubrics', '你创建的量表')
-                        : t('View and manage all your rubrics', '查看并管理量表')}
+                        ? t('ui.yourPersonalRubrics')
+                        : t('ui.viewAndManageAllYourRubrics')}
                     </CardDescription>
                   </div>
                 </div>
@@ -247,7 +249,7 @@ export function RubricsClient({
                       className='h-8 text-xs'
                     >
                       <BookOpen className='mr-1 h-3.5 w-3.5' />
-                      {t('All', '全部')}
+                      {t('ui.all')}
                     </Button>
                     <Button
                       variant={filter === 'my' ? 'default' : 'ghost'}
@@ -256,7 +258,7 @@ export function RubricsClient({
                       className='h-8 text-xs'
                     >
                       <Lock className='mr-1 h-3.5 w-3.5' />
-                      {t('My Rubrics', '我的量表')}
+                      {t('ui.myRubrics')}
                     </Button>
                     <Button
                       variant={filter === 'public' ? 'default' : 'ghost'}
@@ -265,7 +267,7 @@ export function RubricsClient({
                       className='h-8 text-xs'
                     >
                       <Globe className='mr-1 h-3.5 w-3.5' />
-                      {t('Public', '公开')}
+                      {t('ui.public')}
                     </Button>
                   </div>
                 )}
@@ -279,17 +281,17 @@ export function RubricsClient({
                   </div>
                   <h3 className='text-foreground text-lg font-semibold'>
                     {filter === 'public'
-                      ? t('No public rubrics yet', '暂无公开量表')
+                      ? t('ui.noPublicRubricsYet')
                       : filter === 'my'
-                      ? t('No rubrics yet', '暂无量表')
-                      : t('No rubrics yet', '暂无量表')}
+                      ? t('ui.noRubricsYet')
+                      : t('ui.noRubricsYet')}
                   </h3>
                   <p className='text-muted-foreground mt-1 max-w-xs text-sm'>
                     {userRole === 'student'
-                      ? filter === 'public' ? t('Your lecturer has not shared any rubrics yet.', '讲师尚未分享量规。') : t('Create a private rubric or browse shared ones.', '可以创建私人量规，或浏览公开量规。')
+                      ? filter === 'public' ? t('ui.yourLecturerHasNotSharedAnyRubricsYet') : t('ui.createAPrivateRubricOrBrowseSharedOnes')
                       : filter === 'public'
-                      ? t('Share your first rubric to make it available to students.', '公开一个量表，供学生查看。')
-                      : t('Upload your first rubric to get started.', '上传第一个量表即可开始。')}
+                      ? t('ui.shareYourFirstRubricToMakeItAvailableToStudents')
+                      : t('ui.uploadYourFirstRubricToGetStarted')}
                   </p>
                 </div>
               ) : (
@@ -299,16 +301,16 @@ export function RubricsClient({
                       <TableHeader className='bg-muted/30'>
                         <TableRow className='hover:bg-transparent'>
                           <TableHead className='text-foreground font-semibold'>
-                            {t('Name', '名称')}
+                            {t('ui.name72219d')}
                           </TableHead>
                           <TableHead className='text-foreground font-semibold'>
-                            {t('Visibility', '可见范围')}
+                            {t('ui.visibility')}
                           </TableHead>
                           <TableHead className='text-foreground font-semibold'>
-                            {t('Created', '创建时间')}
+                            {t('ui.createdd2c502')}
                           </TableHead>
                           <TableHead className='text-foreground text-right font-semibold'>
-                            {t('Actions', '操作')}
+                            {t('ui.actions')}
                           </TableHead>
                         </TableRow>
                       </TableHeader>
@@ -340,7 +342,7 @@ export function RubricsClient({
                                   className='h-8 w-8 p-0 hover:bg-indigo-50 hover:text-indigo-600 dark:hover:bg-indigo-900/20 dark:hover:text-indigo-400'
                                 >
                                   <Eye className='h-4 w-4' />
-                                  <span className='sr-only'>{t('View', '查看')}</span>
+                                  <span className='sr-only'>{t('ui.view')}</span>
                                 </Button>
                                 {(
                                   <Button
@@ -355,7 +357,7 @@ export function RubricsClient({
                                     ) : (
                                       <Copy className='h-4 w-4' />
                                     )}
-                                    <span className='sr-only'>{t('Duplicate', '复制')}</span>
+                                    <span className='sr-only'>{t('ui.duplicate')}</span>
                                   </Button>
                                 )}
                                 {(userRole === 'admin' || (userRole !== 'student' && rubric.user_id_user === userId)) && (
@@ -379,7 +381,7 @@ export function RubricsClient({
                                       <Globe className='h-4 w-4' />
                                     )}
                                     <span className='sr-only'>
-                                      {t('Toggle visibility', '切换可见范围')}
+                                      {t('ui.toggleVisibility')}
                                     </span>
                                   </Button>
                                 )}
@@ -390,7 +392,7 @@ export function RubricsClient({
                                   className='h-8 w-8 p-0 hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20 dark:hover:text-red-400'
                                 >
                                   <Trash className='h-4 w-4' />
-                                  <span className='sr-only'>{t('Delete', '删除')}</span>
+                                  <span className='sr-only'>{t('ui.delete')}</span>
                                 </Button>}
                               </div>
                             </TableCell>
@@ -431,7 +433,7 @@ export function RubricsClient({
                             onClick={() => handleViewRubric(rubric.rubric_id)}
                           >
                             <Eye className='mr-1 h-4 w-4' />
-                            {t('View', '查看')}
+                            {t('ui.view')}
                           </Button>
                           <Button
                             variant='outline'
@@ -441,7 +443,7 @@ export function RubricsClient({
                             disabled={duplicatingId === rubric.rubric_id}
                           >
                             {duplicatingId === rubric.rubric_id ? <Loader2 className='mr-1 h-4 w-4 animate-spin' /> : <Copy className='mr-1 h-4 w-4' />}
-                            {t('Copy', '复制')}
+                            {t('ui.copy')}
                           </Button>
                           {(userRole === 'admin' || (userRole !== 'student' && rubric.user_id_user === userId)) && (
                             <Button
@@ -463,7 +465,7 @@ export function RubricsClient({
                               ) : (
                                 <Globe className='mr-1 h-4 w-4' />
                               )}
-                              {rubric.visibility === 'public' ? t('Make Private', '设为私有') : t('Make Public', '公开')}
+                              {rubric.visibility === 'public' ? t('ui.makePrivate') : t('ui.makePublic')}
                             </Button>
                           )}
                           {(userRole === 'admin' || rubric.user_id_user === userId) && <Button
@@ -473,7 +475,7 @@ export function RubricsClient({
                             onClick={() => handleDeleteClick(rubric)}
                           >
                             <Trash className='mr-1 h-4 w-4' />
-                            {t('Delete', '删除')}
+                            {t('ui.delete')}
                           </Button>}
                         </div>
                       </div>
@@ -491,14 +493,14 @@ export function RubricsClient({
           <AlertDialogHeader>
             <AlertDialogTitle className='text-destructive flex items-center gap-2'>
               <AlertCircle className='h-5 w-5' />
-              {t('Delete Rubric', '删除量表')}
+              {t('ui.deleteRubric')}
             </AlertDialogTitle>
             <AlertDialogDescription>
               {t(`Delete "${rubricToDelete?.rubric_desc}"? This cannot be undone.`, `确定删除“${rubricToDelete?.rubric_desc}”吗？此操作无法撤销。`)}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isDeleting}>{t('Cancel', '取消')}</AlertDialogCancel>
+            <AlertDialogCancel disabled={isDeleting}>{t('ui.cancel')}</AlertDialogCancel>
             <AlertDialogAction
               onClick={handleDeleteConfirm}
               disabled={isDeleting}
@@ -507,10 +509,10 @@ export function RubricsClient({
               {isDeleting ? (
                 <>
                   <Loader2 className='mr-2 h-4 w-4 animate-spin' />
-                  {t('Deleting…', '正在删除…')}
+                  {t('ui.deleting')}
                 </>
               ) : (
-                t('Delete', '删除')
+                t('ui.delete')
               )}
             </AlertDialogAction>
           </AlertDialogFooter>

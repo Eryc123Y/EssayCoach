@@ -1,5 +1,7 @@
 'use client';
 
+import { localized } from '@/locales';
+
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { ArrowLeft, Check, ChevronRight, FileText, History, Loader2, PenLine, Send, Sparkles, Upload } from 'lucide-react';
 import { practiceService } from '@/service/api/v2/practice';
@@ -122,7 +124,7 @@ export function PracticeStudio() {
   const saveChainRef = useRef<Promise<PracticeEssay | null>>(Promise.resolve(null));
   const generationRef = useRef(0);
   const loadedRef = useRef(false);
-  const t = useCallback((en: string, zh: string) => uiLanguage === 'zh' ? zh : en, [uiLanguage]);
+  const t = useCallback((en: string, zh?: string) => localized(uiLanguage, en, zh), [uiLanguage]);
 
   const openEssay = useCallback(async (essay: PracticeEssay) => {
     generationRef.current += 1;
@@ -231,7 +233,7 @@ export function PracticeStudio() {
       setChatInput('');
       setError('');
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : t('Could not ask the coach.', '无法向写作教练提问。'));
+      setError(cause instanceof Error ? cause.message : t('ui.couldNotAskTheCoach'));
     } finally {
       setChatBusy(false);
     }
@@ -239,7 +241,7 @@ export function PracticeStudio() {
 
   async function analyze() {
     if (!draft.goal.trim() || !draft.content.trim()) {
-      setError(t('Add a writing goal and essay before requesting feedback.', '请先填写写作目标和文章。'));
+      setError(t('ui.addAWritingGoalAndEssayBeforeRequestingFeedback'));
       return;
     }
     setBusy(true);
@@ -254,7 +256,7 @@ export function PracticeStudio() {
       setRuns(previous => [created, ...previous.filter(item => item.run_id !== created.run_id)]);
       setMode('report');
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : t('Analysis could not start.', '无法开始分析。'));
+      setError(cause instanceof Error ? cause.message : t('ui.analysisCouldNotStart'));
     } finally {
       setBusy(false);
     }
@@ -277,7 +279,7 @@ export function PracticeStudio() {
   async function uploadText(file: File | undefined) {
     if (!file) return;
     if (!/\.(txt|md|pdf|docx)$/i.test(file.name) || file.size > 10 * 1024 * 1024) {
-      setError(t('Choose a .txt, .md, .pdf, or .docx file under 10 MB.', '请选择小于 10 MB 的 .txt、.md、.pdf 或 .docx 文件。'));
+      setError(t('ui.chooseATxtMdPdfOrDocxFileUnder10'));
       return;
     }
     try {
@@ -285,7 +287,7 @@ export function PracticeStudio() {
       setDraft(previous => ({ ...previous, content: imported.content }));
       setError('');
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : t('Could not read the document.', '无法读取文档。'));
+      setError(cause instanceof Error ? cause.message : t('ui.couldNotReadTheDocument'));
     }
   }
 
@@ -302,60 +304,60 @@ export function PracticeStudio() {
     <main className='practice-studio'>
       <div className='practice-topline'>
         <div>
-          <span className='practice-kicker'>{t('Private writing practice', '私人写作练习')}</span>
-          <h1>{t('Writing studio', '写作空间')}</h1>
-          <p>{t('Write freely. Get focused feedback when your draft is ready.', '自由写作。准备好后获取有针对性的反馈。')}</p>
+          <span className='practice-kicker'>{t('ui.privateWritingPractice')}</span>
+          <h1>{t('ui.writingStudio')}</h1>
+          <p>{t('ui.writeFreelyGetFocusedFeedbackWhenYourDraftIsReady')}</p>
         </div>
         <div className='practice-top-actions'>
           <button type='button' className='practice-language' onClick={() => void changeLocale(uiLanguage === 'en' ? 'zh' : 'en')} aria-label='Switch interface language'>{uiLanguage === 'en' ? '中文' : 'EN'}</button>
-          <button type='button' className='practice-outline' onClick={newEssay}><PenLine size={16} />{t('New draft', '新建草稿')}</button>
+          <button type='button' className='practice-outline' onClick={newEssay}><PenLine size={16} />{t('ui.newDraft')}</button>
         </div>
       </div>
 
       {error && <div className='practice-error' role='alert'>{error}</div>}
-      {loading ? <div className='practice-loading'><Loader2 className='animate-spin' />{t('Opening your studio…', '正在打开写作空间……')}</div> : <>
-        {essays.length > 0 && <div className='practice-history-strip' aria-label={t('Saved drafts', '已保存草稿')}>
+      {loading ? <div className='practice-loading'><Loader2 className='animate-spin' />{t('ui.openingYourStudio')}</div> : <>
+        {essays.length > 0 && <div className='practice-history-strip' aria-label={t('ui.savedDrafts')}>
           <History size={16} />
           {essays.slice(0, 5).map(item => <button type='button' key={item.essay_id} className={essayId === item.essay_id ? 'selected' : ''} onClick={() => void openEssay(item)}>{item.goal}</button>)}
         </div>}
         {mode === 'write' ? <div className='practice-workspace'>
           <section className='practice-main-column'>
             <div className='practice-brief'>
-              <label htmlFor='practice-goal'>{t('What are you trying to write?', '这次你想写什么？')}</label>
-              <input id='practice-goal' value={draft.goal} maxLength={2000} onChange={event => setDraft(previous => ({ ...previous, goal: event.target.value }))} placeholder={t('A question, prompt, or writing goal', '写下题目、问题或练习目标')} />
+              <label htmlFor='practice-goal'>{t('ui.whatAreYouTryingToWrite')}</label>
+              <input id='practice-goal' value={draft.goal} maxLength={2000} onChange={event => setDraft(previous => ({ ...previous, goal: event.target.value }))} placeholder={t('ui.aQuestionPromptOrWritingGoal')} />
             </div>
             <div className='practice-paper'>
-              <div className='practice-paper-head'><span><FileText size={17} />{t('Your draft', '你的草稿')}</span><span>{count} {draft.language === 'zh' ? t('characters', '字') : t('words', '词')}</span></div>
-              <textarea aria-label={t('Essay draft', '文章草稿')} value={draft.content} onChange={event => setDraft(previous => ({ ...previous, content: event.target.value }))} placeholder={t('Start with an idea worth exploring…', '从一个值得探究的想法开始……')} />
-              <div className='practice-paper-foot'><span>{savedAt ? `${t('Saved', '已保存')} ${new Date(savedAt).toLocaleTimeString()}` : t('A private draft', '私人草稿')}</span><span>{t('Practice feedback never becomes a formal grade', '练习反馈不会成为正式成绩')}</span></div>
+              <div className='practice-paper-head'><span><FileText size={17} />{t('ui.yourDraft')}</span><span>{count} {draft.language === 'zh' ? t('ui.characters') : t('ui.words')}</span></div>
+              <textarea aria-label={t('ui.essayDraft')} value={draft.content} onChange={event => setDraft(previous => ({ ...previous, content: event.target.value }))} placeholder={t('ui.startWithAnIdeaWorthExploring')} />
+              <div className='practice-paper-foot'><span>{savedAt ? `${t('ui.saved')} ${new Date(savedAt).toLocaleTimeString()}` : t('ui.aPrivateDraft')}</span><span>{t('ui.practiceFeedbackNeverBecomesAFormalGrade')}</span></div>
             </div>
             <div className='practice-action-row'>
-              <label className='practice-outline practice-upload'><Upload size={16} />{t('Import document', '导入文档')}<input type='file' accept='.txt,.md,.pdf,.docx,text/plain,text/markdown,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document' onChange={event => void uploadText(event.target.files?.[0])} /></label>
-              <button type='button' className='practice-outline' onClick={() => void queueSave(draft).catch(cause => setError(String(cause)))}>{t('Save draft', '保存草稿')}</button>
-              <button type='button' className='practice-primary' disabled={busy || !draft.goal.trim() || !draft.content.trim()} onClick={() => void analyze()}>{busy ? <Loader2 className='animate-spin' size={17} /> : <Sparkles size={17} />}{t('Get practice feedback', '获取练习反馈')}</button>
+              <label className='practice-outline practice-upload'><Upload size={16} />{t('ui.importDocument')}<input type='file' accept='.txt,.md,.pdf,.docx,text/plain,text/markdown,application/pdf,application/vnd.openxmlformats-officedocument.wordprocessingml.document' onChange={event => void uploadText(event.target.files?.[0])} /></label>
+              <button type='button' className='practice-outline' onClick={() => void queueSave(draft).catch(cause => setError(String(cause)))}>{t('ui.saveDraft')}</button>
+              <button type='button' className='practice-primary' disabled={busy || !draft.goal.trim() || !draft.content.trim()} onClick={() => void analyze()}>{busy ? <Loader2 className='animate-spin' size={17} /> : <Sparkles size={17} />}{t('ui.getPracticeFeedback')}</button>
             </div>
           </section>
           <aside className='practice-rail'>
-            <div className='practice-rail-section'><h2>{t('Make it yours', '设置本次练习')}</h2><p>{t('These choices guide feedback without changing your words.', '这些设置会引导反馈，但不会改变你的文章。')}</p></div>
-            <label>{t('Essay language', '文章语言')}<select value={draft.language} onChange={event => setDraft(previous => ({ ...previous, language: event.target.value as Language }))}><option value='en'>English</option><option value='zh'>中文</option></select></label>
-            <label>{t('Audience', '读者')}<input value={draft.audience} maxLength={80} onChange={event => setDraft(previous => ({ ...previous, audience: event.target.value }))} placeholder={t('e.g. university students', '例如：大学生')} /></label>
-            <label>{t('Tone', '语气')}<input value={draft.tone} maxLength={80} onChange={event => setDraft(previous => ({ ...previous, tone: event.target.value }))} placeholder={t('e.g. analytical', '例如：分析性')} /></label>
-            <label>{t('Practice rubric', '练习量规')}<select value={draft.rubric_id ?? ''} onChange={event => setDraft(previous => ({ ...previous, rubric_id: event.target.value ? Number(event.target.value) : null }))}><option value=''>{t('General writing feedback', '通用写作反馈')}</option>{rubrics.map(item => <option key={item.rubric_id} value={item.rubric_id}>{item.rubric_desc || `Rubric ${item.rubric_id}`}</option>)}</select></label>
-            {runs.length > 0 && <div className='practice-revisions'><h2>{t('Earlier feedback', '历史反馈')}</h2>{runs.map(item => <button type='button' key={item.run_id} onClick={() => { setRun(item); setMode('report'); }}><span>{t('Revision', '修订')} {item.revision_number}</span><small>{new Date(item.created_at).toLocaleDateString()}</small><ChevronRight size={15} /></button>)}</div>}
+            <div className='practice-rail-section'><h2>{t('ui.makeItYours')}</h2><p>{t('ui.theseChoicesGuideFeedbackWithoutChangingYourWords')}</p></div>
+            <label>{t('ui.essayLanguage')}<select value={draft.language} onChange={event => setDraft(previous => ({ ...previous, language: event.target.value as Language }))}><option value='en'>English</option><option value='zh'>中文</option></select></label>
+            <label>{t('ui.audience')}<input value={draft.audience} maxLength={80} onChange={event => setDraft(previous => ({ ...previous, audience: event.target.value }))} placeholder={t('ui.eGUniversityStudents')} /></label>
+            <label>{t('ui.tone')}<input value={draft.tone} maxLength={80} onChange={event => setDraft(previous => ({ ...previous, tone: event.target.value }))} placeholder={t('ui.eGAnalytical')} /></label>
+            <label>{t('ui.practiceRubric')}<select value={draft.rubric_id ?? ''} onChange={event => setDraft(previous => ({ ...previous, rubric_id: event.target.value ? Number(event.target.value) : null }))}><option value=''>{t('ui.generalWritingFeedback')}</option>{rubrics.map(item => <option key={item.rubric_id} value={item.rubric_id}>{item.rubric_desc || `Rubric ${item.rubric_id}`}</option>)}</select></label>
+            {runs.length > 0 && <div className='practice-revisions'><h2>{t('ui.earlierFeedback')}</h2>{runs.map(item => <button type='button' key={item.run_id} onClick={() => { setRun(item); setMode('report'); }}><span>{t('ui.revision')} {item.revision_number}</span><small>{new Date(item.created_at).toLocaleDateString()}</small><ChevronRight size={15} /></button>)}</div>}
           </aside>
         </div> : <div className='practice-report'>
-          <button type='button' className='practice-back' onClick={() => setMode('write')}><ArrowLeft size={16} />{t('Back to draft', '返回草稿')}</button>
-          {!run ? <p>{t('No feedback yet. Start with a draft.', '还没有反馈。先写一篇草稿吧。')}</p> : run.status === 'pending' || run.status === 'running' ? <div className='practice-wait'><Loader2 className='animate-spin' size={26} /><h2>{t('Reading your draft', '正在阅读你的文章')}</h2><p>{t('The report and source checks will appear here when ready.', '报告和来源核查完成后会显示在这里。')}</p></div> : run.status === 'failed' ? <div className='practice-wait'><h2>{t('Analysis stopped', '分析已中断')}</h2><p>{run.error_message}</p><button type='button' className='practice-primary' onClick={() => void practiceService.retryRun(run.run_id).then(setRun).catch(cause => setError(String(cause)))}>{t('Retry analysis', '重试分析')}</button></div> : run.report ? <>
-            <div className='practice-report-head'><div><span>{t('Practice feedback', '练习反馈')} · {t('Revision', '修订')} {run.revision_number}</span><h2>{run.report.headline}</h2><p>{t('A guide for your next draft. This is not a formal grade.', '帮助你修改下一稿；这不是正式成绩。')}</p></div><div className='practice-score'><strong>{run.report.overall_score}</strong><span>/100</span></div></div>
+          <button type='button' className='practice-back' onClick={() => setMode('write')}><ArrowLeft size={16} />{t('ui.backToDraft')}</button>
+          {!run ? <p>{t('ui.noFeedbackYetStartWithADraft')}</p> : run.status === 'pending' || run.status === 'running' ? <div className='practice-wait'><Loader2 className='animate-spin' size={26} /><h2>{t('ui.readingYourDraft')}</h2><p>{t('ui.theReportAndSourceChecksWillAppearHereWhenReady')}</p></div> : run.status === 'failed' ? <div className='practice-wait'><h2>{t('ui.analysisStopped')}</h2><p>{run.error_message}</p><button type='button' className='practice-primary' onClick={() => void practiceService.retryRun(run.run_id).then(setRun).catch(cause => setError(String(cause)))}>{t('ui.retryAnalysis')}</button></div> : run.report ? <>
+            <div className='practice-report-head'><div><span>{t('ui.practiceFeedback')} · {t('ui.revision')} {run.revision_number}</span><h2>{run.report.headline}</h2><p>{t('ui.aGuideForYourNextDraftThisIsNotA')}</p></div><div className='practice-score'><strong>{run.report.overall_score}</strong><span>/100</span></div></div>
             <div className='practice-report-grid'><div className='practice-report-main'>
-              <section className='practice-report-section'><h3>{t('Your essay, with notes', '文章与批注')}</h3><AnnotatedEssay content={run.revision_content} annotations={run.report.annotations} />{run.report.annotations.length > 0 && <div className='practice-notes'>{run.report.annotations.map((item, index) => <div key={index}><span>{item.category}</span><strong>{item.quote}</strong><p>{item.explanation}</p><small>{item.suggestion}</small></div>)}</div>}</section>
-              <section className='practice-report-section'><h3>{t('Overall feedback', '整体反馈')}</h3><p>{run.report.general_feedback}</p><div className='practice-feedback-columns'><div><h4>{t('What works', '做得好的地方')}</h4>{run.report.strengths.map((item, index) => <p key={index}><Check size={15} />{item}</p>)}</div><div><h4>{t('Next steps', '下一步')}</h4>{run.report.next_steps.map((item, index) => <p key={index}><ChevronRight size={15} />{item}</p>)}</div></div></section>
+              <section className='practice-report-section'><h3>{t('ui.yourEssayWithNotes')}</h3><AnnotatedEssay content={run.revision_content} annotations={run.report.annotations} />{run.report.annotations.length > 0 && <div className='practice-notes'>{run.report.annotations.map((item, index) => <div key={index}><span>{item.category}</span><strong>{item.quote}</strong><p>{item.explanation}</p><small>{item.suggestion}</small></div>)}</div>}</section>
+              <section className='practice-report-section'><h3>{t('ui.overallFeedback')}</h3><p>{run.report.general_feedback}</p><div className='practice-feedback-columns'><div><h4>{t('ui.whatWorks')}</h4>{run.report.strengths.map((item, index) => <p key={index}><Check size={15} />{item}</p>)}</div><div><h4>{t('ui.nextSteps')}</h4>{run.report.next_steps.map((item, index) => <p key={index}><ChevronRight size={15} />{item}</p>)}</div></div></section>
               {previousComparableRun?.report && <ProgressDiff current={run.report} previous={previousComparableRun.report} language={uiLanguage} />}
-              {run.report.rubric_results.length > 0 && <section className='practice-report-section'><h3>{t('Rubric breakdown', '量规细项')}</h3>{run.report.rubric_results.map((item, index) => {
+              {run.report.rubric_results.length > 0 && <section className='practice-report-section'><h3>{t('ui.rubricBreakdown')}</h3>{run.report.rubric_results.map((item, index) => {
                 const criterion = run.revision_rubric?.find(snapshot => snapshot.name === item.criterion) ?? run.revision_rubric?.[index];
-                return <div className='practice-rubric-row' key={index}><div><strong>{item.criterion}</strong><span>{item.score}/{item.max_score}</span></div><p>{item.justification}</p>{criterion?.exemplar_text && <details className='practice-exemplar'><summary>{t('View high-scoring exemplar', '查看高分范例')}</summary><p>{criterion.exemplar_text}</p></details>}</div>;
+                return <div className='practice-rubric-row' key={index}><div><strong>{item.criterion}</strong><span>{item.score}/{item.max_score}</span></div><p>{item.justification}</p>{criterion?.exemplar_text && <details className='practice-exemplar'><summary>{t('ui.viewHighScoringExemplar')}</summary><p>{criterion.exemplar_text}</p></details>}</div>;
               })}</section>}
-            </div><aside className='practice-report-rail'><section><h3>{t('Writing skills', '写作能力')}</h3><SkillMap skills={run.report.skills} language={uiLanguage} /></section><section><h3>{t('Source checks', '来源核查')}</h3><p className='practice-source-intro'>{t('Only claims with a retrieved, matching source quote are marked supported or contradicted.', '只有找到来源原文引句的观点，才会标为有依据或相矛盾。')}</p>{run.evidence.length === 0 ? <p>{t('No checkable factual claims were identified.', '未识别出可核查的事实性观点。')}</p> : run.evidence.map((item, index) => <div className='practice-evidence' key={index}><span className={`practice-verdict ${item.verdict}`}>{item.verdict === 'supported' ? t('Source supports', '来源支持') : item.verdict === 'contradicted' ? t('Source conflicts', '来源相矛盾') : t('Unresolved', '未核实')}</span><p>{item.claim}</p>{item.source_url && <><blockquote>{item.supporting_quote}</blockquote><a href={item.source_url} target='_blank' rel='noopener noreferrer'>{item.source_title || t('Open source', '打开来源')}</a></>}<small>{item.rationale}</small></div>)}</section><section className='practice-coach'><h3>{t('Ask your writing coach', '问问写作教练')}</h3><p>{t('Ask about this report or a possible revision.', '可以询问报告中的建议或如何修改。')}</p><div className='practice-chat-history'>{chatTurns.length === 0 && <small>{t('Your conversation will stay with this revision.', '对话会保存在这次修订中。')}</small>}{chatTurns.map(item => <div key={item.turn_id} className='practice-chat-turn'><p className='practice-chat-question'>{item.question}</p>{item.status === 'succeeded' ? <p className='practice-chat-answer'>{item.answer}</p> : item.status === 'failed' ? <div className='practice-chat-error'><span>{item.error_message}</span><button type='button' onClick={() => void practiceService.retryCoach(item.turn_id).then(updated => setChatTurns(previous => previous.map(turn => turn.turn_id === updated.turn_id ? updated : turn)))}>{t('Retry', '重试')}</button></div> : <p className='practice-chat-pending'><Loader2 className='animate-spin' size={14} />{t('Thinking…', '思考中……')}</p>}</div>)}</div><div className='practice-chat-input'><textarea aria-label={t('Ask the coach', '向教练提问')} value={chatInput} maxLength={2000} onChange={event => setChatInput(event.target.value)} placeholder={t('What should I revise first?', '我应该先修改什么？')} /><button type='button' aria-label={t('Send question', '发送问题')} disabled={chatBusy || waitingForCoach || !chatInput.trim()} onClick={() => void askCoach()}><Send size={16} /></button></div></section><button type='button' className='practice-outline practice-print' onClick={() => window.print()}>{t('Print or save PDF', '打印或保存 PDF')}</button></aside></div>
+            </div><aside className='practice-report-rail'><section><h3>{t('ui.writingSkills')}</h3><SkillMap skills={run.report.skills} language={uiLanguage} /></section><section><h3>{t('ui.sourceChecks')}</h3><p className='practice-source-intro'>{t('ui.onlyClaimsWithARetrievedMatchingSourceQuoteAreMarked')}</p>{run.evidence.length === 0 ? <p>{t('ui.noCheckableFactualClaimsWereIdentified')}</p> : run.evidence.map((item, index) => <div className='practice-evidence' key={index}><span className={`practice-verdict ${item.verdict}`}>{item.verdict === 'supported' ? t('ui.sourceSupports') : item.verdict === 'contradicted' ? t('ui.sourceConflicts') : t('ui.unresolved')}</span><p>{item.claim}</p>{item.source_url && <><blockquote>{item.supporting_quote}</blockquote><a href={item.source_url} target='_blank' rel='noopener noreferrer'>{item.source_title || t('ui.openSource')}</a></>}<small>{item.rationale}</small></div>)}</section><section className='practice-coach'><h3>{t('ui.askYourWritingCoach')}</h3><p>{t('ui.askAboutThisReportOrAPossibleRevision')}</p><div className='practice-chat-history'>{chatTurns.length === 0 && <small>{t('ui.yourConversationWillStayWithThisRevision')}</small>}{chatTurns.map(item => <div key={item.turn_id} className='practice-chat-turn'><p className='practice-chat-question'>{item.question}</p>{item.status === 'succeeded' ? <p className='practice-chat-answer'>{item.answer}</p> : item.status === 'failed' ? <div className='practice-chat-error'><span>{item.error_message}</span><button type='button' onClick={() => void practiceService.retryCoach(item.turn_id).then(updated => setChatTurns(previous => previous.map(turn => turn.turn_id === updated.turn_id ? updated : turn)))}>{t('ui.retry')}</button></div> : <p className='practice-chat-pending'><Loader2 className='animate-spin' size={14} />{t('ui.thinking')}</p>}</div>)}</div><div className='practice-chat-input'><textarea aria-label={t('ui.askTheCoach')} value={chatInput} maxLength={2000} onChange={event => setChatInput(event.target.value)} placeholder={t('ui.whatShouldIReviseFirst')} /><button type='button' aria-label={t('ui.sendQuestion')} disabled={chatBusy || waitingForCoach || !chatInput.trim()} onClick={() => void askCoach()}><Send size={16} /></button></div></section><button type='button' className='practice-outline practice-print' onClick={() => window.print()}>{t('ui.printOrSavePdf')}</button></aside></div>
           </> : null}
         </div>}
       </>}

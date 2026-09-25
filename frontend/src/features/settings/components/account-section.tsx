@@ -1,5 +1,7 @@
 'use client';
 
+import { localized } from '@/locales';
+
 import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -37,7 +39,7 @@ export function AccountSection({
   onChangePassword,
 }: AccountSectionProps) {
   const { locale } = usePreferences();
-  const t = (en: string, zh: string) => locale === 'zh' ? zh : en;
+  const t = (en: string, zh?: string) => localized(locale, en, zh);
   const [isEditing, setIsEditing] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState(user?.avatar ?? undefined);
   const [formData, setFormData] = useState({
@@ -74,20 +76,20 @@ export function AccountSection({
 
     // Validate file type
     if (!file.type.startsWith('image/')) {
-      toast.error(t('Please select an image file', '请选择图片文件'));
+      toast.error(t('ui.pleaseSelectAnImageFile'));
       return;
     }
 
     // Validate file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
-      toast.error(t('Image must be under 5 MB', '图片不能超过 5 MB'));
+      toast.error(t('ui.imageMustBeUnder5Mb'));
       return;
     }
 
     try {
       const nextUrl = await onUploadAvatar(file);
       setAvatarUrl(`${nextUrl}?v=${Date.now()}`);
-      toast.success(t('Avatar updated', '头像已更新'));
+      toast.success(t('ui.avatarUpdated1e42f9'));
     } catch (error) {
       console.error('Failed to upload avatar:', error);
     }
@@ -97,7 +99,7 @@ export function AccountSection({
     setIsSaving(true);
     try {
       await onSaveUser(formData);
-      toast.success(t('Profile updated', '个人资料已更新'));
+      toast.success(t('ui.profileUpdated'));
       setIsEditing(false);
     } catch (error) {
       console.error('Failed to update profile:', error);
@@ -118,12 +120,12 @@ export function AccountSection({
 
   const handlePasswordChange = async () => {
     if (passwordData.new_password !== passwordData.new_password_confirm) {
-      toast.error(t('Passwords do not match', '两次密码不一致'));
+      toast.error(t('ui.passwordsDoNotMatchab9c00'));
       return;
     }
 
     if (passwordData.new_password.length < 8) {
-      toast.error(t('Password must be at least 8 characters', '密码至少需要 8 个字符'));
+      toast.error(t('ui.passwordMustBeAtLeast8Characters'));
       return;
     }
 
@@ -133,7 +135,7 @@ export function AccountSection({
         passwordData.new_password,
         passwordData.new_password_confirm
       );
-      toast.success(t('Password changed', '密码已更改'));
+      toast.success(t('ui.passwordChanged'));
       setPasswordData({
         current_password: '',
         new_password: '',
@@ -152,16 +154,16 @@ export function AccountSection({
   };
 
   const getPasswordStrengthLabel = (strength: number) => {
-    if (strength <= 2) return t('Weak', '弱');
-    if (strength <= 3) return t('Medium', '中');
-    return t('Strong', '强');
+    if (strength <= 2) return t('ui.weak');
+    if (strength <= 3) return t('ui.medium');
+    return t('ui.strong');
   };
 
   if (isLoading) {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>{t('Profile information', '个人资料')}</CardTitle>
+          <CardTitle>{t('ui.profileInformation')}</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="animate-pulse space-y-4">
@@ -182,14 +184,14 @@ export function AccountSection({
       <Card>
         <CardHeader>
           <CardTitle className="text-lg font-semibold">
-            {t('Profile information', '个人资料')}
+            {t('ui.profileInformation')}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
           {/* Avatar Upload */}
           <div className="flex items-center gap-4">
             <Avatar className="size-20">
-              <AvatarImage src={avatarUrl} alt={t('Avatar', '头像')} />
+              <AvatarImage src={avatarUrl} alt={t('ui.avatar')} />
               <AvatarFallback className="text-lg">{initials}</AvatarFallback>
             </Avatar>
             <div className="space-y-2">
@@ -202,10 +204,10 @@ export function AccountSection({
               />
               <Button variant="outline" size="sm" onClick={handleAvatarClick}>
                 <IconCamera className="mr-2 size-4" />
-                {t('Change avatar', '更换头像')}
+                {t('ui.changeAvatar')}
               </Button>
               <p className="text-xs text-muted-foreground">
-                {t('JPG or PNG, up to 5 MB.', 'JPG 或 PNG，最大 5 MB。')}
+                {t('ui.jpgOrPngUpTo5Mb')}
               </p>
             </div>
           </div>
@@ -216,7 +218,7 @@ export function AccountSection({
           <div className="space-y-4">
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="first-name">{t('First name', '名')}</Label>
+                <Label htmlFor="first-name">{t('ui.firstName')}</Label>
                 <Input
                   id="first-name"
                   value={formData.user_fname}
@@ -227,7 +229,7 @@ export function AccountSection({
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="last-name">{t('Last name', '姓')}</Label>
+                <Label htmlFor="last-name">{t('ui.lastName')}</Label>
                 <Input
                   id="last-name"
                   value={formData.user_lname}
@@ -239,20 +241,20 @@ export function AccountSection({
               </div>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="email">{t('Email', '电子邮箱')}</Label>
+              <Label htmlFor="email">{t('ui.email')}</Label>
               <Input
                 id="email"
                 type="email"
                 value={formData.user_email}
                 readOnly
               />
-              <p className="text-xs text-muted-foreground">{t('Use the verification form below to change this address.', '请使用下方的验证表单更改邮箱地址。')}</p>
+              <p className="text-xs text-muted-foreground">{t('ui.useTheVerificationFormBelowToChangeThisAddress')}</p>
             </div>
 
             {isEditing ? (
               <div className="flex gap-2">
                 <Button onClick={handleSaveUser} disabled={isSaving}>
-                  {isSaving ? t('Saving…', '保存中…') : t('Save changes', '保存更改')}
+                  {isSaving ? t('ui.saving83ad29') : t('ui.saveChanges')}
                 </Button>
                 <Button
                   variant="outline"
@@ -265,11 +267,11 @@ export function AccountSection({
                     });
                   }}
                 >
-                  {t('Cancel', '取消')}
+                  {t('ui.cancel')}
                 </Button>
               </div>
             ) : (
-              <Button onClick={() => setIsEditing(true)}>{t('Edit profile', '编辑资料')}</Button>
+              <Button onClick={() => setIsEditing(true)}>{t('ui.editProfileb7bbb1')}</Button>
             )}
           </div>
         </CardContent>
@@ -279,7 +281,7 @@ export function AccountSection({
       <Card>
         <CardHeader>
           <CardTitle className="text-lg font-semibold">
-            {t('Change password', '更改密码')}
+            {t('ui.changePassword')}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -289,12 +291,12 @@ export function AccountSection({
               onClick={() => setShowPasswordForm(true)}
             >
               <IconLock className="mr-2 size-4" />
-              {t('Change password', '更改密码')}
+              {t('ui.changePassword')}
             </Button>
           ) : (
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="current-password">{t('Current password', '当前密码')}</Label>
+                <Label htmlFor="current-password">{t('ui.currentPassword')}</Label>
                 <Input
                   id="current-password"
                   type="password"
@@ -305,11 +307,11 @@ export function AccountSection({
                       current_password: e.target.value,
                     })
                   }
-                  placeholder={t('Enter current password', '输入当前密码')}
+                  placeholder={t('ui.enterCurrentPassword')}
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="new-password">{t('New password', '新密码')}</Label>
+                <Label htmlFor="new-password">{t('ui.newPassword')}</Label>
                 <Input
                   id="new-password"
                   type="password"
@@ -323,7 +325,7 @@ export function AccountSection({
                       calculatePasswordStrength(e.target.value)
                     );
                   }}
-                  placeholder={t('Enter new password', '输入新密码')}
+                  placeholder={t('ui.enterNewPassword')}
                 />
                 {passwordData.new_password && (
                   <div className="flex items-center gap-2">
@@ -342,7 +344,7 @@ export function AccountSection({
                 )}
               </div>
               <div className="space-y-2">
-                <Label htmlFor="confirm-password">{t('Confirm new password', '确认新密码')}</Label>
+                <Label htmlFor="confirm-password">{t('ui.confirmNewPassword')}</Label>
                 <Input
                   id="confirm-password"
                   type="password"
@@ -353,11 +355,11 @@ export function AccountSection({
                       new_password_confirm: e.target.value,
                     })
                   }
-                  placeholder={t('Confirm new password', '再次输入新密码')}
+                  placeholder={t('ui.confirmNewPasswordff7019')}
                 />
               </div>
               <div className="flex gap-2">
-                <Button onClick={handlePasswordChange}>{t('Confirm change', '确认更改')}</Button>
+                <Button onClick={handlePasswordChange}>{t('ui.confirmChange')}</Button>
                 <Button
                   variant="outline"
                   onClick={() => {
@@ -370,7 +372,7 @@ export function AccountSection({
                     setPasswordStrength(0);
                   }}
                 >
-                  {t('Cancel', '取消')}
+                  {t('ui.cancel')}
                 </Button>
               </div>
             </div>

@@ -1,5 +1,7 @@
 'use client';
 
+import { localized } from '@/locales';
+
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { emailChangeService } from '@/service/api/v2/email-change';
@@ -12,7 +14,7 @@ export default function VerifyEmailPage() {
   const [checking, setChecking] = useState(true);
   const [done, setDone] = useState(false);
   const [error, setError] = useState('');
-  const t = (en: string, zh: string) => locale === 'zh' ? zh : en;
+  const t = (en: string, zh?: string) => localized(locale, en, zh);
 
   useEffect(() => {
     let value = '';
@@ -42,9 +44,9 @@ export default function VerifyEmailPage() {
 
   return <main className='flex min-h-screen items-center justify-center bg-slate-950 px-5 py-12 text-slate-100'><div className='w-full max-w-md rounded-[2rem] border border-slate-700 bg-slate-900 p-7 shadow-2xl md:p-9'>
     <div className='flex items-center justify-between'><Link href='/' className='text-xs font-bold uppercase tracking-[0.22em] text-teal-300'>ESSAYCOACH</Link><button type='button' onClick={() => setLocale(locale === 'en' ? 'zh' : 'en')} className='rounded-full border border-slate-600 px-3 py-1 text-xs font-semibold'>{locale === 'en' ? '中文' : 'English'}</button></div>
-    <h1 className='mt-8 text-3xl font-semibold tracking-tight'>{done ? t('Email updated', '邮箱已更新') : t('Confirm new email', '确认新邮箱')}</h1>
-    {done ? <><p className='mt-4 text-sm leading-6 text-slate-300'>{t('Your old sessions were signed out. Sign in using the new address.', '旧会话已退出。请使用新邮箱登录。')}</p><Link href='/auth/sign-in' className='mt-7 inline-block rounded-full bg-teal-300 px-5 py-2.5 text-sm font-bold text-slate-950'>{t('Go to sign in', '前往登录')}</Link></> : email ? <><p className='mt-4 text-sm leading-6 text-slate-300'>{t('Confirm this address for your EssayCoach account:', '请确认 EssayCoach 账号的新邮箱：')} <strong className='text-white'>{email}</strong></p><button type='button' disabled={busy} onClick={() => { void confirm(); }} className='mt-7 rounded-full bg-teal-300 px-5 py-2.5 text-sm font-bold text-slate-950 disabled:opacity-50'>{busy ? t('Confirming…', '正在确认…') : t('Confirm email', '确认邮箱')}</button></> : checking ? <p className='mt-4 text-sm text-slate-300'>{t('Checking your verification link…', '正在检查验证链接…')}</p> : null}
+    <h1 className='mt-8 text-3xl font-semibold tracking-tight'>{done ? t('ui.emailUpdated') : t('ui.confirmNewEmail')}</h1>
+    {done ? <><p className='mt-4 text-sm leading-6 text-slate-300'>{t('ui.yourOldSessionsWereSignedOutSignInUsingThe')}</p><Link href='/auth/sign-in' className='mt-7 inline-block rounded-full bg-teal-300 px-5 py-2.5 text-sm font-bold text-slate-950'>{t('ui.goToSignIn')}</Link></> : email ? <><p className='mt-4 text-sm leading-6 text-slate-300'>{t('ui.confirmThisAddressForYourEssaycoachAccount')} <strong className='text-white'>{email}</strong></p><button type='button' disabled={busy} onClick={() => { void confirm(); }} className='mt-7 rounded-full bg-teal-300 px-5 py-2.5 text-sm font-bold text-slate-950 disabled:opacity-50'>{busy ? t('ui.confirming') : t('ui.confirmEmail')}</button></> : checking ? <p className='mt-4 text-sm text-slate-300'>{t('ui.checkingYourVerificationLink')}</p> : null}
     {error && <p role='alert' className='mt-5 rounded-xl bg-rose-950 p-4 text-sm text-rose-100'>{error === 'Verification link is missing.' ? t(error, '缺少验证链接。') : error === 'Verification link is invalid.' ? t(error, '验证链接无效。') : error}</p>}
-    <Link href='/auth/sign-in' className='mt-8 inline-block text-sm font-semibold text-teal-300 hover:underline'>{t('Back to sign in', '返回登录')}</Link>
+    <Link href='/auth/sign-in' className='mt-8 inline-block text-sm font-semibold text-teal-300 hover:underline'>{t('ui.backToSignIn')}</Link>
   </div></main>;
 }

@@ -1,5 +1,7 @@
 'use client';
 
+import { localized } from '@/locales';
+
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import type { DashboardUserInfo, DashboardStats, LecturerStats, StudentStats, AdminStats } from '@/service/api/v2/types';
 import { IconAward, IconListCheck, IconPencil, IconTrendingUp } from '@tabler/icons-react';
@@ -20,7 +22,7 @@ interface DashboardHeaderProps {
  */
 export function DashboardHeader({ user, stats, role }: DashboardHeaderProps) {
   const { locale } = usePreferences();
-  const t = (en: string, zh: string) => locale === 'zh' ? zh : en;
+  const t = (en: string, zh?: string) => localized(locale, en, zh);
   const currentDate = locale === 'zh'
     ? new Intl.DateTimeFormat('zh-CN', { dateStyle: 'full', timeStyle: 'short' }).format(new Date())
     : format(new Date(), 'EEEE, MMMM d, y · h:mm a');
@@ -38,18 +40,18 @@ export function DashboardHeader({ user, stats, role }: DashboardHeaderProps) {
           <StatCard
             icon={<IconAward className="h-4 w-4 text-emerald-500" />}
             value={reviewedToday.toString()}
-            label={t('Essays Reviewed Today', '今日已复核作文')}
+            label={t('ui.essaysReviewedToday')}
             trend={avgScore != null ? t(`${avgScore}% avg score`, `平均分 ${avgScore}%`) : undefined}
           />
           <StatCard
             icon={<IconListCheck className="h-4 w-4 text-amber-500" />}
             value={pendingReviews.toString()}
-            label={t('Pending Reviews', '待复核')}
+            label={t('ui.pendingReviews')}
           />
           <StatCard
             icon={<IconPencil className="h-4 w-4 text-violet-500" />}
             value={activeClasses.toString()}
-            label={t('Active Classes', '活跃班级')}
+            label={t('ui.activeClassesf9a013')}
           />
         </>
       );
@@ -65,19 +67,19 @@ export function DashboardHeader({ user, stats, role }: DashboardHeaderProps) {
           <StatCard
             icon={<IconAward className="h-4 w-4 text-emerald-500" />}
             value={totalEssays.toLocaleString()}
-            label={t('Total Essays', '作文总数')}
+            label={t('ui.totalEssays')}
           />
           <StatCard
             icon={<IconListCheck className="h-4 w-4 text-amber-500" />}
             value={pendingGrading.toString()}
-            label={t('Pending Grading', '待评分')}
-            trend={t('Needs review', '需要复核')}
+            label={t('ui.pendingGrading')}
+            trend={t('ui.needsReview')}
           />
           <StatCard
             icon={<IconTrendingUp className="h-4 w-4 text-blue-500" />}
             value={avgScore?.toString() ?? '0'}
-            label={t('Avg Score', '平均分')}
-            trend={t('Published grades', '已发布成绩')}
+            label={t('ui.avgScore')}
+            trend={t('ui.publishedGrades')}
           />
         </>
       );
@@ -92,20 +94,20 @@ export function DashboardHeader({ user, stats, role }: DashboardHeaderProps) {
       <>
         <StatCard
           icon={<IconAward className="h-4 w-4 text-emerald-500" />}
-          value={studentAvgScore?.toFixed(1) ?? t('N/A', '暂无')}
-          label={t('Average Score', '平均分')}
-          trend={studentAvgScore != null ? t('Published grades', '已发布成绩') : undefined}
+          value={studentAvgScore?.toFixed(1) ?? t('ui.nA')}
+          label={t('ui.averageScore272cc1')}
+          trend={studentAvgScore != null ? t('ui.publishedGrades') : undefined}
         />
         <StatCard
           icon={<IconListCheck className="h-4 w-4 text-amber-500" />}
           value={pendingTasks.toString()}
-          label={t('Awaiting Results', '等待结果')}
-          trend={pendingTasks > 0 ? t('Teacher review', '等待教师复核') : t('All clear', '暂无待处理')}
+          label={t('ui.awaitingResults')}
+          trend={pendingTasks > 0 ? t('ui.teacherReview') : t('ui.allClear')}
         />
         <StatCard
           icon={<IconPencil className="h-4 w-4 text-violet-500" />}
           value={essaysSubmitted.toString()}
-          label={t('Essays Submitted', '已提交作文')}
+          label={t('ui.essaysSubmitted')}
         />
       </>
     );

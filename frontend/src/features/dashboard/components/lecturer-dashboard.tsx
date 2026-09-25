@@ -1,5 +1,7 @@
 'use client';
 
+import { localized } from '@/locales';
+
 import { useState } from 'react';
 import { usePreferences } from '@/components/layout/preference-provider';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -38,7 +40,7 @@ interface LecturerDashboardProps {
  */
 export function LecturerDashboard({ data }: LecturerDashboardProps) {
   const { locale } = usePreferences();
-  const t = (en: string, zh: string) => locale === 'zh' ? zh : en;
+  const t = (en: string, zh?: string) => localized(locale, en, zh);
   const [classFilter, setClassFilter] = useState('all');
   const [statusFilter, setStatusFilter] = useState('all');
   const gradingQueue = data.gradingQueue.filter((item) => {
@@ -53,15 +55,15 @@ export function LecturerDashboard({ data }: LecturerDashboardProps) {
       <section>
         <div className='mb-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between'>
           <h2 className='text-[24px] leading-tight font-medium tracking-tight'>
-            {t('Grading Queue', '待复核队列')}
+            {t('ui.gradingQueue')}
           </h2>
           <div className='flex items-center gap-2'>
             <Select value={classFilter} onValueChange={setClassFilter}>
               <SelectTrigger className='focus:ring-primary w-[140px] focus:ring-2'>
-                <SelectValue placeholder={t('All Classes', '全部班级')} />
+                <SelectValue placeholder={t('ui.allClasses')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value='all'>{t('All Classes', '全部班级')}</SelectItem>
+                <SelectItem value='all'>{t('ui.allClasses')}</SelectItem>
                 {data.classes.map((c) => (
                   <SelectItem
                     key={c.id}
@@ -72,12 +74,12 @@ export function LecturerDashboard({ data }: LecturerDashboardProps) {
             </Select>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger className='focus:ring-primary w-[140px] focus:ring-2'>
-                <SelectValue placeholder={t('All Status', '全部状态')} />
+                <SelectValue placeholder={t('ui.allStatus')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value='all'>{t('All Status', '全部状态')}</SelectItem>
-                <SelectItem value='pending_review'>{t('Not overdue', '未逾期')}</SelectItem>
-                <SelectItem value='overdue'>{t('Overdue Review', '逾期复核')}</SelectItem>
+                <SelectItem value='all'>{t('ui.allStatus')}</SelectItem>
+                <SelectItem value='pending_review'>{t('ui.notOverdue')}</SelectItem>
+                <SelectItem value='overdue'>{t('ui.overdueReview')}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -88,7 +90,7 @@ export function LecturerDashboard({ data }: LecturerDashboardProps) {
       {/* Class Overview Cards */}
       <section>
         <h2 className='mb-4 text-[24px] leading-tight font-medium tracking-tight'>
-          {t('Class Overview', '班级概览')}
+          {t('ui.classOverview')}
         </h2>
         <ClassOverviewCards classes={data.classes} />
       </section>
@@ -107,15 +109,15 @@ interface GradingQueueProps {
 
 function GradingQueue({ items, filtersActive = false }: GradingQueueProps) {
   const { locale } = usePreferences();
-  const t = (en: string, zh: string) => locale === 'zh' ? zh : en;
+  const t = (en: string, zh?: string) => localized(locale, en, zh);
   if (items.length === 0) {
     return (
       <Card className='bg-card border-slate-200 shadow-sm dark:border-slate-800'>
         <CardContent className='flex flex-col items-center justify-center py-8 text-center'>
           <IconFileCheck className='text-muted-foreground/50 mb-2 h-12 w-12' />
-          <h3 className='text-lg font-medium'>{filtersActive ? t('No matching reviews', '没有符合条件的复核') : t('All Caught Up!', '已处理完毕')}</h3>
+          <h3 className='text-lg font-medium'>{filtersActive ? t('ui.noMatchingReviews') : t('ui.allCaughtUp')}</h3>
           <p className='text-muted-foreground mt-1 text-sm'>
-            {filtersActive ? t('Try another class or status.', '请尝试其他班级或状态。') : t('No pending reviews at the moment.', '目前没有待复核的作文。')}
+            {filtersActive ? t('ui.tryAnotherClassOrStatus') : t('ui.noPendingReviewsAtTheMoment')}
           </p>
         </CardContent>
       </Card>
@@ -126,11 +128,11 @@ function GradingQueue({ items, filtersActive = false }: GradingQueueProps) {
     <Card className='bg-card border-slate-200 shadow-sm dark:border-slate-800'>
       <CardHeader>
         <CardTitle className='text-lg font-semibold'>
-          {t('Pending Reviews', '待复核')} ({items.length})
+          {t('ui.pendingReviews')} ({items.length})
         </CardTitle>
       </CardHeader>
       <CardContent>
-        <p className='sr-only'>{t('Submitted:', '提交于：')}</p>
+        <p className='sr-only'>{t('ui.submitted')}</p>
         <div className='space-y-3'>
           {items.map((item) => (
             <GradingQueueItem key={item.submissionId} item={item} />
@@ -143,7 +145,7 @@ function GradingQueue({ items, filtersActive = false }: GradingQueueProps) {
 
 function GradingQueueItem({ item }: { item: GradingQueueItem }) {
   const { locale } = usePreferences();
-  const t = (en: string, zh: string) => locale === 'zh' ? zh : en;
+  const t = (en: string, zh?: string) => localized(locale, en, zh);
   const isOverdue = item.dueDate ? new Date(item.dueDate) < new Date() : false;
 
   return (
@@ -155,7 +157,7 @@ function GradingQueueItem({ item }: { item: GradingQueueItem }) {
           {isOverdue && (
             <Badge variant='destructive' className='flex items-center gap-1'>
               <IconAlertCircle className='h-3 w-3' />
-              {t('Overdue', '已逾期')}
+              {t('ui.overdue')}
             </Badge>
           )}
         </div>
@@ -174,7 +176,7 @@ function GradingQueueItem({ item }: { item: GradingQueueItem }) {
         className='focus:ring-primary focus:ring-2 focus:ring-offset-2'
       >
         <Link href={`/dashboard/review/${item.submissionId}`}>
-          {t('Review', '复核')}
+          {t('ui.review')}
         </Link>
       </Button>
     </div>
@@ -241,7 +243,7 @@ function ClassOverviewCards({ classes }: ClassOverviewCardsProps) {
 
 function ClassOverviewCard({ classItem }: { classItem: ClassOverview }) {
   const { locale } = usePreferences();
-  const t = (en: string, zh: string) => locale === 'zh' ? zh : en;
+  const t = (en: string, zh?: string) => localized(locale, en, zh);
   const pendingShare = classItem.essayCount > 0
     ? Math.min(100, Math.round((classItem.pendingReviews / classItem.essayCount) * 100))
     : 0;
@@ -259,18 +261,18 @@ function ClassOverviewCard({ classItem }: { classItem: ClassOverview }) {
           <StatItem
             icon={<IconUsers className='text-muted-foreground h-4 w-4' />}
             value={classItem.studentCount.toString()}
-            label={t('Students', '学生')}
+            label={t('ui.students6d0190')}
           />
           <StatItem
             icon={<IconFileCheck className='text-muted-foreground h-4 w-4' />}
             value={classItem.essayCount.toString()}
-            label={t('Essays', '作文')}
+            label={t('ui.essays')}
           />
         </div>
 
         <div className='space-y-2'>
           <div className='flex items-center justify-between text-xs'>
-            <span className='text-muted-foreground'>{t('Reviews pending', '待复核')}</span>
+            <span className='text-muted-foreground'>{t('ui.reviewsPending')}</span>
             <span className='font-medium'>{pendingShare}%</span>
           </div>
           <div className='h-2 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700'>
@@ -283,7 +285,7 @@ function ClassOverviewCard({ classItem }: { classItem: ClassOverview }) {
 
         <div className='flex items-center justify-between pt-2'>
           <div className='text-xs'>
-            <span className='text-muted-foreground'>{t('Avg Score: ', '平均分：')}</span>
+            <span className='text-muted-foreground'>{t('ui.avgScore334b7c')}</span>
             <span className='font-medium'>
               {classItem.avgScore?.toFixed(1) ?? 'N/A'}
             </span>
@@ -303,7 +305,7 @@ function ClassOverviewCard({ classItem }: { classItem: ClassOverview }) {
           className='focus:ring-primary w-full focus:ring-2 focus:ring-offset-2'
           size='sm'
         >
-          <Link href={`/dashboard/classes/${classItem.id}`}>{t('View Class', '查看班级')}</Link>
+          <Link href={`/dashboard/classes/${classItem.id}`}>{t('ui.viewClass')}</Link>
         </Button>
       </CardContent>
     </Card>

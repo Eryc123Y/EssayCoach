@@ -1,5 +1,7 @@
 'use client';
 
+import { localized } from '@/locales';
+
 import { useState, useEffect } from 'react';
 import PageContainer from '@/components/layout/page-container';
 import { useSettings } from '@/features/settings/hooks/useSettings';
@@ -16,7 +18,7 @@ import { usePreferences } from '@/components/layout/preference-provider';
 
 export default function SettingsWorkspace() {
   const { locale } = usePreferences();
-  const t = (en: string, zh: string) => locale === 'zh' ? zh : en;
+  const t = (en: string, zh?: string) => localized(locale, en, zh);
   const [currentSection, setCurrentSection] = useState<SettingsSection>('account');
   const [user, setUser] = useState<UserInfo | null>(null);
   const [isUserLoading, setIsUserLoading] = useState(true);
@@ -117,11 +119,11 @@ export default function SettingsWorkspace() {
 
   const getSectionTitle = () => {
     const titles: Record<SettingsSection, string> = {
-      account: t('Account settings', '账户设置'),
-      security: t('Security settings', '安全设置'),
-      notifications: t('Notification settings', '通知设置'),
-      display: t('Display settings', '显示设置'),
-      organization: t('Organization settings', '机构设置'),
+      account: t('ui.accountSettings'),
+      security: t('ui.securitySettings'),
+      notifications: t('ui.notificationSettings'),
+      display: t('ui.displaySettings'),
+      organization: t('ui.organizationSettings'),
     };
     return titles[currentSection];
   };
@@ -149,9 +151,9 @@ export default function SettingsWorkspace() {
       <div className="flex flex-col space-y-6">
         {/* Page Header */}
         <div className="space-y-2">
-          <h1 className="text-3xl font-bold tracking-tight">{t('Settings', '设置')}</h1>
+          <h1 className="text-3xl font-bold tracking-tight">{t('ui.settings')}</h1>
           <p className="text-muted-foreground">
-            {t('Manage your account and preferences.', '管理账户与个人偏好。')}
+            {t('ui.manageYourAccountAndPreferences')}
           </p>
         </div>
 

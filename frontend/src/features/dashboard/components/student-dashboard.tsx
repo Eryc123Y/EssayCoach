@@ -1,5 +1,7 @@
 'use client';
 
+import { localized } from '@/locales';
+
 import { useState } from 'react';
 import { usePreferences } from '@/components/layout/preference-provider';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -38,7 +40,7 @@ interface StudentDashboardProps {
  */
 export function StudentDashboard({ data }: StudentDashboardProps) {
   const { locale } = usePreferences();
-  const t = (en: string, zh: string) => locale === 'zh' ? zh : en;
+  const t = (en: string, zh?: string) => localized(locale, en, zh);
   const [unitFilter, setUnitFilter] = useState('all');
   const [timeFilter, setTimeFilter] = useState('all');
   const now = Date.now();
@@ -55,15 +57,15 @@ export function StudentDashboard({ data }: StudentDashboardProps) {
       <section>
         <div className='mb-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between'>
           <h2 className='text-[24px] leading-tight font-medium tracking-tight'>
-            {t('My Essays', '我的作文')}
+            {t('ui.myEssays')}
           </h2>
           <div className='flex items-center gap-2'>
             <Select value={unitFilter} onValueChange={setUnitFilter}>
               <SelectTrigger className='focus:ring-primary w-[140px] focus:ring-2'>
-                <SelectValue placeholder={t('All Classes', '全部课程')} />
+                <SelectValue placeholder={t('ui.allClasses6355a0')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value='all'>{t('All Classes', '全部课程')}</SelectItem>
+                <SelectItem value='all'>{t('ui.allClasses6355a0')}</SelectItem>
                 {Array.from(
                   new Set(data.myEssays.map((e) => e.unitName).filter(Boolean))
                 ).map((unitName) => (
@@ -76,12 +78,12 @@ export function StudentDashboard({ data }: StudentDashboardProps) {
             </Select>
             <Select value={timeFilter} onValueChange={setTimeFilter}>
               <SelectTrigger className='focus:ring-primary w-[140px] focus:ring-2'>
-                <SelectValue placeholder={t('All Time', '全部时间')} />
+                <SelectValue placeholder={t('ui.allTime')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value='all'>{t('All Time', '全部时间')}</SelectItem>
-                <SelectItem value='this_week'>{t('Last 7 days', '最近 7 天')}</SelectItem>
-                <SelectItem value='this_month'>{t('Last 30 days', '最近 30 天')}</SelectItem>
+                <SelectItem value='all'>{t('ui.allTime')}</SelectItem>
+                <SelectItem value='this_week'>{t('ui.last7Days')}</SelectItem>
+                <SelectItem value='this_month'>{t('ui.last30Days')}</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -96,7 +98,7 @@ export function StudentDashboard({ data }: StudentDashboardProps) {
           <section>
             {scoredEssays.length > 1 && (
               <h2 className='mb-4 text-[24px] leading-tight font-medium tracking-tight'>
-                {t('Progress Over Time', '成绩趋势')}
+                {t('ui.progressOverTime7ee7d8')}
               </h2>
             )}
             <ProgressTracker essays={data.myEssays} />
@@ -118,21 +120,21 @@ interface MyEssaysListProps {
 
 function MyEssaysList({ essays, filtersActive = false }: MyEssaysListProps) {
   const { locale } = usePreferences();
-  const t = (en: string, zh: string) => locale === 'zh' ? zh : en;
+  const t = (en: string, zh?: string) => localized(locale, en, zh);
   if (essays.length === 0) {
     return (
       <Card className='bg-card border-slate-200 shadow-sm dark:border-slate-800'>
         <CardContent className='flex flex-col items-center justify-center py-8 text-center'>
           <IconFile className='text-muted-foreground/50 mb-2 h-12 w-12' />
-          <h3 className='text-lg font-medium'>{filtersActive ? t('No matching essays', '没有符合筛选条件的作文') : t('No Submissions Yet', '暂无提交记录')}</h3>
+          <h3 className='text-lg font-medium'>{filtersActive ? t('ui.noMatchingEssays') : t('ui.noSubmissionsYet')}</h3>
           <p className='text-muted-foreground mt-1 text-sm'>
-            {filtersActive ? t('Try another class or time range.', '请尝试其他课程或时间范围。') : t('Start with your first essay submission.', '从提交第一篇作文开始。')}
+            {filtersActive ? t('ui.tryAnotherClassOrTimeRange') : t('ui.startWithYourFirstEssaySubmission')}
           </p>
           {!filtersActive && <Button
             asChild
             className='focus:ring-primary mt-4 focus:ring-2 focus:ring-offset-2'
           >
-            <Link href='/dashboard/essay'>{t('Submit Essay', '提交作文')}</Link>
+            <Link href='/dashboard/essay'>{t('ui.submitEssay')}</Link>
           </Button>}
         </CardContent>
       </Card>
@@ -143,7 +145,7 @@ function MyEssaysList({ essays, filtersActive = false }: MyEssaysListProps) {
     <Card className='bg-card border-slate-200 shadow-sm dark:border-slate-800'>
       <CardHeader>
         <CardTitle className='text-lg font-semibold'>
-          {t('Recent Submissions', '最近提交')} ({essays.length})
+          {t('ui.recentSubmissions')} ({essays.length})
         </CardTitle>
       </CardHeader>
       <CardContent>
@@ -178,7 +180,7 @@ function EssayItem({
   usePlainUnitLabel: boolean;
 }) {
   const { locale } = usePreferences();
-  const t = (en: string, zh: string) => locale === 'zh' ? zh : en;
+  const t = (en: string, zh?: string) => localized(locale, en, zh);
   const statusConfig = getStatusConfig(essay.status, locale);
 
   return (
@@ -210,7 +212,7 @@ function EssayItem({
         {essay.score !== null && (
           <div className='text-right'>
             <p className='text-lg font-bold'>{essay.score}</p>
-            <p className='text-muted-foreground text-xs'>{t('Score', '分数')}</p>
+            <p className='text-muted-foreground text-xs'>{t('ui.score')}</p>
           </div>
         )}
         <Button
@@ -226,7 +228,7 @@ function EssayItem({
                 : `/dashboard/submissions/${essay.id}`
             }
           >
-            {essay.status === 'draft' ? t('Continue', '继续') : t('View', '查看')}
+            {essay.status === 'draft' ? t('ui.continue') : t('ui.view')}
           </Link>
         </Button>
       </div>
@@ -288,7 +290,7 @@ interface ProgressTrackerProps {
 
 function ProgressTracker({ essays }: ProgressTrackerProps) {
   const { locale } = usePreferences();
-  const t = (en: string, zh: string) => locale === 'zh' ? zh : en;
+  const t = (en: string, zh?: string) => localized(locale, en, zh);
   // Get essays with scores, sorted by date
   const scoredEssays = essays
     .filter((e) => e.score !== null)
@@ -300,7 +302,7 @@ function ProgressTracker({ essays }: ProgressTrackerProps) {
         <CardContent className='flex flex-col items-center justify-center py-8 text-center'>
           <IconFile className='text-muted-foreground/50 mb-2 h-8 w-8' />
           <p className='text-muted-foreground text-sm'>
-            {t('Submit more essays to see your progress trend.', '再提交几篇作文后即可查看成绩趋势。')}
+            {t('ui.submitMoreEssaysToSeeYourProgressTrend')}
           </p>
         </CardContent>
       </Card>
@@ -320,7 +322,7 @@ function ProgressTracker({ essays }: ProgressTrackerProps) {
   return (
     <Card className='bg-card border-slate-200 shadow-sm dark:border-slate-800'>
       <CardHeader>
-        <CardTitle className='text-lg font-semibold'>{t('Score Trend', '成绩趋势')}</CardTitle>
+        <CardTitle className='text-lg font-semibold'>{t('ui.scoreTrend')}</CardTitle>
       </CardHeader>
       <CardContent className='space-y-4'>
         {/* Trend Summary */}
@@ -328,7 +330,7 @@ function ProgressTracker({ essays }: ProgressTrackerProps) {
           <div className='space-y-1'>
             <p className='text-2xl font-bold'>{avgScore.toFixed(1)}%</p>
             <p className='text-muted-foreground text-xs'>
-              {t('Average (last 5 essays)', '最近 5 篇平均分')}
+              {t('ui.averageLast5Essays')}
             </p>
           </div>
           <div className='flex items-center gap-2'>
@@ -347,7 +349,7 @@ function ProgressTracker({ essays }: ProgressTrackerProps) {
             {trend === 'stable' && (
               <span className='text-muted-foreground flex items-center'>
                 <IconMinus className='mr-1 h-4 w-4' />
-                {t('No change', '无变化')}
+                {t('ui.noChange')}
               </span>
             )}
           </div>

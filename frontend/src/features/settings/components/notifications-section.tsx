@@ -1,5 +1,7 @@
 'use client';
 
+import { localized } from '@/locales';
+
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -32,7 +34,7 @@ export function NotificationsSection({
   userRole,
 }: NotificationsSectionProps) {
   const { locale } = usePreferences();
-  const t = (en: string, zh: string) => locale === 'zh' ? zh : en;
+  const t = (en: string, zh?: string) => localized(locale, en, zh);
   const [localPrefs, setLocalPrefs] = useState<Partial<UserPreferences>>({});
   const [hasChanges, setHasChanges] = useState(false);
 
@@ -40,7 +42,7 @@ export function NotificationsSection({
     return (
       <Card>
         <CardHeader>
-          <CardTitle>{t('Notification preferences', '通知偏好')}</CardTitle>
+          <CardTitle>{t('ui.notificationPreferences')}</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="animate-pulse space-y-4">
@@ -71,10 +73,10 @@ export function NotificationsSection({
       await onUpdatePreferences(localPrefs);
       setLocalPrefs({});
       setHasChanges(false);
-      toast.success(t('Notification preferences updated', '通知偏好已更新'));
+      toast.success(t('ui.notificationPreferencesUpdated'));
     } catch (error) {
       console.error('Failed to update preferences:', error);
-      toast.error(t('Could not update notification preferences', '无法更新通知偏好'));
+      toast.error(t('ui.couldNotUpdateNotificationPreferences'));
     }
   };
 
@@ -87,7 +89,7 @@ export function NotificationsSection({
     <Card>
       <CardHeader>
         <CardTitle className="text-lg font-semibold">
-          {t('Notification preferences', '通知偏好')}
+          {t('ui.notificationPreferences')}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -99,9 +101,9 @@ export function NotificationsSection({
                 <IconMail className="size-5 text-blue-600 dark:text-blue-400" />
               </div>
               <div>
-                <p className="font-medium">{t('Email notifications', '邮件通知')}</p>
+                <p className="font-medium">{t('ui.emailNotifications')}</p>
                 <p className="text-sm text-muted-foreground">
-                  {t('Email alerts are saved to the local outbox, or sent through configured SMTP.', '邮件提醒会保存到本地发件箱，或通过配置的 SMTP 发送。')}
+                  {t('ui.emailAlertsAreSavedToTheLocalOutboxOrSent')}
                 </p>
               </div>
             </div>
@@ -123,9 +125,9 @@ export function NotificationsSection({
                 <IconBell className="size-5 text-purple-600 dark:text-purple-400" />
               </div>
               <div>
-                <p className="font-medium">{t('In-app notifications', '站内通知')}</p>
+                <p className="font-medium">{t('ui.inAppNotifications')}</p>
                 <p className="text-sm text-muted-foreground">
-                  {t('Get notified within the application', '在应用内接收提醒')}
+                  {t('ui.getNotifiedWithinTheApplication')}
                 </p>
               </div>
             </div>
@@ -146,8 +148,8 @@ export function NotificationsSection({
                 <IconBell className="size-5 text-teal-700 dark:text-teal-300" />
               </div>
               <div>
-                <p className="font-medium">{t('Community activity', '社区互动')}</p>
-                <p className="text-sm text-muted-foreground">{t('Likes, comments and peer feedback on your shared essays', '收到点赞、评论和同伴反馈时提醒我')}</p>
+                <p className="font-medium">{t('ui.communityActivity')}</p>
+                <p className="text-sm text-muted-foreground">{t('ui.likesCommentsAndPeerFeedbackOnYourSharedEssays')}</p>
               </div>
             </div>
             <Switch
@@ -168,9 +170,9 @@ export function NotificationsSection({
                     <IconFile className="size-5 text-green-600 dark:text-green-400" />
                   </div>
                   <div>
-                    <p className="font-medium">{t('Submission alerts', '提交提醒')}</p>
+                    <p className="font-medium">{t('ui.submissionAlerts')}</p>
                     <p className="text-sm text-muted-foreground">
-                      {t('Get notified when you receive feedback', '收到反馈时通知我')}
+                      {t('ui.getNotifiedWhenYouReceiveFeedback')}
                     </p>
                   </div>
                 </div>
@@ -195,9 +197,9 @@ export function NotificationsSection({
                     <IconClipboard className="size-5 text-orange-600 dark:text-orange-400" />
                   </div>
                   <div>
-                    <p className="font-medium">{t('Grading alerts', '评分提醒')}</p>
+                    <p className="font-medium">{t('ui.gradingAlerts')}</p>
                     <p className="text-sm text-muted-foreground">
-                      {t('Get notified when students submit essays', '学生提交作文时通知我')}
+                      {t('ui.getNotifiedWhenStudentsSubmitEssays')}
                     </p>
                   </div>
                 </div>
@@ -219,10 +221,10 @@ export function NotificationsSection({
         {hasChanges && (
           <div className="flex gap-2 pt-4">
             <Button onClick={handleSave} disabled={isSaving}>
-              {isSaving ? t('Saving…', '保存中…') : t('Save changes', '保存更改')}
+              {isSaving ? t('ui.saving83ad29') : t('ui.saveChanges')}
             </Button>
             <Button variant="outline" onClick={handleReset}>
-              {t('Reset', '重置')}
+              {t('ui.reset')}
             </Button>
           </div>
         )}

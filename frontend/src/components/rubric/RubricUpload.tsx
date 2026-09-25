@@ -1,5 +1,7 @@
 'use client';
 
+import { localized } from '@/locales';
+
 import { useState, useCallback, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -29,14 +31,14 @@ interface RubricUploadProps {
 
 function InfoPopover() {
   const { locale } = usePreferences();
-  const t = (en: string, zh: string) => locale === 'zh' ? zh : en;
+  const t = (en: string, zh?: string) => localized(locale, en, zh);
   return (
     <Popover>
       <PopoverTrigger asChild>
         <Button
           variant='ghost'
           size='icon'
-          aria-label={t('Import requirements', '导入要求')}
+          aria-label={t('ui.importRequirements')}
           className='text-muted-foreground h-7 w-7 hover:bg-indigo-50 hover:text-indigo-600 dark:hover:bg-indigo-900/20 dark:hover:text-indigo-400'
         >
           <Info className='h-4 w-4' />
@@ -46,37 +48,37 @@ function InfoPopover() {
         <div className='space-y-4'>
           <div>
             <h4 className='text-foreground mb-2 text-sm font-semibold'>
-              {t('How import works', '导入流程')}
+              {t('ui.howImportWorks')}
             </h4>
             <div className='space-y-2 text-xs'>
               <p className='text-muted-foreground leading-relaxed'>
-                {t('Your PDF goes through these steps:', 'PDF 会经过以下步骤：')}
+                {t('ui.yourPdfGoesThroughTheseSteps')}
               </p>
               <ol className='text-muted-foreground ml-4 list-decimal space-y-1.5'>
-                <li>{t('Analyze document structure', '分析文档结构')}</li>
-                <li>{t('Check that it is a rubric', '确认文档是评分量表')}</li>
-                <li>{t('Extract criteria and score levels', '提取评分维度和等级')}</li>
-                <li>{t('Save it to your library', '保存到量表库')}</li>
+                <li>{t('ui.analyzeDocumentStructure')}</li>
+                <li>{t('ui.checkThatItIsARubric')}</li>
+                <li>{t('ui.extractCriteriaAndScoreLevels')}</li>
+                <li>{t('ui.saveItToYourLibrary')}</li>
               </ol>
             </div>
           </div>
 
           <div className='border-border/50 border-t pt-3'>
             <h4 className='text-foreground mb-2 text-sm font-semibold'>
-              {t('File requirements', '文件要求')}
+              {t('ui.fileRequirements')}
             </h4>
             <div className='text-muted-foreground space-y-1.5 text-xs'>
               <p className='flex items-start gap-2'>
                 <span className='font-medium'>•</span>
-                {t('PDF format only', '仅支持 PDF')}
+                {t('ui.pdfFormatOnly')}
               </p>
               <p className='flex items-start gap-2'>
                 <span className='font-medium'>•</span>
-                {t('Up to 10 MB and 20 pages', '最多 10 MB、20 页')}
+                {t('ui.upTo10MbAnd20Pages')}
               </p>
               <p className='flex items-start gap-2'>
                 <span className='font-medium'>•</span>
-                {t('Selectable text and clear scoring criteria', '需要可选取文字和清晰的评分维度')}
+                {t('ui.selectableTextAndClearScoringCriteria')}
               </p>
             </div>
           </div>
@@ -88,7 +90,7 @@ function InfoPopover() {
 
 export function RubricUpload({ onSuccess }: RubricUploadProps) {
   const { locale } = usePreferences();
-  const t = (en: string, zh: string) => locale === 'zh' ? zh : en;
+  const t = (en: string, zh?: string) => localized(locale, en, zh);
   const [file, setFile] = useState<File | null>(null);
   const [rubricName, setRubricName] = useState('');
   const [isUploading, setIsUploading] = useState(false);
@@ -97,12 +99,12 @@ export function RubricUpload({ onSuccess }: RubricUploadProps) {
 
   const validateFile = useCallback((file: File): string | null => {
     if (file.type !== 'application/pdf') {
-      return t('Please upload a PDF file', '请上传 PDF 文件');
+      return t('ui.pleaseUploadAPdfFile');
     }
 
     const maxSize = 10 * 1024 * 1024;
     if (file.size > maxSize) {
-      return t('File must be 10 MB or smaller', '文件不能超过 10 MB');
+      return t('ui.fileMustBe10MbOrSmaller');
     }
 
     return null;
@@ -162,7 +164,7 @@ export function RubricUpload({ onSuccess }: RubricUploadProps) {
     e.preventDefault();
 
     if (!file) {
-      toast.error(t('Please select a PDF file', '请选择 PDF 文件'));
+      toast.error(t('ui.pleaseSelectAPdfFile'));
       return;
     }
 
@@ -184,10 +186,10 @@ export function RubricUpload({ onSuccess }: RubricUploadProps) {
 
         onSuccess?.(response);
       } else {
-        toast.error(response.error || t('Could not import rubric', '无法导入量表'));
+        toast.error(response.error || t('ui.couldNotImportRubric'));
       }
     } catch (error: any) {
-      toast.error(error.message || t('Could not upload rubric', '无法上传量表'));
+      toast.error(error.message || t('ui.couldNotUploadRubric'));
     } finally {
       setIsUploading(false);
     }
@@ -202,8 +204,8 @@ export function RubricUpload({ onSuccess }: RubricUploadProps) {
               <Upload className='h-5 w-5' />
             </div>
             <div>
-              <CardTitle>{t('Upload rubric PDF', '上传量表 PDF')}</CardTitle>
-              <CardDescription>{t('Extract criteria with Codex Luna', '使用 Codex Luna 提取评分维度')}</CardDescription>
+              <CardTitle>{t('ui.uploadRubricPdf')}</CardTitle>
+              <CardDescription>{t('ui.extractCriteriaWithCodexLuna')}</CardDescription>
             </div>
           </div>
           <InfoPopover />
@@ -216,12 +218,12 @@ export function RubricUpload({ onSuccess }: RubricUploadProps) {
               htmlFor='rubric-name'
               className='text-muted-foreground text-xs font-medium tracking-wider uppercase'
             >
-              {t('Rubric name', '量表名称')}
+              {t('ui.rubricName')}
             </Label>
             <Input
               id='rubric-name'
               type='text'
-              placeholder={t('e.g., Argumentative Essay Rubric', '例如：议论文评分量表')}
+              placeholder={t('ui.eGArgumentativeEssayRubric')}
               value={rubricName}
               onChange={(e) => setRubricName(e.target.value)}
               disabled={isUploading}
@@ -231,7 +233,7 @@ export function RubricUpload({ onSuccess }: RubricUploadProps) {
 
           <div className='space-y-2'>
             <Label className='text-muted-foreground text-xs font-medium tracking-wider uppercase'>
-              {t('PDF file', 'PDF 文件')}
+              {t('ui.pdfFile')}
             </Label>
             <AnimatePresence mode='wait'>
               {!file ? (
@@ -254,7 +256,7 @@ export function RubricUpload({ onSuccess }: RubricUploadProps) {
                   onClick={() => inputRef.current?.click()}
                   role='button'
                   tabIndex={0}
-                  aria-label={t('Choose rubric PDF', '选择量表 PDF')}
+                  aria-label={t('ui.chooseRubricPdf')}
                   onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); inputRef.current?.click(); } }}
                 >
                   <input
@@ -287,12 +289,12 @@ export function RubricUpload({ onSuccess }: RubricUploadProps) {
                     <div>
                       <div className='text-foreground text-sm font-medium'>
                         <span className='text-indigo-600 dark:text-indigo-400'>
-                          {t('Click to upload', '点击上传')}
+                          {t('ui.clickToUpload')}
                         </span>{' '}
-                        {t('or drag a PDF here', '或拖拽 PDF 到此处')}
+                        {t('ui.orDragAPdfHere')}
                       </div>
                       <p className='text-muted-foreground mt-1 text-xs'>
-                        {t('Up to 10 MB', '最大 10 MB')}
+                        {t('ui.upTo10Mb')}
                       </p>
                     </div>
                   </div>
@@ -347,12 +349,12 @@ export function RubricUpload({ onSuccess }: RubricUploadProps) {
             {isUploading ? (
               <>
                 <Loader2 className='mr-2 h-4 w-4 animate-spin' />
-                {t('Processing rubric…', '正在解析量表…')}
+                {t('ui.processingRubric')}
               </>
             ) : (
               <>
                 <Upload className='mr-2 h-4 w-4' />
-                {t('Import rubric', '导入量表')}
+                {t('ui.importRubric')}
               </>
             )}
           </Button>

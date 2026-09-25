@@ -33,6 +33,6 @@ Local traces are written as JSON Lines under `backend/logs/`; admin users can in
 ## Current limits
 
 - Practice feedback, source verification, follow-up chat, and document import work locally. Source coverage is limited; a claim without a retrieved matching quote is explicitly unresolved. The legacy Dify analysis/chat/status endpoints return HTTP 410; use the `/api/v2/practice/` routes.
-- English and Simplified Chinese cover the authenticated journeys. Some older components still keep strings next to JSX instead of stable message-ID catalogs. Adding a third interface language requires catalog consolidation; stored essays and rubrics remain independent of interface language.
+- English and Simplified Chinese cover the authenticated journeys. Most static active-page copy is in `frontend/src/locales/` under stable message IDs; dynamic strings and some older components still keep inline pairs. A third interface language needs its own catalog and a preference-contract extension. Stored essays and rubrics remain independent of interface language.
 - The worker has a 180-second model-turn limit and a 15-minute database lease. A crashed worker's stale lease can be reclaimed on restart. Jobs failed after three attempts require operator investigation.
 - Local tests use PostgreSQL. Run `cd backend && uv run pytest api_v2 ai_feedback core -m 'not performance'`, `cd frontend && pnpm test`, and `cd frontend && pnpm exec tsc --noEmit`. Run `pnpm build` after stopping the frontend dev server; both processes share `.next`.

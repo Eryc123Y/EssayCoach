@@ -1,5 +1,7 @@
 'use client';
 
+import { localized } from '@/locales';
+
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 import type { AdminDashboardResponse } from '@/service/api/v2/types';
@@ -30,17 +32,17 @@ interface AdminDashboardProps {
 export function AdminDashboard({ data }: AdminDashboardProps) {
   const router = useRouter();
   const { locale } = usePreferences();
-  const t = (en: string, zh: string) => locale === 'zh' ? zh : en;
+  const t = (en: string, zh?: string) => localized(locale, en, zh);
   return (
     <div className="space-y-6">
       {/* Platform Stats Section */}
       <section>
         <div className="mb-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <h2 className="text-[24px] font-medium leading-tight tracking-tight">{t('Platform Overview', '平台概览')}</h2>
+          <h2 className="text-[24px] font-medium leading-tight tracking-tight">{t('ui.platformOverview')}</h2>
           <div className="flex items-center gap-2">
             <Button variant="outline" size="sm" onClick={() => router.push('/dashboard/analytics')} className="focus:ring-2 focus:ring-primary focus:ring-offset-2">
               <IconExternalLink className="mr-2 h-4 w-4" />
-              {t('View analytics', '查看分析')}
+              {t('ui.viewAnalytics')}
             </Button>
           </div>
         </div>
@@ -50,9 +52,9 @@ export function AdminDashboard({ data }: AdminDashboardProps) {
       {/* System Health Section */}
       <section>
         <div className="mb-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <h2 className="text-[24px] font-medium leading-tight tracking-tight">{t('System Health', '系统状态')}</h2>
+          <h2 className="text-[24px] font-medium leading-tight tracking-tight">{t('ui.systemHealth')}</h2>
           <Button variant="outline" size="sm" onClick={() => router.push('/dashboard/observability')} className="focus:ring-2 focus:ring-primary focus:ring-offset-2">
-            {t('View Logs', '查看日志')}
+            {t('ui.viewLogs')}
           </Button>
         </div>
         <SystemHealth status={data.systemStatus} health={data.stats.systemHealth} />
@@ -61,9 +63,9 @@ export function AdminDashboard({ data }: AdminDashboardProps) {
       {/* User Metrics Section */}
       <section>
         <div className="mb-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <h2 className="text-[24px] font-medium leading-tight tracking-tight">{t('User Metrics', '用户统计')}</h2>
+          <h2 className="text-[24px] font-medium leading-tight tracking-tight">{t('ui.userMetrics')}</h2>
           <Button variant="outline" size="sm" onClick={() => router.push('/dashboard/users')} className="focus:ring-2 focus:ring-primary focus:ring-offset-2">
-            {t('Manage Users', '管理用户')}
+            {t('ui.manageUsers')}
           </Button>
         </div>
         <UserMetrics data={data} />
@@ -78,30 +80,30 @@ export function AdminDashboard({ data }: AdminDashboardProps) {
 
 function PlatformStats({ data }: { data: AdminDashboardResponse }) {
   const { locale } = usePreferences();
-  const t = (en: string, zh: string) => locale === 'zh' ? zh : en;
+  const t = (en: string, zh?: string) => localized(locale, en, zh);
   return (
     <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-4">
       <StatCard
         icon={<span className="text-blue-500"><IconUsers className="h-4 w-4" /></span>}
         value={data.stats.totalUsers.toLocaleString()}
-        label={t('Total Users', '用户总数')}
+        label={t('ui.totalUsers')}
         trend={t(`${data.stats.activeStudents} students, ${data.stats.activeLecturers} lecturers`, `${data.stats.activeStudents} 名学生，${data.stats.activeLecturers} 名讲师`)}
       />
       <StatCard
         icon={<span className="text-emerald-500"><IconDatabase className="h-4 w-4" /></span>}
         value={data.stats.totalEssays.toLocaleString()}
-        label={t('Total Essays', '作文总数')}
+        label={t('ui.totalEssays')}
       />
       <StatCard
         icon={<span className="text-violet-500"><IconActivity className="h-4 w-4" /></span>}
         value={data.systemStatus.submissionsLast24h.toString()}
-        label={t('Last 24h', '最近 24 小时')}
-        trend={t('Essay submissions', '作文提交')}
+        label={t('ui.last24h')}
+        trend={t('ui.essaySubmissions')}
       />
       <StatCard
         icon={<span className="text-amber-500"><IconCheck className="h-4 w-4" /></span>}
         value={data.stats.totalClasses.toString()}
-        label={t('Active Classes', '活跃班级')}
+        label={t('ui.activeClassesf9a013')}
       />
     </div>
   );
@@ -119,7 +121,7 @@ function SystemHealth({
   health: string;
 }) {
   const { locale } = usePreferences();
-  const t = (en: string, zh: string) => locale === 'zh' ? zh : en;
+  const t = (en: string, zh?: string) => localized(locale, en, zh);
   const healthConfig = getHealthConfig(health);
 
   return (
@@ -127,13 +129,13 @@ function SystemHealth({
       {/* System Status Card */}
       <Card className="border-slate-200 bg-card shadow-sm dark:border-slate-800">
         <CardHeader>
-          <CardTitle className="text-lg font-semibold">{t('System Status', '系统状态')}</CardTitle>
+          <CardTitle className="text-lg font-semibold">{t('ui.systemStatus')}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
               {healthConfig.icon}
-              <span className="font-medium">{t('Overall Health', '整体状态')}</span>
+              <span className="font-medium">{t('ui.overallHealth')}</span>
             </div>
             <Badge variant={healthConfig.variant} className={healthConfig.className}>
               {locale === 'zh' ? { Healthy: '正常', Degraded: '降级', Critical: '严重' }[healthConfig.label] || healthConfig.label : healthConfig.label}
@@ -142,17 +144,17 @@ function SystemHealth({
 
           <div className="space-y-2">
             <HealthItem
-              label={t('Database', '数据库')}
+              label={t('ui.database')}
               status={status.database}
               goodStatus="healthy"
             />
             <HealthItem
-              label={t('API Server', 'API 服务')}
+              label={t('ui.apiServer')}
               status={health === 'healthy' ? 'healthy' : 'degraded'}
               goodStatus="healthy"
             />
             <HealthItem
-              label={t('Feedback Processing', '反馈处理')}
+              label={t('ui.feedbackProcessing')}
               status={status.feedbacksLast24h > 0 ? 'active' : 'idle'}
               goodStatus="active"
             />
@@ -163,22 +165,22 @@ function SystemHealth({
       {/* Activity Stats Card */}
       <Card className="border-slate-200 bg-card shadow-sm dark:border-slate-800">
         <CardHeader>
-          <CardTitle className="text-lg font-semibold">{t('Activity (24h)', '最近 24 小时活动')}</CardTitle>
+          <CardTitle className="text-lg font-semibold">{t('ui.activity24h')}</CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           <ActivityItem
             icon={<IconDatabase className="h-4 w-4 text-muted-foreground" />}
-            label={t('Submissions', '提交')}
+            label={t('ui.submissions02e9f8')}
             value={status.submissionsLast24h}
           />
           <ActivityItem
             icon={<IconActivity className="h-4 w-4 text-muted-foreground" />}
-            label={t('Feedback Generated', '生成反馈')}
+            label={t('ui.feedbackGenerated')}
             value={status.feedbacksLast24h}
           />
           <ActivityItem
             icon={<IconUsers className="h-4 w-4 text-muted-foreground" />}
-            label={t('Active Users', '活跃用户')}
+            label={t('ui.activeUsers')}
             value={status.activeUsers}
           />
         </CardContent>
@@ -240,13 +242,13 @@ function ActivityItem({
 
 function UserMetrics({ data }: { data: AdminDashboardResponse }) {
   const { locale } = usePreferences();
-  const t = (en: string, zh: string) => locale === 'zh' ? zh : en;
+  const t = (en: string, zh?: string) => localized(locale, en, zh);
   const total = data.stats.activeStudents + data.stats.activeLecturers;
   const studentPercent = total > 0 ? Math.round((data.stats.activeStudents / total) * 100) : 0;
   const lecturerPercent = total > 0 ? Math.round((data.stats.activeLecturers / total) * 100) : 0;
 
   const activeStudentsDisplay = data.stats.activeStudents === 0
-    ? t('0 lecturers', '0')
+    ? t('ui.0Lecturers')
     : data.stats.activeStudents.toLocaleString();
   const activeLecturersDisplay = data.stats.activeLecturers === 0
     ? '0'
@@ -255,23 +257,23 @@ function UserMetrics({ data }: { data: AdminDashboardResponse }) {
   return (
     <Card className="border-slate-200 bg-card shadow-sm dark:border-slate-800">
       <CardHeader>
-        <CardTitle className="text-lg font-semibold">{t('User Distribution', '用户分布')}</CardTitle>
+        <CardTitle className="text-lg font-semibold">{t('ui.userDistribution')}</CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
             <p className="text-2xl font-bold">{activeStudentsDisplay}</p>
-            <p className="text-xs text-muted-foreground">{t('Active Students', '活跃学生')}</p>
+            <p className="text-xs text-muted-foreground">{t('ui.activeStudents')}</p>
           </div>
           <div className="space-y-2">
             <p className="text-2xl font-bold">{activeLecturersDisplay}</p>
-            <p className="text-xs text-muted-foreground">{t('Active Lecturers', '活跃讲师')}</p>
+            <p className="text-xs text-muted-foreground">{t('ui.activeLecturers')}</p>
           </div>
         </div>
 
         <div className="space-y-2">
           <div className="flex items-center justify-between text-xs">
-            <span className="text-muted-foreground">{t('Students', '学生')}</span>
+            <span className="text-muted-foreground">{t('ui.students6d0190')}</span>
             <span className="font-medium">{studentPercent}%</span>
           </div>
           <div className="h-2 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700">
@@ -284,7 +286,7 @@ function UserMetrics({ data }: { data: AdminDashboardResponse }) {
 
         <div className="space-y-2">
           <div className="flex items-center justify-between text-xs">
-            <span className="text-muted-foreground">{t('Lecturers', '讲师')}</span>
+            <span className="text-muted-foreground">{t('ui.lecturerse0040e')}</span>
             <span className="font-medium">{lecturerPercent}%</span>
           </div>
           <div className="h-2 w-full overflow-hidden rounded-full bg-slate-200 dark:bg-slate-700">

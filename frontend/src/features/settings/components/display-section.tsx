@@ -1,5 +1,7 @@
 'use client';
 
+import { localized } from '@/locales';
+
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -48,7 +50,7 @@ export function DisplaySection({
   onUpdatePreferences,
 }: DisplaySectionProps) {
   const { locale, applyLocale, applyTheme } = usePreferences();
-  const t = (en: string, zh: string) => locale === 'zh' ? zh : en;
+  const t = (en: string, zh?: string) => localized(locale, en, zh);
   const [localPrefs, setLocalPrefs] = useState<Partial<UserPreferences>>({});
   const [hasChanges, setHasChanges] = useState(false);
 
@@ -56,7 +58,7 @@ export function DisplaySection({
     return (
       <Card>
         <CardHeader>
-          <CardTitle>{t('Display preferences', '显示偏好')}</CardTitle>
+          <CardTitle>{t('ui.displayPreferences')}</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="animate-pulse space-y-4">
@@ -83,14 +85,15 @@ export function DisplaySection({
   const handleSave = async () => {
     try {
       await onUpdatePreferences(localPrefs);
-      if (localPrefs.language === 'en' || localPrefs.language === 'zh') applyLocale(localPrefs.language);
+      const savedLocale = localPrefs.language === 'en' || localPrefs.language === 'zh' ? localPrefs.language : locale;
+      applyLocale(savedLocale);
       if (localPrefs.theme) applyTheme(localPrefs.theme);
       setLocalPrefs({});
       setHasChanges(false);
-      toast.success(t('Display preferences updated', '显示偏好已更新'));
+      toast.success(localized(savedLocale, 'ui.displayPreferencesUpdated'));
     } catch (error) {
       console.error('Failed to update preferences:', error);
-      toast.error(t('Could not update display preferences', '无法更新显示偏好'));
+      toast.error(t('ui.couldNotUpdateDisplayPreferences'));
     }
   };
 
@@ -103,7 +106,7 @@ export function DisplaySection({
     <Card>
       <CardHeader>
         <CardTitle className="text-lg font-semibold">
-          {t('Display preferences', '显示偏好')}
+          {t('ui.displayPreferences')}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -114,9 +117,9 @@ export function DisplaySection({
               <IconLanguage className="size-5 text-blue-600 dark:text-blue-400" />
             </div>
             <div>
-              <p className="font-medium">{t('Language', '语言')}</p>
+              <p className="font-medium">{t('ui.language')}</p>
               <p className="text-sm text-muted-foreground">
-                {t('Select your preferred language', '选择界面语言')}
+                {t('ui.selectYourPreferredLanguage')}
               </p>
             </div>
           </div>
@@ -125,7 +128,7 @@ export function DisplaySection({
             onValueChange={handleLanguageChange}
           >
             <SelectTrigger className="w-full">
-              <SelectValue placeholder={t('Select language', '选择语言')} />
+              <SelectValue placeholder={t('ui.selectLanguage')} />
             </SelectTrigger>
             <SelectContent>
               {LANGUAGES.map((lang) => (
@@ -146,9 +149,9 @@ export function DisplaySection({
               <IconMoon className="size-5 text-purple-600 dark:text-purple-400" />
             </div>
             <div>
-              <p className="font-medium">{t('Theme', '主题')}</p>
+              <p className="font-medium">{t('ui.theme')}</p>
               <p className="text-sm text-muted-foreground">
-                {t('Choose your preferred color theme', '选择界面颜色主题')}
+                {t('ui.chooseYourPreferredColorTheme')}
               </p>
             </div>
           </div>
@@ -188,10 +191,10 @@ export function DisplaySection({
         {hasChanges && (
           <div className="flex gap-2 pt-4">
             <Button onClick={handleSave} disabled={isSaving}>
-              {isSaving ? t('Saving…', '保存中…') : t('Save changes', '保存更改')}
+              {isSaving ? t('ui.saving83ad29') : t('ui.saveChanges')}
             </Button>
             <Button variant="outline" onClick={handleReset}>
-              {t('Reset', '重置')}
+              {t('ui.reset')}
             </Button>
           </div>
         )}
