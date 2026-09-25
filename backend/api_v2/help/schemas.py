@@ -10,7 +10,7 @@ from api_v2.types.enums import ArticleCategory, TicketPriority, TicketStatus
 from api_v2.types.ids import UserId
 
 
-class ArticleOut(TimestampSchema):
+class ArticleOut(Schema):
     """Output schema for a Help Center article."""
 
     id: int
@@ -18,15 +18,27 @@ class ArticleOut(TimestampSchema):
     slug: str
     category: ArticleCategory
     content: str
-    views_count: int = 0
-    helpful_count: int = 0
+    language: str
+    roles: list[str]
+    tags: list[str]
 
 
 class ArticleSearchIn(Schema):
     """Input for searching articles."""
 
-    query: str
+    query: str = ""
     category: ArticleCategory | None = None
+    language: str = Field("en", pattern="^(en|zh)$")
+
+
+class ArticleVoteIn(Schema):
+    helpful: bool
+
+
+class ArticleVoteOut(Schema):
+    helpful: bool | None
+    helpful_count: int
+    unhelpful_count: int
 
 
 class SupportTicketIn(Schema):
@@ -36,6 +48,11 @@ class SupportTicketIn(Schema):
     description: str
     priority: TicketPriority = TicketPriority.NORMAL
     attachment_ids: list[str] | None = None
+
+
+class SupportTicketUpdateIn(Schema):
+    status: TicketStatus
+    staff_reply: str = Field("", max_length=10000)
 
 
 class TicketMessageOut(Schema):
@@ -53,4 +70,4 @@ class SupportTicketOut(TimestampSchema):
     description: str
     status: TicketStatus
     priority: TicketPriority
-    messages: list[TicketMessageOut] | None = None
+    staff_reply: str = ""

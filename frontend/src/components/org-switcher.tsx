@@ -1,6 +1,7 @@
 'use client';
 
 import * as React from 'react';
+import { usePreferences } from '@/components/layout/preference-provider';
 
 import { Icons } from '@/components/icons';
 import { IconBook, IconChevronsDown } from '@tabler/icons-react';
@@ -34,6 +35,7 @@ export function OrgSwitcher({
   currentClass,
   onClassChange
 }: OrgSwitcherProps) {
+  const { locale } = usePreferences();
   const selectedClass =
     currentClass || (classes.length > 0 ? classes[0] : null);
 
@@ -53,11 +55,11 @@ export function OrgSwitcher({
                   <IconBook className='size-3.5 opacity-50' />
                 </div>
                 <span className='text-muted-foreground text-[10px] font-bold tracking-widest uppercase'>
-                  No Classes
+                  {locale === 'zh' ? '暂无班级' : 'No Classes'}
                 </span>
               </div>
               <span className='text-muted-foreground/60 truncate text-[10px]'>
-                Contact administrator
+                {locale === 'zh' ? '请联系管理员' : 'Contact administrator'}
               </span>
             </div>
           </SidebarMenuButton>
@@ -74,7 +76,7 @@ export function OrgSwitcher({
             <SidebarMenuButton
               size='lg'
               className='data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground h-auto py-2 transition-all'
-              aria-label='Select class'
+              aria-label={locale === 'zh' ? '选择班级' : 'Select class'}
             >
               <div className='flex w-full flex-col gap-1.5'>
                 <div className='flex items-center gap-2 px-0.5'>
@@ -82,7 +84,7 @@ export function OrgSwitcher({
                     <IconBook className='size-3.5' />
                   </div>
                   <span className='text-muted-foreground/80 text-[10px] font-bold tracking-widest uppercase'>
-                    Current Class
+                    {locale === 'zh' ? '当前班级' : 'Current Class'}
                   </span>
                 </div>
                 <div className='flex items-center justify-between gap-2 px-0.5'>
@@ -105,7 +107,7 @@ export function OrgSwitcher({
             sideOffset={4}
           >
             <div className='text-muted-foreground/50 px-2 py-1.5 text-[10px] font-bold tracking-widest uppercase'>
-              Switch Class
+              {locale === 'zh' ? '切换班级' : 'Switch Class'}
             </div>
             {classes.map((cls) => (
               <DropdownMenuItem

@@ -3,7 +3,8 @@
 // https://docs.sentry.io/platforms/javascript/guides/nextjs/
 
 if (
-  !process.env.NEXT_PUBLIC_SENTRY_DISABLED &&
+  process.env.NEXT_PUBLIC_SENTRY_DSN &&
+  process.env.NEXT_PUBLIC_SENTRY_DISABLED !== 'true' &&
   process.env.NODE_ENV === 'production'
 ) {
   import('@sentry/nextjs').then((Sentry) => {
@@ -14,7 +15,7 @@ if (
       integrations: [Sentry.replayIntegration()],
 
       // Adds request headers and IP for users, for more info visit
-      sendDefaultPii: true,
+      sendDefaultPii: false,
 
       // Define how likely traces are sampled. Adjust this value in production, or use tracesSampler for greater control.
       tracesSampleRate: 1,
@@ -39,7 +40,8 @@ export const onRouterTransitionStart = async (
   >
 ) => {
   if (
-    !process.env.NEXT_PUBLIC_SENTRY_DISABLED &&
+    process.env.NEXT_PUBLIC_SENTRY_DSN &&
+    process.env.NEXT_PUBLIC_SENTRY_DISABLED !== 'true' &&
     process.env.NODE_ENV === 'production'
   ) {
     const { captureRouterTransitionStart } = await import('@sentry/nextjs');

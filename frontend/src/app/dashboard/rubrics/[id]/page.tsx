@@ -1,479 +1,78 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useParams, useRouter } from 'next/navigation';
+import { ArrowLeft, BookOpen, Copy, Globe2, LockKeyhole, Scale } from 'lucide-react';
+import { useAuth } from '@/components/layout/simple-auth-context';
+import { usePreferences } from '@/components/layout/preference-provider';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { fetchRubricDetail, RubricDetail } from '@/service/api/rubric';
-import { toast } from 'sonner';
-import {
-  Loader2,
-  ArrowLeft,
-  ClipboardList,
-  List,
-  Scale,
-  ChartBar,
-  Info,
-  ChevronDown
-} from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
-import { motion, AnimatePresence } from 'motion/react';
-import { cn } from '@/lib/utils';
-import {
-  Accordion,
-  AccordionContent,
-  AccordionItem,
-  AccordionTrigger
-} from '@/components/ui/accordion';
+import { fetchRubricDetail, type RubricDetail } from '@/service/api/rubric';
 
 export default function RubricDetailPage() {
-  const params = useParams();
   const router = useRouter();
-  const rubricId = parseInt(params.id as string);
-
+  const params = useParams();
+  const rubricId = Number(params.id);
+  const { user } = useAuth();
+  const { locale } = usePreferences();
+  const t = (en: string, zh: string) => locale === 'zh' ? zh : en;
   const [rubric, setRubric] = useState<RubricDetail | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [showInfo, setShowInfo] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(false);
 
   useEffect(() => {
-    const loadRubric = async () => {
-      setIsLoading(true);
-      try {
-        const data = await fetchRubricDetail(rubricId);
-        setRubric(data);
-      } catch (error: any) {
-        toast.error('Failed to load rubric details');
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    loadRubric();
+    let active = true;
+    setLoading(true);
+    setError(false);
+    fetchRubricDetail(rubricId).then((detail) => { if (active) setRubric(detail); })
+      .catch(() => { if (active) setError(true); })
+      .finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
   }, [rubricId]);
 
-  const formatDate = (dateString: string) => {
-    return new Date(dateString).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
-    });
-  };
+  const totalWeight = useMemo(() => rubric?.rubric_items.reduce((sum, item) => sum + Number(item.rubric_item_weight || 0), 0) ?? 0, [rubric]);
+  const levelCount = useMemo(() => rubric?.rubric_items.reduce((sum, item) => sum + item.level_descriptions.length, 0) ?? 0, [rubric]);
+  const canRevise = rubric && user && (user.role === 'admin' || Number(user.id) === rubric.user_id_user);
 
-  if (isLoading) {
-    return (
-      <div className='flex flex-1 items-center justify-center p-4'>
-        <Loader2 className='text-muted-foreground h-8 w-8 animate-spin' />
+  if (loading) return <main className='mx-auto max-w-6xl p-8 text-sm text-slate-500'>{t('Loading rubric…', '正在加载量规…')}</main>;
+  if (error || !rubric) return <main className='mx-auto max-w-6xl p-8'>
+    <h1 className='text-2xl font-semibold'>{t('Rubric unavailable', '无法查看量规')}</h1>
+    <p className='mt-2 text-sm text-slate-500'>{t('It may be private or no longer available.', '此量规可能是私人量规，或已被删除。')}</p>
+    <Button variant='outline' className='mt-5' onClick={() => router.push('/dashboard/rubrics')}><ArrowLeft size={16} /> {t('Back to library', '返回量规库')}</Button>
+  </main>;
+
+  return <main className='mx-auto max-w-6xl px-4 py-7 md:px-9 md:py-10'>
+    <button type='button' onClick={() => router.push('/dashboard/rubrics')} className='mb-5 inline-flex items-center gap-2 text-sm font-medium text-slate-600 hover:text-indigo-700 dark:text-slate-300'><ArrowLeft size={16} /> {t('Rubric library', '返回量规库')}</button>
+    <header className='border-b-4 border-indigo-500 bg-[#111b35] p-6 text-white md:p-9'>
+      <div className='mb-4 flex items-center gap-2 text-sm font-medium text-indigo-200'><BookOpen size={16} /> {t('Scoring guide', '评分指南')}</div>
+      <div className='flex flex-wrap items-start justify-between gap-4'>
+        <div className='min-w-0'><h1 className='break-words text-3xl font-semibold tracking-tight md:text-4xl'>{rubric.rubric_desc}</h1><p className='mt-2 text-sm text-slate-300'>{t('Created', '创建于')} {new Date(rubric.rubric_create_time).toLocaleDateString(locale === 'zh' ? 'zh-CN' : 'en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</p></div>
+        <span className='inline-flex items-center gap-2 border border-slate-500 px-3 py-1.5 text-xs font-semibold text-slate-100'>{rubric.visibility === 'public' ? <Globe2 size={14} /> : <LockKeyhole size={14} />}{rubric.visibility === 'public' ? t('Shared with institution', '机构内公开') : t('Private', '私人')}</span>
       </div>
-    );
-  }
+      {canRevise && <Button className='mt-6 border-slate-500 bg-transparent text-white hover:bg-white hover:text-[#111b35]' variant='outline' onClick={() => router.push(`/dashboard/rubrics/new?from=${rubric.rubric_id}`)}><Copy size={16} /> {t('Create revised copy', '创建修订副本')}</Button>}
+    </header>
 
-  if (!rubric) {
-    return (
-      <div className='flex flex-1 flex-col items-center justify-center p-4 text-center'>
-        <div className='bg-muted/50 mb-4 rounded-full p-4'>
-          <ClipboardList className='text-muted-foreground h-10 w-10' />
-        </div>
-        <h2 className='text-foreground text-xl font-semibold'>
-          Rubric not found
-        </h2>
-        <p className='text-muted-foreground mb-6 max-w-xs text-sm'>
-          The rubric you&apos;re looking for doesn&apos;t exist or has been
-          deleted.
-        </p>
-        <Button
-          onClick={() => router.push('/dashboard/rubrics')}
-          variant='outline'
-        >
-          <ArrowLeft className='mr-2 h-4 w-4' />
-          Back to Rubrics
-        </Button>
-      </div>
-    );
-  }
-
-  return (
-    <div className='mx-auto flex w-full max-w-[1600px] flex-col gap-8 p-6 md:p-8'>
-      <div className='flex flex-col gap-4 rounded-3xl border border-slate-200 bg-slate-50 p-8 md:p-12 dark:border-slate-800 dark:bg-slate-900/50'>
-        <div className='flex flex-col gap-4'>
-          <Button
-            variant='ghost'
-            size='sm'
-            onClick={() => router.push('/dashboard/rubrics')}
-            className='text-muted-foreground hover:text-foreground -ml-2 w-fit'
-          >
-            <ArrowLeft className='mr-2 h-4 w-4' />
-            Back to Library
-          </Button>
-          <div>
-            <h1 className='text-foreground text-3xl font-bold tracking-tight'>
-              {rubric.rubric_desc}
-            </h1>
-            <p className='text-muted-foreground mt-2 text-sm'>
-              Created on {formatDate(rubric.rubric_create_time)}
-            </p>
-          </div>
-        </div>
-      </div>
-
-      <div className='grid gap-4 md:grid-cols-3'>
-        <Card className='bg-card border-slate-200 shadow-sm transition-all hover:shadow-md dark:border-slate-800'>
-          <CardHeader className='flex flex-row items-center justify-between pb-2'>
-            <CardTitle className='text-muted-foreground text-sm font-medium tracking-wider uppercase'>
-              Dimensions
-            </CardTitle>
-            <div className='rounded-lg bg-indigo-50 p-2 text-indigo-600 dark:bg-indigo-900/30 dark:text-indigo-400'>
-              <List className='h-4 w-4' />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className='text-foreground text-3xl font-bold'>
-              {rubric.rubric_items?.length ?? 0}
-            </div>
-            <p className='text-muted-foreground mt-1 text-xs'>
-              Evaluation criteria
-            </p>
-          </CardContent>
-        </Card>
-        <Card className='bg-card border-slate-200 shadow-sm transition-all hover:shadow-md dark:border-slate-800'>
-          <CardHeader className='flex flex-row items-center justify-between pb-2'>
-            <CardTitle className='text-muted-foreground text-sm font-medium tracking-wider uppercase'>
-              Total Levels
-            </CardTitle>
-            <div className='rounded-lg bg-purple-50 p-2 text-purple-600 dark:bg-purple-900/30 dark:text-purple-400'>
-              <ChartBar className='h-4 w-4' />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className='text-foreground text-3xl font-bold'>
-              {rubric.rubric_items?.reduce(
-                (sum, item) => sum + (item.level_descriptions?.length ?? 0),
-                0
-              ) ?? 0}
-            </div>
-            <p className='text-muted-foreground mt-1 text-xs'>
-              Scoring definitions
-            </p>
-          </CardContent>
-        </Card>
-        <Card className='bg-card border-slate-200 shadow-sm transition-all hover:shadow-md dark:border-slate-800'>
-          <CardHeader className='flex flex-row items-center justify-between pb-2'>
-            <CardTitle className='text-muted-foreground text-sm font-medium tracking-wider uppercase'>
-              Total Weight
-            </CardTitle>
-            <div className='rounded-lg bg-blue-50 p-2 text-blue-600 dark:bg-blue-900/30 dark:text-blue-400'>
-              <Scale className='h-4 w-4' />
-            </div>
-          </CardHeader>
-          <CardContent>
-            <div className='text-foreground text-3xl font-bold'>
-              {(
-                rubric.rubric_items?.reduce(
-                  (sum, item) =>
-                    sum + parseFloat(item.rubric_item_weight || '0'),
-                  0
-                ) ?? 0
-              ).toFixed(1)}
-              %
-            </div>
-            <p className='text-muted-foreground mt-1 text-xs'>
-              Cumulative score weight
-            </p>
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className='space-y-6'>
-        <motion.div
-          layout
-          className='border-border/50 flex items-center justify-between gap-2 border-b pb-2'
-        >
-          <div className='flex items-center gap-2'>
-            <ClipboardList className='h-5 w-5 text-indigo-500' />
-            <h2 className='text-foreground text-xl font-semibold tracking-tight'>
-              Rubric Structure
-            </h2>
-          </div>
-          <Button
-            variant='outline'
-            size='sm'
-            onClick={() => setShowInfo(!showInfo)}
-            className={cn(
-              'text-muted-foreground hover:text-foreground transition-colors duration-300',
-              showInfo &&
-                'border-indigo-200 bg-indigo-50 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-400'
-            )}
-          >
-            <motion.div
-              animate={{
-                scale: showInfo ? [1, 0.9, 1] : 1,
-                color: showInfo ? 'rgb(67, 56, 202)' : 'rgb(100, 116, 139)'
-              }}
-              transition={{
-                scale: { duration: 0.3, ease: [0.4, 0, 0.2, 1] },
-                color: { duration: 0.2 }
-              }}
-              className='mr-2'
-            >
-              <Info className='h-4 w-4' />
-            </motion.div>
-            <span className='text-sm font-medium'>
-              {showInfo ? 'Hide Information' : 'Understanding This Rubric'}
-            </span>
-            <motion.div
-              animate={{ rotate: showInfo ? 180 : 0 }}
-              transition={{ duration: 0.3, ease: [0.4, 0, 0.2, 1] }}
-              className='ml-2'
-            >
-              <ChevronDown className='h-4 w-4' />
-            </motion.div>
-          </Button>
-        </motion.div>
-
-        <AnimatePresence mode='wait'>
-          {showInfo && (
-            <motion.div
-              layout
-              initial={{ opacity: 0, scale: 0.98 }}
-              animate={{
-                opacity: 1,
-                scale: 1
-              }}
-              exit={{ opacity: 0, scale: 0.98 }}
-              transition={{
-                duration: 0.25,
-                ease: [0.4, 0, 0.2, 1]
-              }}
-              className='border-border/50 mb-6 rounded-xl border bg-slate-50 p-6 dark:bg-slate-900/50'
-            >
-              <h3 className='text-foreground mb-4 text-lg font-semibold tracking-tight'>
-                Understanding This Rubric
-              </h3>
-
-              <div className='space-y-4'>
-                <div>
-                  <h4 className='mb-2 text-base font-medium text-indigo-600 dark:text-indigo-400'>
-                    Core Concepts
-                  </h4>
-                  <p className='text-muted-foreground text-sm leading-relaxed'>
-                    Learn the fundamental concepts behind rubric-based
-                    evaluation.
-                  </p>
-                </div>
-
-                <div className='space-y-3'>
-                  <div>
-                    <p className='text-foreground mb-1 font-medium'>
-                      Dimensions:
-                    </p>
-                    <p className='text-muted-foreground text-sm'>
-                      The criteria or dimensions evaluated in each essay (e.g.,
-                      Organization, Content, Grammar). Each essay is scored
-                      across all dimensions.
-                    </p>
-                  </div>
-                  <div>
-                    <p className='text-foreground mb-1 font-medium'>Weight:</p>
-                    <p className='text-muted-foreground text-sm'>
-                      The percentage importance of each dimension. All weights
-                      add up to 100% to determine the overall score.
-                    </p>
-                  </div>
-                  <div>
-                    <p className='text-foreground mb-1 font-medium'>
-                      Score Ranges:
-                    </p>
-                    <p className='text-muted-foreground text-sm'>
-                      Point ranges for each performance level: Excellent,
-                      Standard, or Needs Work.
-                    </p>
-                  </div>
-                </div>
-
-                <div>
-                  <h4 className='mb-2 text-base font-medium text-indigo-600 dark:text-indigo-400'>
-                    Performance Levels
-                  </h4>
-                  <p className='text-muted-foreground mb-4 text-sm leading-relaxed'>
-                    Understand what each score level means for essay evaluation.
-                  </p>
-                  <div className='space-y-3'>
-                    <div className='flex items-start gap-3'>
-                      <Badge
-                        variant='outline'
-                        className='border-emerald-200 bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-400'
-                      >
-                        Excellent
-                      </Badge>
-                      <p className='text-muted-foreground ml-3 text-sm'>
-                        High-quality work that meets all criteria with
-                        excellence.
-                      </p>
-                    </div>
-                    <div className='flex items-start gap-3'>
-                      <Badge
-                        variant='outline'
-                        className='border-blue-200 bg-blue-50 text-blue-700 dark:bg-blue-950/30 dark:text-blue-400'
-                      >
-                        Standard
-                      </Badge>
-                      <p className='text-muted-foreground ml-3 text-sm'>
-                        Acceptable work that meets most criteria.
-                      </p>
-                    </div>
-                    <div className='flex items-start gap-3'>
-                      <Badge
-                        variant='outline'
-                        className='border-amber-200 bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:text-amber-400'
-                      >
-                        Needs Work
-                      </Badge>
-                      <p className='text-muted-foreground ml-3 text-sm'>
-                        Work that needs improvement to meet expectations.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                <div>
-                  <h4 className='mb-2 text-base font-medium text-indigo-600 dark:text-indigo-400'>
-                    Example
-                  </h4>
-                  <Card className='border-border/50 bg-white dark:bg-slate-950'>
-                    <CardContent className='text-muted-foreground text-sm'>
-                      <p className='mb-2'>
-                        Consider an essay evaluated on Organization (30%) and
-                        Content (70%):
-                      </p>
-                      <div className='space-y-2'>
-                        <div className='flex items-center gap-2'>
-                          <span className='text-foreground font-medium'>
-                            Excellent:
-                          </span>
-                          <span className='text-emerald-600 dark:text-emerald-400'>
-                            Organization: 9/10 (90%), Content: 8/10 (80%)
-                          </span>
-                        </div>
-                        <div className='flex items-center gap-2'>
-                          <span className='text-foreground font-medium'>
-                            Overall:
-                          </span>
-                          <span className='text-emerald-600 dark:text-emerald-400'>
-                            8.5 / 10 (85%)
-                          </span>
-                        </div>
-                      </div>
-                    </CardContent>
-                  </Card>
-                </div>
-              </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
-
-        <Accordion
-          type='multiple'
-          defaultValue={rubric.rubric_items?.map(
-            (item) => `item-${item.rubric_item_id}`
-          )}
-          className='space-y-4'
-        >
-          {rubric.rubric_items?.map((item, index) => (
-            <motion.div
-              key={item.rubric_item_id}
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ delay: index * 0.1 }}
-            >
-              <AccordionItem
-                value={`item-${item.rubric_item_id}`}
-                className='border-none'
-              >
-                <Card className='border-border/60 overflow-hidden shadow-sm transition-all duration-300 hover:shadow-md'>
-                  <AccordionTrigger className='bg-secondary/30 hover:bg-secondary/50 px-6 py-4 transition-colors hover:no-underline'>
-                    <div className='flex w-full items-center justify-between pr-4'>
-                      <div className='flex items-center gap-4 text-left'>
-                        <div className='flex h-8 w-8 items-center justify-center rounded-lg bg-indigo-100 text-sm font-bold text-indigo-700 shadow-sm ring-1 ring-indigo-500/20 dark:bg-indigo-900/50 dark:text-indigo-300'>
-                          {index + 1}
-                        </div>
-                        <div>
-                          <h3 className='text-foreground text-lg font-bold'>
-                            {item.rubric_item_name}
-                          </h3>
-                          <p className='text-muted-foreground text-xs font-medium'>
-                            Grading Dimension
-                          </p>
-                        </div>
-                      </div>
-                      <Badge
-                        variant='secondary'
-                        className='bg-background border-border/50 border px-3 py-1 font-mono text-sm shadow-sm'
-                      >
-                        {item.rubric_item_weight}%
-                      </Badge>
-                    </div>
-                  </AccordionTrigger>
-                  <AccordionContent className='p-0'>
-                    <div className='divide-border/30 bg-card/50 divide-y px-6 py-2'>
-                      {(item.level_descriptions ?? [])
-                        .sort((a, b) => b.level_max_score - a.level_max_score)
-                        .map((level) => {
-                          const isExcellent =
-                            level.level_max_score >=
-                            (item.rubric_item_id === 5 ? 16 : 40);
-                          const isStandard =
-                            level.level_max_score >=
-                            (item.rubric_item_id === 5 ? 8 : 20);
-
-                          return (
-                            <div
-                              key={level.level_desc_id}
-                              className='group flex flex-col gap-4 py-6 transition-colors sm:flex-row'
-                            >
-                              <div className='flex min-w-[140px] flex-row gap-2 pt-1 sm:flex-col sm:items-end sm:gap-2'>
-                                <div className='bg-secondary/50 border-border/50 flex w-fit items-center justify-center gap-1.5 rounded-lg border px-3 py-1.5 shadow-sm sm:w-full'>
-                                  <span className='text-foreground text-sm font-bold tabular-nums'>
-                                    {level.level_min_score}-
-                                    {level.level_max_score}
-                                  </span>
-                                  <span className='text-muted-foreground text-[10px] font-bold tracking-wider uppercase'>
-                                    pts
-                                  </span>
-                                </div>
-                                <Badge
-                                  variant='outline'
-                                  className={cn(
-                                    'h-6 w-fit justify-center border px-2.5 py-0.5 text-[10px] font-semibold shadow-sm sm:w-full',
-                                    isExcellent
-                                      ? 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-900/50 dark:bg-emerald-950/30 dark:text-emerald-400'
-                                      : isStandard
-                                        ? 'border-blue-200 bg-blue-50 text-blue-700 dark:border-blue-900/50 dark:bg-blue-950/30 dark:text-blue-400'
-                                        : 'border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-900/50 dark:bg-amber-950/30 dark:text-amber-400'
-                                  )}
-                                >
-                                  {isExcellent
-                                    ? 'Excellent'
-                                    : isStandard
-                                      ? 'Standard'
-                                      : 'Needs Work'}
-                                </Badge>
-                              </div>
-
-                              <div className='border-border/40 relative flex-1 border-l-2 pl-6 transition-all duration-300 group-hover:border-indigo-500/30'>
-                                <p className='text-foreground/80 text-[15px] leading-relaxed whitespace-pre-wrap'>
-                                  {level.level_desc}
-                                </p>
-                              </div>
-                            </div>
-                          );
-                        })}
-                    </div>
-                  </AccordionContent>
-                </Card>
-              </AccordionItem>
-            </motion.div>
-          ))}
-        </Accordion>
-      </div>
+    <div className='grid grid-cols-3 divide-x divide-stone-200 border-b border-stone-200 py-5 dark:divide-slate-700 dark:border-slate-700'>
+      <Summary value={rubric.rubric_items.length} label={t('Criteria', '评分维度')} />
+      <Summary value={levelCount} label={t('Score levels', '分数等级')} />
+      <Summary value={`${totalWeight.toFixed(1)}%`} label={t('Total weight', '权重合计')} />
     </div>
-  );
+
+    <div className='mt-9 flex items-center gap-3'><span className='flex h-9 w-9 items-center justify-center bg-indigo-100 text-indigo-700 dark:bg-indigo-900 dark:text-indigo-300'><Scale size={18} /></span><div><h2 className='text-xl font-semibold'>{t('Criteria and expectations', '评分维度与要求')}</h2><p className='text-sm text-slate-500'>{t('Read each range to understand what stronger work looks like.', '查看各分数区间，了解更好的写作表现。')}</p></div></div>
+    <div className='mt-5 space-y-5'>
+      {rubric.rubric_items.length === 0 && <div className='rounded-2xl border border-dashed border-stone-300 p-8 text-center text-sm text-slate-500'>{t('No criteria have been added yet.', '此量规尚未添加评分维度。')}</div>}
+      {rubric.rubric_items.map((item) => <section key={item.rubric_item_id} className='overflow-hidden border-l-4 border-indigo-500 bg-white dark:bg-slate-900'>
+        <div className='flex flex-wrap items-center justify-between gap-3 border-b border-stone-100 px-5 py-5 md:px-7 dark:border-slate-800'><h3 className='break-words text-lg font-semibold'>{item.rubric_item_name}</h3><span className='bg-stone-100 px-3 py-1 text-sm font-semibold tabular-nums text-slate-700 dark:bg-slate-800 dark:text-slate-200'>{item.rubric_item_weight}%</span></div>
+        <div className='divide-y divide-stone-100 px-5 dark:divide-slate-800 md:px-7'>
+          {[...item.level_descriptions].sort((a, b) => b.level_max_score - a.level_max_score).map((level) => <div key={level.level_desc_id} className='grid gap-2 py-4 sm:grid-cols-[100px_1fr] sm:gap-5'><span className='w-fit self-start bg-indigo-50 px-2.5 py-1 text-sm font-bold tabular-nums text-indigo-800 dark:bg-indigo-950 dark:text-indigo-200'>{level.level_min_score}–{level.level_max_score} {t('pts', '分')}</span><p className='whitespace-pre-wrap text-sm leading-6 text-slate-700 dark:text-slate-200'>{level.level_desc}</p></div>)}
+          {item.level_descriptions.length === 0 && <p className='py-5 text-sm text-slate-500'>{t('No score levels defined.', '尚无分数等级。')}</p>}
+        </div>
+        {item.exemplar_text && <div className='border-t border-stone-100 bg-emerald-50/50 px-5 py-5 md:px-7 dark:border-slate-800 dark:bg-emerald-950/20'><p className='mb-2 text-sm font-semibold text-emerald-800 dark:text-emerald-300'>{t('High-scoring exemplar', '高分范例')}</p><p className='whitespace-pre-wrap text-sm leading-6 text-slate-700 dark:text-slate-200'>{item.exemplar_text}</p></div>}
+      </section>)}
+    </div>
+    <p className='mt-7 text-xs leading-5 text-slate-500'>{t('Assignment scores use the rubric snapshot saved when the task was published. Revising this guide creates a new rubric.', '作业成绩依据发布时保存的量规快照；修订本指南会创建新的量规。')}</p>
+  </main>;
+}
+
+function Summary({ value, label }: { value: number | string; label: string }) {
+  return <div className='px-3 text-center first:pl-0 last:pr-0 sm:px-5'><div className='text-xl font-semibold tabular-nums text-slate-950 sm:text-2xl dark:text-white'>{value}</div><div className='mt-1 text-[11px] font-medium text-slate-500 sm:text-xs'>{label}</div></div>;
 }

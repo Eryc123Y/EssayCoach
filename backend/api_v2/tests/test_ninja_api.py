@@ -33,6 +33,25 @@ def test_ai_feedback_chat_endpoint_requires_auth():
 
 
 @pytest.mark.django_db
+def test_legacy_ai_routes_are_retired_for_authenticated_users():
+    from core.models import User
+
+    student = User.objects.create_user(
+        user_email="retired-ai@example.com", password="StudentPass123!"
+    )
+    client = Client(HTTP_AUTHORIZATION=f"Bearer {create_jwt_pair(student).access}")
+    response = client.post(
+        "/api/v2/ai-feedback/agent/workflows/run/",
+        {"essay_question": "Test", "essay_content": "Test content"},
+        content_type="application/json",
+    )
+    assert response.status_code == 410
+    assert "practice/essays" in response.json()["detail"]
+    chat = client.post("/api/v2/ai-feedback/chat/", {"message": "Hi"}, content_type="application/json")
+    assert chat.status_code == 410
+
+
+@pytest.mark.django_db
 def test_auth_register_endpoint():
     client = Client()
     response = client.post(
@@ -44,12 +63,7 @@ def test_auth_register_endpoint():
         },
         content_type="application/json",
     )
-    assert response.status_code in [200, 201]
-    data = response.json()
-    assert data["success"] is True
-    assert "token" in data["data"]
-    assert "refresh" in data["data"]
-    assert "expires_at" in data["data"]
+    assert response.status_code == 422
 
 
 @pytest.mark.django_db
@@ -283,9 +297,9 @@ def test_users_list_student_can_only_view_self():
 
 
 @pytest.mark.django_db
-def test_users_list_lecturer_can_view_all():
-    """Test that lecturers can view all users."""
-    from core.models import User
+def test_users_list_lecturer_only_sees_class_students():
+    """Lecturer directory is restricted to taught classes."""
+    from core.models import Class, Enrollment, TeachingAssn, Unit, User
 
     # Create lecturer user
     lecturer = User.objects.create_user(
@@ -297,7 +311,7 @@ def test_users_list_lecturer_can_view_all():
     auth_token = jwt_pair.access
 
     # Create some students
-    User.objects.create_user(
+    enrolled = User.objects.create_user(
         user_email="student1@example.com",
         password="StudentPass123!",
         user_role="student",
@@ -307,6 +321,10 @@ def test_users_list_lecturer_can_view_all():
         password="StudentPass123!",
         user_role="student",
     )
+    unit = Unit.objects.create(unit_id="ENG101", unit_name="Writing")
+    class_obj = Class.objects.create(unit_id_unit=unit, class_name="Class A")
+    TeachingAssn.objects.create(user_id_user=lecturer, class_id_class=class_obj)
+    Enrollment.objects.create(user_id_user=enrolled, class_id_class=class_obj, unit_id_unit=unit)
 
     client = Client()
     client.defaults["HTTP_AUTHORIZATION"] = f"Bearer {auth_token}"
@@ -314,8 +332,7 @@ def test_users_list_lecturer_can_view_all():
     response = client.get("/api/v2/core/users/", {"user_role": "student"})
     assert response.status_code == 200
     data = response.json()
-    # Should see all users (lecturer + 2 students)
-    assert len(data) >= 2
+    assert {row["user_email"] for row in data} == {"lecturer@example.com", "student1@example.com"}
 
 
 @pytest.mark.django_db
@@ -380,12 +397,12 @@ def test_user_create_student_forbidden():
         },
         content_type="application/json",
     )
-    assert response.status_code == 403
+    assert response.status_code == 410
 
 
 @pytest.mark.django_db
-def test_user_create_lecturer_allowed():
-    """Test that lecturers can create new users."""
+def test_user_create_lecturer_requires_invitation():
+    """Lecturers cannot bypass invitations with the legacy users endpoint."""
     from core.models import User
 
     lecturer = User.objects.create_user(
@@ -410,14 +427,13 @@ def test_user_create_lecturer_allowed():
         },
         content_type="application/json",
     )
-    assert response.status_code == 200
-    data = response.json()
-    assert data["user_email"] == "newuser@example.com"
+    assert response.status_code == 410
+    assert not User.objects.filter(user_email="newuser@example.com").exists()
 
 
 @pytest.mark.django_db
-def test_user_create_admin_allowed():
-    """Test that admins can create new users."""
+def test_user_create_admin_requires_invitation():
+    """Admins issue invitations rather than directly setting account passwords."""
     from core.models import User
 
     admin = User.objects.create_user(
@@ -442,9 +458,8 @@ def test_user_create_admin_allowed():
         },
         content_type="application/json",
     )
-    assert response.status_code == 200
-    data = response.json()
-    assert data["user_email"] == "newuser@example.com"
+    assert response.status_code == 410
+    assert not User.objects.filter(user_email="newuser@example.com").exists()
 
 
 @pytest.mark.django_db

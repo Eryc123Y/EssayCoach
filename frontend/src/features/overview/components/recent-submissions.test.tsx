@@ -272,7 +272,7 @@ describe('RecentSubmissions', () => {
     it('shows avatar images', () => {
       render(<RecentSubmissions />);
 
-      const images = screen.getAllByAltText('Avatar');
+      const images = screen.getAllByAltText('Avatar') as HTMLImageElement[];
       expect(images.length).toBe(5);
 
       // Check that images have correct src

@@ -16,6 +16,7 @@ from api_v2.types.ids import (
 from api_v2.utils.auth import JWTAuth
 from core.models import (
     Class,
+    CourseLeadAssignment,
     Enrollment,
     Feedback,
     FeedbackItem,
@@ -93,12 +94,25 @@ def _make_activity_item(
     )
 
 
-def _score_map_for_submissions(submission_ids: list[int]) -> dict[int, float]:
+def _score_map_for_submissions(submission_ids: list[int], *, published_only: bool = False) -> dict[int, float]:
     if not submission_ids:
         return {}
 
+    if published_only:
+        return {
+            submission_id: float(score)
+            for submission_id, score in Feedback.objects.filter(
+                submission_id_submission_id__in=submission_ids,
+                status="published",
+                final_score__isnull=False,
+            ).values_list("submission_id_submission_id", "final_score")
+        }
+
+    qs = FeedbackItem.objects.filter(feedback_id_feedback__submission_id_submission_id__in=submission_ids)
+    if published_only:
+        qs = qs.filter(feedback_id_feedback__status="published")
     rows = (
-        FeedbackItem.objects.filter(feedback_id_feedback__submission_id_submission_id__in=submission_ids)
+        qs
         .values("feedback_id_feedback__submission_id_submission_id")
         .annotate(avg_score=models.Avg("feedback_item_score"))
     )
@@ -109,7 +123,14 @@ def _score_map_for_submissions(submission_ids: list[int]) -> dict[int, float]:
     }
 
 
-def _average_feedback_score(submission_ids: list[int] | None = None) -> float | None:
+def _average_feedback_score(submission_ids: list[int] | None = None, *, published_only: bool = False) -> float | None:
+    if published_only:
+        qs = Feedback.objects.filter(status="published", final_score__isnull=False)
+        if submission_ids is not None:
+            if not submission_ids:
+                return None
+            qs = qs.filter(submission_id_submission_id__in=submission_ids)
+        return _to_float(qs.aggregate(avg=models.Avg("final_score"))["avg"])
     qs = FeedbackItem.objects.all()
     if submission_ids is not None:
         if not submission_ids:
@@ -125,7 +146,7 @@ def _build_class_overview_item(class_obj: Class) -> ClassOverviewOut:
     class_submission_ids = list(class_submissions.values_list("submission_id", flat=True))
 
     student_count = Enrollment.objects.filter(class_id_class=class_obj).count()
-    pending_reviews = class_submissions.filter(feedback__isnull=True).count()
+    pending_reviews = class_submissions.exclude(feedback__status="published").count()
 
     return ClassOverviewOut(
         id=class_obj.class_id,
@@ -133,7 +154,7 @@ def _build_class_overview_item(class_obj: Class) -> ClassOverviewOut:
         unitName=class_obj.unit_id_unit.unit_name if class_obj.unit_id_unit else None,
         studentCount=student_count,
         essayCount=len(class_submission_ids),
-        avgScore=_average_feedback_score(class_submission_ids),
+        avgScore=_average_feedback_score(class_submission_ids, published_only=True),
         pendingReviews=pending_reviews,
     )
 
@@ -145,9 +166,9 @@ def _build_student_dashboard_payload(user: User) -> StudentDashboardOut:
         .order_by("-submission_time")
     )
     submission_ids = [submission.submission_id for submission in submissions]
-    score_map = _score_map_for_submissions(submission_ids)
+    score_map = _score_map_for_submissions(submission_ids, published_only=True)
     feedback_submission_ids = set(
-        Feedback.objects.filter(submission_id_submission_id__in=submission_ids).values_list(
+        Feedback.objects.filter(submission_id_submission_id__in=submission_ids, status="published").values_list(
             "submission_id_submission_id", flat=True
         )
     )
@@ -200,7 +221,7 @@ def _build_student_dashboard_payload(user: User) -> StudentDashboardOut:
         )
 
     recent_feedbacks = list(
-        Feedback.objects.filter(submission_id_submission_id__in=submission_ids)
+        Feedback.objects.filter(submission_id_submission_id__in=submission_ids, status="published")
         .select_related("submission_id_submission__task_id_task__unit_id_unit")
         .order_by("-submission_id_submission__submission_time")[:6]
     )
@@ -223,7 +244,7 @@ def _build_student_dashboard_payload(user: User) -> StudentDashboardOut:
     activities.sort(key=lambda item: item.timestamp, reverse=True)
 
     total_essays = len(submissions)
-    average_score = _average_feedback_score(submission_ids)
+    average_score = _average_feedback_score(submission_ids, published_only=True)
     pending_grading = sum(1 for submission in submissions if submission.submission_id not in feedback_submission_ids)
 
     return StudentDashboardOut(
@@ -243,13 +264,20 @@ def _build_student_dashboard_payload(user: User) -> StudentDashboardOut:
 
 
 def _build_lecturer_dashboard_payload(user: User) -> LecturerDashboardOut:
+    lead_unit_ids = list(
+        CourseLeadAssignment.objects.filter(user_id_user=user).values_list("unit_id_unit_id", flat=True)
+    )
     assigned_classes = list(
         Class.objects.filter(
-            class_id__in=TeachingAssn.objects.filter(user_id_user=user).values_list("class_id_class_id", flat=True)
-        ).select_related("unit_id_unit")
+            Q(class_id__in=TeachingAssn.objects.filter(user_id_user=user).values_list("class_id_class_id", flat=True))
+            | Q(unit_id_unit_id__in=lead_unit_ids)
+        ).select_related("unit_id_unit").distinct()
     )
     assigned_class_ids = [class_obj.class_id for class_obj in assigned_classes]
-    taught_unit_ids = [class_obj.unit_id_unit_id for class_obj in assigned_classes if class_obj.unit_id_unit_id]
+    taught_unit_ids = set(lead_unit_ids)
+    taught_unit_ids.update(
+        class_obj.unit_id_unit_id for class_obj in assigned_classes if class_obj.unit_id_unit_id
+    )
 
     submission_scope = Q(task_id_task__class_id_class_id__in=assigned_class_ids)
     if taught_unit_ids:
@@ -269,14 +297,15 @@ def _build_lecturer_dashboard_payload(user: User) -> LecturerDashboardOut:
     relevant_submissions = list(relevant_submissions_qs)
     relevant_submission_ids = [submission.submission_id for submission in relevant_submissions]
 
-    feedback_submission_ids = set(
+    feedback_by_submission = dict(
         Feedback.objects.filter(submission_id_submission_id__in=relevant_submission_ids).values_list(
-            "submission_id_submission_id", flat=True
+            "submission_id_submission_id", "status"
         )
     )
 
     pending_submissions = [
-        submission for submission in relevant_submissions if submission.submission_id not in feedback_submission_ids
+        submission for submission in relevant_submissions
+        if feedback_by_submission.get(submission.submission_id) != "published"
     ]
 
     classes = [_build_class_overview_item(class_obj) for class_obj in assigned_classes]
@@ -288,11 +317,15 @@ def _build_lecturer_dashboard_payload(user: User) -> LecturerDashboardOut:
         grading_queue.append(
             {
                 "submissionId": submission.submission_id,
+                "classId": task.class_id_class_id,
                 "studentName": student_name,
                 "essayTitle": task.task_title or f"Essay #{submission.submission_id}",
                 "submittedAt": submission.submission_time,
                 "dueDate": task.task_due_datetime,
-                "status": "pending_review",
+                "status": (
+                    "ai_graded" if feedback_by_submission.get(submission.submission_id) == "ai_draft"
+                    else "pending_review"
+                ),
                 "aiScore": None,
             }
         )
@@ -312,7 +345,7 @@ def _build_lecturer_dashboard_payload(user: User) -> LecturerDashboardOut:
         )
 
     recent_feedbacks = list(
-        Feedback.objects.filter(user_id_user=user)
+        Feedback.objects.filter(user_id_user=user, status__in=("lecturer_reviewed", "published"))
         .select_related("submission_id_submission__task_id_task")
         .order_by("-submission_id_submission__submission_time")[:6]
     )
@@ -332,11 +365,11 @@ def _build_lecturer_dashboard_payload(user: User) -> LecturerDashboardOut:
 
     activities.sort(key=lambda item: item.timestamp, reverse=True)
 
-    avg_score = _average_feedback_score(relevant_submission_ids)
+    avg_score = _average_feedback_score(relevant_submission_ids, published_only=True)
     today = timezone.now().date()
     reviewed_today = Feedback.objects.filter(
-        user_id_user=user,
-        submission_id_submission__submission_time__date=today,
+        reviewed_by=user,
+        reviewed_at__date=today,
     ).count()
 
     return LecturerDashboardOut(
@@ -358,7 +391,7 @@ def _build_lecturer_dashboard_payload(user: User) -> LecturerDashboardOut:
 
 def _build_admin_dashboard_payload(user: User) -> AdminDashboardOut:
     total_submissions = Submission.objects.count()
-    pending_grading = Submission.objects.filter(feedback__isnull=True).count()
+    pending_grading = Submission.objects.exclude(feedback__status="published").count()
 
     recent_submissions = list(
         Submission.objects.select_related("task_id_task__unit_id_unit", "user_id_user").order_by("-submission_time")[
@@ -370,7 +403,7 @@ def _build_admin_dashboard_payload(user: User) -> AdminDashboardOut:
     active_students = User.objects.filter(user_role="student", is_active=True).count()
     active_lecturers = User.objects.filter(user_role="lecturer", is_active=True).count()
     total_classes = Class.objects.count()
-    average_score = _average_feedback_score(None)
+    average_score = _average_feedback_score(None, published_only=True)
 
     db_status = "healthy"
     try:
@@ -396,7 +429,7 @@ def _build_admin_dashboard_payload(user: User) -> AdminDashboardOut:
         )
 
     recent_feedbacks = list(
-        Feedback.objects.select_related("submission_id_submission__task_id_task").order_by(
+        Feedback.objects.filter(status="published").select_related("submission_id_submission__task_id_task").order_by(
             "-submission_id_submission__submission_time"
         )[:8]
     )
@@ -485,5 +518,3 @@ def get_dashboard_legacy(request: HttpRequest) -> StudentDashboardOut | Lecturer
     payload = _build_student_dashboard_payload(current_user)
     payload.classes = []
     return payload
-
-

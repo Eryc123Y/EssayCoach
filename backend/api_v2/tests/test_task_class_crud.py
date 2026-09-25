@@ -9,7 +9,7 @@ import pytest
 from django.utils import timezone
 
 from api_v2.utils.jwt_auth import create_jwt_pair
-from core.models import Class, Enrollment, MarkingRubric, Task, Unit, User
+from core.models import Class, Enrollment, MarkingRubric, RubricItem, RubricLevelDesc, Task, Unit, User
 
 # =============================================================================
 # Fixtures
@@ -93,6 +93,12 @@ def test_update_task_all_fields(client, admin_token, admin_user):
     """Admin can update all task fields."""
     unit = Unit.objects.create(unit_id="TEST002", unit_name="Test Unit 2")
     rubric = MarkingRubric.objects.create(rubric_id=2, user_id_user=admin_user, rubric_desc="Description 2")
+    item = RubricItem.objects.create(
+        rubric_id_marking_rubric=rubric, rubric_item_name="Argument", rubric_item_weight=100
+    )
+    RubricLevelDesc.objects.create(
+        rubric_item_id_rubric_item=item, level_min_score=0, level_max_score=10, level_desc="Argument quality"
+    )
     task = Task.objects.create(
         unit_id_unit=unit,
         rubric_id_marking_rubric=rubric,
@@ -362,8 +368,8 @@ def test_get_my_classes_returns_new_fields(client, student_token, student):
 
 
 @pytest.mark.django_db
-def test_leave_class_student(client, student_token, student):
-    """Student can leave a class."""
+def test_leave_class_student(client, student_token, admin_token, student):
+    """A student remains enrolled until teaching staff approve the request."""
     unit = Unit.objects.create(unit_id="UNIT006", unit_name="Test Unit 6")
     class_obj = Class.objects.create(
         unit_id_unit=unit,
@@ -372,11 +378,22 @@ def test_leave_class_student(client, student_token, student):
     )
     enrollment = Enrollment.objects.create(user_id_user=student, class_id_class=class_obj, unit_id_unit=unit)
 
-    response = client.delete(
+    base = f"/api/v2/core/classes/{class_obj.class_id}/leave-requests/"
+    assert client.delete(
         f"/api/v2/core/classes/{class_obj.class_id}/leave/", HTTP_AUTHORIZATION=f"Bearer {student_token}"
+    ).status_code == 410
+    response = client.post(
+        base, {"reason": "Schedule changed"}, content_type="application/json",
+        HTTP_AUTHORIZATION=f"Bearer {student_token}",
     )
     assert response.status_code == 200
-
+    assert Enrollment.objects.filter(enrollment_id=enrollment.enrollment_id).exists()
+    decision = client.post(
+        f"{base}{response.json()['id']}/decision/", {"approve": True}, content_type="application/json",
+        HTTP_AUTHORIZATION=f"Bearer {admin_token}",
+    )
+    assert decision.status_code == 200
+    assert decision.json()["status"] == "approved"
     assert not Enrollment.objects.filter(enrollment_id=enrollment.enrollment_id).exists()
 
     class_obj.refresh_from_db()
@@ -387,12 +404,13 @@ def test_leave_class_student(client, student_token, student):
 
 @pytest.mark.django_db
 def test_leave_class_lecturer_forbidden(client, admin_token):
-    """Lecturer cannot leave a class (only students can)."""
+    """Staff cannot submit a student leave request."""
     unit = Unit.objects.create(unit_id="UNIT007", unit_name="Test Unit 7")
     class_obj = Class.objects.create(unit_id_unit=unit, class_name="Test", class_size=0)
 
-    response = client.delete(
-        f"/api/v2/core/classes/{class_obj.class_id}/leave/", HTTP_AUTHORIZATION=f"Bearer {admin_token}"
+    response = client.post(
+        f"/api/v2/core/classes/{class_obj.class_id}/leave-requests/", {}, content_type="application/json",
+        HTTP_AUTHORIZATION=f"Bearer {admin_token}",
     )
     assert response.status_code == 403
 
@@ -405,11 +423,12 @@ def test_leave_class_not_enrolled(client, student_token):
     unit = Unit.objects.create(unit_id="UNIT008", unit_name="Test Unit 8")
     class_obj = Class.objects.create(unit_id_unit=unit, class_name="Not Enrolled", class_size=0)
 
-    response = client.delete(
-        f"/api/v2/core/classes/{class_obj.class_id}/leave/", HTTP_AUTHORIZATION=f"Bearer {student_token}"
+    response = client.post(
+        f"/api/v2/core/classes/{class_obj.class_id}/leave-requests/", {}, content_type="application/json",
+        HTTP_AUTHORIZATION=f"Bearer {student_token}",
     )
-    assert response.status_code == 400
-    assert "Not enrolled" in response.json()["detail"]
+    assert response.status_code == 403
+    assert "not enrolled" in response.json()["detail"]
 
     class_obj.delete()
 

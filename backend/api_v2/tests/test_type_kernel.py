@@ -698,19 +698,17 @@ class TestCoreSchemaEnumFields:
 class TestAuthSchemaEnumFields:
     """Auth schemas should use enum types after migration."""
 
-    def test_registration_accepts_enum_role(self):
+    def test_registration_requires_invitation_instead_of_role(self):
         from api_v2.auth.schemas import UserRegistrationIn
-        from api_v2.types.enums import UserRole
 
         u = UserRegistrationIn(
-            email="a@b.com",
+            invitation_token="x" * 32,
             password="12345678",
             password_confirm="12345678",
-            role=UserRole.STUDENT,
         )
-        assert u.role == "student"
+        assert u.invitation_token == "x" * 32
 
-    def test_registration_rejects_invalid_role(self):
+    def test_registration_rejects_missing_invitation(self):
         from api_v2.auth.schemas import UserRegistrationIn
 
         with pytest.raises(ValidationError):

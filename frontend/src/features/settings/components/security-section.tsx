@@ -14,6 +14,8 @@ import {
 } from '@tabler/icons-react';
 import { formatDistanceToNow } from 'date-fns';
 import type { SessionInfo, LoginHistoryItem } from '@/service/api/v2/types';
+import { usePreferences } from '@/components/layout/preference-provider';
+import { zhCN } from 'date-fns/locale';
 
 interface SecuritySectionProps {
   sessions: SessionInfo[];
@@ -39,12 +41,15 @@ export function SecuritySection({
   isLoadingHistory,
   onRevokeSession,
 }: SecuritySectionProps) {
+  const { locale } = usePreferences();
+  const t = (en: string, zh: string) => locale === 'zh' ? zh : en;
+  const ago = (date: string) => formatDistanceToNow(new Date(date), { addSuffix: true, locale: locale === 'zh' ? zhCN : undefined });
   if (isLoadingSessions || isLoadingHistory) {
     return (
       <div className="space-y-6">
         <Card>
           <CardHeader>
-            <CardTitle>Active Sessions</CardTitle>
+            <CardTitle>{t('Active sessions', '活跃会话')}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="animate-pulse space-y-4">
@@ -62,7 +67,7 @@ export function SecuritySection({
         </Card>
         <Card>
           <CardHeader>
-            <CardTitle>Login History</CardTitle>
+            <CardTitle>{t('Login history', '登录记录')}</CardTitle>
           </CardHeader>
           <CardContent>
             <div className="animate-pulse space-y-4">
@@ -88,14 +93,14 @@ export function SecuritySection({
       <Card>
         <CardHeader>
           <CardTitle className="text-lg font-semibold">
-            Active Sessions
+            {t('Active sessions', '活跃会话')}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
           {sessions.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-8 text-center">
               <IconDeviceDesktop className="mb-4 size-12 text-muted-foreground" />
-              <p className="text-muted-foreground">No active sessions found</p>
+              <p className="text-muted-foreground">{t('No active sessions found', '暂无活跃会话')}</p>
             </div>
           ) : (
             sessions.map((session) => (
@@ -115,20 +120,18 @@ export function SecuritySection({
                       {session.is_current && (
                         <Badge variant="default" className="bg-green-500">
                           <IconCheck className="mr-1 size-3" />
-                          Current
+                          {t('Current', '当前')}
                         </Badge>
                       )}
                     </div>
                     <div className="mt-1 flex items-center gap-4 text-sm text-muted-foreground">
                       <span className="flex items-center gap-1">
                         <IconMapPin className="size-3" />
-                        {session.ip_address || 'Unknown location'}
+                        {session.ip_address || t('Unknown location', '未知位置')}
                       </span>
                       <span className="flex items-center gap-1">
                         <IconClock className="size-3" />
-                        {formatDistanceToNow(new Date(session.last_activity), {
-                          addSuffix: true,
-                        })}
+                        {ago(session.last_activity)}
                       </span>
                     </div>
                   </div>
@@ -141,7 +144,7 @@ export function SecuritySection({
                     className="text-destructive hover:text-destructive"
                   >
                     <IconTrash className="mr-2 size-4" />
-                    Revoke
+                    {t('Revoke', '撤销')}
                   </Button>
                 )}
               </div>
@@ -152,10 +155,9 @@ export function SecuritySection({
             <div className="flex items-start gap-2 rounded-md bg-amber-50 p-3 text-amber-700 dark:bg-amber-950 dark:text-amber-300">
               <IconAlertTriangle className="mt-0.5 size-4 flex-shrink-0" />
               <div className="text-sm">
-                <p className="font-medium">Security Tip</p>
+                <p className="font-medium">{t('Security tip', '安全提示')}</p>
                 <p>
-                  Revoke sessions you do not recognize. You will remain logged
-                  in on your current device.
+                  {t('Revoke sessions you do not recognize. Your current session stays active.', '撤销不认识的会话；当前会话会保持登录。')}
                 </p>
               </div>
             </div>
@@ -166,14 +168,14 @@ export function SecuritySection({
       {/* Login History */}
       <Card>
         <CardHeader>
-          <CardTitle className="text-lg font-semibold">Login History</CardTitle>
+          <CardTitle className="text-lg font-semibold">{t('Login history', '登录记录')}</CardTitle>
         </CardHeader>
         <CardContent>
           <Separator className="mb-4" />
           {loginHistory.length === 0 ? (
             <div className="flex flex-col items-center justify-center py-8 text-center">
               <IconClock className="mb-4 size-12 text-muted-foreground" />
-              <p className="text-muted-foreground">No login history available</p>
+              <p className="text-muted-foreground">{t('No login history available', '暂无登录记录')}</p>
             </div>
           ) : (
             <div className="space-y-3">
@@ -198,18 +200,16 @@ export function SecuritySection({
                     </div>
                     <div>
                       <p className="font-medium">
-                        {login.device || 'Unknown device'}
+                        {login.device || t('Unknown device', '未知设备')}
                       </p>
                       <p className="text-sm text-muted-foreground">
-                        {login.ip_address || 'Unknown IP'}
+                        {login.ip_address || t('Unknown IP', '未知 IP')}
                       </p>
                     </div>
                   </div>
                   <div className="text-right">
                     <p className="text-sm font-medium">
-                      {formatDistanceToNow(new Date(login.login_time), {
-                        addSuffix: true,
-                      })}
+                      {ago(login.login_time)}
                     </p>
                     <p
                       className={`text-xs ${
@@ -218,7 +218,7 @@ export function SecuritySection({
                           : 'text-red-600 dark:text-red-400'
                       }`}
                     >
-                      {login.success ? 'Success' : 'Failed'}
+                      {login.success ? t('Success', '成功') : t('Failed', '失败')}
                     </p>
                   </div>
                 </div>

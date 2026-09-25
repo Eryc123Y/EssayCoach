@@ -19,6 +19,7 @@ import {
 } from '@tabler/icons-react';
 import type { UserPreferences } from '@/service/api/v2/types';
 import { toast } from 'sonner';
+import { usePreferences } from '@/components/layout/preference-provider';
 
 interface DisplaySectionProps {
   preferences: UserPreferences | null;
@@ -29,13 +30,7 @@ interface DisplaySectionProps {
 
 const LANGUAGES = [
   { value: 'en', label: 'English' },
-  { value: 'zh-CN', label: '简体中文 (Simplified Chinese)' },
-  { value: 'zh-TW', label: '繁體中文 (Traditional Chinese)' },
-  { value: 'es', label: 'Español (Spanish)' },
-  { value: 'fr', label: 'Français (French)' },
-  { value: 'de', label: 'Deutsch (German)' },
-  { value: 'ja', label: '日本語 (Japanese)' },
-  { value: 'ko', label: '한국어 (Korean)' },
+  { value: 'zh', label: '简体中文 (Simplified Chinese)' },
 ];
 
 const THEMES = [
@@ -52,6 +47,8 @@ export function DisplaySection({
   isSaving,
   onUpdatePreferences,
 }: DisplaySectionProps) {
+  const { locale, applyLocale, applyTheme } = usePreferences();
+  const t = (en: string, zh: string) => locale === 'zh' ? zh : en;
   const [localPrefs, setLocalPrefs] = useState<Partial<UserPreferences>>({});
   const [hasChanges, setHasChanges] = useState(false);
 
@@ -59,7 +56,7 @@ export function DisplaySection({
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Display Preferences</CardTitle>
+          <CardTitle>{t('Display preferences', '显示偏好')}</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="animate-pulse space-y-4">
@@ -86,12 +83,14 @@ export function DisplaySection({
   const handleSave = async () => {
     try {
       await onUpdatePreferences(localPrefs);
+      if (localPrefs.language === 'en' || localPrefs.language === 'zh') applyLocale(localPrefs.language);
+      if (localPrefs.theme) applyTheme(localPrefs.theme);
       setLocalPrefs({});
       setHasChanges(false);
-      toast.success('Display preferences updated successfully');
+      toast.success(t('Display preferences updated', '显示偏好已更新'));
     } catch (error) {
       console.error('Failed to update preferences:', error);
-      toast.error('Failed to update display preferences');
+      toast.error(t('Could not update display preferences', '无法更新显示偏好'));
     }
   };
 
@@ -104,7 +103,7 @@ export function DisplaySection({
     <Card>
       <CardHeader>
         <CardTitle className="text-lg font-semibold">
-          Display Preferences
+          {t('Display preferences', '显示偏好')}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
@@ -115,9 +114,9 @@ export function DisplaySection({
               <IconLanguage className="size-5 text-blue-600 dark:text-blue-400" />
             </div>
             <div>
-              <p className="font-medium">Language</p>
+              <p className="font-medium">{t('Language', '语言')}</p>
               <p className="text-sm text-muted-foreground">
-                Select your preferred language
+                {t('Select your preferred language', '选择界面语言')}
               </p>
             </div>
           </div>
@@ -126,7 +125,7 @@ export function DisplaySection({
             onValueChange={handleLanguageChange}
           >
             <SelectTrigger className="w-full">
-              <SelectValue placeholder="Select language" />
+              <SelectValue placeholder={t('Select language', '选择语言')} />
             </SelectTrigger>
             <SelectContent>
               {LANGUAGES.map((lang) => (
@@ -147,9 +146,9 @@ export function DisplaySection({
               <IconMoon className="size-5 text-purple-600 dark:text-purple-400" />
             </div>
             <div>
-              <p className="font-medium">Theme</p>
+              <p className="font-medium">{t('Theme', '主题')}</p>
               <p className="text-sm text-muted-foreground">
-                Choose your preferred color theme
+                {t('Choose your preferred color theme', '选择界面颜色主题')}
               </p>
             </div>
           </div>
@@ -178,7 +177,7 @@ export function DisplaySection({
                       isSelected ? 'text-primary' : 'text-muted-foreground'
                     }`}
                   >
-                    {theme.label}
+                    {locale === 'zh' ? { light: '浅色', dark: '深色', system: '跟随系统' }[theme.value] : theme.label}
                   </span>
                 </button>
               );
@@ -189,10 +188,10 @@ export function DisplaySection({
         {hasChanges && (
           <div className="flex gap-2 pt-4">
             <Button onClick={handleSave} disabled={isSaving}>
-              {isSaving ? 'Saving...' : 'Save Changes'}
+              {isSaving ? t('Saving…', '保存中…') : t('Save changes', '保存更改')}
             </Button>
             <Button variant="outline" onClick={handleReset}>
-              Reset
+              {t('Reset', '重置')}
             </Button>
           </div>
         )}

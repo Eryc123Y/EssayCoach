@@ -1,6 +1,6 @@
 # AI agent migration: Dify → LangChain / LangGraph
 
-This document describes the planned migration of EssayCoach’s essay analysis and revision chat from **Dify** to a **LangGraph**-centric stack (with LangChain agents where appropriate). It is the working design reference for implementation; update it as decisions land.
+This document describes the planned migration of EssayCoach’s essay analysis and revision chat from **Dify** to a **LangGraph**-centric stack. It is the working design reference for implementation; update it as decisions land. Sections marked as targets are not claims about the current code.
 
 ---
 
@@ -65,7 +65,11 @@ This document describes the planned migration of EssayCoach’s essay analysis a
 
 ### Provider boundary
 
-- Introduce an **implementation** behind today’s orchestration (replace `**DifyClient`** usage in views) so **URLs and schemas** stay stable.
+- Keep the essay workflow in Python **LangGraph** and call a provider-neutral model adapter from bounded graph nodes. The initial adapter uses the **Python Codex SDK**, a local ChatGPT sign-in, and a configurable Luna model; later adapters can use an API or another provider without changing graph steps or the public essay result contract.
+- Keep the existing `EssayAgentInterface` as the application-facing workflow boundary. Add a narrower model-execution boundary inside the graph so `provider_name` identifies the execution provider rather than confusing it with the LangGraph orchestrator.
+- The Codex SDK is the initial **local/private runtime choice**, subject to an end-to-end spike for structured output, source capture, cancellation, timeouts, and concurrent runs. Do not infer that the current API-key-based `LangGraphEssayAgent` already uses it.
+- Replace `DifyClient` usage in views progressively while keeping **URLs and schemas** stable.
+- Store the AI result as a draft. Django/Postgres owns the lecturer's review and edits, the course lead's confirmation, and publication; a model run cannot publish a formal grade.
 - Long term, **OpenAPI** descriptions on Ninja should say “LangGraph” instead of “Dify” where accurate.
 
 ---
@@ -140,8 +144,21 @@ The **typed essay result** the UI relies on is `**EssayAnalysisOut`**: `overall_
 
 ## 7. Observability and quality
 
-- **Tracing**: LangSmith (or equivalent) for graph steps and failures.
-- **Evals**: golden essays / schema checks on `**EssayAnalysisOut`**; optional LLM-as-judge with human spot checks for rubric adherence.
+Observability is part of the first working AI module, including the Codex SDK spike, rather than a later dashboard task. Keep instrumentation provider-neutral and usable in the local/private deployment. OpenTelemetry spans and structured JSON logs are the default direction; a local OTLP collector/trace viewer and metrics endpoint can be added when the worker is wired. LangSmith remains an optional exporter, not a dependency for local use.
+
+### Run and trace contract
+
+- Generate one application `run_id` per essay-analysis request. Carry it through the Ninja request, background job, LangGraph nodes, provider call, fact-check searches, persisted AI draft, and error response. Record `trace_id` alongside it when tracing is enabled. Keep Codex thread/turn IDs as provider metadata so a run can be diagnosed without exposing them in the product API.
+- Persist a run record with submission/rubric references and rubric version, provider/model and prompt/schema versions, locale, status, start/end timestamps, node-level attempts, error category, and available token/usage fields. A process restart must not erase the status endpoint’s result. Mark unavailable provider usage as unknown rather than zero.
+- Span the main stages separately: context/rubric loading, writing analysis, claim extraction, source retrieval, claim verification, rubric scoring, schema/score validation, and draft persistence. Record duration and outcome for each. Capture query/source IDs and URLs for fact checking, plus whether each claim was supported, contradicted, or unresolved. Source evidence belongs in the run record so reviewers can open it; do not rely on a trace alone as evidence.
+- Log structured identifiers, durations, statuses, retry counts, and typed failure reasons. Do not put raw essay text, full prompts, credentials, or model responses into general logs or trace attributes. Store reviewable feedback and evidence in access-controlled application records.
+- Record a separate append-only audit event for each teacher edit, approval, and publication, linked to the AI draft/run. Preserve the original AI proposal, editor identity, timestamp, and changed fields so the final grade can be explained.
+
+### Operational signals and quality checks
+
+- Track run success/failure/cancellation, per-stage latency, queue age, retries, schema-validation failures, missing citations, fact-check coverage, and provider usage/rate-limit failures. Compare AI draft scores with approved scores by rubric criterion and language to find systematic disagreement; use aggregate views for dashboards.
+- Maintain a small bilingual set of rubric/essay fixtures for schema, scoring-arithmetic, citation, and teacher-review checks. Before switching a provider or model, replay these fixtures and review score/feedback differences. Optional model-as-judge output is supplementary to teacher spot checks.
+- The Codex spike passes only when one bilingual sample can be traced end to end, yields a validated `EssayAnalysisOut`, preserves source references for verified claims, and surfaces a simulated provider failure with a useful run status. A failed spike leaves the provider boundary intact while the execution adapter is reconsidered.
 
 ---
 
@@ -150,8 +167,8 @@ The **typed essay result** the UI relies on is `**EssayAnalysisOut`**: `overall_
 
 | Phase                      | Deliverable                                                                                          |
 | -------------------------- | ---------------------------------------------------------------------------------------------------- |
-| **0 — Spike**              | One LangGraph for analyze; same `**WorkflowRunOut`** / `**EssayAnalysisOut**`; feature flag.         |
-| **1 — Production analyze** | Replace Dify for blocking path; status endpoint wired; env cleanup (`DIFY_*` deprecation plan).      |
+| **0 — Spike**              | One LangGraph analysis flow with the Codex SDK adapter, Luna, structured output, source capture, and correlated trace/run record; same `WorkflowRunOut` / `EssayAnalysisOut` contract. |
+| **1 — Production analyze** | Replace Dify for analysis; durable status endpoint, stage telemetry, teacher-review draft boundary, and `DIFY_*` retirement. |
 | **2 — Chat**               | Real chat graph/agent; optional streaming; frontend replaces mock/`dify.ts` naming where applicable. |
 | **3 — Memory harness**     | Lecturer correction events → stored policy / retrieval; class-scoped behavior.                       |
 
@@ -160,7 +177,7 @@ The **typed essay result** the UI relies on is `**EssayAnalysisOut`**: `overall_
 
 ## 9. Open decisions
 
-- Model provider(s) and fallbacks.
+- Which execution adapter to use if the Codex SDK spike cannot meet structured-output, source-capture, or concurrency needs. Luna is the initial model, with provider/model selection configurable per task.
 - **Streaming** transport for chat (SSE vs WebSocket) vs v1 full-message responses.
 - Whether `**WorkflowDataOut.outputs`** is formally typed as `**EssayAnalysisOut**` in OpenAPI for the run response.
 - Background worker vs synchronous request for long graphs.
@@ -216,4 +233,4 @@ class FactState(TypedDict):
 
 ---
 
-*Last updated: 2026-04-12 — draft for implementation planning.*
+*Last updated: 2026-09-25 — runtime and observability decisions recorded; implementation pending.*

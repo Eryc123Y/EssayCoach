@@ -1,6 +1,9 @@
 from __future__ import annotations
 
+from django.db import transaction
+from django.db.models import Q
 from django.http import HttpRequest
+from django.utils import timezone
 from ninja import Router
 from ninja.errors import HttpError
 
@@ -12,8 +15,15 @@ from api_v2.types.ids import (
     SubmissionId,
 )
 from api_v2.utils.auth import JWTAuth
+from api_v2.utils.course_scope import visible_classes
 from api_v2.utils.permissions import IsAdminOrLecturer, has_role
+from core.achievements import award_submission_milestones
+from core.assessment import AssessmentError, rubric_snapshot_for_feedback
 from core.models import (
+    AIJob,
+    CourseLeadAssignment,
+    DeadlineExtension,
+    Enrollment,
     Feedback,
     FeedbackItem,
     RubricItem,
@@ -21,6 +31,7 @@ from core.models import (
     Task,
     User,
 )
+from core.notifications import notify_submission
 
 from ..schemas import (
     FeedbackFilterParams,
@@ -57,20 +68,46 @@ def _check_admin_or_lecturer(request: HttpRequest) -> None:
     IsAdminOrLecturer().check(request)
 
 
-def _check_submission_write_permission(request: HttpRequest, submission: Submission) -> None:
-    user = request.auth
-    if has_role(user, [UserRole.ADMIN, UserRole.LECTURER]):
+def _visible_submissions(user: User):
+    if user.user_role == "admin":
+        return Submission.objects.all()
+    if user.user_role == "student":
+        return Submission.objects.filter(user_id_user=user)
+    if user.user_role == "lecturer":
+        class_ids = visible_classes(user).values_list("class_id", flat=True)
+        lead_units = CourseLeadAssignment.objects.filter(user_id_user=user).values_list(
+            "unit_id_unit_id", flat=True
+        )
+        return Submission.objects.filter(
+            Q(task_id_task__class_id_class_id__in=class_ids)
+            | Q(task_id_task__class_id_class__isnull=True, task_id_task__unit_id_unit_id__in=lead_units)
+        )
+    return Submission.objects.none()
+
+
+def _require_visible_submission(user: User, submission: Submission) -> None:
+    if not _visible_submissions(user).filter(pk=submission.pk).exists():
+        raise HttpError(403, "Submission is outside your course scope")
+
+
+def _require_staff_feedback_read(request: HttpRequest, feedback: Feedback) -> None:
+    if request.auth.user_role == "student":
+        if feedback.submission_id_submission.user_id_user_id != request.auth.pk:
+            raise HttpError(403, "Feedback is outside your scope")
+        if feedback.status != "published":
+            raise HttpError(403, "Formal feedback is unavailable before publication")
         return
-    if has_role(user, [UserRole.STUDENT]) and submission.user_id_user_id == user.user_id:
-        return
-    raise HttpError(403, "You do not have permission to modify this submission")
+    _require_visible_submission(request.auth, feedback.submission_id_submission)
 
 
 def _check_feedback_write_permission(request: HttpRequest, feedback: Feedback) -> None:
+    if feedback.status != "ai_pending":
+        raise HttpError(409, "AI drafts and reviewed assessments can be changed only through the review workflow")
     user = request.auth
     if has_role(user, [UserRole.ADMIN]):
         return
     if has_role(user, [UserRole.LECTURER]) and feedback.user_id_user_id == user.user_id:
+        _require_visible_submission(user, feedback.submission_id_submission)
         return
     raise HttpError(403, "You do not have permission to modify this feedback")
 
@@ -82,63 +119,85 @@ def _check_feedback_write_permission(request: HttpRequest, feedback: Feedback) -
 
 @router.get("/submissions/", response=list[SubmissionOut])
 def list_submissions(request: HttpRequest, filters: SubmissionFilterParams = SubmissionFilterParams()):
-    qs = filters.filter(Submission.objects.all())
+    qs = filters.filter(_visible_submissions(request.auth))
     return paginate(qs, PaginationParams())["results"]
 
 
 @router.post("/submissions/", response=SubmissionOut)
 def create_submission(request: HttpRequest, data: SubmissionIn):
     request_user = request.auth
-    if has_role(request_user, [UserRole.STUDENT]) and request_user.user_id != data.user_id_user:
-        raise HttpError(403, "Students can only create submissions for themselves")
+    if request_user.user_role != "student" or request_user.user_id != data.user_id_user:
+        raise HttpError(403, "Students can submit only their own work")
 
-    try:
-        task = Task.objects.get(task_id=data.task_id_task)
-    except Task.DoesNotExist:
-        raise HttpError(400, "Task not found")
+    with transaction.atomic():
+        try:
+            task = Task.objects.select_for_update().get(task_id=data.task_id_task)
+        except Task.DoesNotExist:
+            raise HttpError(400, "Task not found")
 
-    try:
-        user = User.objects.get(user_id=data.user_id_user)
-    except User.DoesNotExist:
-        raise HttpError(400, "User not found")
+        if task.task_status != "published":
+            raise HttpError(403, "This assignment is not open for submission")
+        extension = DeadlineExtension.objects.filter(task_id_task=task, user_id_user=request_user).first()
+        effective_deadline = max(
+            task.task_due_datetime,
+            extension.extended_deadline if extension else task.task_due_datetime,
+        )
+        if effective_deadline < timezone.now() and not task.task_allow_late_submission:
+            raise HttpError(403, "The submission deadline has passed")
+        enrollment = Enrollment.objects.filter(user_id_user=request_user, unit_id_unit=task.unit_id_unit)
+        if task.class_id_class is not None:
+            enrollment = enrollment.filter(class_id_class=task.class_id_class)
+        if not enrollment.exists():
+            raise HttpError(403, "You are not enrolled in this assignment's class")
+        existing_count = Submission.objects.filter(task_id_task=task, user_id_user=request_user).count()
+        if existing_count >= (2 if task.task_allow_resubmission else 1):
+            raise HttpError(409, "No further submissions are allowed for this assignment")
 
-    submission = Submission.objects.create(
-        task_id_task=task,
-        user_id_user=user,
-        submission_txt=data.submission_txt,
-    )
-    return submission
+        submission = Submission.objects.create(
+            task_id_task=task,
+            user_id_user=request_user,
+            submission_txt=data.submission_txt,
+        )
+        feedback = Feedback.objects.create(submission_id_submission=submission)
+        try:
+            feedback.rubric_snapshot = rubric_snapshot_for_feedback(feedback)
+            feedback.save(update_fields=["rubric_snapshot"])
+        except AssessmentError:
+            # Legacy tasks may lack a usable rubric. The durable job records a
+            # validation failure instead of fabricating a score.
+            pass
+        AIJob.objects.create(submission=submission)
+        award_submission_milestones(request_user)
+        notify_submission(submission)
+        return submission
 
 
 @router.get("/submissions/{submission_id}/", response=SubmissionOut)
 def get_submission(request: HttpRequest, submission_id: SubmissionId):
     try:
-        return Submission.objects.get(submission_id=submission_id)
+        submission = Submission.objects.get(submission_id=submission_id)
+        _require_visible_submission(request.auth, submission)
+        return submission
     except Submission.DoesNotExist:
         raise HttpError(404, "Submission not found")
 
 
 @router.put("/submissions/{submission_id}/", response=SubmissionOut)
 def update_submission(request: HttpRequest, submission_id: SubmissionId, data: SubmissionIn):
-    try:
-        submission = Submission.objects.get(submission_id=submission_id)
-        _check_submission_write_permission(request, submission)
-        submission.submission_txt = data.submission_txt
-        submission.save()
-        return submission
-    except Submission.DoesNotExist:
+    submission = Submission.objects.filter(pk=submission_id).first()
+    if submission is None:
         raise HttpError(404, "Submission not found")
+    _require_visible_submission(request.auth, submission)
+    raise HttpError(410, "Formal submissions are immutable; use a draft or revision workflow")
 
 
 @router.delete("/submissions/{submission_id}/", response=SuccessResponse)
 def delete_submission(request: HttpRequest, submission_id: SubmissionId) -> SuccessResponse:
-    try:
-        submission = Submission.objects.get(submission_id=submission_id)
-        _check_submission_write_permission(request, submission)
-        submission.delete()
-        return SuccessResponse(success=True)
-    except Submission.DoesNotExist:
+    submission = Submission.objects.filter(pk=submission_id).first()
+    if submission is None:
         raise HttpError(404, "Submission not found")
+    _require_visible_submission(request.auth, submission)
+    raise HttpError(410, "Formal submissions are retained for assessment audit")
 
 
 # =============================================================================
@@ -148,38 +207,28 @@ def delete_submission(request: HttpRequest, submission_id: SubmissionId) -> Succ
 
 @router.get("/feedbacks/", response=list[FeedbackOut])
 def list_feedbacks(request: HttpRequest, filters: FeedbackFilterParams = FeedbackFilterParams()):
-    qs = filters.filter(Feedback.objects.all())
+    if request.auth.user_role == "student":
+        qs = filters.filter(Feedback.objects.filter(
+            submission_id_submission__user_id_user=request.auth,
+            status="published",
+        ))
+        return paginate(qs, PaginationParams())["results"]
+    qs = filters.filter(Feedback.objects.filter(submission_id_submission__in=_visible_submissions(request.auth)))
     return paginate(qs, PaginationParams())["results"]
 
 
 @router.post("/feedbacks/", response=FeedbackOut)
 def create_feedback(request: HttpRequest, data: FeedbackIn):
     _check_admin_or_lecturer(request)
-    request_user = request.auth
-    if has_role(request_user, [UserRole.LECTURER]) and request_user.user_id != data.user_id_user:
-        raise HttpError(403, "Lecturers can only create feedback as themselves")
-
-    try:
-        submission = Submission.objects.get(submission_id=data.submission_id_submission)
-    except Submission.DoesNotExist:
-        raise HttpError(400, "Submission not found")
-
-    try:
-        user = User.objects.get(user_id=data.user_id_user)
-    except User.DoesNotExist:
-        raise HttpError(400, "User not found")
-
-    feedback = Feedback.objects.create(
-        submission_id_submission=submission,
-        user_id_user=user,
-    )
-    return feedback
+    raise HttpError(410, "Formal assessment is created automatically when an essay is submitted")
 
 
 @router.get("/feedbacks/{feedback_id}/", response=FeedbackOut)
 def get_feedback(request: HttpRequest, feedback_id: FeedbackId):
     try:
-        return Feedback.objects.get(feedback_id=feedback_id)
+        feedback = Feedback.objects.get(feedback_id=feedback_id)
+        _require_staff_feedback_read(request, feedback)
+        return feedback
     except Feedback.DoesNotExist:
         raise HttpError(404, "Feedback not found")
 
@@ -202,7 +251,15 @@ def delete_feedback(request: HttpRequest, feedback_id: FeedbackId) -> SuccessRes
 
 @router.get("/feedback-items/", response=list[FeedbackItemOut])
 def list_feedback_items(request: HttpRequest, filters: FeedbackItemFilterParams = FeedbackItemFilterParams()):
-    qs = filters.filter(FeedbackItem.objects.all())
+    if request.auth.user_role == "student":
+        qs = filters.filter(FeedbackItem.objects.filter(
+            feedback_id_feedback__submission_id_submission__user_id_user=request.auth,
+            feedback_id_feedback__status="published",
+        ))
+        return paginate(qs, PaginationParams())["results"]
+    qs = filters.filter(FeedbackItem.objects.filter(
+        feedback_id_feedback__submission_id_submission__in=_visible_submissions(request.auth)
+    ))
     return paginate(qs, PaginationParams())["results"]
 
 
@@ -233,7 +290,9 @@ def create_feedback_item(request: HttpRequest, data: FeedbackItemIn):
 @router.get("/feedback-items/{item_id}/", response=FeedbackItemOut)
 def get_feedback_item(request: HttpRequest, item_id: FeedbackItemId):
     try:
-        return FeedbackItem.objects.get(feedback_item_id=item_id)
+        item = FeedbackItem.objects.get(feedback_item_id=item_id)
+        _require_staff_feedback_read(request, item.feedback_id_feedback)
+        return item
     except FeedbackItem.DoesNotExist:
         raise HttpError(404, "Feedback item not found")
 

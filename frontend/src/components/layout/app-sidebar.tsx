@@ -46,10 +46,13 @@ import { usePathname, useRouter } from 'next/navigation';
 import * as React from 'react';
 import { Icons } from '../icons';
 import { OrgSwitcher } from '../org-switcher';
+import { usePreferences } from './preference-provider';
+import { navigationLabel } from '@/lib/navigation-labels';
 
 export default function AppSidebar() {
   const pathname = usePathname();
   const { user, classes, currentClass, setCurrentClass, logout } = useAuth();
+  const { locale } = usePreferences();
   const router = useRouter();
 
   // Filter nav items based on user role
@@ -108,7 +111,7 @@ export default function AppSidebar() {
       </SidebarHeader>
       <SidebarContent className='overflow-x-hidden'>
         <SidebarGroup>
-          <SidebarGroupLabel>Menu</SidebarGroupLabel>
+          <SidebarGroupLabel>{locale === 'zh' ? '菜单' : 'Menu'}</SidebarGroupLabel>
           <SidebarMenu>
             {filteredNavItems.map((item) => {
               const Icon = item.icon ? Icons[item.icon] : Icons.logo;
@@ -122,11 +125,11 @@ export default function AppSidebar() {
                   <SidebarMenuItem>
                     <CollapsibleTrigger asChild>
                       <SidebarMenuButton
-                        tooltip={item.title}
+                        tooltip={navigationLabel(item.title, locale)}
                         isActive={pathname === item.url}
                       >
                         {item.icon && <Icon />}
-                        <span>{item.title}</span>
+                        <span>{navigationLabel(item.title, locale)}</span>
                         <IconChevronRight className='ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90' />
                       </SidebarMenuButton>
                     </CollapsibleTrigger>
@@ -139,7 +142,7 @@ export default function AppSidebar() {
                               isActive={pathname === subItem.url}
                             >
                               <Link href={subItem.url}>
-                                <span>{subItem.title}</span>
+                                <span>{navigationLabel(subItem.title, locale)}</span>
                               </Link>
                             </SidebarMenuSubButton>
                           </SidebarMenuSubItem>
@@ -152,12 +155,12 @@ export default function AppSidebar() {
                 <SidebarMenuItem key={item.title}>
                   <SidebarMenuButton
                     asChild
-                    tooltip={item.title}
+                    tooltip={navigationLabel(item.title, locale)}
                     isActive={pathname === item.url}
                   >
                     <Link href={item.url}>
                       <Icon />
-                      <span>{item.title}</span>
+                      <span>{navigationLabel(item.title, locale)}</span>
                     </Link>
                   </SidebarMenuButton>
                 </SidebarMenuItem>
@@ -217,23 +220,23 @@ export default function AppSidebar() {
                     onClick={() => router.push('/dashboard/profile')}
                   >
                     <IconUserCircle className='mr-2 h-4 w-4' />
-                    Profile
+                    {navigationLabel('Profile', locale)}
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     onClick={() => router.push('/dashboard/settings')}
                   >
                     <IconSettings className='mr-2 h-4 w-4' />
-                    Settings
+                    {navigationLabel('Settings', locale)}
                   </DropdownMenuItem>
-                  <DropdownMenuItem>
+                  <DropdownMenuItem onClick={() => router.push('/dashboard/notifications')}>
                     <IconBell className='mr-2 h-4 w-4' />
-                    Notifications
+                    {navigationLabel('Notifications', locale)}
                   </DropdownMenuItem>
                 </DropdownMenuGroup>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={logout}>
                   <IconLogout className='mr-2 h-4 w-4' />
-                  Sign out
+                  {locale === 'zh' ? '退出登录' : 'Sign out'}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

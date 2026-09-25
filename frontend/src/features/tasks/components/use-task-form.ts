@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { classService, rubricService, taskService } from '@/service/api/v2';
-import type { ClassItem, RubricListItem, Task, TaskCreateInput } from '@/service/api/v2/types';
+import type { ClassItem, ClassCreatableUnit, RubricListItem, Task, TaskCreateInput } from '@/service/api/v2/types';
 
 type UseTaskFormInput = {
   taskId?: number;
@@ -12,7 +12,9 @@ type UseTaskFormInput = {
 
 type UseTaskFormOutput = {
   loading: boolean;
+  error: string | null;
   classes: ClassItem[];
+  units: ClassCreatableUnit[];
   rubrics: RubricListItem[];
   formData: TaskCreateInput;
   setFormData: React.Dispatch<React.SetStateAction<TaskCreateInput>>;
@@ -29,6 +31,7 @@ const defaultFormData: TaskCreateInput = {
   class_id_class: undefined,
   task_status: 'draft',
   task_allow_late_submission: false,
+  task_allow_resubmission: false,
 };
 
 function toInitialFormData(initialData?: Task): TaskCreateInput {
@@ -45,6 +48,7 @@ function toInitialFormData(initialData?: Task): TaskCreateInput {
     class_id_class: initialData.class_id_class || undefined,
     task_status: initialData.task_status,
     task_allow_late_submission: initialData.task_allow_late_submission,
+    task_allow_resubmission: initialData.task_allow_resubmission,
   };
 }
 
@@ -64,7 +68,9 @@ async function saveTask(args: {
 export function useTaskForm({ taskId, initialData }: UseTaskFormInput): UseTaskFormOutput {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [classes, setClasses] = useState<ClassItem[]>([]);
+  const [units, setUnits] = useState<ClassCreatableUnit[]>([]);
   const [rubrics, setRubrics] = useState<RubricListItem[]>([]);
   const [formData, setFormData] = useState<TaskCreateInput>(toInitialFormData(initialData));
 
@@ -75,14 +81,16 @@ export function useTaskForm({ taskId, initialData }: UseTaskFormInput): UseTaskF
   useEffect(() => {
     const loadData = async () => {
       try {
-        const [classesData, rubricsData] = await Promise.all([
+        const [classesData, unitsData, rubricsData] = await Promise.all([
           classService.listClasses(),
+          classService.listCreatableUnits(),
           rubricService.fetchRubricList({ page_size: 100 }),
         ]);
         setClasses(classesData);
+        setUnits(unitsData);
         setRubrics(rubricsData.results || rubricsData);
-      } catch (error) {
-        console.error('Failed to load form data:', error);
+      } catch {
+        setError('Could not load class and rubric options. Refresh and try again.');
       }
     };
 
@@ -93,18 +101,26 @@ export function useTaskForm({ taskId, initialData }: UseTaskFormInput): UseTaskF
     async (e: React.FormEvent) => {
       e.preventDefault();
       setLoading(true);
+      setError(null);
       try {
+        if (!formData.unit_id_unit || !formData.rubric_id_marking_rubric || !formData.task_due_datetime) {
+          setError('Choose a course, rubric, and due date before saving.');
+          return;
+        }
+        if (!units.some((unit) => unit.unit_id === formData.unit_id_unit) && !formData.class_id_class) {
+          setError('Choose a class for this course before saving.');
+          return;
+        }
         await saveTask({ taskId, initialData, formData });
         router.push('/dashboard/tasks');
-      } catch (error) {
-        console.error('Failed to save task:', error);
-        alert('Failed to save task. Please try again.');
+      } catch (cause) {
+        setError(cause instanceof Error ? cause.message : 'Failed to save task. Please try again.');
       } finally {
         setLoading(false);
       }
     },
-    [formData, initialData, router, taskId]
+    [formData, initialData, router, taskId, units]
   );
 
-  return { loading, classes, rubrics, formData, setFormData, handleSubmit };
+  return { loading, error, classes, units, rubrics, formData, setFormData, handleSubmit };
 }

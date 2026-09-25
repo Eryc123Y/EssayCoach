@@ -3,6 +3,8 @@
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import type { DashboardActivityItem } from '@/service/api/v2/types';
 import { formatDistanceToNow } from 'date-fns';
+import { zhCN } from 'date-fns/locale';
+import { usePreferences } from '@/components/layout/preference-provider';
 import {
   IconFile,
   IconMessage,
@@ -36,20 +38,23 @@ export function ActivityFeed({
   limit = 10,
   emptyMessage = 'No recent activity.',
 }: ActivityFeedProps) {
+  const { locale } = usePreferences();
   const limitedActivities = activities.slice(0, limit);
+  const heading = locale === 'zh' && title === 'Recent Activity' ? '最近活动' : title;
+  const empty = locale === 'zh' && emptyMessage === 'No recent activity.' ? '暂无最近活动。' : emptyMessage;
 
   return (
     <Card className="border-slate-200 bg-card shadow-sm dark:border-slate-800">
       <CardHeader>
-        <CardTitle className="text-lg font-semibold">{title}</CardTitle>
+        <CardTitle className="text-lg font-semibold">{heading}</CardTitle>
       </CardHeader>
       <CardContent>
         {limitedActivities.length === 0 ? (
-          <EmptyState message={emptyMessage} />
+          <EmptyState message={empty} />
         ) : (
           <div className="space-y-4">
             {limitedActivities.map((activity) => (
-              <ActivityItem key={activity.id} activity={activity} />
+              <ActivityItem key={`${activity.type}-${activity.id}`} activity={activity} />
             ))}
           </div>
         )}
@@ -67,10 +72,12 @@ interface ActivityItemProps {
 }
 
 function ActivityItem({ activity }: ActivityItemProps) {
+  const { locale } = usePreferences();
   const icon = getActivityIcon(activity.type);
   const bgColor = getActivityBgColor(activity.type);
   const timeAgo = formatDistanceToNow(new Date(activity.timestamp), {
     addSuffix: true,
+    locale: locale === 'zh' ? zhCN : undefined,
   });
 
   return (
@@ -80,13 +87,41 @@ function ActivityItem({ activity }: ActivityItemProps) {
       </div>
       <div className="flex-1 space-y-1">
         <div className="flex items-center justify-between">
-          <p className="text-sm font-medium leading-none">{activity.title}</p>
+          <p className="text-sm font-medium leading-none">{localizeActivityText(activity.title, locale)}</p>
           <span className="text-xs text-muted-foreground">{timeAgo}</span>
         </div>
-        <p className="text-sm text-muted-foreground">{activity.description}</p>
+        <p className="text-sm text-muted-foreground">{localizeActivityText(activity.description, locale)}</p>
       </div>
     </div>
   );
+}
+
+function localizeActivityText(value: string, locale: 'en' | 'zh'): string {
+  if (locale !== 'zh') return value;
+  const prefixes: Record<string, string> = {
+    'Submitted: ': '已提交：',
+    'Feedback received: ': '收到反馈：',
+    'New submission: ': '新提交：',
+    'Reviewed: ': '已复核：',
+    'Feedback completed: ': '反馈已完成：',
+    'Submitted to ': '提交至 ',
+    'New feedback for ': '新反馈：',
+    'Provided feedback for submission #': '已为提交 #',
+    'Unit: ': '课程：',
+    'Submission #': '提交 #',
+  };
+  for (const [prefix, translated] of Object.entries(prefixes)) {
+    if (value.startsWith(prefix)) {
+      const rest = value.slice(prefix.length);
+      if (prefix === 'Submission #' && rest.endsWith(' was reviewed')) return `${translated}${rest.slice(0, -13)} 已复核`;
+      if (prefix === 'Provided feedback for submission #') return `${translated}${rest} 提供了反馈`;
+      return translated + rest;
+    }
+  }
+  if (value.endsWith(' submitted an essay')) return `${value.slice(0, -19)} 提交了作文`;
+  const adminSubmission = value.match(/^(.+) submitted (.+)$/);
+  if (adminSubmission) return `${adminSubmission[1]} 提交了 ${adminSubmission[2]}`;
+  return value;
 }
 
 function EmptyState({ message }: { message: string }) {
@@ -170,22 +205,23 @@ export function ActivityFeedError({
   error: Error;
   onRetry: () => void;
 }) {
+  const { locale } = usePreferences();
   return (
     <Card className="border-destructive/50 bg-destructive/5 shadow-sm">
       <CardHeader className="border-destructive/50 bg-destructive/5">
         <CardTitle className="text-lg font-semibold text-destructive">
-          Failed to Load Activity
+          {locale === 'zh' ? '无法加载活动' : 'Failed to Load Activity'}
         </CardTitle>
       </CardHeader>
       <CardContent>
         <p className="text-sm text-muted-foreground">
-          {error.message || 'An unexpected error occurred.'}
+          {error.message || (locale === 'zh' ? '发生未知错误。' : 'An unexpected error occurred.')}
         </p>
         <button
           onClick={onRetry}
           className="mt-4 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
         >
-          Retry
+          {locale === 'zh' ? '重试' : 'Retry'}
         </button>
       </CardContent>
     </Card>

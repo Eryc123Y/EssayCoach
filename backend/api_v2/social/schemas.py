@@ -1,67 +1,42 @@
-from __future__ import annotations
+"""Inputs for the institution's moderated peer learning feed."""
 
 from ninja import Schema
 from pydantic import Field
 
-from api_v2.schemas.base import TimestampSchema
-from api_v2.types.enums import InteractionType, ReportStatus, Visibility
-from api_v2.types.ids import SubmissionId, UserId
-
-
-class SocialInteractionIn(Schema):
-    """Input for creating an interaction on a shared essay."""
-
-    interaction_type: InteractionType = Field(..., description="Type of interaction (like/bookmark)")
-    content: str | None = Field(None, description="Optional content for comments")
-
-
-class SocialInteractionOut(TimestampSchema):
-    """Output for a single interaction."""
-
-    id: int
-    user_id: UserId
-    submission_id: SubmissionId
-    interaction_type: InteractionType
-    content: str | None = None
+from api_v2.types.enums import InteractionType, SocialVisibility
 
 
 class SharedEssayIn(Schema):
-    """Input for sharing an essay."""
+    submission_id: int
+    class_id: int | None = None
+    visibility: SocialVisibility = SocialVisibility.CLASS
+    caption: str = Field(default="", max_length=300)
+    tags: list[str] = Field(default_factory=list, max_length=8)
 
-    submission_id: SubmissionId
-    visibility: Visibility = Visibility.PUBLIC
-    caption: str | None = Field(None, description="Optional caption for the shared essay")
-    tags: list[str] = Field(default_factory=list, description="Tags for categorization")
+
+class ShareUpdateIn(Schema):
+    visibility: SocialVisibility
+    caption: str = Field(default="", max_length=300)
+    tags: list[str] = Field(default_factory=list, max_length=8)
 
 
-class SharedEssayOut(TimestampSchema):
-    """Output for a shared essay."""
-
-    id: int
-    submission_id: SubmissionId
-    user_id: UserId
-    visibility: Visibility
-    caption: str | None = None
-    tags: list[str] = Field(default_factory=list)
-    likes_count: int = 0
-    comments_count: int = 0
-    bookmarks_count: int = 0
+class SocialInteractionIn(Schema):
+    interaction_type: InteractionType
+    content: str | None = Field(default=None, max_length=3000)
 
 
 class ContentReportIn(Schema):
-    """Input for reporting content."""
-
-    submission_id: SubmissionId | None = None
-    interaction_id: int | None = None
-    reason: str = Field(..., description="Reason for reporting")
-
-
-class ContentReportOut(TimestampSchema):
-    """Output for a content report."""
-
-    id: int
-    reporter_id: UserId
-    submission_id: SubmissionId | None = None
+    submission_id: int | None = None
     interaction_id: int | None = None
     reason: str
-    status: ReportStatus
+    description: str = Field(default="", max_length=1000)
+
+
+class ResolveReportIn(Schema):
+    decision: str
+
+
+class PostingBanIn(Schema):
+    class_id: int
+    days: int = Field(ge=1, le=30)
+    reason: str = Field(min_length=3, max_length=300)

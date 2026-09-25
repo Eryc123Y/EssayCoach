@@ -7,9 +7,25 @@ import type {
   TaskDuplicateInput,
   TaskExtendInput,
   TaskExtendResponse,
+  TaskEligibleStudent,
+  TaskStudentDeadline,
+  TaskSubmissionSummary,
 } from './types';
 
 const BASE_URL = '/api/v2';
+
+export type TaskRubric = {
+  rubric_id: number;
+  description: string;
+  version: number;
+  items: Array<{
+    id: number;
+    name: string;
+    weight: string;
+    max_score: number;
+    levels: Array<{ min: number; max: number; description: string }>;
+  }>;
+};
 
 export const taskService = {
   async listTasks(params?: {
@@ -32,6 +48,17 @@ export const taskService = {
     return request<Task>({
       url: `${BASE_URL}/core/tasks/${taskId}/`,
       method: 'GET',
+    });
+  },
+
+  async getTaskRubric(taskId: number): Promise<TaskRubric> {
+    return request<TaskRubric>({ url: `${BASE_URL}/core/tasks/${taskId}/rubric/` });
+  },
+
+  async submitEssay(taskId: number, userId: number, content: string): Promise<TaskSubmission> {
+    return request<TaskSubmission>({
+      url: `${BASE_URL}/core/submissions/`, method: 'POST',
+      data: { task_id_task: taskId, user_id_user: userId, submission_txt: content }
     });
   },
 
@@ -93,5 +120,23 @@ export const taskService = {
       method: 'POST',
       data,
     });
+  },
+
+  async getEligibleStudents(taskId: number): Promise<TaskEligibleStudent[]> {
+    return request<TaskEligibleStudent[]>({ url: `${BASE_URL}/core/tasks/${taskId}/eligible-students/` });
+  },
+
+  async getMyDeadline(taskId: number): Promise<TaskStudentDeadline> {
+    return request<TaskStudentDeadline>({ url: `${BASE_URL}/core/tasks/${taskId}/my-deadline/` });
+  },
+
+  async getSubmissionSummary(taskId: number): Promise<TaskSubmissionSummary> {
+    return request<TaskSubmissionSummary>({ url: `${BASE_URL}/core/tasks/${taskId}/submission-summary/` });
+  },
+
+  async exportSubmissions(taskId: number): Promise<Blob> {
+    const response = await fetch(`${BASE_URL}/core/tasks/${taskId}/submissions-export/`, { credentials: 'include' });
+    if (!response.ok) throw new Error(`Export failed (${response.status})`);
+    return response.blob();
   },
 };

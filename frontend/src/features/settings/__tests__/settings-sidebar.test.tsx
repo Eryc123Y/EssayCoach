@@ -1,6 +1,10 @@
 import { render, screen } from '@testing-library/react';
-import { describe, it, expect } from 'vitest';
+import { describe, it, expect, vi } from 'vitest';
 import { SettingsSidebar } from '../components/settings-sidebar';
+
+vi.mock('@/components/layout/preference-provider', () => ({
+  usePreferences: () => ({ locale: 'en' }),
+}));
 
 describe('SettingsSidebar', () => {
   it('shows Organization tab only for admins', () => {

@@ -36,20 +36,17 @@ class TestAIFeedbackSchemas:
 class TestAuthSchemas:
     def test_user_registration_valid(self):
         data = UserRegistrationIn(
-            email="test@example.com",
+            invitation_token="x" * 32,
             password="SecurePass123!",
             password_confirm="SecurePass123!",
         )
-        assert data.email == "test@example.com"
-        assert data.role is None
+        assert data.invitation_token == "x" * 32
 
-    def test_user_registration_invalid_role(self):
+    def test_user_registration_requires_invitation(self):
         with pytest.raises(ValidationError):
             UserRegistrationIn(
-                email="test@example.com",
                 password="SecurePass123!",
                 password_confirm="SecurePass123!",
-                role="invalid_role",
             )
 
     def test_user_login_valid(self):
@@ -113,9 +110,11 @@ class TestAPIStructure:
 
         schema = get_schema(api_v2)
         auth_paths = [p for p in schema["paths"].keys() if p.startswith("/auth/")]
-        # Includes: register, login, logout, me, me/jwt, password-change,
-        # password-reset, login-with-jwt, refresh, logout-jwt
-        assert len(auth_paths) == 16
+        assert len(auth_paths) >= 19
+        assert "/auth/invitations/" in auth_paths
+        assert "/auth/invitations/batch/" in auth_paths
+        assert "/auth/password-reset/preview/" in auth_paths
+        assert "/auth/password-reset/complete/" in auth_paths
 
     def test_ai_feedback_endpoints_registered(self):
         from ninja.openapi.schema import get_schema
@@ -124,7 +123,10 @@ class TestAPIStructure:
 
         schema = get_schema(api_v2)
         ai_paths = [p for p in schema["paths"].keys() if p.startswith("/ai-feedback/")]
-        assert len(ai_paths) == 3
+        assert len(ai_paths) >= 5
+        assert "/ai-feedback/jobs/{job_id}/" in ai_paths
+        assert "/ai-feedback/jobs/{job_id}/retry/" in ai_paths
+        assert "/ai-feedback/jobs/submission/{submission_id}/" in ai_paths
 
     def test_core_endpoints_registered(self):
         from ninja.openapi.schema import get_schema

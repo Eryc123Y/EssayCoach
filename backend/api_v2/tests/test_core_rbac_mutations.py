@@ -139,14 +139,14 @@ def test_units_create_student_forbidden(student_token):
 
 
 @pytest.mark.django_db
-def test_units_create_lecturer_allowed(lecturer_token):
+def test_units_create_lecturer_forbidden(lecturer_token):
     client = _authed_client(lecturer_token)
     response = client.post(
         "/api/v2/core/units/",
         {"unit_id": "RBAC103", "unit_name": "Allowed"},
         content_type="application/json",
     )
-    assert response.status_code == 200
+    assert response.status_code == 403
 
 
 @pytest.mark.django_db

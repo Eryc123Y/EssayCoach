@@ -60,13 +60,13 @@ describe('useExportPDF', () => {
   it('should generate PDF blob successfully', async () => {
     const { result } = renderHook(() => useExportPDF());
 
-    let blob: Blob;
+    let blob: Blob | undefined;
     await act(async () => {
       blob = await result.current.generatePDFBlob(mockData);
     });
 
     expect(blob).toBeDefined();
-    expect(blob!.type).toBe('application/pdf');
+    expect(blob?.type).toBe('application/pdf');
     expect(result.current.isGenerating).toBe(false);
     expect(result.current.error).toBe(null);
   });

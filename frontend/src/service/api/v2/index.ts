@@ -2,6 +2,8 @@ export { authService, rubricService } from './auth';
 export { dashboardService } from './dashboard';
 export { taskService } from './tasks';
 export { classService } from './classes';
+export { invitationService, invitationLink } from './invitations';
+export { practiceService } from './practice';
 export { rubricActionsService } from './rubrics';
 export type {
   LoginRequest,
@@ -49,10 +51,14 @@ export type {
   ClassDetail,
   StudentInfo,
   LeaveClassResponse,
-  BatchEnrollInput,
-  BatchEnrollResult,
-  InviteLecturerInput,
-  InviteLecturerResult,
+  InvitationCreateInput,
+  InvitationCreateResult,
+  BatchStudentInvitationResult,
+  PracticeEssay,
+  PracticeRun,
+  PracticeReport,
+  PracticeEvidence,
+  PracticeChatTurn,
   // Rubric action types (PRD-06)
   RubricDuplicateInput,
 } from './types';

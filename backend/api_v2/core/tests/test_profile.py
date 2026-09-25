@@ -146,14 +146,14 @@ class TestUserStats:
         assert data["total_submissions"] == 2
         # average_score will be None since no feedback items exist
 
-    def test_get_stats_lecturer_view_student(self, lecturer_user, student_user, task):
-        """Lecturer can view student's stats."""
+    def test_get_stats_unassigned_lecturer_cannot_view_student(self, lecturer_user, student_user, task):
+        """A lecturer cannot read a student's records outside teaching scope."""
         client = Client()
         jwt_pair = create_jwt_pair(lecturer_user)
         client.defaults["HTTP_AUTHORIZATION"] = f"Bearer {jwt_pair.access}"
 
         response = client.get(f"/api/v2/core/users/{student_user.user_id}/stats/")
-        assert response.status_code == 200
+        assert response.status_code == 403
 
     def test_get_stats_admin_view_any(self, admin_user, student_user):
         """Admin can view any user's stats."""
@@ -239,14 +239,14 @@ class TestUserBadges:
         response = client.get(f"/api/v2/core/users/{lecturer_user.user_id}/badges/")
         assert response.status_code == 403
 
-    def test_student_can_view_other_student_badges(self, student_user, another_student):
-        """Student can view other student's badges (social learning)."""
+    def test_student_cannot_view_other_student_badges_without_sharing(self, student_user, another_student):
+        """Private badges are not part of an opt-in social share."""
         client = Client()
         jwt_pair = create_jwt_pair(student_user)
         client.defaults["HTTP_AUTHORIZATION"] = f"Bearer {jwt_pair.access}"
 
         response = client.get(f"/api/v2/core/users/{another_student.user_id}/badges/")
-        assert response.status_code == 200
+        assert response.status_code == 403
 
     def test_admin_can_view_any_badges(self, admin_user, student_user):
         """Admin can view any user's badges."""
@@ -338,14 +338,14 @@ class TestUserProgress:
         response = client.get(f"/api/v2/core/users/{another_student.user_id}/progress/")
         assert response.status_code == 403
 
-    def test_get_progress_lecturer_can_view_student(self, lecturer_user, student_user):
-        """Lecturer can view student's progress."""
+    def test_get_progress_unassigned_lecturer_cannot_view_student(self, lecturer_user, student_user):
+        """Lecturers cannot read progress outside their teaching scope."""
         client = Client()
         jwt_pair = create_jwt_pair(lecturer_user)
         client.defaults["HTTP_AUTHORIZATION"] = f"Bearer {jwt_pair.access}"
 
         response = client.get(f"/api/v2/core/users/{student_user.user_id}/progress/")
-        assert response.status_code == 200
+        assert response.status_code == 403
 
     def test_get_progress_admin_can_view_any(self, admin_user, student_user):
         """Admin can view any user's progress."""

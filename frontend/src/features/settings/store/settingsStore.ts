@@ -36,7 +36,8 @@ const DEFAULT_PREFERENCES: UserPreferences = {
   in_app_notifications: true,
   submission_alerts: true,
   grading_alerts: false,
-  weekly_digest: true,
+  social_alerts: true,
+  weekly_digest: false,
   language: 'en',
   theme: 'system',
 };

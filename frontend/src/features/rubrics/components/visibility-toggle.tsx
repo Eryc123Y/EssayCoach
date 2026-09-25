@@ -5,6 +5,7 @@ import { Label } from '@/components/ui/label';
 import { Badge } from '@/components/ui/badge';
 import { Globe, Lock } from 'lucide-react';
 import { cn } from '@/lib/utils';
+import { usePreferences } from '@/components/layout/preference-provider';
 
 interface VisibilityToggleProps {
   visibility: 'public' | 'private';
@@ -21,6 +22,7 @@ export function VisibilityToggle({
   showLabel = true,
   size = 'md'
 }: VisibilityToggleProps) {
+  const { locale } = usePreferences();
   const isPublic = visibility === 'public';
 
   const handleToggle = (checked: boolean) => {
@@ -45,7 +47,7 @@ export function VisibilityToggle({
           ) : (
             <Lock className='h-4 w-4 text-amber-600 dark:text-amber-400' />
           )}
-          <span>Visibility</span>
+          <span>{locale === 'zh' ? '可见范围' : 'Visibility'}</span>
         </Label>
       )}
       <div className='flex items-center gap-2'>
@@ -54,7 +56,7 @@ export function VisibilityToggle({
           checked={isPublic}
           onCheckedChange={handleToggle}
           disabled={disabled}
-          aria-label='Toggle rubric visibility'
+          aria-label={locale === 'zh' ? '切换量表可见范围' : 'Toggle rubric visibility'}
         />
         <span
           className={cn(
@@ -64,7 +66,7 @@ export function VisibilityToggle({
               : 'text-amber-600 dark:text-amber-400'
           )}
         >
-          {isPublic ? 'Public' : 'Private'}
+          {isPublic ? locale === 'zh' ? '公开' : 'Public' : locale === 'zh' ? '私有' : 'Private'}
         </span>
       </div>
     </div>
@@ -80,6 +82,7 @@ export function VisibilityBadge({
   visibility,
   size = 'sm'
 }: VisibilityBadgeProps) {
+  const { locale } = usePreferences();
   const isPublic = visibility === 'public';
 
   const sizeClasses = {
@@ -101,12 +104,12 @@ export function VisibilityBadge({
       {isPublic ? (
         <>
           <Globe className='h-3 w-3' />
-          <span>Public</span>
+          <span>{locale === 'zh' ? '公开' : 'Public'}</span>
         </>
       ) : (
         <>
           <Lock className='h-3 w-3' />
-          <span>Private</span>
+          <span>{locale === 'zh' ? '私有' : 'Private'}</span>
         </>
       )}
     </Badge>

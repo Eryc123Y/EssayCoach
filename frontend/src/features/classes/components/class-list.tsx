@@ -12,27 +12,37 @@ import { PlusCircle, Search } from 'lucide-react';
 import { useAuth } from '@/components/layout/simple-auth-context';
 import { JoinClassDialog } from './join-class-dialog';
 import { toast } from 'sonner';
+import { usePreferences } from '@/components/layout/preference-provider';
 
 export function ClassList() {
   const router = useRouter();
   const { user } = useAuth();
+  const { locale } = usePreferences();
+  const zh = locale === 'zh';
   const [classes, setClasses] = useState<ClassItem[]>([]);
+  const [creatableUnitIds, setCreatableUnitIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [searchQuery, setSearchQuery] = useState('');
   const [showJoinDialog, setShowJoinDialog] = useState(false);
   const userRole = user?.role || 'student';
 
   useEffect(() => {
-    loadClasses();
-  }, []);
+    void loadClasses();
+    if (user?.role === 'admin' || user?.role === 'lecturer') {
+      void classService.listCreatableUnits().then((units) => setCreatableUnitIds(units.map((unit) => unit.unit_id))).catch(() => setCreatableUnitIds([]));
+    }
+  }, [user?.role]);
 
   const loadClasses = async () => {
     try {
       setLoading(true);
+      setLoadError(false);
       const data = await classService.listClasses();
       setClasses(data);
     } catch (error) {
-      toast.error('Failed to load classes. Please try again.');
+      setLoadError(true);
+      toast.error(zh ? '无法加载班级，请重试。' : 'Failed to load classes. Please try again.');
     } finally {
       setLoading(false);
     }
@@ -49,8 +59,8 @@ export function ClassList() {
     (c) => c.class_status === 'archived'
   );
 
-  const canCreateClass = userRole === 'lecturer' || userRole === 'admin';
   const canJoinClass = userRole === 'student';
+  const canCreateClass = creatableUnitIds.length > 0;
 
   if (loading) {
     return (
@@ -60,26 +70,33 @@ export function ClassList() {
     );
   }
 
+  if (loadError) {
+    return <div className='rounded-xl border p-8 text-center' role='alert'>
+      <p>{zh ? '暂时无法加载班级。' : 'Classes could not be loaded.'}</p>
+      <Button className='mt-4' variant='outline' onClick={() => void loadClasses()}>{zh ? '重试' : 'Retry'}</Button>
+    </div>;
+  }
+
   return (
     <div className='space-y-6'>
       {/* Header */}
-      <div className='flex items-center justify-between'>
+      <div className='flex flex-wrap items-center justify-between gap-4'>
         <div>
-          <h1 className='text-3xl font-bold'>Classes</h1>
+          <h1 className='text-3xl font-bold'>{zh ? '班级' : 'Classes'}</h1>
           <p className='text-muted-foreground mt-1'>
-            Manage your classes and students
+            {zh ? '查看班级、课程与学生' : 'Manage your classes and students'}
           </p>
         </div>
         <div className='flex gap-2'>
           {canJoinClass && (
             <Button variant='outline' onClick={() => setShowJoinDialog(true)}>
-              Join Class
+              {zh ? '加入班级' : 'Join Class'}
             </Button>
           )}
           {canCreateClass && (
             <Button onClick={() => router.push('/dashboard/classes/new')}>
               <PlusCircle className='mr-2 h-4 w-4' />
-              New Class
+              {zh ? '新建班级' : 'New Class'}
             </Button>
           )}
         </div>
@@ -89,7 +106,8 @@ export function ClassList() {
       <div className='relative max-w-sm'>
         <Search className='text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform' />
         <Input
-          placeholder='Search classes...'
+          placeholder={zh ? '搜索班级…' : 'Search classes...'}
+          aria-label={zh ? '搜索班级' : 'Search classes'}
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           className='pl-10'
@@ -100,24 +118,24 @@ export function ClassList() {
       <Tabs defaultValue='active'>
         <TabsList>
           <TabsTrigger value='active'>
-            Active ({activeClasses.length})
+            {zh ? '进行中' : 'Active'} ({activeClasses.length})
           </TabsTrigger>
           <TabsTrigger value='archived'>
-            Archived ({archivedClasses.length})
+            {zh ? '已归档' : 'Archived'} ({archivedClasses.length})
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value='active' className='mt-4'>
           {activeClasses.length === 0 ? (
             <div className='py-12 text-center'>
-              <p className='text-muted-foreground'>No active classes</p>
+              <p className='text-muted-foreground'>{zh ? '暂无进行中的班级' : 'No active classes'}</p>
               {canCreateClass && (
                 <Button
                   variant='link'
                   onClick={() => router.push('/dashboard/classes/new')}
                   className='mt-2'
                 >
-                  Create your first class
+                  {zh ? '创建第一个班级' : 'Create your first class'}
                 </Button>
               )}
               {canJoinClass && (
@@ -126,7 +144,7 @@ export function ClassList() {
                   onClick={() => setShowJoinDialog(true)}
                   className='mt-2'
                 >
-                  Join a class with code
+                  {zh ? '使用邀请码加入班级' : 'Join a class with code'}
                 </Button>
               )}
             </div>
@@ -137,6 +155,8 @@ export function ClassList() {
                   key={cls.class_id}
                   classItem={cls}
                   onUpdate={loadClasses}
+                  canManage={userRole === 'admin' || userRole === 'lecturer'}
+                  canDuplicate={creatableUnitIds.includes(cls.unit_id_unit)}
                 />
               ))}
             </div>
@@ -146,7 +166,7 @@ export function ClassList() {
         <TabsContent value='archived' className='mt-4'>
           {archivedClasses.length === 0 ? (
             <div className='text-muted-foreground py-12 text-center'>
-              No archived classes
+              {zh ? '暂无已归档班级' : 'No archived classes'}
             </div>
           ) : (
             <div className='grid gap-4 md:grid-cols-2 lg:grid-cols-3'>
@@ -155,6 +175,8 @@ export function ClassList() {
                   key={cls.class_id}
                   classItem={cls}
                   onUpdate={loadClasses}
+                  canManage={userRole === 'admin' || userRole === 'lecturer'}
+                  canDuplicate={creatableUnitIds.includes(cls.unit_id_unit)}
                 />
               ))}
             </div>

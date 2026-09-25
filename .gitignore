@@ -58,6 +58,9 @@ coverage.xml
 
 # Django stuff:
 *.log
+backend/outbox/
+backend/media/
+backend/logs/
 local_settings.py
 db.sqlite3
 db.sqlite3-journal
@@ -247,4 +250,3 @@ backend/api_v1/
 * 8.*
 * 9.*
 * 10.*
-

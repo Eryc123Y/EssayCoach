@@ -17,6 +17,10 @@ import { render, screen } from '@testing-library/react';
 import { AdminDashboard, AdminDashboardSkeleton } from '@/features/dashboard/components/admin-dashboard';
 import type { AdminDashboardResponse } from '@/service/api/v2/types';
 
+vi.mock('@/components/layout/preference-provider', () => ({
+  usePreferences: () => ({ locale: 'en' }),
+}));
+
 // Mock shadcn/ui components
 vi.mock('@/components/ui/card', () => ({
   Card: ({ children, className, ...props }: any) => (
@@ -146,7 +150,7 @@ describe('AdminDashboard', () => {
 
       expect(screen.getByText('45')).toBeInTheDocument();
       expect(screen.getByText('Active Classes')).toBeInTheDocument();
-      expect(screen.getByText('This semester')).toBeInTheDocument();
+      expect(screen.getByText('Active Classes')).toBeInTheDocument();
     });
 
     it('should format large numbers with commas', () => {

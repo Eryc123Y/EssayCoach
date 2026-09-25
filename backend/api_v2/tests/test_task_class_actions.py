@@ -9,7 +9,18 @@ import pytest
 from django.test import Client
 
 from api_v2.utils.jwt_auth import create_jwt_pair
-from core.models import Class, Enrollment, MarkingRubric, Submission, Task, Unit, User
+from core.models import (
+    Class,
+    Enrollment,
+    MarkingRubric,
+    RubricItem,
+    RubricLevelDesc,
+    Submission,
+    Task,
+    TeachingAssn,
+    Unit,
+    User,
+)
 
 # =============================================================================
 # Fixtures
@@ -59,16 +70,23 @@ def unit(db):
 @pytest.fixture
 def rubric(db, lecturer):
     """Create a marking rubric."""
-    return MarkingRubric.objects.create(
+    rubric = MarkingRubric.objects.create(
         user_id_user=lecturer,
         rubric_desc="Standard essay grading rubric",
     )
+    item = RubricItem.objects.create(
+        rubric_id_marking_rubric=rubric, rubric_item_name="Argument", rubric_item_weight=100
+    )
+    RubricLevelDesc.objects.create(
+        rubric_item_id_rubric_item=item, level_min_score=0, level_max_score=10, level_desc="Argument quality"
+    )
+    return rubric
 
 
 @pytest.fixture
 def class_obj(db, unit, lecturer):
     """Create a class with join code."""
-    return Class.objects.create(
+    class_obj = Class.objects.create(
         unit_id_unit=unit,
         class_name="CS101 Class A",
         class_desc="Test class",
@@ -77,6 +95,8 @@ def class_obj(db, unit, lecturer):
         class_year=2026,
         class_status="active",
     )
+    TeachingAssn.objects.create(user_id_user=lecturer, class_id_class=class_obj)
+    return class_obj
 
 
 @pytest.fixture
@@ -112,6 +132,11 @@ def task_published(db, unit, rubric, class_obj):
 @pytest.fixture
 def submission(db, task_published, student):
     """Create a submission for a task."""
+    Enrollment.objects.get_or_create(
+        user_id_user=student,
+        class_id_class=task_published.class_id_class,
+        unit_id_unit=task_published.unit_id_unit,
+    )
     return Submission.objects.create(
         task_id_task=task_published,
         user_id_user=student,

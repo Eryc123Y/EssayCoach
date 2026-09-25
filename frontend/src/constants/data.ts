@@ -3,7 +3,6 @@ import { NavItem } from '@/types';
 // Navigation items with role-based access control
 // roles: which user roles can see this item
 // If roles is undefined, the item is visible to all
-// NOTE: Some items link to pages that are not yet implemented - marked with TODO
 export const navItems: NavItem[] = [
   // Dashboard - visible to all (redirects to role-specific dashboard)
   {
@@ -55,47 +54,49 @@ export const navItems: NavItem[] = [
     isActive: false,
     items: [],
     roles: ['student', 'lecturer', 'admin']
-  }
-  // TODO: Assignments - PRD-09 Not implemented yet
-  // {
-  //   title: 'Assignments',
-  //   url: '/dashboard/assignments',
-  //   icon: 'clipboard',
-  //   shortcut: ['a', 'a'],
-  //   isActive: false,
-  //   items: [],
-  //   roles: ['student', 'lecturer', 'admin']
-  // },
-  // TODO: Library - PRD-11 Not implemented yet
-  // {
-  //   title: 'Library',
-  //   url: '/dashboard/library',
-  //   icon: 'library',
-  //   shortcut: ['l', 'b'],
-  //   isActive: false,
-  //   items: [],
-  //   roles: ['lecturer', 'admin']
-  // },
-  // TODO: Analytics - PRD-12 Not implemented yet
-  // {
-  //   title: 'Analytics',
-  //   url: '/dashboard/analytics',
-  //   icon: 'chart',
-  //   shortcut: ['g', 'g'],
-  //   isActive: false,
-  //   items: [],
-  //   roles: ['admin']
-  // },
-  // TODO: User Management - PRD-13 Not implemented yet
-  // {
-  //   title: 'User Management',
-  //   url: '/dashboard/users',
-  //   icon: 'users',
-  //   shortcut: ['u', 'u'],
-  //   isActive: false,
-  //   items: [],
-  //   roles: ['admin']
-  // }
+  },
+  {
+    title: 'Community',
+    url: '/dashboard/community',
+    icon: 'library',
+    shortcut: ['l', 'b'],
+    isActive: false,
+    items: [],
+    roles: ['student', 'lecturer', 'admin']
+  },
+  {
+    title: 'Help',
+    url: '/dashboard/help',
+    icon: 'help',
+    isActive: false,
+    items: [],
+    roles: ['student', 'lecturer', 'admin']
+  },
+  {
+    title: 'Analytics',
+    url: '/dashboard/analytics',
+    icon: 'chart',
+    shortcut: ['g', 'g'],
+    isActive: false,
+    items: [],
+    roles: ['student', 'lecturer', 'admin']
+  },
+  {
+    title: 'People',
+    url: '/dashboard/users',
+    icon: 'users',
+    isActive: false,
+    items: [],
+    roles: ['admin']
+  },
+  {
+    title: 'Operations',
+    url: '/dashboard/observability',
+    icon: 'dashboard',
+    isActive: false,
+    items: [],
+    roles: ['admin']
+  },
 ];
 
 export interface RecentSubmission {

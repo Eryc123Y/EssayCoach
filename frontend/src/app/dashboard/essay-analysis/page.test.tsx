@@ -1,279 +1,100 @@
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
-import { describe, it, expect, vi, beforeEach } from 'vitest';
-import AIAnalysisPage from './page';
-import * as difyApi from '@/service/api/dify';
-import { useAuth } from '@/components/layout/simple-auth-context';
+import { fireEvent, render, screen, waitFor } from '@testing-library/react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+import EssayAnalysisPage from './page';
+import { practiceService } from '@/service/api/v2/practice';
+import { PreferenceProvider } from '@/components/layout/preference-provider';
 
-// Mock the dependencies
-vi.mock('@/service/api/dify', () => ({
-  fetchDifyWorkflowRun: vi.fn()
+vi.mock('next-themes', () => {
+  const setTheme = vi.fn();
+  return { useTheme: () => ({ setTheme }) };
+});
+
+vi.mock('@/service/api/v2/auth', () => ({
+  settingsService: { updatePreferences: vi.fn().mockResolvedValue({}) }
 }));
 
-vi.mock('@/components/layout/simple-auth-context', () => ({
-  useAuth: vi.fn()
-}));
-
-vi.mock('sonner', () => ({
-  toast: {
-    error: vi.fn(),
-    success: vi.fn()
+vi.mock('@/service/api/v2/practice', () => ({
+  practiceService: {
+    listEssays: vi.fn(), listPublicRubrics: vi.fn(), listRuns: vi.fn(),
+    createEssay: vi.fn(), saveEssay: vi.fn(), analyze: vi.fn(), getRun: vi.fn(), retryRun: vi.fn(),
+    listChat: vi.fn(), askCoach: vi.fn(), retryCoach: vi.fn()
   }
 }));
 
-// Mock PageContainer to avoid layout issues
-vi.mock('@/components/layout/page-container', () => ({
-  default: ({ children }: { children: React.ReactNode }) => (
-    <div data-testid='page-container'>{children}</div>
-  )
+vi.mock('@/features/settings/store/settingsStore', () => ({
+  useSettingsStore: (selector: (state: object) => unknown) => selector({
+    preferences: { language: 'en' }, fetchPreferences: vi.fn()
+  })
 }));
 
-// Mock motion/react to avoid animation delays in tests
-vi.mock('motion/react', () => ({
-  AnimatePresence: ({ children }: { children: React.ReactNode }) => (
-    <>{children}</>
-  ),
-  motion: {
-    div: ({ children, className, ...props }: any) => (
-      <div className={className} {...props}>
-        {children}
-      </div>
-    )
-  }
-}));
+const essay = {
+  essay_id: 'essay-1', goal: 'Explain climate change', content: 'Carbon dioxide absorbs infrared radiation.',
+  language: 'en', audience: '', tone: '', rubric_id: null, version: 1,
+  created_at: '2026-09-25T00:00:00Z', updated_at: '2026-09-25T00:00:00Z', revision_count: 0
+};
 
-// Mock result components to verify props
-vi.mock('@/features/essay-analysis/components/analysis-progress', () => ({
-  AnalysisProgress: ({ isLoading, onComplete }: any) => (
-    <div data-testid='analysis-progress'>
-      {isLoading ? 'Loading...' : 'Complete'}
-      <button onClick={onComplete} data-testid='complete-analysis-btn'>
-        Complete Analysis
-      </button>
-    </div>
-  )
-}));
+const run = {
+  run_id: 'run-1', essay_id: 'essay-1', revision_number: 1,
+  revision_goal: essay.goal, revision_content: essay.content,
+  revision_rubric: [{ id: 1, name: 'Evidence', weight: '100.0', max_score: 10, exemplar_text: 'A precise claim with a cited source.', levels: [{ min: 0, max: 10, description: 'Evidence quality' }] }],
+  status: 'succeeded', attempts: 1, model: 'gpt-6-luna',
+  report: {
+    overall_score: 78, headline: 'A clear starting point', general_feedback: 'Build on your evidence.',
+    strengths: ['Clear claim'], next_steps: ['Add a source'],
+    skills: { grammar: 80, logic: 70, tone: 78, structure: 75, vocabulary: 82 },
+    annotations: [{ quote: 'Carbon dioxide', category: 'fact', explanation: 'Check the claim', suggestion: 'Cite a source' }],
+    rubric_results: [{ criterion: 'Evidence', score: 8, max_score: 10, justification: 'Clear claim' }]
+  },
+  evidence: [{
+    claim: 'Carbon dioxide absorbs infrared radiation', query: 'carbon dioxide infrared', verdict: 'supported',
+    rationale: 'The source supports this.', source_title: 'NASA', source_url: 'https://science.nasa.gov/',
+    source_excerpt: 'Carbon dioxide absorbs infrared radiation.',
+    supporting_quote: 'Carbon dioxide absorbs infrared radiation.', retrieved_at: '2026-09-25T00:00:00Z'
+  }],
+  error_category: null, error_message: null,
+  created_at: '2026-09-25T00:00:00Z', started_at: '2026-09-25T00:00:01Z', finished_at: '2026-09-25T00:00:03Z'
+};
 
-vi.mock('@/features/essay-analysis/components/feedback-dashboard', () => ({
-  FeedbackDashboard: ({ scores, overallScore }: any) => (
-    <div data-testid='feedback-dashboard'>
-      <div data-testid='overall-score'>{overallScore}</div>
-      <div data-testid='scores'>{JSON.stringify(scores)}</div>
-    </div>
-  )
-}));
-
-vi.mock('@/features/essay-analysis/components/insights-list', () => ({
-  InsightsList: ({ insights }: any) => (
-    <div data-testid='insights-list'>{JSON.stringify(insights)}</div>
-  )
-}));
-
-vi.mock('@/features/essay-analysis/components/revision-chat', () => ({
-  RevisionChat: () => <div data-testid='revision-chat'>Revision Chat</div>
-}));
-
-// ResizeObserver mock needed for some UI components that might be implicitly used or just good practice
-global.ResizeObserver = vi.fn().mockImplementation(() => ({
-  observe: vi.fn(),
-  unobserve: vi.fn(),
-  disconnect: vi.fn()
-}));
-
-describe('AIAnalysisPage', () => {
-  const mockUser = { id: 'user-123', name: 'Test User' };
-
+describe('Practice studio', () => {
+  const renderPractice = () => render(<PreferenceProvider hasInitialPreferences><EssayAnalysisPage /></PreferenceProvider>);
   beforeEach(() => {
     vi.clearAllMocks();
-    (useAuth as any).mockReturnValue({ user: mockUser });
+    vi.mocked(practiceService.listEssays).mockResolvedValue([]);
+    vi.mocked(practiceService.listPublicRubrics).mockResolvedValue([]);
+    vi.mocked(practiceService.listChat).mockResolvedValue([]);
+    vi.mocked(practiceService.createEssay).mockResolvedValue(essay as never);
+    vi.mocked(practiceService.analyze).mockResolvedValue(run as never);
   });
 
-  const mockSuccessResponse = {
-    status: 'succeeded',
-    data: {
-      outputs: {
-        overall_score: 85,
-        structure_analysis: { score: 80, comments: 'Good structure' },
-        content_analysis: { score: 90, comments: 'Good content' },
-        style_analysis: { score: 85, comments: 'Good style' },
-        grammar_notes: [
-          {
-            type: 'Typo',
-            explanation: 'Spelling error',
-            original: 'teh',
-            suggestion: 'the'
-          }
-        ]
-      }
-    }
-  };
-
-  it('renders the essay submission form initially', () => {
-    render(<AIAnalysisPage />);
-
-    expect(screen.getByText(/Essay Practice/i)).toBeInTheDocument();
-    expect(screen.getByLabelText(/Essay Question \/ Topic/i)).toBeInTheDocument();
-    expect(screen.getByRole('button', { name: /Continue/i })).toBeInTheDocument();
-  });
-
-  it('allows user input in question and content fields', async () => {
-    render(<AIAnalysisPage />);
-
-    const questionInput = screen.getByLabelText(/Essay Question \/ Topic/i);
-    fireEvent.change(questionInput, { target: { value: 'Test Question' } });
-    fireEvent.click(screen.getByRole('button', { name: /Continue/i }));
-
-    const contentInput = await screen.findByPlaceholderText(
-      /Paste or type your essay here/i
-    );
-
-    fireEvent.change(contentInput, { target: { value: 'Test Essay Content' } });
-
-    expect(questionInput).toHaveValue('Test Question');
-    expect(contentInput).toHaveValue('Test Essay Content');
-  });
-
-  it('submits the form and triggers API call', async () => {
-    (difyApi.fetchDifyWorkflowRun as any).mockResolvedValue(
-      mockSuccessResponse
-    );
-
-    render(<AIAnalysisPage />);
-
-    // Fill form
-    fireEvent.change(screen.getByLabelText(/Essay Question \/ Topic/i), {
-      target: { value: 'Test Question' }
+  it('saves a draft and shows real analysis with a source link', async () => {
+    renderPractice();
+    fireEvent.change(await screen.findByLabelText('What are you trying to write?'), {
+      target: { value: essay.goal }
     });
-    fireEvent.click(screen.getByRole('button', { name: /Continue/i }));
-
-    fireEvent.change(await screen.findByPlaceholderText(/Paste or type your essay here/i), {
-      target: { value: 'Test Essay Content' }
+    fireEvent.change(screen.getByLabelText('Essay draft'), {
+      target: { value: essay.content }
     });
-    fireEvent.click(screen.getByRole('button', { name: /Continue/i }));
-
-    // Submit
-    const submitBtn = screen.getByRole('button', {
-      name: /Analyze My Essay/i
-    });
-    expect(submitBtn).not.toBeDisabled();
-    fireEvent.click(submitBtn);
-
-    // Verify API call
-    await waitFor(() => {
-      expect(difyApi.fetchDifyWorkflowRun).toHaveBeenCalledWith({
-        essay_question: 'Test Question',
-        essay_content: 'Test Essay Content',
-        language: 'English',
-        response_mode: 'blocking',
-        user_id: mockUser.id,
-        rubric_id: undefined
-      });
-    });
-  });
-
-  it('shows analyzing state (loading)', async () => {
-    // Return a promise that doesn't resolve immediately to test loading state
-    (difyApi.fetchDifyWorkflowRun as any).mockImplementation(
-      () => new Promise(() => {})
-    );
-
-    render(<AIAnalysisPage />);
-
-    fireEvent.change(screen.getByLabelText(/Essay Question \/ Topic/i), {
-      target: { value: 'Q' }
-    });
-    fireEvent.click(screen.getByRole('button', { name: /Continue/i }));
-
-    fireEvent.change(await screen.findByPlaceholderText(/Paste or type your essay here/i), {
-      target: { value: 'C' }
-    });
-    fireEvent.click(screen.getByRole('button', { name: /Continue/i }));
-    fireEvent.click(screen.getByRole('button', { name: /Analyze My Essay/i }));
-
-    expect(screen.getByTestId('analysis-progress')).toBeInTheDocument();
-    expect(screen.getByText('Loading...')).toBeInTheDocument();
-  });
-
-  it('shows results after successful analysis', async () => {
-    (difyApi.fetchDifyWorkflowRun as any).mockResolvedValue(
-      mockSuccessResponse
-    );
-
-    render(<AIAnalysisPage />);
-
-    fireEvent.change(screen.getByLabelText(/Essay Question \/ Topic/i), {
-      target: { value: 'Q' }
-    });
-    fireEvent.click(screen.getByRole('button', { name: /Continue/i }));
-
-    fireEvent.change(await screen.findByPlaceholderText(/Paste or type your essay here/i), {
-      target: { value: 'C' }
-    });
-    fireEvent.click(screen.getByRole('button', { name: /Continue/i }));
-    fireEvent.click(screen.getByRole('button', { name: /Analyze My Essay/i }));
-
-    // Wait for API to return
-    await waitFor(() => {
-      expect(difyApi.fetchDifyWorkflowRun).toHaveBeenCalled();
-    });
-
-    // In the actual component, AnalysisProgress calls onComplete when it's done or API returns.
-    // Since we mocked AnalysisProgress, we need to trigger onComplete manually if the component logic relies on it.
-    // Looking at page.tsx:
-    // setIsLoading(true) -> API Call -> setIsLoading(false) -> handleAnalysisComplete checks !isLoading
-    // BUT handleAnalysisComplete is passed to AnalysisProgress.
-    // So the page waits for AnalysisProgress to trigger onComplete.
-
-    // The mocked AnalysisProgress shows "Complete Analysis" button which calls onComplete
-    const completeBtn = await screen.findByTestId('complete-analysis-btn');
-    fireEvent.click(completeBtn);
-
-    // Now results should be visible
-    expect(await screen.findByTestId('feedback-dashboard')).toBeInTheDocument();
-    expect(screen.getByTestId('insights-list')).toBeInTheDocument();
-    expect(screen.getByTestId('revision-chat')).toBeInTheDocument();
-
-    // Verify data passed to components
-    expect(screen.getByTestId('overall-score')).toHaveTextContent('85');
-
-    const scoresContent = screen.getByTestId('scores').textContent;
-    expect(scoresContent).toContain('"category":"Structure","score":80');
-    expect(scoresContent).toContain('"category":"Content","score":90');
-    expect(scoresContent).toContain('"category":"Style","score":85');
-
-    const insightsContent = screen.getByTestId('insights-list').textContent;
-    expect(insightsContent).toContain('Spelling error');
-    expect(insightsContent).toContain('teh');
-    expect(insightsContent).toContain('the');
-  });
-
-  it('handles API failure', async () => {
-    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
-    (difyApi.fetchDifyWorkflowRun as any).mockRejectedValue(
-      new Error('API Error')
-    );
-
-    render(<AIAnalysisPage />);
-
-    fireEvent.change(screen.getByLabelText(/Essay Question \/ Topic/i), {
-      target: { value: 'Q' }
-    });
-    fireEvent.click(screen.getByRole('button', { name: /Continue/i }));
-
-    fireEvent.change(await screen.findByPlaceholderText(/Paste or type your essay here/i), {
-      target: { value: 'C' }
-    });
-    fireEvent.click(screen.getByRole('button', { name: /Continue/i }));
-    fireEvent.click(screen.getByRole('button', { name: /Analyze My Essay/i }));
+    fireEvent.click(screen.getByRole('button', { name: 'Get practice feedback' }));
 
     await waitFor(() => {
-      expect(difyApi.fetchDifyWorkflowRun).toHaveBeenCalled();
+      expect(practiceService.createEssay).toHaveBeenCalledWith(expect.objectContaining({
+        goal: essay.goal, content: essay.content
+      }));
+      expect(practiceService.analyze).toHaveBeenCalledWith('essay-1', 1);
     });
+    expect(await screen.findByText('A clear starting point')).toBeInTheDocument();
+    expect(screen.getByText('78')).toBeInTheDocument();
+    expect(screen.getByRole('link', { name: 'NASA' })).toHaveAttribute('href', 'https://science.nasa.gov/');
+    expect(screen.getByText('This is not a formal grade.', { exact: false })).toBeInTheDocument();
+    fireEvent.click(screen.getByText('View high-scoring exemplar'));
+    expect(screen.getByText('A precise claim with a cited source.')).toBeVisible();
+  });
 
-    // Expect toast error
-    // Note: The toast mock might be called, but we assert on page state
-    // The component sets state back to 'input' on error
-    expect(await screen.findByText(/Essay Practice/i)).toBeInTheDocument();
-
-    consoleSpy.mockRestore();
+  it('can show the Chinese interface without changing the essay language', async () => {
+    renderPractice();
+    await screen.findByLabelText('What are you trying to write?');
+    fireEvent.click(screen.getByRole('button', { name: 'Switch interface language' }));
+    expect(screen.getByLabelText('这次你想写什么？')).toBeInTheDocument();
+    expect(screen.getByLabelText('文章草稿')).toBeInTheDocument();
   });
 });

@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import datetime, timedelta
 
 from django.db import models
+from django.db.models.deletion import Collector
 from django.http import HttpRequest
 from django.utils import timezone
 from ninja import Router
@@ -13,13 +14,10 @@ from api_v2.types.ids import (
     UserId,
 )
 from api_v2.utils.auth import JWTAuth
+from api_v2.utils.course_scope import require_visible_user, visible_classes, visible_users
 from core.models import (
-    Class,
-    Enrollment,
     Feedback,
-    FeedbackItem,
     Submission,
-    TeachingAssn,
     User,
     UserBadge,
 )
@@ -62,36 +60,15 @@ router = Router(tags=["Users"], auth=JWTAuth())
 
 @router.get("/users/", response=list[UserOut])
 def list_users(request: HttpRequest, filters: UserFilterParams = UserFilterParams()):
-    # Admin and lecturer can list all users
-    # Students can only view themselves
-    user = request.auth
-    if user.user_role == "student":
-        # Students can only see their own record
-        return [user]
-
-    # Admin and lecturer can see all users
-    qs = filters.filter(User.objects.all())
+    qs = filters.filter(visible_users(request.auth))
     return paginate(qs, PaginationParams())["results"]
 
 
 @router.post("/users/", response=UserOut)
 def create_user(request: HttpRequest, data: UserIn):
-    # Only admin and lecturer can create users
-    current_user = request.auth
-    if current_user.user_role not in ["admin", "lecturer"]:
-        raise HttpError(403, "Only admin and lecturer can create users")
-
-    new_user = User.objects.create_user(
-        user_email=data.user_email,
-        password=data.password,
-        user_fname=data.user_fname,
-        user_lname=data.user_lname,
-        user_role=data.user_role,
-        user_status=data.user_status,
-        is_active=data.is_active,
-        is_staff=data.is_staff,
-    )
-    return new_user
+    # Accounts are activated only through a scoped invitation. Keep the old
+    # route as an explicit rejection so old clients cannot bypass this rule.
+    raise HttpError(410, "Direct account creation is retired; issue an invitation")
 
 
 @router.get("/users/me/", response=UserOut)
@@ -101,21 +78,11 @@ def get_current_user(request: HttpRequest):
 
 @router.get("/users/{user_id}/", response=UserOut)
 def get_user(request: HttpRequest, user_id: UserId):
-    """
-    Get a specific user.
-
-    Permissions:
-    - Admin/Lecturer: Can view any user
-    - Student: Can only view themselves
-    """
-    current_user = request.auth
-
-    # Students can only view their own profile
-    if current_user.user_role == "student" and current_user.user_id != user_id:
-        raise HttpError(403, "You can only view your own profile")
-
+    """Get a user visible through the actor's class membership or staff role."""
     try:
-        return User.objects.get(user_id=user_id)
+        target = User.objects.get(user_id=user_id)
+        require_visible_user(request.auth, target)
+        return target
     except User.DoesNotExist:
         raise HttpError(404, "User not found")
 
@@ -125,38 +92,29 @@ def update_user(request: HttpRequest, user_id: UserId, data: UserUpdateIn):
     """
     Update a user.
 
-    Permissions:
-    - Admin: Can update any user
-    - Lecturer: Can update any user except admins
-    - Student: Can only update themselves
+    Admins can edit profile and status; everyone else can edit only their own profile.
     """
     current_user = request.auth
+    update_data = data.dict(exclude_unset=True)
+    if any(field in update_data for field in ("user_role", "is_staff", "password", "user_email")):
+        raise HttpError(403, "Role, staff flag, password, and email require dedicated account workflows")
+    if any(field in update_data for field in ("user_status", "is_active")) and current_user.user_role != "admin":
+        raise HttpError(403, "Only admins can change account status")
 
     # Permission check
     if current_user.user_role == "student":
         # Students can only update themselves
         if current_user.user_id != user_id:
             raise HttpError(403, "You can only update your own profile")
-    elif current_user.user_role == "lecturer":
-        # Lecturers cannot update admins
-        try:
-            target_user = User.objects.get(user_id=user_id)
-            if target_user.user_role == "admin":
-                raise HttpError(403, "Lecturers cannot modify admin accounts")
-        except User.DoesNotExist:
-            raise HttpError(404, "User not found")
+    elif current_user.user_role == "lecturer" and current_user.user_id != user_id:
+        raise HttpError(403, "Lecturers can update only their own profile")
     # Admins can update anyone
 
     try:
         user = User.objects.get(user_id=user_id)
         # Only update fields that are explicitly provided (not None)
-        update_data = data.dict(exclude_unset=True)
         for key, value in update_data.items():
-            if key == "password":
-                if value:
-                    user.set_password(value)
-            else:
-                setattr(user, key, value)
+            setattr(user, key, value)
         user.save()
         return user
     except User.DoesNotExist:
@@ -183,6 +141,12 @@ def delete_user(request: HttpRequest, user_id: UserId) -> SuccessResponse:
         target_user = User.objects.get(user_id=user_id)
         if target_user.user_role == "admin":
             raise HttpError(403, "Cannot delete admin accounts")
+        collector = Collector(using=target_user._state.db or "default")
+        collector.collect([target_user])
+        if any(model is not User and objects for model, objects in collector.data.items()) or any(
+            queryset.exists() for queryset in collector.fast_deletes
+        ):
+            raise HttpError(409, "Accounts with related records must be disabled, not deleted")
         target_user.delete()
         return SuccessResponse(success=True)
     except User.DoesNotExist:
@@ -199,33 +163,30 @@ def get_user_stats(request: HttpRequest, user_id: UserId):
     """
     Get user statistics including essay count, average score, and activity.
 
-    Permissions:
-    - Any authenticated user can view their own stats
-    - Lecturers/Admins can view any user's stats
+    Only the account owner, its class teaching staff, and admins can view stats.
     """
     current_user = request.auth
 
-    # Permission check: students can only view their own stats
-    if current_user.user_role == "student" and current_user.user_id != user_id:
-        raise HttpError(403, "You can only view your own statistics")
-
     # Check if user exists
     try:
-        User.objects.get(user_id=user_id)
+        target_user = User.objects.get(user_id=user_id)
     except User.DoesNotExist:
         raise HttpError(404, "User not found")
+    require_visible_user(current_user, target_user)
 
     # Get user's submissions
     submissions = Submission.objects.filter(user_id_user_id=user_id)
     total_submissions = submissions.count()
 
-    # Get feedback items for scoring
+    # Only course-lead-released results enter profile statistics.
     submission_ids = list(submissions.values_list("submission_id", flat=True))
-    feedback_items = FeedbackItem.objects.filter(feedback_id_feedback__submission_id_submission__in=submission_ids)
-
-    # Calculate average score from feedback items
-    avg_score_data = feedback_items.aggregate(avg_score=models.Avg("feedback_item_score"))
-    average_score = float(avg_score_data["avg_score"]) if avg_score_data["avg_score"] else None
+    feedbacks = Feedback.objects.filter(
+        submission_id_submission_id__in=submission_ids,
+        status="published",
+        final_score__isnull=False,
+    )
+    avg_score_data = feedbacks.aggregate(avg_score=models.Avg("final_score"))
+    average_score = float(avg_score_data["avg_score"]) if avg_score_data["avg_score"] is not None else None
 
     # Get last activity (most recent submission time)
     last_submission = submissions.order_by("-submission_time").first()
@@ -244,10 +205,7 @@ def get_user_badges(request: HttpRequest, user_id: UserId):
     """
     Get user's earned badges.
 
-    Permissions:
-    - Any authenticated user can view their own badges
-    - Lecturers/Admins can view any user's badges
-    - Students can view other students' badges (for social learning)
+    Badges follow the same private class scope until social sharing is implemented.
     """
     current_user = request.auth
 
@@ -257,10 +215,7 @@ def get_user_badges(request: HttpRequest, user_id: UserId):
     except User.DoesNotExist:
         raise HttpError(404, "User not found")
 
-    # Permission check: students cannot view lecturer/admin badges
-    if current_user.user_role == "student":
-        if target_user.user_role in ["lecturer", "admin"]:
-            raise HttpError(403, "Students cannot view lecturer/admin badges")
+    require_visible_user(current_user, target_user)
 
     # Get user's earned badges
     user_badges = (
@@ -289,22 +244,17 @@ def get_user_progress(request: HttpRequest, user_id: UserId, period: str = "mont
 
     Returns time-series data with essay count and average score per period.
 
-    Permissions:
-    - Any authenticated user can view their own progress
-    - Lecturers/Admins can view any user's progress
+    Progress follows the account and teaching scope.
     """
 
     current_user = request.auth
 
-    # Permission check: students can only view their own progress
-    if current_user.user_role == "student" and current_user.user_id != user_id:
-        raise HttpError(403, "You can only view your own progress")
-
     # Check if user exists
     try:
-        User.objects.get(user_id=user_id)
+        target_user = User.objects.get(user_id=user_id)
     except User.DoesNotExist:
         raise HttpError(404, "User not found")
+    require_visible_user(current_user, target_user)
 
     # Get date range (last 6 months or last 12 weeks)
     now = timezone.now()
@@ -337,11 +287,9 @@ def get_user_progress(request: HttpRequest, user_id: UserId, period: str = "mont
 
             # Get score for this submission
             try:
-                feedback = Feedback.objects.get(submission_id_submission=sub)
-                scores = FeedbackItem.objects.filter(feedback_id_feedback=feedback).aggregate(
-                    avg=models.Avg("feedback_item_score")
-                )["avg"]
-                if scores:
+                feedback = Feedback.objects.get(submission_id_submission=sub, status="published")
+                scores = feedback.final_score
+                if scores is not None:
                     current_scores = weekly_data[week_key]["scores"]
                     if isinstance(current_scores, list):
                         current_scores.append(float(scores))
@@ -359,7 +307,7 @@ def get_user_progress(request: HttpRequest, user_id: UserId, period: str = "mont
                     ProgressEntryOut(
                         date=week_start,
                         essay_count=count,
-                        average_score=float(avg_score) if avg_score else None,
+                        average_score=float(avg_score) if avg_score is not None else None,
                     )
                 )
 
@@ -378,11 +326,9 @@ def get_user_progress(request: HttpRequest, user_id: UserId, period: str = "mont
 
             # Get score for this submission
             try:
-                feedback = Feedback.objects.get(submission_id_submission=sub)
-                scores = FeedbackItem.objects.filter(feedback_id_feedback=feedback).aggregate(
-                    avg=models.Avg("feedback_item_score")
-                )["avg"]
-                if scores:
+                feedback = Feedback.objects.get(submission_id_submission=sub, status="published")
+                scores = feedback.final_score
+                if scores is not None:
                     current_scores = monthly_data[month_key]["scores"]
                     if isinstance(current_scores, list):
                         current_scores.append(float(scores))
@@ -400,7 +346,7 @@ def get_user_progress(request: HttpRequest, user_id: UserId, period: str = "mont
                     ProgressEntryOut(
                         date=month_start,
                         essay_count=count,
-                        average_score=float(avg_score) if avg_score else None,
+                        average_score=float(avg_score) if avg_score is not None else None,
                     )
                 )
 
@@ -418,16 +364,7 @@ def get_user_progress(request: HttpRequest, user_id: UserId, period: str = "mont
 @router.get("/users/me/classes/", response=list[ClassDetailOut])
 def get_my_classes(request):
     user = request.auth
-    user_role = getattr(user, "user_role", None) or "student"
-
-    if user_role == "admin":
-        classes = Class.objects.all().select_related("unit_id_unit")
-    elif user_role == "lecturer":
-        class_ids = TeachingAssn.objects.filter(user_id_user=user).values_list("class_id_class_id", flat=True)
-        classes = Class.objects.filter(class_id__in=class_ids).select_related("unit_id_unit")
-    else:
-        class_ids = Enrollment.objects.filter(user_id_user=user).values_list("class_id_class_id", flat=True)
-        classes = Class.objects.filter(class_id__in=class_ids).select_related("unit_id_unit")
+    classes = visible_classes(user).select_related("unit_id_unit")
 
     result = []
     for class_obj in classes:
@@ -443,8 +380,7 @@ def get_my_classes(request):
                 class_term=class_obj.class_term,
                 class_year=class_obj.class_year,
                 class_status=class_obj.class_status,
+                class_archived_at=class_obj.class_archived_at,
             )
         )
     return result
-
-

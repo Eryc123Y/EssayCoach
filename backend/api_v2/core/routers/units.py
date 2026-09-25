@@ -9,7 +9,7 @@ from api_v2.types.ids import (
     UnitId,
 )
 from api_v2.utils.auth import JWTAuth
-from api_v2.utils.permissions import IsAdminOrLecturer
+from api_v2.utils.permissions import IsAdmin
 from core.models import (
     Unit,
 )
@@ -39,8 +39,8 @@ def paginate(queryset, params: PaginationParams):
 router = Router(tags=["Units"], auth=JWTAuth())
 
 
-def _check_admin_or_lecturer(request: HttpRequest) -> None:
-    IsAdminOrLecturer().check(request)
+def _check_admin(request: HttpRequest) -> None:
+    IsAdmin().check(request)
 
 
 # =============================================================================
@@ -56,7 +56,7 @@ def list_units(request: HttpRequest, filters: UnitFilterParams = UnitFilterParam
 
 @router.post("/units/", response=UnitOut)
 def create_unit(request: HttpRequest, data: UnitIn):
-    _check_admin_or_lecturer(request)
+    _check_admin(request)
     unit = Unit.objects.create(**data.dict())
     return unit
 
@@ -71,7 +71,7 @@ def get_unit(request: HttpRequest, unit_id: UnitId):
 
 @router.put("/units/{unit_id}/", response=UnitOut)
 def update_unit(request: HttpRequest, unit_id: UnitId, data: UnitIn):
-    _check_admin_or_lecturer(request)
+    _check_admin(request)
     try:
         unit = Unit.objects.get(unit_id=unit_id)
         for key, value in data.dict().items():
@@ -84,7 +84,7 @@ def update_unit(request: HttpRequest, unit_id: UnitId, data: UnitIn):
 
 @router.delete("/units/{unit_id}/", response=SuccessResponse)
 def delete_unit(request: HttpRequest, unit_id: UnitId) -> SuccessResponse:
-    _check_admin_or_lecturer(request)
+    _check_admin(request)
     try:
         unit = Unit.objects.get(unit_id=unit_id)
         unit.delete()

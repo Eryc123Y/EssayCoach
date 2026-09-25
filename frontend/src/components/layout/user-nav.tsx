@@ -12,8 +12,11 @@ import {
 import { UserAvatarProfile } from '@/components/user-avatar-profile';
 import { useAuth } from '@/components/layout/simple-auth-context';
 import { useRouter } from 'next/navigation';
+import { usePreferences } from './preference-provider';
+import { navigationLabel } from '@/lib/navigation-labels';
 export function UserNav() {
   const { user, logout } = useAuth();
+  const { locale } = usePreferences();
   const router = useRouter();
   if (user) {
     return (
@@ -46,14 +49,14 @@ export function UserNav() {
           <DropdownMenuSeparator />
           <DropdownMenuGroup>
             <DropdownMenuItem onClick={() => router.push('/dashboard/profile')}>
-              Profile
+              {navigationLabel('Profile', locale)}
             </DropdownMenuItem>
-            <DropdownMenuItem>Billing</DropdownMenuItem>
-            <DropdownMenuItem>Settings</DropdownMenuItem>
-            <DropdownMenuItem>New Team</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => router.push('/dashboard/settings')}>
+              {navigationLabel('Settings', locale)}
+            </DropdownMenuItem>
           </DropdownMenuGroup>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={logout}>Sign out</DropdownMenuItem>
+          <DropdownMenuItem onClick={logout}>{locale === 'zh' ? '退出登录' : 'Sign out'}</DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
     );

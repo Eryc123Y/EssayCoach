@@ -21,6 +21,10 @@ import {
 } from '@/features/dashboard/components/activity-feed';
 import type { DashboardActivityItem } from '@/service/api/v2/types';
 
+vi.mock('@/components/layout/preference-provider', () => ({
+  usePreferences: () => ({ locale: 'en' }),
+}));
+
 // Mock shadcn/ui components
 vi.mock('@/components/ui/card', () => ({
   Card: ({ children, className, ...props }: any) => (

@@ -21,18 +21,22 @@ import { toast } from 'sonner';
 import { Upload, Loader2, FileText, X, CloudUpload, Info } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'motion/react';
+import { usePreferences } from '@/components/layout/preference-provider';
 
 interface RubricUploadProps {
   onSuccess?: (response: RubricImportResponse) => void;
 }
 
 function InfoPopover() {
+  const { locale } = usePreferences();
+  const t = (en: string, zh: string) => locale === 'zh' ? zh : en;
   return (
     <Popover>
       <PopoverTrigger asChild>
         <Button
           variant='ghost'
           size='icon'
+          aria-label={t('Import requirements', '导入要求')}
           className='text-muted-foreground h-7 w-7 hover:bg-indigo-50 hover:text-indigo-600 dark:hover:bg-indigo-900/20 dark:hover:text-indigo-400'
         >
           <Info className='h-4 w-4' />
@@ -42,37 +46,37 @@ function InfoPopover() {
         <div className='space-y-4'>
           <div>
             <h4 className='text-foreground mb-2 text-sm font-semibold'>
-              AI Processing Workflow
+              {t('How import works', '导入流程')}
             </h4>
             <div className='space-y-2 text-xs'>
               <p className='text-muted-foreground leading-relaxed'>
-                Your PDF is processed through these steps:
+                {t('Your PDF goes through these steps:', 'PDF 会经过以下步骤：')}
               </p>
               <ol className='text-muted-foreground ml-4 list-decimal space-y-1.5'>
-                <li>AI analyzes document structure</li>
-                <li>Validates rubric format detection</li>
-                <li>Extracts dimensions and scoring levels</li>
-                <li>Auto-saves to your rubric library</li>
+                <li>{t('Analyze document structure', '分析文档结构')}</li>
+                <li>{t('Check that it is a rubric', '确认文档是评分量表')}</li>
+                <li>{t('Extract criteria and score levels', '提取评分维度和等级')}</li>
+                <li>{t('Save it to your library', '保存到量表库')}</li>
               </ol>
             </div>
           </div>
 
           <div className='border-border/50 border-t pt-3'>
             <h4 className='text-foreground mb-2 text-sm font-semibold'>
-              File Requirements
+              {t('File requirements', '文件要求')}
             </h4>
             <div className='text-muted-foreground space-y-1.5 text-xs'>
               <p className='flex items-start gap-2'>
                 <span className='font-medium'>•</span>
-                PDF format only
+                {t('PDF format only', '仅支持 PDF')}
               </p>
               <p className='flex items-start gap-2'>
                 <span className='font-medium'>•</span>
-                Maximum 10MB file size
+                {t('Up to 10 MB and 20 pages', '最多 10 MB、20 页')}
               </p>
               <p className='flex items-start gap-2'>
                 <span className='font-medium'>•</span>
-                Valid rubric structure with dimensions
+                {t('Selectable text and clear scoring criteria', '需要可选取文字和清晰的评分维度')}
               </p>
             </div>
           </div>
@@ -83,6 +87,8 @@ function InfoPopover() {
 }
 
 export function RubricUpload({ onSuccess }: RubricUploadProps) {
+  const { locale } = usePreferences();
+  const t = (en: string, zh: string) => locale === 'zh' ? zh : en;
   const [file, setFile] = useState<File | null>(null);
   const [rubricName, setRubricName] = useState('');
   const [isUploading, setIsUploading] = useState(false);
@@ -91,16 +97,16 @@ export function RubricUpload({ onSuccess }: RubricUploadProps) {
 
   const validateFile = useCallback((file: File): string | null => {
     if (file.type !== 'application/pdf') {
-      return 'Please upload a PDF file';
+      return t('Please upload a PDF file', '请上传 PDF 文件');
     }
 
     const maxSize = 10 * 1024 * 1024;
     if (file.size > maxSize) {
-      return 'File size must be less than 10MB';
+      return t('File must be 10 MB or smaller', '文件不能超过 10 MB');
     }
 
     return null;
-  }, []);
+  }, [locale]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
@@ -156,7 +162,7 @@ export function RubricUpload({ onSuccess }: RubricUploadProps) {
     e.preventDefault();
 
     if (!file) {
-      toast.error('Please select a PDF file');
+      toast.error(t('Please select a PDF file', '请选择 PDF 文件'));
       return;
     }
 
@@ -167,7 +173,7 @@ export function RubricUpload({ onSuccess }: RubricUploadProps) {
 
       if (response.success) {
         toast.success(
-          `Rubric "${response.rubric_name}" imported successfully! (${response.items_count} items, ${response.levels_count} levels)`
+          t(`Rubric "${response.rubric_name}" imported (${response.items_count} criteria, ${response.levels_count} levels)`, `已导入量表“${response.rubric_name}”（${response.items_count} 个维度、${response.levels_count} 个等级）`)
         );
 
         setFile(null);
@@ -178,10 +184,10 @@ export function RubricUpload({ onSuccess }: RubricUploadProps) {
 
         onSuccess?.(response);
       } else {
-        toast.error(response.error || 'Failed to import rubric');
+        toast.error(response.error || t('Could not import rubric', '无法导入量表'));
       }
     } catch (error: any) {
-      toast.error(error.message || 'Failed to upload rubric');
+      toast.error(error.message || t('Could not upload rubric', '无法上传量表'));
     } finally {
       setIsUploading(false);
     }
@@ -196,8 +202,8 @@ export function RubricUpload({ onSuccess }: RubricUploadProps) {
               <Upload className='h-5 w-5' />
             </div>
             <div>
-              <CardTitle>Upload Rubric PDF</CardTitle>
-              <CardDescription>AI-powered rubric extraction</CardDescription>
+              <CardTitle>{t('Upload rubric PDF', '上传量表 PDF')}</CardTitle>
+              <CardDescription>{t('Extract criteria with Codex Luna', '使用 Codex Luna 提取评分维度')}</CardDescription>
             </div>
           </div>
           <InfoPopover />
@@ -210,12 +216,12 @@ export function RubricUpload({ onSuccess }: RubricUploadProps) {
               htmlFor='rubric-name'
               className='text-muted-foreground text-xs font-medium tracking-wider uppercase'
             >
-              Rubric Name
+              {t('Rubric name', '量表名称')}
             </Label>
             <Input
               id='rubric-name'
               type='text'
-              placeholder='e.g., Argumentative Essay Rubric'
+              placeholder={t('e.g., Argumentative Essay Rubric', '例如：议论文评分量表')}
               value={rubricName}
               onChange={(e) => setRubricName(e.target.value)}
               disabled={isUploading}
@@ -225,7 +231,7 @@ export function RubricUpload({ onSuccess }: RubricUploadProps) {
 
           <div className='space-y-2'>
             <Label className='text-muted-foreground text-xs font-medium tracking-wider uppercase'>
-              PDF File
+              {t('PDF file', 'PDF 文件')}
             </Label>
             <AnimatePresence mode='wait'>
               {!file ? (
@@ -246,6 +252,10 @@ export function RubricUpload({ onSuccess }: RubricUploadProps) {
                   onDragOver={handleDrag}
                   onDrop={handleDrop}
                   onClick={() => inputRef.current?.click()}
+                  role='button'
+                  tabIndex={0}
+                  aria-label={t('Choose rubric PDF', '选择量表 PDF')}
+                  onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); inputRef.current?.click(); } }}
                 >
                   <input
                     ref={inputRef}
@@ -277,12 +287,12 @@ export function RubricUpload({ onSuccess }: RubricUploadProps) {
                     <div>
                       <div className='text-foreground text-sm font-medium'>
                         <span className='text-indigo-600 dark:text-indigo-400'>
-                          Click to upload
+                          {t('Click to upload', '点击上传')}
                         </span>{' '}
-                        or drag PDF
+                        {t('or drag a PDF here', '或拖拽 PDF 到此处')}
                       </div>
                       <p className='text-muted-foreground mt-1 text-xs'>
-                        Max size 10MB
+                        {t('Up to 10 MB', '最大 10 MB')}
                       </p>
                     </div>
                   </div>
@@ -337,12 +347,12 @@ export function RubricUpload({ onSuccess }: RubricUploadProps) {
             {isUploading ? (
               <>
                 <Loader2 className='mr-2 h-4 w-4 animate-spin' />
-                Processing Rubric...
+                {t('Processing rubric…', '正在解析量表…')}
               </>
             ) : (
               <>
                 <Upload className='mr-2 h-4 w-4' />
-                Start AI Import
+                {t('Import rubric', '导入量表')}
               </>
             )}
           </Button>

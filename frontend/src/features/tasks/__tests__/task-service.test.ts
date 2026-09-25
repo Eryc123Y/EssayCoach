@@ -1,4 +1,4 @@
-import { describe, it, expect, vi } from 'vitest';
+import { afterEach, beforeEach, describe, it, expect, vi } from 'vitest';
 import { taskService } from '@/service/api/v2/tasks';
 import type { Task } from '@/service/api/v2/types';
 
@@ -15,6 +15,7 @@ describe('taskService', () => {
     class_id_class: null,
     task_status: 'published',
     task_allow_late_submission: true,
+    task_allow_resubmission: false,
   };
 
   beforeEach(() => {
