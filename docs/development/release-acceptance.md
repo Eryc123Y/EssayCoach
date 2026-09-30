@@ -36,7 +36,7 @@ This record describes the one-institution, private local product on 2026-09-25. 
 
 ## Re-verification in a second environment, 2026-09-30
 
-Run on a Linux container (PostgreSQL 16 where the setup guide asks for 17, Python 3.12, Node 22, headless Chromium). There is no Codex sign-in there, so **no real AI call was made**. These checks cover code paths, the database, and the browser, not live model behavior.
+Run on a Linux container (PostgreSQL 16, Python 3.12, Node 22, headless Chromium). The migrations through `core.0033`, the backend suite, and the performance tests all passed on 16, so the setup guide now asks for 16 or newer; the Docker Compose file and CI still use 17. There is no Codex sign-in there, so **no real AI call was made**. These checks cover code paths, the database, and the browser, not live model behavior.
 
 - The 2026-09-25 results reproduced at commit `3946a4d`: backend 362 passed, frontend 598 passed, Ruff and TypeScript clean. Pyright reported 16 errors that this record did not mention. I could not make any of them fail at runtime (non-finite rubric weights are rejected with 422 before the flagged line, and a blank upload name returns 400), so each is a type-narrowing fix with unchanged behavior, and all are resolved.
 - Final state: backend 410 passed plus the 6 performance tests, frontend 608 passed, Ruff, Pyright, and TypeScript clean, and the production build passes. ESLint reports 0 errors and 113 warnings.

@@ -5,7 +5,7 @@ This is the development setup for one institution on a single machine. The [comp
 ## Prerequisites
 
 - Python 3.12 or newer, `uv`, Node.js 22 or newer, and `pnpm`.
-- PostgreSQL 17 reachable on a local port. Docker Compose or a locally installed PostgreSQL instance both work.
+- PostgreSQL 16 or newer reachable on a local port. Docker Compose (its file pulls PostgreSQL 17) or a locally installed PostgreSQL instance both work.
 - The Codex desktop/CLI signed in with a ChatGPT subscription. The worker uses this sign-in and requires **no OpenAI API key**. `CODEX_BIN` may point to a compatible Codex executable when `codex` is not on `PATH`; the current desktop app on macOS provides `/Applications/ChatGPT.app/Contents/Resources/codex`.
 
 ## Configure and start

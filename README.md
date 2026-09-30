@@ -7,7 +7,7 @@ EssayCoach is being built as a private, bilingual writing platform for one insti
 ## Current architecture
 
 - Next.js 15, React 19, TypeScript, and Tailwind CSS 4 for the web interface.
-- Django 4.2 with Ninja API v2 and PostgreSQL 17 for application data and permissions.
+- Django 4.2 with Ninja API v2 and PostgreSQL (verified on 16 and 17) for application data and permissions.
 - A PostgreSQL backed worker for formal scoring, practice feedback, and follow-up chat.
 - The local Python Codex SDK with a signed-in ChatGPT account and configurable `gpt-6-luna` model. The current private setup does not require an OpenAI API key. Practice source checks use live web discovery plus independent server retrieval. The old Dify API routes return HTTP 410.
 
@@ -15,7 +15,7 @@ Read the [architecture decisions](docs/architecture/product-architecture.md) for
 
 ## Local start
 
-Prerequisites: Python 3.12+, `uv`, Node.js 22+, `pnpm`, PostgreSQL 17, and a signed-in Codex CLI/Desktop app for AI jobs.
+Prerequisites: Python 3.12+, `uv`, Node.js 22+, `pnpm`, PostgreSQL 16 or newer, and a signed-in Codex CLI/Desktop app for AI jobs.
 
 1. Copy `.env.example` to `.env`. Set a stable, private `DJANGO_SECRET_KEY` and your local PostgreSQL connection values.
 2. Install dependencies with `cd backend && uv sync`, then `cd ../frontend && pnpm install`.
