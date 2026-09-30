@@ -1023,4 +1023,5 @@ export const zh: Record<keyof typeof en, string> = {
   'ui.couldNotLoadThisArticle': "无法加载文章。",
   'ui.private6a33ef': "私有",
   'ui.toggleRubricVisibility': "切换量表可见范围",
+  'ui.onlyALecturerCanReviewAndScoreThisEssay': "只有讲师可以审阅并评分这篇作文。",
 };

@@ -1021,4 +1021,5 @@ export const en = {
   'ui.couldNotLoadThisArticle': "Could not load this article.",
   'ui.private6a33ef': "Private",
   'ui.toggleRubricVisibility': "Toggle rubric visibility",
+  'ui.onlyALecturerCanReviewAndScoreThisEssay': "Only a lecturer can review and score this essay.",
 } as const;

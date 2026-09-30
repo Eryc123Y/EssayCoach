@@ -31,6 +31,7 @@ export type FormalAssessment = {
   ai_proposal: { model: string; run_id: string; items: AssessmentCriterion[] } | null;
   rubric_snapshot: AssessmentSnapshotItem[] | null;
   can_publish: boolean;
+  can_review: boolean;
   reviewed_by: number | null;
   reviewed_at: string | null;
   published_by: number | null;
