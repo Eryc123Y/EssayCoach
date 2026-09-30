@@ -227,6 +227,7 @@ nitro.json
 
 # Temporary folders
 tasks/
+!frontend/src/features/tasks/
 temp/
 tmp/
 
