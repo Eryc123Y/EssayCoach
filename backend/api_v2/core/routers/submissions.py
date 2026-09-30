@@ -63,6 +63,9 @@ def paginate(queryset, params: PaginationParams):
 
 router = Router(tags=["Submissions"], auth=JWTAuth())
 
+# Matches the limit the writing forms and the practice workflow already enforce.
+MAX_ESSAY_CHARACTERS = 50000
+
 
 def _check_admin_or_lecturer(request: HttpRequest) -> None:
     IsAdminOrLecturer().check(request)
@@ -128,6 +131,12 @@ def create_submission(request: HttpRequest, data: SubmissionIn):
     request_user = request.auth
     if request_user.user_role != "student" or request_user.user_id != data.user_id_user:
         raise HttpError(403, "Students can submit only their own work")
+    # A formal submission is immutable and counts against the attempt limit, so
+    # reject unusable text before anything is stored or queued for the model.
+    if not data.submission_txt.strip():
+        raise HttpError(400, "The essay text cannot be empty")
+    if len(data.submission_txt) > MAX_ESSAY_CHARACTERS:
+        raise HttpError(400, f"The essay text cannot exceed {MAX_ESSAY_CHARACTERS:,} characters")
 
     with transaction.atomic():
         try:

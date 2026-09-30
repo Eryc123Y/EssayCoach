@@ -134,7 +134,8 @@ export function AccountSection({
         passwordData.new_password,
         passwordData.new_password_confirm
       );
-      toast.success(t('ui.passwordChanged'));
+      // The server revokes every session, so the workspace signs the user out next.
+      toast.success(t('ui.yourOldSessionsHaveBeenSignedOutUseYourNew'));
       setPasswordData({
         current_password: '',
         new_password: '',

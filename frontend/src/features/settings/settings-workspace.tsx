@@ -15,9 +15,11 @@ import { EmailChangeSection } from '@/features/settings/components/email-change-
 import { Skeleton } from '@/components/ui/skeleton';
 import type { UserInfo } from '@/service/api/v2/types';
 import { usePreferences } from '@/components/layout/preference-provider';
+import { useAuth } from '@/components/layout/simple-auth-context';
 
 export default function SettingsWorkspace() {
   const { locale } = usePreferences();
+  const { logout } = useAuth();
   const t = (en: string, zh?: string) => localized(locale, en, zh);
   const [currentSection, setCurrentSection] = useState<SettingsSection>('account');
   const [user, setUser] = useState<UserInfo | null>(null);
@@ -56,6 +58,13 @@ export default function SettingsWorkspace() {
     loadUserInfo();
   }, [fetchUserInfo]);
 
+  // Changing the password revokes every session, including this one, so finish
+  // signing out after the confirmation has been visible for a moment.
+  const handlePasswordChange = async (current: string, next: string, confirmation: string) => {
+    await changePassword(current, next, confirmation);
+    window.setTimeout(() => void logout(), 1500);
+  };
+
   const handleSaveUser = async (data: {
     user_fname: string;
     user_lname: string;
@@ -78,7 +87,7 @@ export default function SettingsWorkspace() {
             isLoading={isUserLoading}
             onSaveUser={handleSaveUser}
             onUploadAvatar={uploadAvatar}
-            onChangePassword={changePassword}
+            onChangePassword={handlePasswordChange}
           />{user && <EmailChangeSection currentEmail={user.user_email} />}</>
         );
       case 'security':
