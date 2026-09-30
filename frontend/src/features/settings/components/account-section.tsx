@@ -11,7 +11,6 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { IconCamera, IconLock } from '@tabler/icons-react';
 import { toast } from 'sonner';
-import { settingsService } from '@/service/api/v2/auth';
 import type { UserInfo } from '@/service/api/v2/types';
 import { usePreferences } from '@/components/layout/preference-provider';
 

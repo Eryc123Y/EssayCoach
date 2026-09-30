@@ -1,6 +1,5 @@
 'use client';
 
-import { useParams } from 'next/navigation';
 import { ClassDetail } from '@/features/classes';
 
 export default function ClassDetailPage() {

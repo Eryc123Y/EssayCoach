@@ -45,7 +45,7 @@ const DEFAULT_PREFERENCES: UserPreferences = {
   theme: 'system',
 };
 
-export const useSettingsStore = create<SettingsState>((set, get) => ({
+export const useSettingsStore = create<SettingsState>((set) => ({
   // Initial state
   preferences: null,
   isLoading: false,
