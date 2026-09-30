@@ -48,6 +48,15 @@ def rubric_snapshot_for_rubric(rubric: MarkingRubric) -> list[dict]:
     return snapshot
 
 
+def task_rubric_snapshot(rubric: MarkingRubric) -> dict:
+    """The frozen rubric stored on a task; `GET /tasks/{id}/rubric/` returns exactly this shape."""
+    return {
+        "rubric_id": rubric.pk,
+        "description": rubric.rubric_desc or "",
+        "items": rubric_snapshot_for_rubric(rubric),
+    }
+
+
 def rubric_snapshot_for_feedback(feedback: Feedback) -> list[dict]:
     task = feedback.submission_id_submission.task_id_task
     if task.rubric_snapshot:

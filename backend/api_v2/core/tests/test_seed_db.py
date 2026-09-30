@@ -5,7 +5,9 @@ Run with: uv run pytest api_v2/core/tests/test_seed_db.py -v
 
 import pytest
 from django.core.management import call_command
+from django.test import Client
 
+from api_v2.utils.jwt_auth import create_jwt_pair
 from core.models import (
     Class,
     CourseLeadAssignment,
@@ -41,8 +43,16 @@ def test_seed_creates_a_usable_demo_course():
 
     task = Task.objects.get()
     assert task.task_status == "published"
-    assert len(task.rubric_snapshot) == 3
     assert task.class_id_class == class_obj
+    assert len(task.rubric_snapshot["items"]) == 3
+
+    # The seeded task must be usable through the API, not just present in the database.
+    for user in (student, lecturer):
+        client = Client()
+        client.defaults["HTTP_AUTHORIZATION"] = f"Bearer {create_jwt_pair(user).access}"
+        response = client.get(f"/api/v2/core/tasks/{task.pk}/rubric/")
+        assert response.status_code == 200, response.content
+        assert [item["name"] for item in response.json()["items"]] == ["Argument", "Structure", "Language"]
 
 
 @pytest.mark.django_db

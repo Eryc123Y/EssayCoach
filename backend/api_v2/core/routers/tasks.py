@@ -22,7 +22,7 @@ from api_v2.utils.course_scope import (
     visible_tasks,
 )
 from api_v2.utils.permissions import IsAdminOrLecturer, has_role
-from core.assessment import AssessmentError, rubric_snapshot_for_rubric
+from core.assessment import AssessmentError, task_rubric_snapshot
 from core.models import (
     Class,
     DeadlineExtension,
@@ -116,15 +116,11 @@ def _require_assignable_rubric(user: User, rubric: MarkingRubric) -> None:
 
 def _freeze_rubric(task: Task) -> None:
     try:
-        items = rubric_snapshot_for_rubric(task.rubric_id_marking_rubric)
+        snapshot = task_rubric_snapshot(task.rubric_id_marking_rubric)
     except AssessmentError as exc:
         raise HttpError(400, str(exc)) from exc
     task.rubric_version += 1
-    task.rubric_snapshot = {
-        "rubric_id": task.rubric_id_marking_rubric_id,
-        "description": task.rubric_id_marking_rubric.rubric_desc or "",
-        "items": items,
-    }
+    task.rubric_snapshot = snapshot
 
 
 # =============================================================================

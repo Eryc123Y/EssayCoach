@@ -5,7 +5,7 @@ from django.core.management.base import BaseCommand
 from django.db import transaction
 from django.utils import timezone
 
-from core.assessment import rubric_snapshot_for_rubric
+from core.assessment import task_rubric_snapshot
 from core.models import (
     Class,
     CourseLeadAssignment,
@@ -107,7 +107,7 @@ class Command(BaseCommand):
             unit_id_unit=unit,
             class_id_class=class_obj,
             rubric_id_marking_rubric=rubric,
-            rubric_snapshot=rubric_snapshot_for_rubric(rubric),
+            rubric_snapshot=task_rubric_snapshot(rubric),
             rubric_version=1,
             task_title="Essay 1: Technology and society",
             task_desc="A short argumentative essay.",
