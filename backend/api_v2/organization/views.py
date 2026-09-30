@@ -15,6 +15,12 @@ from api_v2.utils.permissions import IsAdmin
 from core.models import OrganizationSettings
 
 router = Router(tags=["Organization"], auth=JWTAuth())
+# Sign-in and the landing page are shown before anyone is authenticated, so the
+# institution's name, logo and colour are readable without a token. Nothing else
+# about the organization is exposed here.
+public_router = Router(tags=["Organization"], auth=None)
+
+_HEX_COLOR = re.compile(r"#[0-9a-fA-F]{6}")
 
 
 class OrganizationIn(Schema):
@@ -33,6 +39,22 @@ def _serialize(settings: OrganizationSettings) -> dict:
     }
 
 
+def _is_web_url(value: str) -> bool:
+    parsed = urlparse(value)
+    return parsed.scheme in {"http", "https"} and bool(parsed.netloc)
+
+
+@public_router.get("/branding/", response=dict)
+def get_public_branding(request: HttpRequest):
+    settings, _ = OrganizationSettings.objects.get_or_create(pk=1)
+    # Stored values were validated on write; re-check so a bad row can never reach a page.
+    return {
+        "name": settings.name,
+        "logo_url": settings.logo_url if _is_web_url(settings.logo_url) else "",
+        "primary_color": settings.primary_color if _HEX_COLOR.fullmatch(settings.primary_color) else "#0f766e",
+    }
+
+
 @router.get("/", response=dict)
 def get_organization(request: HttpRequest):
     IsAdmin().check(request)
@@ -43,11 +65,10 @@ def get_organization(request: HttpRequest):
 @router.put("/", response=dict)
 def update_organization(request: HttpRequest, data: OrganizationIn):
     IsAdmin().check(request)
-    if not re.fullmatch(r"#[0-9a-fA-F]{6}", data.primary_color):
+    if not _HEX_COLOR.fullmatch(data.primary_color):
         raise HttpError(400, "Primary color must be a six-digit hex color")
     if data.logo_url:
-        parsed = urlparse(data.logo_url)
-        if parsed.scheme not in {"http", "https"} or not parsed.netloc:
+        if not _is_web_url(data.logo_url):
             raise HttpError(400, "Logo must be an HTTP or HTTPS URL")
     settings, _ = OrganizationSettings.objects.get_or_create(pk=1)
     settings.name = data.name.strip()

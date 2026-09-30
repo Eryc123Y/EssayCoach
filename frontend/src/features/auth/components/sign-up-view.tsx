@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { BrandMark, BrandName } from '@/components/layout/brand-mark';
 import { useRouter } from 'next/navigation';
 import { useEffect, useState, type FormEvent } from 'react';
 
@@ -125,7 +126,7 @@ export default function SignUpViewPage() {
     <main className='min-h-screen bg-[#F5F7FB] px-5 py-7 text-[#19243B] sm:px-8'>
       <div className='mx-auto max-w-5xl'>
         <header className='flex items-center justify-between border-b border-[#DFE5EF] pb-5'>
-          <Link href='/' className='text-xl font-semibold tracking-tight'>EssayCoach<span className='text-[#365CE6]'>.</span></Link>
+          <Link href='/' className='flex items-center gap-3 text-xl font-semibold tracking-tight'><BrandMark /><BrandName /></Link>
           <button type='button' onClick={() => setLocale(locale === 'en' ? 'zh' : 'en')} className='rounded-lg border border-[#D8DEEA] bg-white px-3 py-1.5 text-sm focus-visible:outline-2 focus-visible:outline-[#365CE6]' aria-label='Switch language / 切换语言'>
             {locale === 'en' ? '中文' : 'English'}
           </button>

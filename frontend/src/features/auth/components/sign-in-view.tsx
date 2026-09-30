@@ -3,6 +3,7 @@ import { cn } from "@/lib/utils";
 import UserAuthForm from "./user-auth-form";
 import { Metadata } from "next";
 import Link from "next/link";
+import { BrandMark, BrandName } from "@/components/layout/brand-mark";
 
 export const metadata: Metadata = {
   title: 'Authentication',
@@ -31,22 +32,9 @@ export default function SignInViewPage() {
             backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='1'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`
           }}
         />
-        <div className="relative z-10 flex items-center text-xl font-semibold tracking-tight">
-          <div className="mr-3 flex h-8 w-8 items-center justify-center rounded-lg bg-blue-600">
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="none"
-              stroke="currentColor"
-              strokeWidth="2"
-              strokeLinecap="round"
-              strokeLinejoin="round"
-              className="h-5 w-5"
-            >
-              <path d="M15 6v12a3 3 0 1 0 3-3H6a3 3 0 1 0 3 3V6a3 3 0 1 0-3 3h12a3 3 0 1 0-3-3" />
-            </svg>
-          </div>
-          EssayCoach
+        <div className="relative z-10 flex items-center gap-3 text-xl font-semibold tracking-tight">
+          <BrandMark className="h-8 w-8 rounded-lg" iconSize={18} />
+          <BrandName />
         </div>
         <div className="relative z-10 mt-auto">
           <blockquote className="space-y-4">
@@ -78,8 +66,8 @@ export default function SignInViewPage() {
           </div>
         </div>
         {/* Footer */}
-        <div className="relative z-10 mt-auto pt-8 text-xs text-slate-500">
-          © 2024 EssayCoach. All rights reserved.
+        <div className="relative z-10 mt-auto pt-8 text-xs text-slate-400">
+          © 2024 <BrandName />. All rights reserved.
         </div>
       </div>
       {/* Form Panel */}
@@ -87,28 +75,15 @@ export default function SignInViewPage() {
         <div className="flex w-full max-w-md flex-col justify-center space-y-8">
           {/* Mobile header */}
           <div className="flex items-center gap-3 lg:hidden">
-            <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-blue-600 shadow-lg shadow-blue-600/25">
-              <svg
-                xmlns="http://www.w3.org/2000/svg"
-                viewBox="0 0 24 24"
-                fill="none"
-                stroke="currentColor"
-                strokeWidth="2"
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                className="h-6 w-6 text-white"
-              >
-                <path d="M15 6v12a3 3 0 1 0 3-3H6a3 3 0 1 0 3 3V6a3 3 0 1 0-3 3h12a3 3 0 1 0-3-3" />
-              </svg>
-            </div>
-            <span className="text-xl font-semibold">EssayCoach</span>
+            <BrandMark className="h-10 w-10 shadow-lg" iconSize={22} />
+            <BrandName className="text-xl font-semibold" />
           </div>
           
           <div>
             <h1 className="text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-50">
               Welcome back
             </h1>
-            <p className="mt-2 text-sm text-slate-500">
+            <p className="mt-2 text-sm text-slate-600 dark:text-slate-400">
               Enter your credentials to access your account
             </p>
           </div>

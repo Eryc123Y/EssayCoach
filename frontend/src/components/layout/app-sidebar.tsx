@@ -46,6 +46,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import * as React from 'react';
 import { Icons } from '../icons';
 import { OrgSwitcher } from '../org-switcher';
+import { BrandMark, BrandName } from './brand-mark';
 import { usePreferences } from './preference-provider';
 import { navigationLabel } from '@/lib/navigation-labels';
 import { localized } from '@/locales';
@@ -104,6 +105,10 @@ export default function AppSidebar() {
   return (
     <Sidebar collapsible='icon'>
       <SidebarHeader>
+        <div className='flex items-center gap-2 px-2 py-1 group-data-[collapsible=icon]:justify-center group-data-[collapsible=icon]:px-0'>
+          <BrandMark className='size-8' iconSize={16} />
+          <BrandName className='truncate text-sm font-semibold group-data-[collapsible=icon]:hidden' />
+        </div>
         <OrgSwitcher
           classes={classes}
           currentClass={currentClass}

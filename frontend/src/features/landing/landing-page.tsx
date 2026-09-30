@@ -4,6 +4,7 @@ import { localized } from '@/locales';
 
 import { useState, type ReactNode } from 'react';
 import Link from 'next/link';
+import { BrandMark, BrandName } from '@/components/layout/brand-mark';
 import { ArrowRight, BookOpen, Check, CheckCircle2, FileText, GraduationCap, MessageCircle, PenLine, SearchCheck, ShieldCheck, Sparkles } from 'lucide-react';
 
 type Translate = (en: string, zh?: string) => string;
@@ -16,7 +17,7 @@ export function LandingPage() {
   return <div className='min-h-screen bg-[#f7f9f8] text-[#182f30]'>
     <header className='sticky top-0 z-40 border-b border-slate-200/80 bg-[#f7f9f8]/95 backdrop-blur'>
       <nav className='mx-auto flex max-w-[1440px] items-center justify-between gap-4 px-5 py-4 sm:px-9 lg:px-16' aria-label={t('landing.mainNavigation')}>
-        <Link href='/' className='flex items-center gap-3 text-xl font-bold tracking-tight'><span className='grid h-9 w-9 place-items-center rounded-xl bg-[#143f3d] text-white'><PenLine size={19} /></span>EssayCoach</Link>
+        <Link href='/' className='flex items-center gap-3 text-xl font-bold tracking-tight'><BrandMark /><BrandName /></Link>
         <div className='hidden items-center gap-8 text-sm font-semibold text-slate-600 md:flex'><a href='#why' className='hover:text-teal-800'>{t('landing.whyEssaycoach')}</a><a href='#workflow' className='hover:text-teal-800'>{t('landing.howItWorks')}</a><a href='#for-teams' className='hover:text-teal-800'>{t('landing.forYourTeam')}</a></div>
         <div className='hidden items-center gap-3 md:flex'><button type='button' onClick={() => setLanguage(language === 'en' ? 'zh' : 'en')} className='rounded-full border border-slate-300 px-3 py-2 text-xs font-bold'>{language === 'en' ? '中文' : 'English'}</button><Link href='/auth/sign-in' className='rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold'>{t('landing.signIn')}</Link><Link href='/auth/sign-up' className='inline-flex items-center gap-2 rounded-full bg-[#143f3d] px-5 py-2.5 text-sm font-semibold text-white'>{t('landing.useYourInvitation')}<ArrowRight size={15} /></Link></div>
         <button type='button' onClick={() => setMenuOpen(!menuOpen)} aria-expanded={menuOpen} aria-label={t('landing.openMenu')} className='rounded-lg border border-slate-300 px-3 py-2 text-sm font-semibold md:hidden'>{menuOpen ? t('landing.close') : t('landing.menu')}</button>
@@ -41,7 +42,7 @@ export function LandingPage() {
       <section className='bg-[#e8f0eb] px-5 py-16 sm:px-9 lg:px-16'><div className='mx-auto flex max-w-[1312px] flex-wrap items-center justify-between gap-8'><div><p className='text-xs font-bold uppercase tracking-[0.2em] text-teal-800'>{t('landing.readyToWrite')}</p><h2 className='mt-3 text-3xl font-semibold tracking-tight'>{t('landing.yourNextDraftStartsHere')}</h2></div><Link href='/auth/sign-in' className='inline-flex items-center gap-2 rounded-full bg-[#143f3d] px-6 py-3.5 text-sm font-bold text-white'>{t('landing.enterEssaycoach')}<ArrowRight size={18} /></Link></div></section>
     </main>
 
-    <footer className='border-t border-slate-200 bg-[#f7f9f8] px-5 py-8 text-sm text-slate-500 sm:px-9 lg:px-16'><div className='mx-auto flex max-w-[1312px] flex-wrap items-center justify-between gap-5'><span className='font-bold text-slate-800'>EssayCoach</span><span>{t('landing.privateLocalWorkspaceForInvitedSchoolCommunities')}</span><div className='flex gap-5'><Link href='/auth/sign-in' className='hover:text-teal-800'>{t('landing.signIn')}</Link><Link href='/auth/sign-up' className='hover:text-teal-800'>{t('landing.invitation')}</Link></div></div></footer>
+    <footer className='border-t border-slate-200 bg-[#f7f9f8] px-5 py-8 text-sm text-slate-500 sm:px-9 lg:px-16'><div className='mx-auto flex max-w-[1312px] flex-wrap items-center justify-between gap-5'><BrandName className='font-bold text-slate-800' /><span>{t('landing.privateLocalWorkspaceForInvitedSchoolCommunities')}</span><div className='flex gap-5'><Link href='/auth/sign-in' className='hover:text-teal-800'>{t('landing.signIn')}</Link><Link href='/auth/sign-up' className='hover:text-teal-800'>{t('landing.invitation')}</Link></div></div></footer>
   </div>;
 }
 
