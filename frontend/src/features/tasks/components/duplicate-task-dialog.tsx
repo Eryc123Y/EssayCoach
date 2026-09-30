@@ -33,7 +33,6 @@ export function DuplicateTaskDialog({
   onSuccess,
 }: DuplicateTaskDialogProps) {
   const { locale } = usePreferences();
-  const zh = locale === 'zh';
   const [title, setTitle] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
@@ -63,7 +62,7 @@ export function DuplicateTaskDialog({
             {localized(locale, 'ui.duplicateAssignment')}
           </DialogTitle>
           <DialogDescription>
-            {zh ? `将“${task.task_title}”复制为草稿。` : <>Create a copy of &ldquo;{task.task_title}&rdquo; as a draft.</>}
+            {localized(locale, 'ui.createACopyOfTitleAsADraft', { title: task.task_title })}
           </DialogDescription>
         </DialogHeader>
 
@@ -72,7 +71,7 @@ export function DuplicateTaskDialog({
             <Label htmlFor="dup-title">{localized(locale, 'ui.newTitleOptional')}</Label>
             <Input
               id="dup-title"
-              placeholder={zh ? `复制：${task.task_title}` : `Copy of ${task.task_title}`}
+              placeholder={localized(locale, 'ui.copyOfTitle', { title: task.task_title })}
               value={title}
               onChange={(e) => setTitle(e.target.value)}
             />

@@ -46,7 +46,6 @@ interface ClassCardProps {
 export function ClassCard({ classItem, onUpdate, canManage, canDuplicate }: ClassCardProps) {
   const router = useRouter();
   const { locale } = usePreferences();
-  const zh = locale === 'zh';
   const [isDeleting, setIsDeleting] = useState(false);
   const [isArchiving, setIsArchiving] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -114,7 +113,7 @@ export function ClassCard({ classItem, onUpdate, canManage, canDuplicate }: Clas
         <CardContent className='space-y-2'>
           <div className='text-muted-foreground flex items-center text-sm'>
             <Users className='mr-2 h-4 w-4' />
-            {zh ? `${classItem.class_size} 名学生` : `${classItem.class_size} students`}
+            {localized(locale, 'ui.studentCountLabel', { count: classItem.class_size })}
           </div>
           {classItem.class_join_code && (
             <div className='text-sm'>
@@ -186,7 +185,7 @@ export function ClassCard({ classItem, onUpdate, canManage, canDuplicate }: Clas
           <AlertDialogHeader>
             <AlertDialogTitle>{localized(locale, 'ui.deleteClass')}</AlertDialogTitle>
             <AlertDialogDescription>
-              {zh ? `“${classItem.class_name}”将被永久删除，此操作无法撤销。` : <>This will permanently delete &ldquo;{classItem.class_name}&rdquo;. This action cannot be undone.</>}
+              {localized(locale, 'ui.thisWillPermanentlyDeleteClassNameThisActionCannotBeUndone', { name: classItem.class_name })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

@@ -15,6 +15,18 @@ interface TaskFormProps {
   initialData?: Task;
 }
 
+// Messages raised by useTaskForm itself; anything else is a server message shown as received.
+const FORM_ERROR_IDS: Record<string, string> = {
+  'Could not load class and rubric options. Refresh and try again.': 'ui.couldNotLoadClassAndRubricOptions',
+  'Choose a course, rubric, and due date before saving.': 'ui.chooseACourseRubricAndDueDateBeforeSaving',
+  'Choose a class for this course before saving.': 'ui.chooseAClassForThisCourseBeforeSaving'
+};
+
+function formErrorMessage(locale: string, error: string) {
+  const id = FORM_ERROR_IDS[error];
+  return id ? localized(locale, id) : error;
+}
+
 /**
  * Task create/update form used by `/dashboard/tasks/new` and `/dashboard/tasks/[id]/edit`.
  *
@@ -24,7 +36,6 @@ interface TaskFormProps {
 export function TaskForm({ taskId, initialData }: TaskFormProps) {
   const router = useRouter();
   const { locale } = usePreferences();
-  const zh = locale === 'zh';
   const { loading, error, classes, units, rubrics, formData, setFormData, handleSubmit } = useTaskForm({
     taskId,
     initialData,
@@ -42,7 +53,7 @@ export function TaskForm({ taskId, initialData }: TaskFormProps) {
 
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
-          {error && <Alert variant='destructive' role='alert'><AlertDescription>{zh ? (error.includes('options') ? '无法加载班级和量表，请刷新页面重试。' : error.includes('Choose a course') ? '保存前请选择课程、量表和截止时间。' : error.includes('Choose a class') ? '保存前请选择班级。' : error) : error}</AlertDescription></Alert>}
+          {error && <Alert variant='destructive' role='alert'><AlertDescription>{formErrorMessage(locale, error)}</AlertDescription></Alert>}
           <TaskTextFieldsSection {...sectionProps} />
           <TaskMetaFieldsSection {...sectionProps} />
           <TaskSettingsSection {...sectionProps} />

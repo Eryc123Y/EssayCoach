@@ -190,10 +190,10 @@ function StatusBadge({ status }: { status?: string }) {
     pending_review: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
   };
 
-  const labels: Record<string, string> = {
-    ai_graded: 'AI Graded',
-    pending_review: 'Pending',
-    overdue: 'Overdue'
+  const labelIds: Record<string, string> = {
+    ai_graded: 'ui.statusAiGraded',
+    pending_review: 'ui.statusPendingReview',
+    overdue: 'ui.overdue'
   };
 
   const s = status || 'ai_graded';
@@ -203,7 +203,7 @@ function StatusBadge({ status }: { status?: string }) {
       variant={isOverdueStatus ? 'destructive' : 'secondary'}
       className={classNames[s]}
     >
-      {locale === 'zh' ? { ai_graded: 'AI 草稿', pending_review: '待复核', overdue: '已逾期' }[s] || s : labels[s] || s}
+      {labelIds[s] ? localized(locale, labelIds[s]) : s}
     </Badge>
   );
 }

@@ -11,6 +11,7 @@ import {
   IconLayoutDashboard,
   IconBuilding,
 } from '@tabler/icons-react';
+import { localized } from '@/locales';
 
 export type SettingsSection =
   | 'account'
@@ -27,43 +28,37 @@ interface SettingsSidebarProps {
 
 const navItems: {
   id: SettingsSection;
-  label: string;
-  labelZh: string;
+  labelId: string;
   icon: React.ReactNode;
   roles: ('student' | 'lecturer' | 'admin')[];
 }[] = [
   {
     id: 'account',
-    label: 'Account',
-    labelZh: '账户',
+    labelId: 'ui.settingsAccount',
     icon: <IconUser className="size-4" />,
     roles: ['student', 'lecturer', 'admin'],
   },
   {
     id: 'security',
-    label: 'Security',
-    labelZh: '安全',
+    labelId: 'ui.settingsSecurity',
     icon: <IconShield className="size-4" />,
     roles: ['student', 'lecturer', 'admin'],
   },
   {
     id: 'notifications',
-    label: 'Notifications',
-    labelZh: '通知',
+    labelId: 'ui.notifications',
     icon: <IconBell className="size-4" />,
     roles: ['student', 'lecturer', 'admin'],
   },
   {
     id: 'display',
-    label: 'Display',
-    labelZh: '显示',
+    labelId: 'ui.settingsDisplay',
     icon: <IconLayoutDashboard className="size-4" />,
     roles: ['student', 'lecturer', 'admin'],
   },
   {
     id: 'organization',
-    label: 'Organization',
-    labelZh: '机构',
+    labelId: 'ui.settingsOrganization',
     icon: <IconBuilding className="size-4" />,
     roles: ['admin'],
   },
@@ -92,7 +87,7 @@ export function SettingsSidebar({
               onClick={() => onSectionChange(item.id)}
             >
               {item.icon}
-              {locale === 'zh' ? item.labelZh : item.label}
+              {localized(locale, item.labelId)}
             </Button>
           ))}
         </nav>

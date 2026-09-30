@@ -185,7 +185,7 @@ function RoleBadge({ role, locale }: { role: 'student' | 'lecturer' | 'admin'; l
 
   return (
     <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium capitalize ${variants[role]}`}>
-      {locale === 'zh' ? { student: '学生', lecturer: '讲师', admin: '管理员' }[role] : role}
+      {localized(locale, { student: 'ui.student', lecturer: 'ui.lecturer', admin: 'ui.admin' }[role])}
     </span>
   );
 }
