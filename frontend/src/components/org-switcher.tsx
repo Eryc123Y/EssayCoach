@@ -16,6 +16,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem
 } from '@/components/ui/sidebar';
+import { localized } from '@/locales';
 
 interface ClassInfo {
   classId: number;
@@ -55,11 +56,11 @@ export function OrgSwitcher({
                   <IconBook className='size-3.5 opacity-50' />
                 </div>
                 <span className='text-muted-foreground text-[10px] font-bold tracking-widest uppercase'>
-                  {locale === 'zh' ? '暂无班级' : 'No Classes'}
+                  {localized(locale, 'ui.noClasses')}
                 </span>
               </div>
               <span className='text-muted-foreground/60 truncate text-[10px]'>
-                {locale === 'zh' ? '请联系管理员' : 'Contact administrator'}
+                {localized(locale, 'ui.contactAdministrator')}
               </span>
             </div>
           </SidebarMenuButton>
@@ -76,7 +77,7 @@ export function OrgSwitcher({
             <SidebarMenuButton
               size='lg'
               className='data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground h-auto py-2 transition-all'
-              aria-label={locale === 'zh' ? '选择班级' : 'Select class'}
+              aria-label={localized(locale, 'ui.selectClass')}
             >
               <div className='flex w-full flex-col gap-1.5'>
                 <div className='flex items-center gap-2 px-0.5'>
@@ -84,7 +85,7 @@ export function OrgSwitcher({
                     <IconBook className='size-3.5' />
                   </div>
                   <span className='text-muted-foreground/80 text-[10px] font-bold tracking-widest uppercase'>
-                    {locale === 'zh' ? '当前班级' : 'Current Class'}
+                    {localized(locale, 'ui.currentClass')}
                   </span>
                 </div>
                 <div className='flex items-center justify-between gap-2 px-0.5'>
@@ -107,7 +108,7 @@ export function OrgSwitcher({
             sideOffset={4}
           >
             <div className='text-muted-foreground/50 px-2 py-1.5 text-[10px] font-bold tracking-widest uppercase'>
-              {locale === 'zh' ? '切换班级' : 'Switch Class'}
+              {localized(locale, 'ui.switchClass')}
             </div>
             {classes.map((cls) => (
               <DropdownMenuItem

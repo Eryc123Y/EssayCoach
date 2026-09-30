@@ -6,6 +6,7 @@ import { Badge } from '@/components/ui/badge';
 import { Globe, Lock } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { usePreferences } from '@/components/layout/preference-provider';
+import { localized } from '@/locales';
 
 interface VisibilityToggleProps {
   visibility: 'public' | 'private';
@@ -47,7 +48,7 @@ export function VisibilityToggle({
           ) : (
             <Lock className='h-4 w-4 text-amber-600 dark:text-amber-400' />
           )}
-          <span>{locale === 'zh' ? '可见范围' : 'Visibility'}</span>
+          <span>{localized(locale, 'community.visibility')}</span>
         </Label>
       )}
       <div className='flex items-center gap-2'>
@@ -56,7 +57,7 @@ export function VisibilityToggle({
           checked={isPublic}
           onCheckedChange={handleToggle}
           disabled={disabled}
-          aria-label={locale === 'zh' ? '切换量表可见范围' : 'Toggle rubric visibility'}
+          aria-label={localized(locale, 'ui.toggleRubricVisibility')}
         />
         <span
           className={cn(
@@ -66,7 +67,7 @@ export function VisibilityToggle({
               : 'text-amber-600 dark:text-amber-400'
           )}
         >
-          {isPublic ? locale === 'zh' ? '公开' : 'Public' : locale === 'zh' ? '私有' : 'Private'}
+          {isPublic ? localized(locale, 'ui.public') : localized(locale, 'ui.private6a33ef')}
         </span>
       </div>
     </div>
@@ -104,12 +105,12 @@ export function VisibilityBadge({
       {isPublic ? (
         <>
           <Globe className='h-3 w-3' />
-          <span>{locale === 'zh' ? '公开' : 'Public'}</span>
+          <span>{localized(locale, 'ui.public')}</span>
         </>
       ) : (
         <>
           <Lock className='h-3 w-3' />
-          <span>{locale === 'zh' ? '私有' : 'Private'}</span>
+          <span>{localized(locale, 'ui.private6a33ef')}</span>
         </>
       )}
     </Badge>

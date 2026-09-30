@@ -14,6 +14,7 @@ import { useAuth } from '@/components/layout/simple-auth-context';
 import { useRouter } from 'next/navigation';
 import { usePreferences } from './preference-provider';
 import { navigationLabel } from '@/lib/navigation-labels';
+import { localized } from '@/locales';
 export function UserNav() {
   const { user, logout } = useAuth();
   const { locale } = usePreferences();
@@ -56,7 +57,7 @@ export function UserNav() {
             </DropdownMenuItem>
           </DropdownMenuGroup>
           <DropdownMenuSeparator />
-          <DropdownMenuItem onClick={logout}>{locale === 'zh' ? '退出登录' : 'Sign out'}</DropdownMenuItem>
+          <DropdownMenuItem onClick={logout}>{localized(locale, 'ui.signOut')}</DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
     );

@@ -191,7 +191,7 @@ function RoleBadge({ role, locale }: { role: 'student' | 'lecturer' | 'admin'; l
 }
 
 function getGreeting(name: string | null, locale: 'en' | 'zh'): string {
-  if (!name) return locale === 'zh' ? '欢迎回来' : 'Welcome';
+  if (!name) return localized(locale, 'ui.welcome');
   const displayName = name.includes('@') ? name.split('@')[0] : name.split(' ')[0];
 
   const hour = new Date().getHours();

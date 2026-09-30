@@ -7,6 +7,7 @@ import { classService } from '@/service/api/v2';
 import type { ClassItem } from '@/service/api/v2/types';
 import { usePreferences } from '@/components/layout/preference-provider';
 import { Button } from '@/components/ui/button';
+import { localized } from '@/locales';
 
 export default function EditClassPage() {
   const params = useParams();
@@ -32,8 +33,8 @@ export default function EditClassPage() {
   }
 
   if (!classData) return <div className='rounded-xl border p-8 text-center' role='alert'>
-    <p>{error ? (locale === 'zh' ? '无法加载班级，请重试。' : 'Could not load this class. Please try again.') : (locale === 'zh' ? '找不到这个班级。' : 'Class not found.')}</p>
-    <Button className='mt-4' variant='outline' onClick={() => window.location.reload()}>{locale === 'zh' ? '重试' : 'Retry'}</Button>
+    <p>{error ? (localized(locale, 'ui.couldNotLoadThisClassPleaseTryAgain3545e4')) : (localized(locale, 'ui.classNotFound'))}</p>
+    <Button className='mt-4' variant='outline' onClick={() => window.location.reload()}>{localized(locale, 'ui.retry')}</Button>
   </div>;
 
   return (

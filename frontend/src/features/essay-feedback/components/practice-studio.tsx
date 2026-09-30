@@ -33,7 +33,7 @@ function SkillMap({ skills, language }: { skills: PracticeReport['skills']; lang
     return `${120 + Math.cos(angle) * radius},${112 + Math.sin(angle) * radius}`;
   };
   return (
-    <svg className='practice-radar' viewBox='0 0 240 225' role='img' aria-label={language === 'zh' ? '写作能力图' : 'Writing skills chart'}>
+    <svg className='practice-radar' viewBox='0 0 240 225' role='img' aria-label={localized(language, 'ui.writingSkillsChart')}>
       {[30, 60, 90].map(radius => (
         <polygon key={radius} points={values.map((_, index) => point(index, radius)).join(' ')} className='practice-radar-grid' />
       ))}
@@ -57,11 +57,11 @@ function ProgressDiff({ current, previous, language }: { current: PracticeReport
     .map(key => ({ key, delta: current.skills[key] - previous.skills[key] }))
     .filter(item => item.delta !== 0);
   const signed = (value: number) => `${value > 0 ? '+' : ''}${value}`;
-  return <section className='practice-report-section' aria-label={language === 'zh' ? '与上一稿比较' : 'Compared with previous draft'}>
-    <h3>{language === 'zh' ? '与上一稿比较' : 'Compared with previous draft'}</h3>
-    <p>{language === 'zh' ? '同一量规下的练习评分变化：' : 'Practice score change under the same rubric: '}
-      <strong>{signed(scoreChange)}</strong> {language === 'zh' ? '分' : 'points'}。
-      {language === 'zh' ? '这是修改线索，不是正式成绩。' : 'Use this as a revision clue, not a formal grade.'}
+  return <section className='practice-report-section' aria-label={localized(language, 'ui.comparedWithPreviousDraft')}>
+    <h3>{localized(language, 'ui.comparedWithPreviousDraft')}</h3>
+    <p>{localized(language, 'ui.practiceScoreChangeUnderTheSameRubric')}
+      <strong>{signed(scoreChange)}</strong> {localized(language, 'ui.points')}。
+      {localized(language, 'ui.useThisAsARevisionClueNotA')}
     </p>
     {changedSkills.length > 0 && <div className='practice-feedback-columns'>
       {changedSkills.map(({ key, delta }) => <p key={key}><span>{labels[key][language === 'zh' ? 1 : 0]}</span> <strong>{signed(delta)}</strong></p>)}

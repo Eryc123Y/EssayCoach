@@ -251,31 +251,31 @@ function getStatusConfig(status: StudentEssay['status'], locale: 'en' | 'zh'): {
       variant: 'outline',
       className:
         'border-slate-300 text-slate-600 dark:border-slate-600 dark:text-slate-400',
-      label: locale === 'zh' ? '草稿' : 'Draft'
+      label: localized(locale, 'ui.draft')
     },
     submitted: {
       variant: 'secondary',
       className:
         'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
-      label: locale === 'zh' ? '已提交' : 'Submitted'
+      label: localized(locale, 'ui.submitted667f11')
     },
     ai_graded: {
       variant: 'default',
       className:
         'bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400',
-      label: locale === 'zh' ? '等待复核' : 'Awaiting review'
+      label: localized(locale, 'ui.awaitingReview')
     },
     lecturer_reviewed: {
       variant: 'default',
       className:
         'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
-      label: locale === 'zh' ? '已复核' : 'Reviewed'
+      label: localized(locale, 'ui.reviewed')
     },
     returned: {
       variant: 'default',
       className:
         'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400',
-      label: locale === 'zh' ? '已返回' : 'Returned'
+      label: localized(locale, 'ui.returned')
     }
   };
 

@@ -48,6 +48,7 @@ import { Icons } from '../icons';
 import { OrgSwitcher } from '../org-switcher';
 import { usePreferences } from './preference-provider';
 import { navigationLabel } from '@/lib/navigation-labels';
+import { localized } from '@/locales';
 
 export default function AppSidebar() {
   const pathname = usePathname();
@@ -111,7 +112,7 @@ export default function AppSidebar() {
       </SidebarHeader>
       <SidebarContent className='overflow-x-hidden'>
         <SidebarGroup>
-          <SidebarGroupLabel>{locale === 'zh' ? '菜单' : 'Menu'}</SidebarGroupLabel>
+          <SidebarGroupLabel>{localized(locale, 'landing.menu')}</SidebarGroupLabel>
           <SidebarMenu>
             {filteredNavItems.map((item) => {
               const Icon = item.icon ? Icons[item.icon] : Icons.logo;
@@ -236,7 +237,7 @@ export default function AppSidebar() {
                 <DropdownMenuSeparator />
                 <DropdownMenuItem onClick={logout}>
                   <IconLogout className='mr-2 h-4 w-4' />
-                  {locale === 'zh' ? '退出登录' : 'Sign out'}
+                  {localized(locale, 'ui.signOut')}
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>

@@ -223,9 +223,9 @@ function ClassOverviewCards({ classes }: ClassOverviewCardsProps) {
       <Card className='bg-card border-slate-200 shadow-sm dark:border-slate-800'>
         <CardContent className='flex flex-col items-center justify-center py-8 text-center'>
           <IconUsers className='text-muted-foreground/50 mb-2 h-12 w-12' />
-          <h3 className='text-lg font-medium'>{locale === 'zh' ? '暂无班级' : 'No Classes Yet'}</h3>
+          <h3 className='text-lg font-medium'>{localized(locale, 'ui.noClassesYet')}</h3>
           <p className='text-muted-foreground mt-1 text-sm'>
-            {locale === 'zh' ? '创建第一个班级即可开始。' : 'Create your first class to get started.'}
+            {localized(locale, 'ui.createYourFirstClassToGetStarted')}
           </p>
         </CardContent>
       </Card>

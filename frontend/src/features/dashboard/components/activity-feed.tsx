@@ -11,6 +11,7 @@ import {
   IconStar,
   IconUserCheck,
 } from '@tabler/icons-react';
+import { localized } from '@/locales';
 
 interface ActivityFeedProps {
   activities: DashboardActivityItem[];
@@ -210,18 +211,18 @@ export function ActivityFeedError({
     <Card className="border-destructive/50 bg-destructive/5 shadow-sm">
       <CardHeader className="border-destructive/50 bg-destructive/5">
         <CardTitle className="text-lg font-semibold text-destructive">
-          {locale === 'zh' ? '无法加载活动' : 'Failed to Load Activity'}
+          {localized(locale, 'ui.failedToLoadActivity')}
         </CardTitle>
       </CardHeader>
       <CardContent>
         <p className="text-sm text-muted-foreground">
-          {error.message || (locale === 'zh' ? '发生未知错误。' : 'An unexpected error occurred.')}
+          {error.message || (localized(locale, 'ui.anUnexpectedErrorOccurred'))}
         </p>
         <button
           onClick={onRetry}
           className="mt-4 rounded-md bg-primary px-4 py-2 text-sm font-medium text-primary-foreground hover:bg-primary/90"
         >
-          {locale === 'zh' ? '重试' : 'Retry'}
+          {localized(locale, 'ui.retry')}
         </button>
       </CardContent>
     </Card>
