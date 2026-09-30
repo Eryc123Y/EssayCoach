@@ -18,6 +18,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Loader2, CalendarClock } from 'lucide-react';
 import { toast } from 'sonner';
 import { usePreferences } from '@/components/layout/preference-provider';
+import { localized } from '@/locales';
 
 interface ExtendDeadlineDialogProps {
   task: Task;
@@ -46,12 +47,12 @@ export function ExtendDeadlineDialog({
     let current = true;
     taskService.getEligibleStudents(task.task_id)
       .then(result => { if (current) { setStudents(result); setStudentLoadError(''); } })
-      .catch(() => { if (current) setStudentLoadError(zh ? '无法载入学生名单。' : 'Could not load students.'); });
+      .catch(() => { if (current) setStudentLoadError(localized(locale, 'ui.couldNotLoadStudents')); });
     return () => { current = false; };
   }, [open, task.task_id, zh]);
 
   // Format the current deadline for display
-  const currentDeadline = new Date(task.task_due_datetime).toLocaleString(zh ? 'zh-CN' : 'en-US');
+  const currentDeadline = new Date(task.task_due_datetime).toLocaleString(localized(locale, 'ui.enUs'));
 
   // Min datetime is now (can't extend to past)
   const now = new Date();
@@ -59,14 +60,14 @@ export function ExtendDeadlineDialog({
 
   const handleSubmit = async () => {
     if (!newDeadline) {
-      toast.error(zh ? '请选择新的截止时间。' : 'Please select a new deadline.');
+      toast.error(localized(locale, 'ui.pleaseSelectANewDeadline'));
       return;
     }
 
     const newDeadlineDate = new Date(newDeadline);
     const currentDeadlineDate = new Date(task.task_due_datetime);
     if (newDeadlineDate <= currentDeadlineDate) {
-      toast.error(zh ? '新截止时间必须晚于当前截止时间。' : 'New deadline must be after the current deadline.');
+      toast.error(localized(locale, 'ui.newDeadlineMustBeAfterTheCurrentDeadline'));
       return;
     }
 
@@ -78,15 +79,15 @@ export function ExtendDeadlineDialog({
         reason: reason.trim() || undefined,
       });
       toast.success(studentId
-        ? (zh ? '已为学生延长截止时间。' : 'Student deadline extended.')
-        : (zh ? '已延长全班截止时间。' : 'Class deadline extended.'));
+        ? (localized(locale, 'ui.studentDeadlineExtended'))
+        : (localized(locale, 'ui.classDeadlineExtended')));
       onOpenChange(false);
       setNewDeadline('');
       setReason('');
       setStudentId(null);
       onSuccess();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : (zh ? '延长截止时间失败。' : 'Failed to extend deadline.'));
+      toast.error(error instanceof Error ? error.message : (localized(locale, 'ui.failedToExtendDeadline')));
     } finally {
       setIsLoading(false);
     }
@@ -98,7 +99,7 @@ export function ExtendDeadlineDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <CalendarClock className="h-4 w-4" />
-            {zh ? '延长截止时间' : 'Extend deadline'}
+            {localized(locale, 'ui.extendDeadline')}
           </DialogTitle>
           <DialogDescription>
             {zh ? `“${task.task_title}”当前截止时间：` : <>Extend the deadline for &ldquo;{task.task_title}&rdquo;. Current deadline: </>}<strong>{currentDeadline}</strong>.
@@ -107,7 +108,7 @@ export function ExtendDeadlineDialog({
 
         <div className="space-y-4 py-2">
           <div className="space-y-2">
-            <Label htmlFor="extend-target">{zh ? '延期对象' : 'Extend for'}</Label>
+            <Label htmlFor="extend-target">{localized(locale, 'ui.extendFor')}</Label>
             <select
               id="extend-target"
               value={studentId ?? ''}
@@ -115,7 +116,7 @@ export function ExtendDeadlineDialog({
               className="h-10 w-full rounded-md border border-input bg-background px-3 text-sm"
               disabled={!!studentLoadError}
             >
-              <option value="">{zh ? '整个班级／课程' : 'Entire class or course'}</option>
+              <option value="">{localized(locale, 'ui.entireClassOrCourse')}</option>
               {students.map(student => <option key={student.user_id} value={student.user_id}>
                 {student.display_name} · {student.user_email}
               </option>)}
@@ -123,7 +124,7 @@ export function ExtendDeadlineDialog({
             {studentLoadError && <p role="alert" className="text-xs text-red-700">{studentLoadError}</p>}
           </div>
           <div className="space-y-2">
-            <Label htmlFor="new-deadline">{zh ? '新截止时间 *' : 'New deadline *'}</Label>
+            <Label htmlFor="new-deadline">{localized(locale, 'ui.newDeadline')}</Label>
             <Input
               id="new-deadline"
               type="datetime-local"
@@ -134,10 +135,10 @@ export function ExtendDeadlineDialog({
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="extend-reason">{zh ? '原因（可选）' : 'Reason (optional)'}</Label>
+            <Label htmlFor="extend-reason">{localized(locale, 'ui.reasonOptional')}</Label>
             <Textarea
               id="extend-reason"
-              placeholder={zh ? '例如：教学安排调整' : 'e.g. Schedule change…'}
+              placeholder={localized(locale, 'ui.eGScheduleChange')}
               value={reason}
               onChange={(e) => setReason(e.target.value)}
               rows={2}
@@ -147,18 +148,18 @@ export function ExtendDeadlineDialog({
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isLoading}>
-            {zh ? '取消' : 'Cancel'}
+            {localized(locale, 'community.cancel')}
           </Button>
           <Button onClick={handleSubmit} disabled={isLoading || !newDeadline}>
             {isLoading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                {zh ? '更新中…' : 'Extending…'}
+                {localized(locale, 'ui.extending')}
               </>
             ) : (
               <>
                 <CalendarClock className="mr-2 h-4 w-4" />
-                {zh ? '延长截止时间' : 'Extend deadline'}
+                {localized(locale, 'ui.extendDeadline')}
               </>
             )}
           </Button>

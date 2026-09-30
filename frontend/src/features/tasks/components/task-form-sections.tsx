@@ -15,6 +15,7 @@ import {
   toOptionalSelectValue,
   toDatetimeLocalValue,
 } from './task-form-utils';
+import { localized } from '@/locales';
 
 type SectionProps = {
   formData: TaskCreateInput;
@@ -28,11 +29,10 @@ type SectionProps = {
 
 export function TaskTextFieldsSection({ formData, setFormData }: SectionProps) {
   const { locale } = usePreferences();
-  const zh = locale === 'zh';
   return (
     <>
       <div className="space-y-2">
-        <Label htmlFor="title">{zh ? '作业标题 *' : 'Assignment title *'}</Label>
+        <Label htmlFor="title">{localized(locale, 'ui.assignmentTitle')}</Label>
         <Input
           id="title"
           value={formData.task_title}
@@ -42,7 +42,7 @@ export function TaskTextFieldsSection({ formData, setFormData }: SectionProps) {
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="desc">{zh ? '描述' : 'Description'}</Label>
+        <Label htmlFor="desc">{localized(locale, 'ui.description644c26')}</Label>
         <Textarea
           id="desc"
           value={formData.task_desc || ''}
@@ -52,14 +52,14 @@ export function TaskTextFieldsSection({ formData, setFormData }: SectionProps) {
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="instructions">{zh ? '写作要求 *' : 'Instructions *'}</Label>
+        <Label htmlFor="instructions">{localized(locale, 'ui.instructionse55691')}</Label>
         <Textarea
           id="instructions"
           value={formData.task_instructions}
           onChange={(e) => setFormData((prev) => ({ ...prev, task_instructions: e.target.value }))}
           required
           rows={4}
-          placeholder={zh ? '说明提交方式、字数及格式要求等' : 'Submission instructions, word count, formatting requirements…'}
+          placeholder={localized(locale, 'ui.submissionInstructionsWordCountFormattingRequirements')}
         />
       </div>
     </>
@@ -76,19 +76,19 @@ function TaskUnitRubricSection({ formData, setFormData, classes, units, rubrics 
   return (
     <div className="grid gap-4 sm:grid-cols-2">
       <div className="space-y-2">
-        <Label htmlFor="unit">{zh ? '课程 *' : 'Course *'}</Label>
+        <Label htmlFor="unit">{localized(locale, 'ui.course8e191a')}</Label>
         <Select value={formData.unit_id_unit} onValueChange={(value) => setFormData((prev) => ({
           ...prev,
           unit_id_unit: value,
           class_id_class: units.some((unit) => unit.unit_id === value) ? undefined : classes.find((item) => item.unit_id_unit === value)?.class_id,
         }))}>
-          <SelectTrigger id='unit'><SelectValue placeholder={zh ? '选择课程' : 'Select a course'} /></SelectTrigger>
+          <SelectTrigger id='unit'><SelectValue placeholder={localized(locale, 'ui.selectACourse')} /></SelectTrigger>
           <SelectContent>{availableUnits.map((unit) => <SelectItem key={unit.id} value={unit.id}>{unit.id} · {unit.name}</SelectItem>)}</SelectContent>
         </Select>
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="rubric">{zh ? '评分量表 *' : 'Rubric *'}</Label>
+        <Label htmlFor="rubric">{localized(locale, 'ui.rubric')}</Label>
         <Select
           value={String(formData.rubric_id_marking_rubric)}
           onValueChange={(value) =>
@@ -99,7 +99,7 @@ function TaskUnitRubricSection({ formData, setFormData, classes, units, rubrics 
           }
         >
           <SelectTrigger id='rubric'>
-            <SelectValue placeholder={zh ? '选择评分量表' : 'Select rubric'} />
+            <SelectValue placeholder={localized(locale, 'ui.selectRubric')} />
           </SelectTrigger>
           <SelectContent>
             {rubrics.map((rubric) => (
@@ -116,12 +116,11 @@ function TaskUnitRubricSection({ formData, setFormData, classes, units, rubrics 
 
 function TaskClassDueSection({ formData, setFormData, classes, units }: SectionProps) {
   const { locale } = usePreferences();
-  const zh = locale === 'zh';
   const requiresClass = Boolean(formData.unit_id_unit) && !units.some((unit) => unit.unit_id === formData.unit_id_unit);
   return (
     <div className="grid gap-4 sm:grid-cols-2">
       <div className="space-y-2">
-        <Label htmlFor="class">{requiresClass ? (zh ? '班级 *' : 'Class *') : (zh ? '班级（可选）' : 'Class (optional)')}</Label>
+        <Label htmlFor="class">{requiresClass ? (localized(locale, 'ui.classbf2a95')) : (localized(locale, 'ui.classOptional'))}</Label>
         <Select
           value={toOptionalSelectValue(formData.class_id_class)}
           onValueChange={(value) =>
@@ -129,10 +128,10 @@ function TaskClassDueSection({ formData, setFormData, classes, units }: SectionP
           }
         >
           <SelectTrigger id='class'>
-            <SelectValue placeholder={zh ? '选择班级' : 'Select a class'} />
+            <SelectValue placeholder={localized(locale, 'ui.selectAClass')} />
           </SelectTrigger>
           <SelectContent>
-            {!requiresClass && <SelectItem value={OPTIONAL_SELECT_SENTINEL}>{zh ? '面向整门课程' : 'Whole course'}</SelectItem>}
+            {!requiresClass && <SelectItem value={OPTIONAL_SELECT_SENTINEL}>{localized(locale, 'ui.wholeCourse')}</SelectItem>}
             {classes.filter((item) => item.unit_id_unit === formData.unit_id_unit).map((cls) => (
               <SelectItem key={cls.class_id} value={String(cls.class_id)}>
                 {cls.class_name}
@@ -143,7 +142,7 @@ function TaskClassDueSection({ formData, setFormData, classes, units }: SectionP
       </div>
 
       <div className="space-y-2">
-        <Label htmlFor="due">{zh ? '截止时间 *' : 'Due date *'}</Label>
+        <Label htmlFor="due">{localized(locale, 'ui.dueDate')}</Label>
         <Input
           id="due"
           type="datetime-local"
@@ -169,11 +168,10 @@ export function TaskMetaFieldsSection(props: SectionProps) {
 
 export function TaskSettingsSection({ formData, setFormData, loading, taskId }: SectionProps) {
   const { locale } = usePreferences();
-  const zh = locale === 'zh';
   return (
     <>
       <div className="space-y-2">
-        <Label htmlFor="status">{zh ? '状态' : 'Status'}</Label>
+        <Label htmlFor="status">{localized(locale, 'ui.status')}</Label>
         <Select
           value={formData.task_status}
           onValueChange={(value) =>
@@ -187,10 +185,10 @@ export function TaskSettingsSection({ formData, setFormData, loading, taskId }: 
             <SelectValue />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value="draft">{zh ? '草稿' : 'Draft'}</SelectItem>
-            <SelectItem value="published">{zh ? '已发布' : 'Published'}</SelectItem>
-            <SelectItem value="unpublished">{zh ? '已撤回' : 'Unpublished'}</SelectItem>
-            <SelectItem value="archived">{zh ? '已归档' : 'Archived'}</SelectItem>
+            <SelectItem value="draft">{localized(locale, 'ui.draft')}</SelectItem>
+            <SelectItem value="published">{localized(locale, 'ui.published')}</SelectItem>
+            <SelectItem value="unpublished">{localized(locale, 'ui.unpublished')}</SelectItem>
+            <SelectItem value="archived">{localized(locale, 'ui.archived')}</SelectItem>
           </SelectContent>
         </Select>
       </div>
@@ -201,7 +199,7 @@ export function TaskSettingsSection({ formData, setFormData, loading, taskId }: 
           checked={Boolean(formData.task_allow_late_submission)}
           onCheckedChange={(checked) => setFormData((prev) => ({ ...prev, task_allow_late_submission: checked }))}
         />
-        <Label htmlFor="allow-late">{zh ? '允许逾期提交' : 'Allow late submissions'}</Label>
+        <Label htmlFor="allow-late">{localized(locale, 'ui.allowLateSubmissions')}</Label>
       </div>
 
       <div className="flex items-center space-x-2">
@@ -210,12 +208,12 @@ export function TaskSettingsSection({ formData, setFormData, loading, taskId }: 
           checked={Boolean(formData.task_allow_resubmission)}
           onCheckedChange={(checked) => setFormData((prev) => ({ ...prev, task_allow_resubmission: checked }))}
         />
-        <Label htmlFor="allow-resubmission">{zh ? '允许一次重新提交（保留原版本）' : 'Allow one revision (retain the original)'}</Label>
+        <Label htmlFor="allow-resubmission">{localized(locale, 'ui.allowOneRevisionRetainTheOriginal')}</Label>
       </div>
 
       <div className="flex gap-4 pt-4">
         <Button type="submit" disabled={loading}>
-          {loading ? (zh ? '保存中…' : 'Saving…') : taskId ? (zh ? '保存更改' : 'Save changes') : (zh ? '创建作业' : 'Create assignment')}
+          {loading ? (localized(locale, 'ui.saving83ad29')) : taskId ? (localized(locale, 'ui.saveChanges')) : (localized(locale, 'ui.createAssignment'))}
         </Button>
       </div>
     </>

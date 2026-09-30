@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { usePreferences } from '@/components/layout/preference-provider';
+import { localized } from '@/locales';
 
 interface JoinClassDialogProps {
   open: boolean;
@@ -16,14 +17,13 @@ interface JoinClassDialogProps {
 
 export function JoinClassDialog({ open, onOpenChange, onJoin }: JoinClassDialogProps) {
   const { locale } = usePreferences();
-  const zh = locale === 'zh';
   const [joinCode, setJoinCode] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const handleJoin = async () => {
     if (!joinCode.trim()) {
-      setError(zh ? '请输入加入代码。' : 'Please enter a join code.');
+      setError(localized(locale, 'ui.pleaseEnterAJoinCode'));
       return;
     }
 
@@ -36,7 +36,7 @@ export function JoinClassDialog({ open, onOpenChange, onJoin }: JoinClassDialogP
       onOpenChange(false);
       setJoinCode('');
     } catch (err) {
-      setError(err instanceof Error ? err.message : (zh ? '加入班级失败，请检查代码。' : 'Failed to join class. Please check the code.'));
+      setError(err instanceof Error ? err.message : (localized(locale, 'ui.failedToJoinClassPleaseCheckTheCode')));
     } finally {
       setLoading(false);
     }
@@ -46,9 +46,9 @@ export function JoinClassDialog({ open, onOpenChange, onJoin }: JoinClassDialogP
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>{zh ? '加入班级' : 'Join class'}</DialogTitle>
+          <DialogTitle>{localized(locale, 'ui.joinClassd83ce0')}</DialogTitle>
           <DialogDescription>
-            {zh ? '输入讲师提供的加入代码，加入已经受邀注册的班级。' : 'Enter the code from your lecturer to join a class.'}
+            {localized(locale, 'ui.enterTheCodeFromYourLecturerToJoin')}
           </DialogDescription>
         </DialogHeader>
 
@@ -60,12 +60,12 @@ export function JoinClassDialog({ open, onOpenChange, onJoin }: JoinClassDialogP
           )}
           
           <div className="space-y-2">
-            <Label htmlFor="join-code">{zh ? '加入代码' : 'Join code'}</Label>
+            <Label htmlFor="join-code">{localized(locale, 'ui.joinCodea0bbc8')}</Label>
             <Input
               id="join-code"
               value={joinCode}
               onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
-              placeholder={zh ? '例如：ABC123' : 'e.g. ABC123'}
+              placeholder={localized(locale, 'ui.eGAbc123')}
               className="uppercase tracking-wider text-center text-lg"
               maxLength={10}
             />
@@ -74,10 +74,10 @@ export function JoinClassDialog({ open, onOpenChange, onJoin }: JoinClassDialogP
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            {zh ? '取消' : 'Cancel'}
+            {localized(locale, 'community.cancel')}
           </Button>
           <Button onClick={handleJoin} disabled={loading}>
-            {loading ? (zh ? '加入中…' : 'Joining…') : (zh ? '加入班级' : 'Join class')}
+            {loading ? (localized(locale, 'ui.joining')) : (localized(locale, 'ui.joinClassd83ce0'))}
           </Button>
         </DialogFooter>
       </DialogContent>

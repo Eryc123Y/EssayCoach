@@ -7,6 +7,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@
 import { UserPlus } from 'lucide-react';
 import { usePreferences } from '@/components/layout/preference-provider';
 import { Button } from '@/components/ui/button';
+import { localized } from '@/locales';
 
 interface StudentRosterProps {
   classId: number;
@@ -34,7 +35,7 @@ export function StudentRoster({ classId, onRosterChange }: StudentRosterProps) {
       await classService.getClassStudents(classId).then(setStudents);
       onRosterChange?.();
     } catch (cause) {
-      setActionError(cause instanceof Error ? cause.message : (zh ? '移除学生失败。' : 'Could not remove student.'));
+      setActionError(cause instanceof Error ? cause.message : (localized(locale, 'ui.couldNotRemoveStudent')));
     } finally {
       setRemovingId(null);
     }
@@ -57,15 +58,15 @@ export function StudentRoster({ classId, onRosterChange }: StudentRosterProps) {
   }
 
   if (error) return <div className='rounded-lg border p-6 text-center' role='alert'>
-    <p>{zh ? '无法加载学生名单。' : 'Could not load the student roster.'}</p>
-    <Button className='mt-3' variant='outline' onClick={loadStudents}>{zh ? '重试' : 'Retry'}</Button>
+    <p>{localized(locale, 'ui.couldNotLoadTheStudentRoster')}</p>
+    <Button className='mt-3' variant='outline' onClick={loadStudents}>{localized(locale, 'ui.retry')}</Button>
   </div>;
 
   if (students.length === 0) {
     return (
       <div className="text-center py-12 text-muted-foreground">
         <UserPlus className="mx-auto h-12 w-12 mb-4" />
-        <p>{zh ? '暂无学生加入' : 'No students enrolled yet'}</p>
+        <p>{localized(locale, 'ui.noStudentsEnrolledYet')}</p>
       </div>
     );
   }
@@ -76,20 +77,20 @@ export function StudentRoster({ classId, onRosterChange }: StudentRosterProps) {
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>{zh ? '姓名' : 'Name'}</TableHead>
-            <TableHead>{zh ? '邮箱' : 'Email'}</TableHead>
-            <TableHead>{zh ? '角色' : 'Role'}</TableHead>
-            <TableHead className='text-right'>{zh ? '操作' : 'Action'}</TableHead>
+            <TableHead>{localized(locale, 'ui.name')}</TableHead>
+            <TableHead>{localized(locale, 'ui.emailcbfd4c')}</TableHead>
+            <TableHead>{localized(locale, 'ui.role')}</TableHead>
+            <TableHead className='text-right'>{localized(locale, 'ui.action')}</TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
           {students.map((student) => (
             <TableRow key={student.user_id}>
-              <TableCell>{student.user_fname || student.user_lname ? `${student.user_fname || ''} ${student.user_lname || ''}`.trim() : (zh ? '未填写' : 'Unknown')}</TableCell>
+              <TableCell>{student.user_fname || student.user_lname ? `${student.user_fname || ''} ${student.user_lname || ''}`.trim() : (localized(locale, 'ui.unknown'))}</TableCell>
               <TableCell>{student.user_email}</TableCell>
-              <TableCell>{student.user_role === 'student' ? (zh ? '学生' : 'Student') : student.user_role}</TableCell>
+              <TableCell>{student.user_role === 'student' ? (localized(locale, 'ui.student')) : student.user_role}</TableCell>
               <TableCell className='text-right'><Button variant='outline' size='sm' disabled={removingId !== null} onClick={() => void removeStudent(student)}>
-                {removingId === student.user_id ? (zh ? '移除中…' : 'Removing…') : (zh ? '移出班级' : 'Remove')}
+                {removingId === student.user_id ? (localized(locale, 'ui.removing')) : (localized(locale, 'ui.remove'))}
               </Button></TableCell>
             </TableRow>
           ))}

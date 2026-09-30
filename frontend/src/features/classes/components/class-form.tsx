@@ -13,6 +13,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { localized } from '@/locales';
 
 interface ClassFormProps {
   classId?: number;
@@ -45,7 +46,7 @@ export function ClassForm({ classId, initialData }: ClassFormProps) {
       setUnits(list);
       setFormData((current) => ({ ...current, unit_id_unit: current.unit_id_unit || list[0]?.unit_id || '' }));
     }).catch(() => {
-      if (active) setError(zh ? '无法加载可选课程，请刷新页面重试。' : 'Could not load available courses. Refresh and try again.');
+      if (active) setError(localized(locale, 'ui.couldNotLoadAvailableCoursesRefreshAndTry'));
     }).finally(() => { if (active) setUnitsLoading(false); });
     return () => { active = false; };
   }, [initialData, zh]);
@@ -63,7 +64,7 @@ export function ClassForm({ classId, initialData }: ClassFormProps) {
       }
       router.push('/dashboard/classes');
     } catch (err) {
-      setError(err instanceof Error ? err.message : (zh ? '保存班级失败。' : 'Failed to save class.'));
+      setError(err instanceof Error ? err.message : (localized(locale, 'ui.failedToSaveClass')));
     } finally {
       setLoading(false);
     }
@@ -79,9 +80,9 @@ export function ClassForm({ classId, initialData }: ClassFormProps) {
   return (
     <Card className='mx-auto max-w-3xl'>
       <CardHeader>
-        <CardTitle>{classId ? (zh ? '编辑班级' : 'Edit class') : (zh ? '新建班级' : 'Create class')}</CardTitle>
+        <CardTitle>{classId ? (localized(locale, 'ui.editClass')) : (localized(locale, 'ui.createClassa388b8'))}</CardTitle>
         <CardDescription>
-          {classId ? (zh ? '更新班级资料' : 'Update class details') : (zh ? '为课程建立教学班级' : 'Create a teaching class for a course')}
+          {classId ? (localized(locale, 'ui.updateClassDetails')) : (localized(locale, 'ui.createATeachingClassForACourse'))}
         </CardDescription>
       </CardHeader>
       <CardContent>
@@ -91,42 +92,42 @@ export function ClassForm({ classId, initialData }: ClassFormProps) {
               <AlertDescription>{error}</AlertDescription>
             </Alert>
           )}
-          {!classId && !unitsLoading && units.length === 0 && !error && <Alert><AlertDescription>{zh ? '你尚无可创建班级的课程，请联系管理员分配课程负责人。' : 'You have no courses available for class creation. Ask an admin to assign you as course lead.'}</AlertDescription></Alert>}
+          {!classId && !unitsLoading && units.length === 0 && !error && <Alert><AlertDescription>{localized(locale, 'ui.youHaveNoCoursesAvailableForClassCreation')}</AlertDescription></Alert>}
 
           <div className="space-y-2">
-            <Label htmlFor="name">{zh ? '班级名称 *' : 'Class name *'}</Label>
+            <Label htmlFor="name">{localized(locale, 'ui.className840bf2')}</Label>
             <Input
               id="name"
               value={formData.class_name}
               onChange={(e) => setFormData({ ...formData, class_name: e.target.value })}
               required
               maxLength={100}
-              placeholder={zh ? '例如：学术写作 A 班' : 'e.g. Academic Writing A'}
+              placeholder={localized(locale, 'ui.eGAcademicWritingA')}
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="desc">{zh ? '描述' : 'Description'}</Label>
+            <Label htmlFor="desc">{localized(locale, 'ui.description644c26')}</Label>
             <Textarea
               id="desc"
               value={formData.class_desc || ''}
               onChange={(e) => setFormData({ ...formData, class_desc: e.target.value })}
               rows={3}
-              placeholder={zh ? '简要介绍教学安排' : 'Briefly describe the class'}
+              placeholder={localized(locale, 'ui.brieflyDescribeTheClass')}
             />
           </div>
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="unit">{zh ? '课程 *' : 'Course *'}</Label>
+              <Label htmlFor="unit">{localized(locale, 'ui.course8e191a')}</Label>
               {classId ? <Input id='unit' value={formData.unit_id_unit} disabled /> : <Select value={formData.unit_id_unit} onValueChange={(value) => setFormData({ ...formData, unit_id_unit: value })} disabled={unitsLoading || units.length === 0}>
-                <SelectTrigger id='unit'><SelectValue placeholder={unitsLoading ? (zh ? '加载中…' : 'Loading…') : (zh ? '选择课程' : 'Select a course')} /></SelectTrigger>
+                <SelectTrigger id='unit'><SelectValue placeholder={unitsLoading ? (localized(locale, 'ui.loadingd1185a')) : (localized(locale, 'ui.selectACourse'))} /></SelectTrigger>
                 <SelectContent>{units.map((unit) => <SelectItem key={unit.unit_id} value={unit.unit_id}>{unit.unit_id} · {unit.unit_name}</SelectItem>)}</SelectContent>
               </Select>}
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="term">{zh ? '学期' : 'Term'}</Label>
+              <Label htmlFor="term">{localized(locale, 'ui.term743be0')}</Label>
               <Select
                 value={formData.class_term}
                 onValueChange={(value) => setFormData({ ...formData, class_term: value })}
@@ -143,7 +144,7 @@ export function ClassForm({ classId, initialData }: ClassFormProps) {
 
           <div className="grid gap-4 sm:grid-cols-2">
             <div className="space-y-2">
-              <Label htmlFor="year">{zh ? '年份' : 'Year'}</Label>
+              <Label htmlFor="year">{localized(locale, 'ui.year')}</Label>
               <Input
                 id="year"
                 type="number"
@@ -156,18 +157,18 @@ export function ClassForm({ classId, initialData }: ClassFormProps) {
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="join-code">{zh ? '加入代码（可选）' : 'Join code (optional)'}</Label>
+              <Label htmlFor="join-code">{localized(locale, 'ui.joinCodeOptional')}</Label>
               <div className="flex gap-2">
                 <Input
                   id="join-code"
                   value={formData.class_join_code || ''}
                   onChange={(e) => setFormData({ ...formData, class_join_code: e.target.value.toUpperCase() })}
-                  placeholder={zh ? '留空则自动生成' : 'Generated if blank'}
+                  placeholder={localized(locale, 'ui.generatedIfBlank')}
                   maxLength={10}
                   className="uppercase"
                 />
                 <Button type="button" variant="outline" onClick={generateJoinCode}>
-                  {zh ? '生成' : 'Generate'}
+                  {localized(locale, 'ui.generate')}
                 </Button>
               </div>
             </div>
@@ -175,10 +176,10 @@ export function ClassForm({ classId, initialData }: ClassFormProps) {
 
           <div className="flex gap-4 pt-4">
             <Button type="submit" disabled={loading || (!classId && (unitsLoading || !formData.unit_id_unit))}>
-              {loading ? (zh ? '保存中…' : 'Saving…') : classId ? (zh ? '保存更改' : 'Save changes') : (zh ? '创建班级' : 'Create class')}
+              {loading ? (localized(locale, 'ui.saving83ad29')) : classId ? (localized(locale, 'ui.saveChanges')) : (localized(locale, 'ui.createClass'))}
             </Button>
             <Button type="button" variant="outline" onClick={() => router.push('/dashboard/classes')}>
-              {zh ? '取消' : 'Cancel'}
+              {localized(locale, 'community.cancel')}
             </Button>
           </div>
         </form>

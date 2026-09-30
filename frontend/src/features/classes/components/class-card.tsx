@@ -34,6 +34,7 @@ import {
 import { toast } from 'sonner';
 import { usePreferences } from '@/components/layout/preference-provider';
 import { classTermLabel } from './class-labels';
+import { localized } from '@/locales';
 
 interface ClassCardProps {
   classItem: ClassItem;
@@ -54,11 +55,11 @@ export function ClassCard({ classItem, onUpdate, canManage, canDuplicate }: Clas
   const handleDuplicate = async () => {
     setIsDuplicating(true);
     try {
-      await classService.duplicateClass(classItem.class_id, `${classItem.class_name} ${zh ? '（副本）' : '(copy)'}`.slice(0, 100));
+      await classService.duplicateClass(classItem.class_id, `${classItem.class_name} ${localized(locale, 'ui.copy308dba')}`.slice(0, 100));
       onUpdate();
-      toast.success(zh ? '已复制为空班级。' : 'Created an empty class copy.');
+      toast.success(localized(locale, 'ui.createdAnEmptyClassCopy'));
     } catch {
-      toast.error(zh ? '复制班级失败。' : 'Failed to duplicate class.');
+      toast.error(localized(locale, 'ui.failedToDuplicateClass'));
     } finally {
       setIsDuplicating(false);
     }
@@ -70,7 +71,7 @@ export function ClassCard({ classItem, onUpdate, canManage, canDuplicate }: Clas
       await classService.deleteClass(classItem.class_id);
       onUpdate();
     } catch {
-      toast.error(zh ? '无法删除含学生或作业的班级，请使用归档。' : 'Classes with students or assignments must be archived.');
+      toast.error(localized(locale, 'ui.classesWithStudentsOrAssignmentsMustBeArchived'));
     } finally {
       setIsDeleting(false);
       setShowDeleteConfirm(false);
@@ -83,7 +84,7 @@ export function ClassCard({ classItem, onUpdate, canManage, canDuplicate }: Clas
       await classService.archiveClass(classItem.class_id);
       onUpdate();
     } catch (error) {
-      toast.error(zh ? '归档班级失败，请重试。' : 'Failed to archive class. Please try again.');
+      toast.error(localized(locale, 'ui.failedToArchiveClassPleaseTryAgain'));
     } finally {
       setIsArchiving(false);
     }
@@ -97,7 +98,7 @@ export function ClassCard({ classItem, onUpdate, canManage, canDuplicate }: Clas
             <div className='space-y-1'>
               <CardTitle className='text-lg'>{classItem.class_name}</CardTitle>
               <CardDescription className='line-clamp-2'>
-                {classItem.class_desc || (zh ? '暂无描述' : 'No description')}
+                {classItem.class_desc || (localized(locale, 'ui.noDescription'))}
               </CardDescription>
             </div>
             <Badge
@@ -105,7 +106,7 @@ export function ClassCard({ classItem, onUpdate, canManage, canDuplicate }: Clas
                 classItem.class_status === 'active' ? 'default' : 'secondary'
               }
             >
-              {classItem.class_status === 'active' ? (zh ? '进行中' : 'Active') : (zh ? '已归档' : 'Archived')}
+              {classItem.class_status === 'active' ? (localized(locale, 'ui.activeb40ce1')) : (localized(locale, 'ui.archived'))}
             </Badge>
           </div>
         </CardHeader>
@@ -117,14 +118,14 @@ export function ClassCard({ classItem, onUpdate, canManage, canDuplicate }: Clas
           </div>
           {classItem.class_join_code && (
             <div className='text-sm'>
-              {zh ? '加入代码：' : 'Join code: '}
+              {localized(locale, 'ui.joinCode')}
               <span className='bg-muted rounded px-2 py-0.5 font-mono'>
                 {classItem.class_join_code}
               </span>
             </div>
           )}
           <div className='text-muted-foreground text-sm'>
-            {zh ? '学期：' : 'Term: '}{classTermLabel(classItem.class_term, locale)} {classItem.class_year}
+            {localized(locale, 'ui.term')}{classTermLabel(classItem.class_term, locale)} {classItem.class_year}
           </div>
         </CardContent>
 
@@ -137,12 +138,12 @@ export function ClassCard({ classItem, onUpdate, canManage, canDuplicate }: Clas
             }
           >
             <Eye className='mr-2 h-4 w-4' />
-            {zh ? '查看' : 'View'}
+            {localized(locale, 'ui.view')}
           </Button>
 
           {canManage && <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant='ghost' size='sm' aria-label={zh ? '班级操作' : 'Class actions'}>
+              <Button variant='ghost' size='sm' aria-label={localized(locale, 'ui.classActions')}>
                 <MoreVertical className='h-4 w-4' />
               </Button>
             </DropdownMenuTrigger>
@@ -153,7 +154,7 @@ export function ClassCard({ classItem, onUpdate, canManage, canDuplicate }: Clas
                 }
               >
                 <Edit className='mr-2 h-4 w-4' />
-                {zh ? '编辑' : 'Edit'}
+                {localized(locale, 'nav.edit')}
               </DropdownMenuItem>
               {classItem.class_status === 'active' && (
                 <DropdownMenuItem
@@ -161,11 +162,11 @@ export function ClassCard({ classItem, onUpdate, canManage, canDuplicate }: Clas
                   disabled={isArchiving}
                 >
                   <Archive className='mr-2 h-4 w-4' />
-                  {isArchiving ? (zh ? '归档中…' : 'Archiving...') : (zh ? '归档' : 'Archive')}
+                  {isArchiving ? (localized(locale, 'ui.archiving')) : (localized(locale, 'ui.archive'))}
                 </DropdownMenuItem>
               )}
               {canDuplicate && <DropdownMenuItem onClick={handleDuplicate} disabled={isDuplicating}>
-                <Copy className='mr-2 h-4 w-4' />{zh ? '复制为空班级' : 'Duplicate empty class'}
+                <Copy className='mr-2 h-4 w-4' />{localized(locale, 'ui.duplicateEmptyClass')}
               </DropdownMenuItem>}
               <DropdownMenuItem
                 onClick={() => setShowDeleteConfirm(true)}
@@ -173,7 +174,7 @@ export function ClassCard({ classItem, onUpdate, canManage, canDuplicate }: Clas
                 className='text-destructive'
               >
                 <Trash2 className='mr-2 h-4 w-4' />
-                {zh ? '删除' : 'Delete'}
+                {localized(locale, 'ui.delete')}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>}
@@ -183,15 +184,15 @@ export function ClassCard({ classItem, onUpdate, canManage, canDuplicate }: Clas
       {canManage && <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>{zh ? '删除班级？' : 'Delete class?'}</AlertDialogTitle>
+            <AlertDialogTitle>{localized(locale, 'ui.deleteClass')}</AlertDialogTitle>
             <AlertDialogDescription>
               {zh ? `“${classItem.class_name}”将被永久删除，此操作无法撤销。` : <>This will permanently delete &ldquo;{classItem.class_name}&rdquo;. This action cannot be undone.</>}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isDeleting}>{zh ? '取消' : 'Cancel'}</AlertDialogCancel>
+            <AlertDialogCancel disabled={isDeleting}>{localized(locale, 'community.cancel')}</AlertDialogCancel>
             <AlertDialogAction onClick={handleDelete} disabled={isDeleting}>
-              {isDeleting ? (zh ? '删除中…' : 'Deleting...') : (zh ? '删除' : 'Delete')}
+              {isDeleting ? (localized(locale, 'ui.deletingd1b100')) : (localized(locale, 'ui.delete'))}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

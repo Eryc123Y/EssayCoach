@@ -19,6 +19,7 @@ import { DuplicateTaskDialog } from './duplicate-task-dialog';
 import { ExtendDeadlineDialog } from './extend-deadline-dialog';
 import { usePreferences } from '@/components/layout/preference-provider';
 import { toast } from 'sonner';
+import { localized } from '@/locales';
 
 interface TaskCardProps {
   task: Task;
@@ -74,7 +75,7 @@ export function TaskCard({ task, className, userRole, onUpdate }: TaskCardProps)
       await taskService.deleteTask(task.task_id);
       onUpdate();
     } catch {
-      toast.error(zh ? '删除作业失败。' : 'Failed to delete assignment.');
+      toast.error(localized(locale, 'ui.failedToDeleteAssignment'));
     } finally {
       setIsDeleting(false);
     }
@@ -85,7 +86,7 @@ export function TaskCard({ task, className, userRole, onUpdate }: TaskCardProps)
       await taskService.publishTask(task.task_id);
       onUpdate();
     } catch {
-      toast.error(zh ? '发布作业失败。' : 'Failed to publish assignment.');
+      toast.error(localized(locale, 'ui.failedToPublishAssignment'));
     }
   };
 
@@ -94,7 +95,7 @@ export function TaskCard({ task, className, userRole, onUpdate }: TaskCardProps)
       await taskService.unpublishTask(task.task_id);
       onUpdate();
     } catch {
-      toast.error(zh ? '撤回作业失败。' : 'Failed to unpublish assignment.');
+      toast.error(localized(locale, 'ui.failedToUnpublishAssignment'));
     }
   };
 
@@ -111,11 +112,11 @@ export function TaskCard({ task, className, userRole, onUpdate }: TaskCardProps)
           <div className="space-y-1">
             <CardTitle className="text-lg">{task.task_title}</CardTitle>
             <CardDescription className="line-clamp-2">
-              {task.task_desc || (zh ? '暂无描述' : 'No description')}
+              {task.task_desc || (localized(locale, 'ui.noDescription'))}
             </CardDescription>
           </div>
           <Badge className={statusColors[task.task_status] || 'bg-secondary'}>
-            {({ draft: zh ? '草稿' : 'Draft', published: zh ? '已发布' : 'Published', unpublished: zh ? '已撤回' : 'Unpublished', archived: zh ? '已归档' : 'Archived' } as Record<string, string>)[task.task_status] || task.task_status}
+            {({ draft: localized(locale, 'ui.draft'), published: localized(locale, 'ui.published'), unpublished: localized(locale, 'ui.unpublished'), archived: localized(locale, 'ui.archived') } as Record<string, string>)[task.task_status] || task.task_status}
           </Badge>
         </div>
       </CardHeader>
@@ -123,43 +124,43 @@ export function TaskCard({ task, className, userRole, onUpdate }: TaskCardProps)
       <CardContent className="space-y-2">
         {task.class_id_class && (
           <div className="text-sm text-muted-foreground">
-            {zh ? '班级' : 'Class'} · {className || task.unit_id_unit}
+            {localized(locale, 'community.class')} · {className || task.unit_id_unit}
           </div>
         )}
         <div className="text-sm text-muted-foreground">
-          {deadlineExtended ? (zh ? '你的延期截止时间：' : 'Your extended deadline: ') : (zh ? '截止：' : 'Due: ')}
-          {new Date(personalDeadline ?? task.task_due_datetime).toLocaleString(zh ? 'zh-CN' : 'en-US')}
+          {deadlineExtended ? (localized(locale, 'ui.yourExtendedDeadline92e62d')) : (localized(locale, 'ui.due1831b6'))}
+          {new Date(personalDeadline ?? task.task_due_datetime).toLocaleString(localized(locale, 'ui.enUs'))}
         </div>
         {userRole === 'student' && submissionCount !== null && (
           <div className="text-sm font-medium text-blue-700">
             {submissionCount > 0
               ? revisionAvailable
-                ? (zh ? '已提交 · 还可提交一次修订稿' : 'Submitted · one revision available')
-                : (zh ? '已提交' : 'Submitted')
-              : (zh ? '尚未提交' : 'Not submitted')}
+                ? (localized(locale, 'ui.submittedOneRevisionAvailable'))
+                : (localized(locale, 'ui.submitted667f11'))
+              : (localized(locale, 'ui.notSubmitted'))}
           </div>
         )}
         {userRole === 'student' && submissionCount === 0 && task.task_status === 'published'
           && remainingHours >= 0 && remainingHours <= 48 && (
           <div role="status" className="text-sm font-medium text-amber-700">
             {remainingHours < 24
-              ? (zh ? '截止时间不足 24 小时' : 'Due in less than 24 hours')
-              : (zh ? '截止时间不足 48 小时' : 'Due in less than 48 hours')}
+              ? (localized(locale, 'ui.dueInLessThan24Hours'))
+              : (localized(locale, 'ui.dueInLessThan48Hours'))}
           </div>
         )}
         {userRole === 'student' && submissionCount === 0 && task.task_status === 'published'
           && remainingHours < 0 && !task.task_allow_late_submission && (
           <div role="status" className="text-sm font-medium text-rose-700">
-            {zh ? '已过截止时间' : 'Deadline passed'}
+            {localized(locale, 'ui.deadlinePassed')}
           </div>
         )}
         {task.task_allow_late_submission && (
           <div className="text-sm text-green-600">
-            {zh ? '允许逾期提交' : 'Late submissions allowed'}
+            {localized(locale, 'ui.lateSubmissionsAllowed')}
           </div>
         )}
         {summary && <div className='text-sm text-muted-foreground'>
-          {zh ? '已提交' : 'Submitted'} {summary.submitted_students}/{summary.eligible_students}
+          {localized(locale, 'ui.submitted667f11')} {summary.submitted_students}/{summary.eligible_students}
         </div>}
       </CardContent>
 
@@ -170,38 +171,38 @@ export function TaskCard({ task, className, userRole, onUpdate }: TaskCardProps)
           onClick={() => router.push(`/dashboard/tasks/${task.task_id}`)}
         >
           <FileText className="mr-2 h-4 w-4" />
-          {userRole === 'student' ? (zh ? '查看作业' : 'View assignment') : (zh ? '查看' : 'View')}
+          {userRole === 'student' ? (localized(locale, 'ui.viewAssignment')) : (localized(locale, 'ui.view'))}
         </Button>
 
         {canEdit && (
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="sm" aria-label={zh ? '作业操作' : 'Assignment actions'}>
+              <Button variant="ghost" size="sm" aria-label={localized(locale, 'ui.assignmentActions')}>
                 <MoreVertical className="h-4 w-4" />
               </Button>
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={() => router.push(`/dashboard/tasks/${task.task_id}/edit`)}>
                 <Edit className="mr-2 h-4 w-4" />
-                {zh ? '编辑' : 'Edit'}
+                {localized(locale, 'nav.edit')}
               </DropdownMenuItem>
               {task.task_status === 'published' ? (
                 <DropdownMenuItem onClick={handleUnpublish}>
-                  {zh ? '撤回' : 'Unpublish'}
+                  {localized(locale, 'ui.unpublish')}
                 </DropdownMenuItem>
               ) : (
                 <DropdownMenuItem onClick={handlePublish} disabled={task.task_status === 'archived'}>
-                  {zh ? '发布' : 'Publish'}
+                  {localized(locale, 'ui.publish')}
                 </DropdownMenuItem>
               )}
               <DropdownMenuSeparator />
               <DropdownMenuItem onClick={() => setDuplicateOpen(true)}>
                 <Copy className="mr-2 h-4 w-4" />
-                {zh ? '复制' : 'Duplicate'}
+                {localized(locale, 'ui.duplicate')}
               </DropdownMenuItem>
               <DropdownMenuItem onClick={() => setExtendOpen(true)}>
                 <CalendarClock className="mr-2 h-4 w-4" />
-                {zh ? '延长截止时间' : 'Extend deadline'}
+                {localized(locale, 'ui.extendDeadline')}
               </DropdownMenuItem>
               <DropdownMenuSeparator />
               <DropdownMenuItem
@@ -210,7 +211,7 @@ export function TaskCard({ task, className, userRole, onUpdate }: TaskCardProps)
                 className="text-destructive"
               >
                 <Trash2 className="mr-2 h-4 w-4" />
-                {zh ? '删除' : 'Delete'}
+                {localized(locale, 'ui.delete')}
               </DropdownMenuItem>
             </DropdownMenuContent>
           </DropdownMenu>

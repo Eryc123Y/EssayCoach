@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from '@/components/ui/dialog';
 import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
+import { localized } from '@/locales';
 
 interface BatchEnrollDialogProps {
   classId: number;
@@ -46,7 +47,7 @@ export function BatchEnrollDialog({ classId, className, open, onOpenChange, onSu
       setResult(response);
       if (response.created.length) onSuccess();
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : (zh ? '创建邀请失败' : 'Could not create invitations'));
+      setError(cause instanceof Error ? cause.message : (localized(locale, 'ui.couldNotCreateInvitations')));
     } finally {
       setWorking(false);
     }
@@ -56,7 +57,7 @@ export function BatchEnrollDialog({ classId, className, open, onOpenChange, onSu
     <Dialog open={open} onOpenChange={close}>
       <DialogContent className='max-h-[85vh] overflow-y-auto sm:max-w-xl'>
         <DialogHeader>
-          <DialogTitle>{zh ? '邀请学生' : 'Invite students'}</DialogTitle>
+          <DialogTitle>{localized(locale, 'ui.inviteStudents')}</DialogTitle>
           <DialogDescription>
             {zh ? `为「${className}」创建一次性邀请链接。学生接受后才会加入班级；目前请自行复制并分享链接。` :
               `Create one-time links for ${className}. Students join after accepting; copy and share the links yourself.`}
@@ -65,15 +66,15 @@ export function BatchEnrollDialog({ classId, className, open, onOpenChange, onSu
         {!result ? (
           <>
             <div className='space-y-2 py-2'>
-              <Label htmlFor='student-emails'>{zh ? '学生邮箱' : 'Student emails'} ({emails.length})</Label>
+              <Label htmlFor='student-emails'>{localized(locale, 'ui.studentEmails')} ({emails.length})</Label>
               <Textarea id='student-emails' value={raw} onChange={(event) => setRaw(event.target.value)} rows={6} placeholder={'student1@example.com\nstudent2@example.com'} />
-              <p className='text-muted-foreground text-xs'>{zh ? '可用换行、逗号或分号分隔，单次最多 50 人。' : 'Separate with newlines, commas, or semicolons; up to 50 per batch.'}</p>
+              <p className='text-muted-foreground text-xs'>{localized(locale, 'ui.separateWithNewlinesCommasOrSemicolonsUpTo')}</p>
             </div>
             {error && <p className='text-sm text-red-600' role='alert'>{error}</p>}
             <DialogFooter>
-              <Button variant='outline' onClick={close}>{zh ? '取消' : 'Cancel'}</Button>
+              <Button variant='outline' onClick={close}>{localized(locale, 'community.cancel')}</Button>
               <Button onClick={createLinks} disabled={working || !emails.length || emails.length > 50}>
-                {working ? (zh ? '正在创建…' : 'Creating…') : (zh ? '创建邀请链接' : 'Create invitation links')}
+                {working ? (localized(locale, 'ui.creating')) : (localized(locale, 'ui.createInvitationLinks'))}
               </Button>
             </DialogFooter>
           </>
@@ -89,13 +90,13 @@ export function BatchEnrollDialog({ classId, className, open, onOpenChange, onSu
                   <p className='mb-2 text-sm font-medium'>{invitation.email}</p>
                   <div className='flex gap-2'>
                     <input readOnly aria-label={`${invitation.email} invitation link`} value={invitationLink(invitation.token)} className='min-w-0 flex-1 rounded border px-2 py-1 text-xs' />
-                    <Button size='sm' variant='outline' onClick={() => navigator.clipboard.writeText(invitationLink(invitation.token))}>{zh ? '复制' : 'Copy'}</Button>
+                    <Button size='sm' variant='outline' onClick={() => navigator.clipboard.writeText(invitationLink(invitation.token))}>{localized(locale, 'ui.copy')}</Button>
                   </div>
                 </div>
               ))}
               {result.failed.map((item) => <p key={item.email} className='text-sm text-red-600'>{item.email}: {item.reason}</p>)}
             </div>
-            <DialogFooter><Button onClick={close}>{zh ? '完成' : 'Done'}</Button></DialogFooter>
+            <DialogFooter><Button onClick={close}>{localized(locale, 'ui.done')}</Button></DialogFooter>
           </>
         )}
       </DialogContent>

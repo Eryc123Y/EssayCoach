@@ -17,6 +17,7 @@ import { Label } from '@/components/ui/label';
 import { Loader2, Copy } from 'lucide-react';
 import { toast } from 'sonner';
 import { usePreferences } from '@/components/layout/preference-provider';
+import { localized } from '@/locales';
 
 interface DuplicateTaskDialogProps {
   task: Task;
@@ -42,12 +43,12 @@ export function DuplicateTaskDialog({
       await taskService.duplicateTask(task.task_id, {
         task_title: title.trim() || undefined,
       });
-      toast.success(zh ? '已复制作业。' : 'Assignment duplicated.');
+      toast.success(localized(locale, 'ui.assignmentDuplicated'));
       onOpenChange(false);
       setTitle('');
       onSuccess();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : (zh ? '复制作业失败。' : 'Failed to duplicate assignment.'));
+      toast.error(error instanceof Error ? error.message : (localized(locale, 'ui.failedToDuplicateAssignment')));
     } finally {
       setIsLoading(false);
     }
@@ -59,7 +60,7 @@ export function DuplicateTaskDialog({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Copy className="h-4 w-4" />
-            {zh ? '复制作业' : 'Duplicate assignment'}
+            {localized(locale, 'ui.duplicateAssignment')}
           </DialogTitle>
           <DialogDescription>
             {zh ? `将“${task.task_title}”复制为草稿。` : <>Create a copy of &ldquo;{task.task_title}&rdquo; as a draft.</>}
@@ -68,7 +69,7 @@ export function DuplicateTaskDialog({
 
         <div className="space-y-4 py-2">
           <div className="space-y-2">
-            <Label htmlFor="dup-title">{zh ? '新标题（可选）' : 'New title (optional)'}</Label>
+            <Label htmlFor="dup-title">{localized(locale, 'ui.newTitleOptional')}</Label>
             <Input
               id="dup-title"
               placeholder={zh ? `复制：${task.task_title}` : `Copy of ${task.task_title}`}
@@ -76,25 +77,25 @@ export function DuplicateTaskDialog({
               onChange={(e) => setTitle(e.target.value)}
             />
             <p className="text-xs text-muted-foreground">
-              {zh ? '留空则自动生成标题。' : 'Leave blank to generate a title.'}
+              {localized(locale, 'ui.leaveBlankToGenerateATitle')}
             </p>
           </div>
         </div>
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)} disabled={isLoading}>
-            {zh ? '取消' : 'Cancel'}
+            {localized(locale, 'community.cancel')}
           </Button>
           <Button onClick={handleSubmit} disabled={isLoading}>
             {isLoading ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                {zh ? '复制中…' : 'Duplicating…'}
+                {localized(locale, 'ui.duplicating')}
               </>
             ) : (
               <>
                 <Copy className="mr-2 h-4 w-4" />
-                {zh ? '复制' : 'Duplicate'}
+                {localized(locale, 'ui.duplicate')}
               </>
             )}
           </Button>

@@ -11,6 +11,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { localized } from '@/locales';
 
 interface InviteLecturerDialogProps {
   unitId: string;
@@ -50,7 +51,7 @@ export function InviteLecturerDialog({ unitId, unitName, open, onOpenChange, onS
       setResult(invitation);
       onSuccess();
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : (zh ? '创建邀请失败' : 'Could not create invitation'));
+      setError(cause instanceof Error ? cause.message : (localized(locale, 'ui.couldNotCreateInvitation')));
     } finally {
       setWorking(false);
     }
@@ -60,10 +61,9 @@ export function InviteLecturerDialog({ unitId, unitName, open, onOpenChange, onS
     <Dialog open={open} onOpenChange={close}>
       <DialogContent className='sm:max-w-lg'>
         <DialogHeader>
-          <DialogTitle>{zh ? '邀请讲师' : 'Invite lecturer'}</DialogTitle>
+          <DialogTitle>{localized(locale, 'ui.inviteLecturer')}</DialogTitle>
           <DialogDescription>
-            {zh ? '创建七天有效的一次性链接。请复制并自行分享给讲师。' :
-              'Create a one-time link valid for seven days. Copy and share it with the lecturer.'}
+            {localized(locale, 'ui.createAOneTimeLinkValidForSeven')}
           </DialogDescription>
         </DialogHeader>
 
@@ -71,7 +71,7 @@ export function InviteLecturerDialog({ unitId, unitName, open, onOpenChange, onS
           <>
             <div className='space-y-4 py-2'>
               <div className='space-y-2'>
-                <Label htmlFor='lecturer-email'>{zh ? '讲师邮箱' : 'Lecturer email'}</Label>
+                <Label htmlFor='lecturer-email'>{localized(locale, 'ui.lecturerEmail')}</Label>
                 <Input
                   id='lecturer-email'
                   type='email'
@@ -90,17 +90,16 @@ export function InviteLecturerDialog({ unitId, unitName, open, onOpenChange, onS
                 <div className='space-y-1'>
                   <Label htmlFor='course-lead'>{zh ? `设为 ${unitName} 的课程负责人` : `Make course lead for ${unitName}`}</Label>
                   <p className='text-muted-foreground text-xs'>
-                    {zh ? '课程负责人可以确认和发布这门课的正式成绩。' :
-                      'Course leads can confirm and publish formal grades for this course.'}
+                    {localized(locale, 'ui.courseLeadsCanConfirmAndPublishFormalGrades')}
                   </p>
                 </div>
               </div>
             </div>
             {error && <p className='text-sm text-red-600' role='alert'>{error}</p>}
             <DialogFooter>
-              <Button variant='outline' onClick={close}>{zh ? '取消' : 'Cancel'}</Button>
+              <Button variant='outline' onClick={close}>{localized(locale, 'community.cancel')}</Button>
               <Button onClick={createLink} disabled={working || !email.trim()}>
-                {working ? (zh ? '正在创建…' : 'Creating…') : (zh ? '创建邀请链接' : 'Create invitation link')}
+                {working ? (localized(locale, 'ui.creating')) : (localized(locale, 'ui.createInvitationLink'))}
               </Button>
             </DialogFooter>
           </>
@@ -110,18 +109,18 @@ export function InviteLecturerDialog({ unitId, unitName, open, onOpenChange, onS
               {zh ? `已为 ${result.email} 创建邀请链接。` : `Invitation link created for ${result.email}.`}
             </p>
             <div className='space-y-2'>
-              <Label htmlFor='lecturer-invitation-link'>{zh ? '邀请链接' : 'Invitation link'}</Label>
+              <Label htmlFor='lecturer-invitation-link'>{localized(locale, 'ui.invitationLink')}</Label>
               <div className='flex gap-2'>
                 <Input id='lecturer-invitation-link' readOnly value={invitationLink(result.token)} />
                 <Button variant='outline' onClick={() => navigator.clipboard.writeText(invitationLink(result.token))}>
-                  {zh ? '复制' : 'Copy'}
+                  {localized(locale, 'ui.copy')}
                 </Button>
               </div>
               <p className='text-muted-foreground text-xs'>
-                {zh ? '链接只在这里显示一次，请现在保存。' : 'This link is shown once. Save it now.'}
+                {localized(locale, 'ui.thisLinkIsShownOnceSaveItNow')}
               </p>
             </div>
-            <DialogFooter><Button onClick={close}>{zh ? '完成' : 'Done'}</Button></DialogFooter>
+            <DialogFooter><Button onClick={close}>{localized(locale, 'ui.done')}</Button></DialogFooter>
           </>
         )}
       </DialogContent>

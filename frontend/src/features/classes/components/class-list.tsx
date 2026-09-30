@@ -13,12 +13,12 @@ import { useAuth } from '@/components/layout/simple-auth-context';
 import { JoinClassDialog } from './join-class-dialog';
 import { toast } from 'sonner';
 import { usePreferences } from '@/components/layout/preference-provider';
+import { localized } from '@/locales';
 
 export function ClassList() {
   const router = useRouter();
   const { user } = useAuth();
   const { locale } = usePreferences();
-  const zh = locale === 'zh';
   const [classes, setClasses] = useState<ClassItem[]>([]);
   const [creatableUnitIds, setCreatableUnitIds] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
@@ -42,7 +42,7 @@ export function ClassList() {
       setClasses(data);
     } catch (error) {
       setLoadError(true);
-      toast.error(zh ? '无法加载班级，请重试。' : 'Failed to load classes. Please try again.');
+      toast.error(localized(locale, 'ui.failedToLoadClassesPleaseTryAgain'));
     } finally {
       setLoading(false);
     }
@@ -72,8 +72,8 @@ export function ClassList() {
 
   if (loadError) {
     return <div className='rounded-xl border p-8 text-center' role='alert'>
-      <p>{zh ? '暂时无法加载班级。' : 'Classes could not be loaded.'}</p>
-      <Button className='mt-4' variant='outline' onClick={() => void loadClasses()}>{zh ? '重试' : 'Retry'}</Button>
+      <p>{localized(locale, 'ui.classesCouldNotBeLoaded')}</p>
+      <Button className='mt-4' variant='outline' onClick={() => void loadClasses()}>{localized(locale, 'ui.retry')}</Button>
     </div>;
   }
 
@@ -82,21 +82,21 @@ export function ClassList() {
       {/* Header */}
       <div className='flex flex-wrap items-center justify-between gap-4'>
         <div>
-          <h1 className='text-3xl font-bold'>{zh ? '班级' : 'Classes'}</h1>
+          <h1 className='text-3xl font-bold'>{localized(locale, 'ui.classes47c68f')}</h1>
           <p className='text-muted-foreground mt-1'>
-            {zh ? '查看班级、课程与学生' : 'Manage your classes and students'}
+            {localized(locale, 'ui.manageYourClassesAndStudents')}
           </p>
         </div>
         <div className='flex gap-2'>
           {canJoinClass && (
             <Button variant='outline' onClick={() => setShowJoinDialog(true)}>
-              {zh ? '加入班级' : 'Join Class'}
+              {localized(locale, 'ui.joinClass')}
             </Button>
           )}
           {canCreateClass && (
             <Button onClick={() => router.push('/dashboard/classes/new')}>
               <PlusCircle className='mr-2 h-4 w-4' />
-              {zh ? '新建班级' : 'New Class'}
+              {localized(locale, 'nav.newClass')}
             </Button>
           )}
         </div>
@@ -106,8 +106,8 @@ export function ClassList() {
       <div className='relative max-w-sm'>
         <Search className='text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform' />
         <Input
-          placeholder={zh ? '搜索班级…' : 'Search classes...'}
-          aria-label={zh ? '搜索班级' : 'Search classes'}
+          placeholder={localized(locale, 'ui.searchClassese21b5a')}
+          aria-label={localized(locale, 'ui.searchClasses')}
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
           className='pl-10'
@@ -118,24 +118,24 @@ export function ClassList() {
       <Tabs defaultValue='active'>
         <TabsList>
           <TabsTrigger value='active'>
-            {zh ? '进行中' : 'Active'} ({activeClasses.length})
+            {localized(locale, 'ui.activeb40ce1')} ({activeClasses.length})
           </TabsTrigger>
           <TabsTrigger value='archived'>
-            {zh ? '已归档' : 'Archived'} ({archivedClasses.length})
+            {localized(locale, 'ui.archived')} ({archivedClasses.length})
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value='active' className='mt-4'>
           {activeClasses.length === 0 ? (
             <div className='py-12 text-center'>
-              <p className='text-muted-foreground'>{zh ? '暂无进行中的班级' : 'No active classes'}</p>
+              <p className='text-muted-foreground'>{localized(locale, 'ui.noActiveClassesf1ca27')}</p>
               {canCreateClass && (
                 <Button
                   variant='link'
                   onClick={() => router.push('/dashboard/classes/new')}
                   className='mt-2'
                 >
-                  {zh ? '创建第一个班级' : 'Create your first class'}
+                  {localized(locale, 'ui.createYourFirstClass')}
                 </Button>
               )}
               {canJoinClass && (
@@ -144,7 +144,7 @@ export function ClassList() {
                   onClick={() => setShowJoinDialog(true)}
                   className='mt-2'
                 >
-                  {zh ? '使用邀请码加入班级' : 'Join a class with code'}
+                  {localized(locale, 'ui.joinAClassWithCode')}
                 </Button>
               )}
             </div>
@@ -166,7 +166,7 @@ export function ClassList() {
         <TabsContent value='archived' className='mt-4'>
           {archivedClasses.length === 0 ? (
             <div className='text-muted-foreground py-12 text-center'>
-              {zh ? '暂无已归档班级' : 'No archived classes'}
+              {localized(locale, 'ui.noArchivedClasses')}
             </div>
           ) : (
             <div className='grid gap-4 md:grid-cols-2 lg:grid-cols-3'>

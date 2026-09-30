@@ -8,6 +8,7 @@ import { TaskMetaFieldsSection, TaskSettingsSection, TaskTextFieldsSection } fro
 import { useTaskForm } from './use-task-form';
 import { usePreferences } from '@/components/layout/preference-provider';
 import { Alert, AlertDescription } from '@/components/ui/alert';
+import { localized } from '@/locales';
 
 interface TaskFormProps {
   taskId?: number;
@@ -33,9 +34,9 @@ export function TaskForm({ taskId, initialData }: TaskFormProps) {
   return (
     <Card className='mx-auto max-w-4xl'>
       <CardHeader>
-        <CardTitle>{taskId ? (zh ? '编辑作业' : 'Edit assignment') : (zh ? '新建作业' : 'Create assignment')}</CardTitle>
+        <CardTitle>{taskId ? (localized(locale, 'ui.editAssignment')) : (localized(locale, 'ui.createAssignment550e5f'))}</CardTitle>
         <CardDescription>
-          {taskId ? (zh ? '更新作业要求与设置' : 'Update assignment details') : (zh ? '为学生布置写作任务' : 'Create a writing assignment for your students')}
+          {taskId ? (localized(locale, 'ui.updateAssignmentDetails')) : (localized(locale, 'ui.createAWritingAssignmentForYourStudents'))}
         </CardDescription>
       </CardHeader>
 
@@ -46,7 +47,7 @@ export function TaskForm({ taskId, initialData }: TaskFormProps) {
           <TaskMetaFieldsSection {...sectionProps} />
           <TaskSettingsSection {...sectionProps} />
           <Button type="button" variant="outline" onClick={() => router.push('/dashboard/tasks')}>
-            {zh ? '取消' : 'Cancel'}
+            {localized(locale, 'community.cancel')}
           </Button>
         </form>
       </CardContent>
