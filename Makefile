@@ -6,7 +6,7 @@ MKDOCS_CMD := uv run --with mkdocs==1.6.1 --with mkdocs-material==9.5.50 --with 
 # Install all dependencies
 install:
 	@echo "Installing Python dependencies (in backend .venv)..."
-	@cd backend && uv venv .venv && uv pip install -e .
+	@cd backend && uv sync
 	@echo "Installing Node dependencies..."
 	@cd frontend && pnpm install
 

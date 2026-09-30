@@ -190,11 +190,12 @@ def list_essays(request: HttpRequest):
 @router.post("/import/", response=PracticeImportOut)
 def import_document(request: HttpRequest, file: UploadedFile):
     _student(request)
+    filename = file.name or ""
     try:
-        content = extract_practice_text(file.name, file.read(10 * 1024 * 1024 + 1))
+        content = extract_practice_text(filename, file.read(10 * 1024 * 1024 + 1))
     except PracticeImportError as exc:
         raise HttpError(400, str(exc)) from exc
-    return PracticeImportOut(filename=file.name[:200], content=content, character_count=len(content))
+    return PracticeImportOut(filename=filename[:200], content=content, character_count=len(content))
 
 
 @router.post("/essays/", response={201: PracticeEssayOut})

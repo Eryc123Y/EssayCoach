@@ -191,7 +191,9 @@ def create_manual_rubric(request: HttpRequest, data: ManualRubricIn):
     for item in data.items:
         if not item.rubric_item_name.strip() or item.rubric_item_weight <= 0 or item.rubric_item_weight > 100:
             raise HttpError(400, "Criterion name and weight must be valid")
-        if item.rubric_item_weight.as_tuple().exponent < -1:
+        # as_tuple().exponent is a string only for NaN/Infinity, which the schema already rejects.
+        exponent = item.rubric_item_weight.as_tuple().exponent
+        if isinstance(exponent, int) and exponent < -1:
             raise HttpError(400, "Criterion weights support one decimal place")
         if not item.levels:
             raise HttpError(400, "Every criterion requires score levels")

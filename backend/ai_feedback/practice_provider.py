@@ -341,22 +341,22 @@ class CodexPracticeProvider:
             )
             quote = raw.get("quote", "")
             verdict = raw.get("verdict", "unresolved")
-            valid = (
+            verified = source if (
                 source is not None and isinstance(quote, str) and bool(quote)
                 and quote in source.excerpt and verdict in {"supported", "contradicted"}
-            )
+            ) else None
             evidence.append({
                 **entry,
-                "verdict": verdict if valid else "unresolved",
+                "verdict": verdict if verified else "unresolved",
                 "rationale": (
-                    str(raw.get("rationale", ""))[:2000] if valid
+                    str(raw.get("rationale", ""))[:2000] if verified
                     else "No conclusive source excerpt was verified."
                 ),
-                "source_title": source.title if valid else "",
-                "source_url": source.url if valid else "",
-                "source_excerpt": source.excerpt if valid else "",
-                "supporting_quote": quote if valid else "",
-                "retrieved_at": source.retrieved_at if valid else None,
+                "source_title": verified.title if verified else "",
+                "source_url": verified.url if verified else "",
+                "source_excerpt": verified.excerpt if verified else "",
+                "supporting_quote": quote if verified else "",
+                "retrieved_at": verified.retrieved_at if verified else None,
             })
         return evidence, verification_usage
 

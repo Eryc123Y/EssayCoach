@@ -48,6 +48,8 @@ class LocalJsonSpanExporter(SpanExporter):
     def export(self, spans) -> SpanExportResult:
         lines = []
         for span in spans:
+            if span.context is None or span.start_time is None or span.end_time is None:
+                continue  # only finished spans are exported; skip anything incomplete
             attributes = {key: value for key, value in (span.attributes or {}).items() if key in _ATTRIBUTES}
             if span.name.startswith("ai.") and not attributes.get("job.id"):
                 continue
