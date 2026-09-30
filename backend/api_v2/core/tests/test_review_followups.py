@@ -216,3 +216,73 @@ def test_worker_counts_processed_jobs_without_losing_updates(monkeypatch):
     call_command("run_ai_worker", once=True)
 
     assert WorkerHeartbeat.objects.get(pk=1).processed_jobs == 2
+
+
+@pytest.mark.django_db(transaction=True)
+@pytest.mark.parametrize(
+    ("busy_queue", "expected_calls"),
+    [
+        ("formal", ["formal"]),
+        ("practice", ["formal", "practice"]),
+        ("chat", ["formal", "practice", "chat"]),
+        (None, ["formal", "practice", "chat"]),
+    ],
+)
+def test_once_mode_stops_after_the_first_queue_with_work(monkeypatch, busy_queue, expected_calls):
+    from types import SimpleNamespace
+
+    from core.management.commands import run_ai_worker
+
+    calls = []
+
+    def queue(name):
+        def process():
+            calls.append(name)
+            if name != busy_queue:
+                return None
+            return SimpleNamespace(
+                pk=name, status="succeeded", attempts=1, error_category="", model="m", refresh_from_db=lambda: None
+            )
+
+        return process
+
+    monkeypatch.setattr(run_ai_worker, "process_next_job", queue("formal"))
+    monkeypatch.setattr(run_ai_worker, "process_next_run", queue("practice"))
+    monkeypatch.setattr(run_ai_worker, "process_next_turn", queue("chat"))
+
+    call_command("run_ai_worker", once=True)
+
+    assert calls == expected_calls
+
+
+# --- deleting an account with protected records is a conflict, not a server error ---------
+
+
+@pytest.mark.django_db
+def test_deleting_an_account_that_owns_a_shared_essay_returns_409(assessment):  # noqa: F811
+    from core.models import SharedEssay
+
+    teacher, student, outsider, unit, criterion, submission, feedback = assessment
+    admin = User.objects.create_user(user_email="delete-admin@example.com", password="pw-12345678", user_role="admin")
+    SharedEssay.objects.create(
+        submission=submission, owner=student, class_obj=submission.task_id_task.class_id_class, visibility="class"
+    )
+    admin_client = _client(admin)
+    admin_client.raise_request_exception = False  # an unhandled error must show up as a 500, not an exception
+
+    response = admin_client.delete(f"/api/v2/core/users/{student.pk}/")
+
+    assert response.status_code == 409, response.content
+    assert "disabled" in response.json()["detail"]
+    assert User.objects.filter(pk=student.pk).exists()
+
+
+@pytest.mark.django_db
+def test_an_account_with_no_records_can_still_be_deleted():
+    admin = User.objects.create_user(user_email="delete-admin2@example.com", password="pw-12345678", user_role="admin")
+    lonely = User.objects.create_user(user_email="delete-lonely@example.com", password="pw-12345678")
+
+    response = _client(admin).delete(f"/api/v2/core/users/{lonely.pk}/")
+
+    assert response.status_code == 200, response.content
+    assert not User.objects.filter(pk=lonely.pk).exists()

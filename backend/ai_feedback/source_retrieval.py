@@ -11,10 +11,64 @@ from ipaddress import ip_address
 from urllib.parse import quote, urljoin, urlparse
 
 import requests
+from requests.adapters import HTTPAdapter
+from urllib3.connection import HTTPSConnection
+from urllib3.connectionpool import HTTPSConnectionPool
+from urllib3.exceptions import NameResolutionError, NewConnectionError
+from urllib3.util import connection as urllib3_connection
 
 
 class SourceRetrievalError(RuntimeError):
     pass
+
+
+class _PublicOnlyHTTPSConnection(HTTPSConnection):
+    """Open the socket only to addresses this connection resolved and verified as public.
+
+    Validating a hostname and then letting the HTTP client resolve it again leaves a gap: a
+    hostname that answers with a public address for the check and a private one for the
+    connection (DNS rebinding) would reach the local network. Here the name is resolved once,
+    every answer must be a global address, and the socket is opened to that literal address.
+    TLS still verifies the certificate against the original hostname.
+    """
+
+    def _new_conn(self):
+        try:
+            answers = socket.getaddrinfo(self._dns_host, self.port, type=socket.SOCK_STREAM)
+        except socket.gaierror as exc:
+            raise NameResolutionError(self.host, self, exc) from exc
+        addresses = [item[4][0] for item in answers]
+        if not addresses or any(not ip_address(address.split("%")[0]).is_global for address in addresses):
+            raise NewConnectionError(self, "Source host does not resolve to public IP addresses")
+        failure: OSError | None = None
+        for address in addresses:
+            try:
+                return urllib3_connection.create_connection(
+                    (address, self.port),
+                    self.timeout,
+                    source_address=self.source_address,
+                    socket_options=self.socket_options,
+                )
+            except OSError as exc:
+                failure = exc
+        raise NewConnectionError(self, f"Failed to establish a new connection: {failure}")
+
+
+class _PublicOnlyHTTPSConnectionPool(HTTPSConnectionPool):
+    # urllib3's own HTTPSConnection does not satisfy its BaseHTTPSConnection protocol, so any subclass is flagged.
+    ConnectionCls = _PublicOnlyHTTPSConnection  # pyright: ignore[reportAssignmentType]
+
+
+class _PublicOnlyAdapter(HTTPAdapter):
+    """Direct HTTPS requests use the address-pinning connection. A configured proxy resolves the
+    host itself, so requests sent through one keep the earlier hostname check only."""
+
+    def init_poolmanager(self, *args, **kwargs):
+        super().init_poolmanager(*args, **kwargs)
+        self.poolmanager.pool_classes_by_scheme = {
+            **self.poolmanager.pool_classes_by_scheme,
+            "https": _PublicOnlyHTTPSConnectionPool,
+        }
 
 
 @dataclass(frozen=True)
@@ -136,9 +190,11 @@ class PublicWebSourceFetcher:
 
     def fetch(self, url: str, *, query: str) -> RetrievedSource:
         current = self._public_url(url)
+        session = requests.Session()
+        session.mount("https://", _PublicOnlyAdapter())
         try:
             for _ in range(3):
-                response = requests.get(
+                response = session.get(
                     current, headers={"User-Agent": self.USER_AGENT}, timeout=self.timeout_seconds,
                     stream=True, allow_redirects=False,
                 )
@@ -185,3 +241,5 @@ class PublicWebSourceFetcher:
             raise SourceRetrievalError("Source redirected too many times")
         except requests.RequestException as exc:
             raise SourceRetrievalError("Source page could not be fetched") from exc
+        finally:
+            session.close()

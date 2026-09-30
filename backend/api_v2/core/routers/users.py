@@ -3,6 +3,7 @@ from __future__ import annotations
 from datetime import datetime, timedelta
 
 from django.db import models
+from django.db.models import ProtectedError
 from django.db.models.deletion import Collector
 from django.http import HttpRequest
 from django.utils import timezone
@@ -150,12 +151,17 @@ def delete_user(request: HttpRequest, user_id: UserId) -> SuccessResponse:
         target_user = User.objects.get(user_id=user_id)
         if target_user.user_role == "admin":
             raise HttpError(403, "Cannot delete admin accounts")
+        conflict = "Accounts with related records must be disabled, not deleted"
         collector = Collector(using=target_user._state.db or "default")
-        collector.collect([target_user])
+        try:
+            collector.collect([target_user])
+        except ProtectedError as exc:
+            # Shared essays and content reports use PROTECT, so the collector refuses before the check below.
+            raise HttpError(409, conflict) from exc
         if any(model is not User and objects for model, objects in collector.data.items()) or any(
             queryset.exists() for queryset in collector.fast_deletes
         ):
-            raise HttpError(409, "Accounts with related records must be disabled, not deleted")
+            raise HttpError(409, conflict)
         target_user.delete()
         return SuccessResponse(success=True)
     except User.DoesNotExist:

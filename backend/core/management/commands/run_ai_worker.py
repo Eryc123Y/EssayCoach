@@ -53,9 +53,10 @@ class Command(BaseCommand):
         heartbeat.start()
         try:
             while True:
+                # --once means one job in total, so stop at the first queue that had work.
                 job = self._process("formal", process_next_job)
-                practice_run = self._process("practice", process_next_run)
-                chat_turn = self._process("chat", process_next_turn)
+                practice_run = None if once and job else self._process("practice", process_next_run)
+                chat_turn = None if once and (job or practice_run) else self._process("chat", process_next_turn)
                 processed = sum(item is not None for item in (job, practice_run, chat_turn))
                 WorkerHeartbeat.objects.update_or_create(
                     pk=1, defaults={"last_seen_at": timezone.now()}

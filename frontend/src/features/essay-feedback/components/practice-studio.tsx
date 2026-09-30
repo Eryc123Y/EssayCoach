@@ -128,6 +128,7 @@ export function PracticeStudio() {
 
   const openEssay = useCallback(async (essay: PracticeEssay) => {
     generationRef.current += 1;
+    const generation = generationRef.current;
     essayIdRef.current = essay.essay_id;
     versionRef.current = essay.version;
     const nextDraft: Draft = {
@@ -140,7 +141,11 @@ export function PracticeStudio() {
     setSavedAt(essay.updated_at);
     setMode('write');
     setError('');
+    setRuns([]);
+    setRun(null);
     const history = await practiceService.listRuns(essay.essay_id);
+    // The student may have opened another draft while this request was in flight.
+    if (generation !== generationRef.current) return;
     setRuns(history);
     setRun(history[0] ?? null);
   }, []);
@@ -194,13 +199,18 @@ export function PracticeStudio() {
   const runStatus = run?.status;
   useEffect(() => {
     if (!runId || (runStatus !== 'pending' && runStatus !== 'running')) return;
+    let current = true;
     const timer = setInterval(() => {
       void practiceService.getRun(runId).then(updated => {
+        if (!current) return; // a late answer for a run the student has since left
         setRun(updated);
         setRuns(previous => [updated, ...previous.filter(item => item.run_id !== updated.run_id)]);
       }).catch(() => {});
     }, 2500);
-    return () => clearInterval(timer);
+    return () => {
+      current = false;
+      clearInterval(timer);
+    };
   }, [runId, runStatus]);
 
   useEffect(() => {

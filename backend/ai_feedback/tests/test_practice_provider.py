@@ -146,3 +146,66 @@ def test_practice_turn_returns_payload_and_null_usage_when_unreported():
 def test_practice_turn_rejects_unusable_model_output(status, final_response, message):
     with pytest.raises(PracticeProviderError, match=message):
         _practice_turn(_practice_provider(), status=status, final_response=final_response)
+
+
+# --- the per-criterion breakdown must match the rubric the student chose ---------------------
+
+RUBRIC = [
+    {"id": 1, "name": "Argument", "max_score": 10, "weight": "60.0"},
+    {"id": 2, "name": "Structure", "max_score": 5, "weight": "40.0"},
+]
+
+
+def _report(rubric_results):
+    return {
+        "overall_score": 70,
+        "skills": {name: 70 for name in ("grammar", "logic", "tone", "structure", "vocabulary")},
+        "claims": [],
+        "annotations": [],
+        "rubric_results": rubric_results,
+    }
+
+
+def _result(criterion, score, max_score):
+    return {"criterion": criterion, "score": score, "max_score": max_score, "justification": "because"}
+
+
+def _validate(rubric_results, snapshot=RUBRIC):
+    report = _report(rubric_results)
+    revision = SimpleNamespace(content="An essay.", rubric_snapshot=snapshot)
+    _practice_provider()._validate_report(report, revision)
+    return report
+
+
+def test_a_breakdown_that_matches_the_rubric_is_accepted():
+    results = [_result("Argument", 8, 10), _result("Structure", 5, 5)]
+    assert _validate(results)["rubric_results"] == results
+    assert _validate([_result("Structure", 0, 5), _result(" Argument ", 10, 10)])  # order and padding do not matter
+
+
+@pytest.mark.parametrize(
+    "results",
+    [
+        [_result("Argument", 8, 10)],  # a criterion is missing
+        [_result("Argument", 8, 10), _result("Argument", 7, 10), _result("Structure", 5, 5)],  # duplicated criterion
+        [_result("Argument", 8, 10), _result("Structure", 5, 5), _result("Style", 3, 5)],  # invented criterion
+        [_result("Argument", 8, 10), _result("Clarity", 5, 5)],  # a criterion the rubric does not have
+        [_result("Argument", 8, 100), _result("Structure", 5, 5)],  # fabricated maximum
+        [_result("Argument", 8, None), _result("Structure", 5, 5)],  # malformed maximum
+        [_result("Argument", 11, 10), _result("Structure", 5, 5)],  # above the criterion maximum
+        [_result("Argument", -1, 10), _result("Structure", 5, 5)],  # below zero
+        [_result("Argument", True, 10), _result("Structure", 5, 5)],  # a boolean is not a score
+        [_result("Argument", 7.5, 10), _result("Structure", 5, 5)],  # not a whole-number score
+        [],  # the rubric was ignored entirely
+        "not a list",
+        ["not an object"],
+    ],
+)
+def test_a_breakdown_that_does_not_match_the_rubric_fails_the_run(results):
+    with pytest.raises(PracticeProviderError):
+        _validate(results)
+
+
+def test_without_a_rubric_the_models_breakdown_is_discarded():
+    report = _validate([_result("Anything", 9, 10)], snapshot=None)
+    assert report["rubric_results"] == []

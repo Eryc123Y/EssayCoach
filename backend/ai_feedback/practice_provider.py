@@ -240,11 +240,36 @@ class CodexPracticeProvider:
             raise PracticeProviderError("Practice skill scores were invalid")
         if not isinstance(report.get("claims"), list) or not isinstance(report.get("annotations"), list):
             raise PracticeProviderError("Practice report was incomplete")
+        self._validate_rubric_results(report, revision)
         report["annotations"] = [
             item for item in report["annotations"][:30]
             if isinstance(item, dict) and isinstance(item.get("quote"), str)
             and item["quote"] and item["quote"] in revision.content
         ]
+
+    @staticmethod
+    def _validate_rubric_results(report: dict, revision: PracticeRevision) -> None:
+        """Hold the model's per-criterion breakdown to the rubric the student chose, as formal scoring does."""
+        snapshot = revision.rubric_snapshot or []
+        results = report.get("rubric_results")
+        if not snapshot:
+            report["rubric_results"] = []  # without a rubric there is no authoritative breakdown to show
+            return
+        if not isinstance(results, list) or not all(isinstance(item, dict) for item in results):
+            raise PracticeProviderError("Practice rubric breakdown was invalid")
+        def by_name(pair: tuple) -> tuple[str, str]:
+            return pair[0], str(pair[1])  # a malformed maximum must fail validation, not the sort
+
+        expected = sorted(((str(item["name"]), int(item["max_score"])) for item in snapshot), key=by_name)
+        received = sorted(
+            ((str(item.get("criterion", "")).strip(), item.get("max_score")) for item in results), key=by_name
+        )
+        if received != expected:
+            raise PracticeProviderError("Practice rubric breakdown did not match the selected rubric")
+        for item in results:
+            score = item.get("score")
+            if not isinstance(score, int) or isinstance(score, bool) or not 0 <= score <= item["max_score"]:
+                raise PracticeProviderError("Practice rubric score was outside the criterion range")
 
     async def _discover_sources(self, codex, workdir: str, claims: list[dict], language: str):
         if not claims:
