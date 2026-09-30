@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import hashlib
-import os
 import secrets
 from datetime import timedelta
 
@@ -12,6 +11,7 @@ from django.core.mail import send_mail
 from django.db import transaction
 from django.utils import timezone
 
+from core.app_url import app_base_url
 from core.models import AdminAuditEvent, AuthSession, EmailChangeGrant, User
 
 
@@ -46,8 +46,7 @@ def issue_email_change(user: User, new_email: str, current_password: str) -> tup
         user=user, old_email=user.user_email, new_email=normalized,
         token_hash=_digest(token), expires_at=now + timedelta(hours=1),
     )
-    app_url = os.environ.get("ESSAYCOACH_APP_URL", "http://localhost:5100").rstrip("/")
-    link = f"{app_url}/auth/verify-email#token={token}"
+    link = f"{app_base_url()}/auth/verify-email#token={token}"
     send_mail(
         "Confirm your EssayCoach email address",
         (
