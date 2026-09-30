@@ -110,7 +110,7 @@ target-version = ['py312']
 
 [tool.pytest.ini_options]
 DJANGO_SETTINGS_MODULE = "essay_coach.settings"
-testpaths = ["api_v2/tests"]
+testpaths = ["api_v2", "ai_feedback", "core"]
 python_files = ["test_*.py"]
 python_classes = ["Test*", "*Tests"]
 python_functions = ["test_*"]
