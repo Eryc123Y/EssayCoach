@@ -60,7 +60,7 @@ export function StudentDashboard({ data }: StudentDashboardProps) {
           </h2>
           <div className='flex items-center gap-2'>
             <Select value={unitFilter} onValueChange={setUnitFilter}>
-              <SelectTrigger className='focus:ring-primary w-[140px] focus:ring-2'>
+              <SelectTrigger aria-label={t('ui.filterByClass')} className='focus:ring-primary w-[140px] focus:ring-2'>
                 <SelectValue placeholder={t('ui.allClasses6355a0')} />
               </SelectTrigger>
               <SelectContent>
@@ -76,7 +76,7 @@ export function StudentDashboard({ data }: StudentDashboardProps) {
               </SelectContent>
             </Select>
             <Select value={timeFilter} onValueChange={setTimeFilter}>
-              <SelectTrigger className='focus:ring-primary w-[140px] focus:ring-2'>
+              <SelectTrigger aria-label={t('ui.filterByTime')} className='focus:ring-primary w-[140px] focus:ring-2'>
                 <SelectValue placeholder={t('ui.allTime')} />
               </SelectTrigger>
               <SelectContent>

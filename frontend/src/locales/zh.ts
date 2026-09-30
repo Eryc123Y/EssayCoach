@@ -829,4 +829,7 @@ export const zh: Record<keyof typeof en, string> = {
   'ui.issueOneTimeResetFor': "为 {email} 创建一次性密码重置链接？",
   'ui.verificationLinkIsMissing': "缺少验证链接。",
   'ui.verificationLinkIsInvalid': "验证链接无效。",
+  'ui.filterByClass': "按班级筛选",
+  'ui.filterByStatus': "按状态筛选",
+  'ui.filterByTime': "按时间筛选",
 };

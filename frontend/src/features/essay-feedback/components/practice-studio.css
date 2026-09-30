@@ -1,6 +1,6 @@
 .practice-studio {
   --practice-ink: #19243b;
-  --practice-muted: #68758c;
+  --practice-muted: #5d6a80;
   --practice-blue: #365ce6;
   --practice-line: #e2e8f2;
   --practice-paper: #fff;
@@ -38,7 +38,7 @@
 .practice-brief input { display: block; width: 100%; border: 0; border-bottom: 1px solid #bfcdf2; padding: 3px 0 9px; background: transparent; font-family: var(--font-instrument), sans-serif; font-size: clamp(20px, 2vw, 27px); font-weight: 600; color: var(--practice-ink); outline: none; }
 .practice-brief input::placeholder { color: #7f91b6; }
 .practice-paper { background: var(--practice-paper); border: 1px solid var(--practice-line); border-radius: 13px; min-height: 560px; display: flex; flex-direction: column; box-shadow: 0 8px 28px rgba(35, 57, 101, .035); }
-.practice-paper-head, .practice-paper-foot { display: flex; justify-content: space-between; gap: 15px; align-items: center; padding: 15px 23px; color: #6c7990; font-size: 12px; }
+.practice-paper-head, .practice-paper-foot { display: flex; justify-content: space-between; gap: 15px; align-items: center; padding: 15px 23px; color: #5d6a80; font-size: 12px; }
 .practice-paper-head { border-bottom: 1px solid #edf0f6; }
 .practice-paper-head span:first-child { display: flex; align-items: center; gap: 8px; color: #30405c; font-weight: 700; }
 .practice-paper textarea { width: 100%; flex: 1; border: 0; resize: vertical; min-height: 420px; padding: 29px clamp(24px, 5vw, 70px); font-size: 16px; line-height: 1.9; color: #26334c; outline: 0; background: transparent; }

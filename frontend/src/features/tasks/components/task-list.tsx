@@ -109,7 +109,7 @@ export function TaskList({ userRole }: TaskListProps) {
           />
         </div>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className='w-[180px]'>
+          <SelectTrigger aria-label={zh ? '按状态筛选' : 'Filter by status'} className='w-[180px]'>
             <SelectValue placeholder={zh ? '按状态筛选' : 'Filter by status'} />
           </SelectTrigger>
           <SelectContent>

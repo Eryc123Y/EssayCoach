@@ -34,7 +34,9 @@ export function Breadcrumbs() {
               </BreadcrumbSeparator>
             )}
             {index === items.length - 1 && (
-              <BreadcrumbPage>{navigationLabel(item.title, locale)}</BreadcrumbPage>
+              <BreadcrumbItem>
+                <BreadcrumbPage>{navigationLabel(item.title, locale)}</BreadcrumbPage>
+              </BreadcrumbItem>
             )}
           </Fragment>
         ))}

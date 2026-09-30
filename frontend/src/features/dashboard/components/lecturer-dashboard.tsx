@@ -59,7 +59,7 @@ export function LecturerDashboard({ data }: LecturerDashboardProps) {
           </h2>
           <div className='flex items-center gap-2'>
             <Select value={classFilter} onValueChange={setClassFilter}>
-              <SelectTrigger className='focus:ring-primary w-[140px] focus:ring-2'>
+              <SelectTrigger aria-label={t('ui.filterByClass')} className='focus:ring-primary w-[140px] focus:ring-2'>
                 <SelectValue placeholder={t('ui.allClasses')} />
               </SelectTrigger>
               <SelectContent>
@@ -73,7 +73,7 @@ export function LecturerDashboard({ data }: LecturerDashboardProps) {
               </SelectContent>
             </Select>
             <Select value={statusFilter} onValueChange={setStatusFilter}>
-              <SelectTrigger className='focus:ring-primary w-[140px] focus:ring-2'>
+              <SelectTrigger aria-label={t('ui.filterByStatus')} className='focus:ring-primary w-[140px] focus:ring-2'>
                 <SelectValue placeholder={t('ui.allStatus')} />
               </SelectTrigger>
               <SelectContent>

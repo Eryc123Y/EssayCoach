@@ -61,8 +61,8 @@ export function TaskCard({ task, className, userRole, onUpdate }: TaskCardProps)
 
   const statusColors: Record<string, string> = {
     draft: 'bg-secondary text-secondary-foreground',
-    published: 'bg-green-500 text-white',
-    unpublished: 'bg-orange-500 text-white',
+    published: 'bg-green-700 text-white',
+    unpublished: 'bg-orange-700 text-white',
     archived: 'bg-muted text-muted-foreground',
   };
 

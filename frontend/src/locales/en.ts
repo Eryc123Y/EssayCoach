@@ -827,4 +827,7 @@ export const en = {
   'ui.issueOneTimeResetFor': "Issue a one-time password reset for {email}?",
   'ui.verificationLinkIsMissing': "Verification link is missing.",
   'ui.verificationLinkIsInvalid': "Verification link is invalid.",
+  'ui.filterByClass': "Filter by class",
+  'ui.filterByStatus': "Filter by status",
+  'ui.filterByTime': "Filter by time",
 } as const;
