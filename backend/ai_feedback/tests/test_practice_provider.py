@@ -4,7 +4,14 @@ import asyncio
 from datetime import UTC, datetime
 from types import SimpleNamespace
 
-from ai_feedback.practice_provider import CodexPracticeChatProvider, CodexPracticeProvider, PracticeChatResult
+import pytest
+
+from ai_feedback.practice_provider import (
+    CodexPracticeChatProvider,
+    CodexPracticeProvider,
+    PracticeChatResult,
+    PracticeProviderError,
+)
 from ai_feedback.source_retrieval import RetrievedSource
 
 
@@ -72,3 +79,70 @@ def test_coach_loads_database_context_before_entering_async_runtime():
 
     coach._reply_async = fake_reply
     assert coach.reply(run, "What next?", []).answer == "Try one example."
+
+
+def _practice_turn(provider, **turn_behaviour):
+    """Drive the provider's single-turn helper against a fake thread."""
+    interrupted = []
+
+    class FakeTurn:
+        async def run(self):
+            if turn_behaviour.get("hang"):
+                await asyncio.Event().wait()
+            return SimpleNamespace(
+                status=turn_behaviour.get("status", "completed"),
+                final_response=turn_behaviour.get("final_response", ""),
+                usage=None,
+            )
+
+        async def interrupt(self):
+            interrupted.append(True)
+
+    class FakeThread:
+        async def turn(self, prompt, *, output_schema):
+            return FakeTurn()
+
+    return asyncio.run(provider._turn(FakeThread(), "prompt", {})), interrupted
+
+
+def _practice_provider(**kwargs):
+    return CodexPracticeProvider(codex_bin="fake-codex", source_search=object(), source_fetcher=object(), **kwargs)
+
+
+def test_practice_turn_timeout_interrupts_the_turn():
+    interrupted = []
+
+    class HangingTurn:
+        async def run(self):
+            await asyncio.Event().wait()
+
+        async def interrupt(self):
+            interrupted.append(True)
+
+    class Thread:
+        async def turn(self, prompt, *, output_schema):
+            return HangingTurn()
+
+    with pytest.raises(PracticeProviderError, match="timed out"):
+        asyncio.run(_practice_provider(timeout_seconds=0.01)._turn(Thread(), "prompt", {}))
+    assert interrupted == [True]
+
+
+def test_practice_turn_returns_payload_and_null_usage_when_unreported():
+    (payload, usage), _ = _practice_turn(_practice_provider(), final_response='{"overall_score": 70}')
+    assert payload == {"overall_score": 70}
+    assert usage is None  # unknown usage stays null rather than zero
+
+
+@pytest.mark.parametrize(
+    ("status", "final_response", "message"),
+    [
+        ("failed", '{"a": 1}', "did not complete"),
+        ("completed", "", "did not complete"),
+        ("completed", "not json", "invalid structured output"),
+        ("completed", "[1, 2]", "invalid structured output"),
+    ],
+)
+def test_practice_turn_rejects_unusable_model_output(status, final_response, message):
+    with pytest.raises(PracticeProviderError, match=message):
+        _practice_turn(_practice_provider(), status=status, final_response=final_response)
