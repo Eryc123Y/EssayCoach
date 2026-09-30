@@ -120,6 +120,7 @@ nav:
       - Debugging Guide: development/debugging.md
       - Contributing: development/contributing.md
       - Configuration: development/configuration.md
+      - Source-check evaluation: development/source-check-evaluation.md
   - Agentic Workflow:
       - Agentic Design Plans: agentic-workflow/agentic-design.md
 

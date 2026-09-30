@@ -251,3 +251,6 @@ backend/api_v1/
 * 8.*
 * 9.*
 * 10.*
+
+# Source-check evaluation output
+backend/source-eval-results/
