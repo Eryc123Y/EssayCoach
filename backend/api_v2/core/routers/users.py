@@ -16,6 +16,7 @@ from api_v2.types.ids import (
 from api_v2.utils.auth import JWTAuth
 from api_v2.utils.course_scope import require_visible_user, visible_classes, visible_users
 from core.models import (
+    AuthSession,
     Feedback,
     Submission,
     User,
@@ -112,10 +113,18 @@ def update_user(request: HttpRequest, user_id: UserId, data: UserUpdateIn):
 
     try:
         user = User.objects.get(user_id=user_id)
+        status_before = (user.user_status, user.is_active)
         # Only update fields that are explicitly provided (not None)
         for key, value in update_data.items():
             setattr(user, key, value)
-        user.save()
+        if (user.user_status, user.is_active) != status_before:
+            # Same as the directory lifecycle actions: a status change must invalidate
+            # every issued token, or re-enabling the account would revive old sessions.
+            user.auth_version += 1
+            user.save()
+            AuthSession.objects.filter(user=user, revoked_at__isnull=True).update(revoked_at=timezone.now())
+        else:
+            user.save()
         return user
     except User.DoesNotExist:
         raise HttpError(404, "User not found")

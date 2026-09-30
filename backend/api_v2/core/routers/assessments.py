@@ -118,8 +118,8 @@ def get_assessment(request: HttpRequest, submission_id: int):
 @router.post("/assessments/{submission_id}/review/", response=AssessmentOut)
 def review(request: HttpRequest, submission_id: int, data: ReviewIn):
     feedback = _visible_feedback(request, submission_id)
-    if request.auth.user_role == "student":
-        raise HttpError(403, "Only teaching staff may review")
+    if request.auth.user_role != "lecturer":
+        raise HttpError(403, "Only a lecturer may review")
     try:
         updated = review_assessment(
             feedback.pk,
@@ -127,6 +127,8 @@ def review(request: HttpRequest, submission_id: int, data: ReviewIn):
             [item.model_dump() for item in data.items],
             expected_version=data.expected_version,
         )
+    except PermissionError as exc:
+        raise HttpError(403, str(exc)) from exc
     except AssessmentError as exc:
         raise HttpError(409, str(exc)) from exc
     return _serialize(updated, actor=request.auth)

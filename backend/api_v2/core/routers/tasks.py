@@ -269,6 +269,7 @@ def get_task_rubric(request: HttpRequest, task_id: TaskId):
 
 @router.put("/tasks/{task_id}/", response=TaskOut)
 def update_task(request: HttpRequest, task_id: TaskId, data: TaskIn):
+    """Replace an assignment's editable fields; an empty `class_id_class` makes it a whole-course assignment."""
     _check_admin_or_lecturer(request)
     try:
         task = Task.objects.get(task_id=task_id)
@@ -276,7 +277,7 @@ def update_task(request: HttpRequest, task_id: TaskId, data: TaskIn):
         previous_status = task.task_status
         previous_rubric_id = task.rubric_id_marking_rubric_id
         target_unit_id = data.unit_id_unit or task.unit_id_unit_id
-        target_class = task.class_id_class
+        target_class = None
         if data.class_id_class is not None:
             target_class = Class.objects.filter(class_id=data.class_id_class).first()
             if target_class is None:
@@ -304,11 +305,7 @@ def update_task(request: HttpRequest, task_id: TaskId, data: TaskIn):
         task.task_title = data.task_title
         task.task_desc = data.task_desc
         task.task_instructions = data.task_instructions
-        if data.class_id_class is not None:
-            try:
-                task.class_id_class = Class.objects.get(class_id=data.class_id_class)
-            except Class.DoesNotExist:
-                raise HttpError(400, "Class not found")
+        task.class_id_class = target_class
         task.task_status = data.task_status
         task.task_allow_late_submission = data.task_allow_late_submission
         task.task_allow_resubmission = data.task_allow_resubmission

@@ -2,9 +2,12 @@
 
 from __future__ import annotations
 
+import threading
 import time
 
 from django.core.management.base import BaseCommand
+from django.db import connection
+from django.db.models import F
 from django.utils import timezone
 from opentelemetry import trace
 
@@ -12,6 +15,27 @@ from core.ai_jobs import process_next_job
 from core.models import WorkerHeartbeat
 from core.practice import process_next_run
 from core.practice_chat import process_next_turn
+
+# The operations page reports the worker as down after 15 seconds without a heartbeat,
+# while one model call may take minutes, so the heartbeat runs on its own thread.
+HEARTBEAT_SECONDS = 5.0
+
+
+class _Heartbeat(threading.Thread):
+    def __init__(self) -> None:
+        super().__init__(name="ai-worker-heartbeat", daemon=True)
+        self._stopped = threading.Event()
+
+    def run(self) -> None:
+        try:
+            while not self._stopped.wait(HEARTBEAT_SECONDS):
+                WorkerHeartbeat.objects.filter(pk=1).update(last_seen_at=timezone.now())
+        finally:
+            connection.close()  # this thread has its own database connection
+
+    def stop(self) -> None:
+        self._stopped.set()
+        self.join(timeout=HEARTBEAT_SECONDS + 5)
 
 
 class Command(BaseCommand):
@@ -24,24 +48,28 @@ class Command(BaseCommand):
     def handle(self, *args, **options):
         once = options["once"]
         poll_seconds = max(0.2, options["poll_seconds"])
+        WorkerHeartbeat.objects.update_or_create(pk=1, defaults={"last_seen_at": timezone.now()})
+        heartbeat = _Heartbeat()
+        heartbeat.start()
         try:
             while True:
                 job = self._process("formal", process_next_job)
                 practice_run = self._process("practice", process_next_run)
                 chat_turn = self._process("chat", process_next_turn)
                 processed = sum(item is not None for item in (job, practice_run, chat_turn))
-                heartbeat, _ = WorkerHeartbeat.objects.get_or_create(
+                WorkerHeartbeat.objects.update_or_create(
                     pk=1, defaults={"last_seen_at": timezone.now()}
                 )
-                heartbeat.last_seen_at = timezone.now()
-                heartbeat.processed_jobs += processed
-                heartbeat.save(update_fields=["last_seen_at", "processed_jobs"])
+                if processed:
+                    WorkerHeartbeat.objects.filter(pk=1).update(processed_jobs=F("processed_jobs") + processed)
                 if once:
                     return
                 if job is None and practice_run is None and chat_turn is None:
                     time.sleep(poll_seconds)
         except KeyboardInterrupt:
             self.stdout.write("AI worker stopped")
+        finally:
+            heartbeat.stop()
 
     @staticmethod
     def _process(kind, process):

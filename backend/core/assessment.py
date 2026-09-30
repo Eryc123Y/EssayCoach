@@ -133,6 +133,9 @@ def record_ai_proposal(feedback_id: int, items: list[dict], *, model: str, run_i
 
 
 def review_assessment(feedback_id: int, actor: User, items: list[dict], *, expected_version: int) -> Feedback:
+    # The audit trail records this stage as a lecturer review, so only a lecturer may perform it.
+    if actor.user_role != "lecturer":
+        raise PermissionError("Only a lecturer can review an assessment")
     with transaction.atomic():
         feedback = Feedback.objects.select_for_update().get(pk=feedback_id)
         if feedback.status not in ("ai_draft", "lecturer_reviewed"):
