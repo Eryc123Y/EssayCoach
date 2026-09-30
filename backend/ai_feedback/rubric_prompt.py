@@ -16,7 +16,7 @@ def load_rubric_prompt_context(
     """
     Return (rubric_text, rubric_name, rubric_id) for inclusion in an essay-analysis prompt.
 
-    Mirrors DifyClient rubric resolution when rubric_id is None (first rubric for user).
+    Uses the user's first rubric when rubric_id is None.
     """
     if rubric_id is None:
         rubric = (
