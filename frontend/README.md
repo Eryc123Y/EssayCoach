@@ -55,7 +55,7 @@ frontend/
 │   │   │   └── v1/           # /api/v1/* routes
 │   │   ├── auth/             # Authentication pages
 │   │   ├── dashboard/         # Main dashboard area
-│   │   │   └── essay-analysis/  # AI essay feedback feature
+│   │   │   └── essay-analysis/  # Practice studio route (see features/essay-feedback)
 │   │   ├── layout.tsx         # Root layout component
 │   │   └── page.tsx           # Home page
 │   ├── components/             # Reusable UI components

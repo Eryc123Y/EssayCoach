@@ -8,8 +8,8 @@
 ## 📋 执行摘要 (Executive Summary)
 
 > [!CAUTION]
-> **Deprecation Notice**: The legacy `dashboard/essay` page and `essay-feedback` feature folder are deprecated.
-> All new development should focus on the `Essay Analysis` module (`/dashboard/essay-analysis`), which provides a superior AI-driven experience.
+> **Note**: The old Dify-era essay form, feedback viewer and `features/essay-analysis` components were removed. The practice studio
+> (`/dashboard/essay-analysis`, in `features/essay-feedback/components/practice-studio.tsx`) and the formal assessment screens are the current surfaces.
 
 当前前端最初基于 **next-shadcn-dashboard-starter** 模板搭建，现已完成核心业务模块落地（认证、仪表盘、作文分析、Rubrics、Tasks、Classes）。当前处于“持续迭代与体验优化”阶段。
 
@@ -72,7 +72,7 @@ frontend/src/
 │   │   │   ├── @bar_stats/         # 柱状图统计插槽
 │   │   │   ├── @area_stats/        # 面积图统计插槽
 │   │   │   └── @sales/             # 销售数据插槽 (模板遗留)
-│   │   ├── essay-analysis/         # 作文分析主流程
+│   │   ├── essay-analysis/         # 练习工作室路由
 │   │   ├── rubrics/                # 评分标准管理
 │   │   ├── tasks/                  # 作业任务管理
 │   │   ├── classes/                # 班级管理
@@ -149,8 +149,7 @@ frontend/src/
 
 | 页面 | 状态 | 关键组件 |
 |-----------|---------|-------|
-| `/dashboard/essay-analysis` | ✅ 已实现 | `EssaySubmissionForm`, `FeedbackDashboard`, `RevisionChat` |
-| `/dashboard/essay` | ✅ 已实现（Legacy） | `EssayForm`, `FeedbackViewer`, `RevisionChat` |
+| `/dashboard/essay-analysis` | ✅ 已实现 | `PracticeStudio` |
 | `/dashboard/rubrics` | ✅ 已实现 | `rubric-list`, `RubricsClient` |
 | `/dashboard/tasks` | ✅ 已实现 | `task-list`, `task-form` |
 | `/dashboard/classes` | ✅ 已实现 | `class-list`, `join-class-dialog` |

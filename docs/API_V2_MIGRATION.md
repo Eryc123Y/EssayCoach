@@ -37,8 +37,7 @@ NEXT_PUBLIC_API_VERSION=v1
 
 ### Services
 - `frontend/src/service/api/rubric.ts` - all endpoints use v2
-- `frontend/src/service/api/dify.ts` - uses v2 endpoints
-- `frontend/src/service/agent/agent-service.ts` - uses v2 baseUrl
+- `frontend/src/service/api/dify.ts` and `frontend/src/service/agent/agent-service.ts` - migrated at the time, since removed with the Dify-era code
 
 ### New v2 Service Layer
 - `frontend/src/service/api/v2/auth.ts` - auth + rubric services
