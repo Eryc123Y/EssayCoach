@@ -71,7 +71,7 @@ export function StudentDashboard({ data }: StudentDashboardProps) {
                   <SelectItem
                     key={unitName as string}
                     value={unitName as string}
-                  >{t(`Class: ${unitName}`, `课程：${unitName}`)}</SelectItem>
+                  >{localized(locale, 'ui.unitWithName', { name: String(unitName) })}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -203,7 +203,7 @@ function EssayItem({
           </span>
           {essay.unitName && (
             <span>
-              {usePlainUnitLabel ? essay.unitName : t(`Class: ${essay.unitName}`, `课程：${essay.unitName}`)}
+              {usePlainUnitLabel ? essay.unitName : localized(locale, 'ui.unitWithName', { name: essay.unitName })}
             </span>
           )}
           {essay.taskTitle && <span>{essay.taskTitle}</span>}

@@ -41,7 +41,7 @@ export function DashboardHeader({ user, stats, role }: DashboardHeaderProps) {
             icon={<IconAward className="h-4 w-4 text-emerald-500" />}
             value={reviewedToday.toString()}
             label={t('ui.essaysReviewedToday')}
-            trend={avgScore != null ? t(`${avgScore}% avg score`, `平均分 ${avgScore}%`) : undefined}
+            trend={avgScore != null ? localized(locale, 'ui.avgScorePercent', { score: avgScore }) : undefined}
           />
           <StatCard
             icon={<IconListCheck className="h-4 w-4 text-amber-500" />}

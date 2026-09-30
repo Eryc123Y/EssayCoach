@@ -87,7 +87,7 @@ function PlatformStats({ data }: { data: AdminDashboardResponse }) {
         icon={<span className="text-blue-500"><IconUsers className="h-4 w-4" /></span>}
         value={data.stats.totalUsers.toLocaleString()}
         label={t('ui.totalUsers')}
-        trend={t(`${data.stats.activeStudents} students, ${data.stats.activeLecturers} lecturers`, `${data.stats.activeStudents} 名学生，${data.stats.activeLecturers} 名讲师`)}
+        trend={localized(locale, 'ui.studentsAndLecturersCount', { students: data.stats.activeStudents, lecturers: data.stats.activeLecturers })}
       />
       <StatCard
         icon={<span className="text-emerald-500"><IconDatabase className="h-4 w-4" /></span>}

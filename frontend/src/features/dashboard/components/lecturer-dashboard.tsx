@@ -68,7 +68,7 @@ export function LecturerDashboard({ data }: LecturerDashboardProps) {
                   <SelectItem
                     key={c.id}
                     value={c.id.toString()}
-                  >{t(`Class: ${c.name}`, `班级：${c.name}`)}</SelectItem>
+                  >{localized(locale, 'ui.classWithName', { name: c.name })}</SelectItem>
                 ))}
               </SelectContent>
             </Select>
@@ -167,7 +167,7 @@ function GradingQueueItem({ item }: { item: GradingQueueItem }) {
             <IconClock className='h-3 w-3' />
             {format(new Date(item.submittedAt), 'MMM d, y')}
           </span>
-          {item.aiScore != null && <span>{t(`AI Score: ${item.aiScore}`, `AI 建议分：${item.aiScore}`)}</span>}
+          {item.aiScore != null && <span>{localized(locale, 'ui.aiScoreValue', { score: item.aiScore })}</span>}
         </div>
       </div>
       <Button
@@ -295,7 +295,7 @@ function ClassOverviewCard({ classItem }: { classItem: ClassOverview }) {
               variant='secondary'
               className='bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400'
             >
-              {t(`${classItem.pendingReviews} pending`, `${classItem.pendingReviews} 篇待复核`)}
+              {localized(locale, 'ui.pendingCount', { count: classItem.pendingReviews })}
             </Badge>
           )}
         </div>

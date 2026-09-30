@@ -175,7 +175,7 @@ export function RubricUpload({ onSuccess }: RubricUploadProps) {
 
       if (response.success) {
         toast.success(
-          t(`Rubric "${response.rubric_name}" imported (${response.items_count} criteria, ${response.levels_count} levels)`, `已导入量表“${response.rubric_name}”（${response.items_count} 个维度、${response.levels_count} 个等级）`)
+          localized(locale, 'ui.rubricImportedSummary', { name: response.rubric_name, items: response.items_count, levels: response.levels_count })
         );
 
         setFile(null);

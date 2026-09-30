@@ -103,7 +103,7 @@ export function RubricsClient({
     setIsDeleting(true);
     try {
       await deleteRubric(rubricToDelete.rubric_id);
-      toast.success(t(`Rubric "${rubricToDelete.rubric_desc}" deleted`, `已删除量表“${rubricToDelete.rubric_desc}”`));
+      toast.success(localized(locale, 'ui.rubricDeletedNamed', { name: rubricToDelete.rubric_desc }));
 
       setRubrics((prev) =>
         prev.filter((r) => r.rubric_id !== rubricToDelete.rubric_id)
@@ -121,7 +121,7 @@ export function RubricsClient({
     setDuplicatingId(rubric.rubric_id);
     try {
       await rubricActionsService.duplicateRubric(rubric.rubric_id, {});
-      toast.success(t(`Rubric "${rubric.rubric_desc}" duplicated`, `已复制量表“${rubric.rubric_desc}”`));
+      toast.success(localized(locale, 'ui.rubricDuplicatedNamed', { name: rubric.rubric_desc }));
       router.refresh();
     } catch (error: any) {
       toast.error(error.message || t('ui.couldNotDuplicateRubric'));
@@ -151,7 +151,7 @@ export function RubricsClient({
         )
       );
 
-      toast.success(t(`Rubric is now ${newVisibility}`, newVisibility === 'public' ? '量表已公开' : '量表已设为私有'));
+      toast.success(t(newVisibility === 'public' ? 'ui.rubricNowPublic' : 'ui.rubricNowPrivate'));
     } catch (error: any) {
       toast.error(error.message || t('ui.couldNotUpdateVisibility'));
     } finally {
@@ -496,7 +496,7 @@ export function RubricsClient({
               {t('ui.deleteRubric')}
             </AlertDialogTitle>
             <AlertDialogDescription>
-              {t(`Delete "${rubricToDelete?.rubric_desc}"? This cannot be undone.`, `确定删除“${rubricToDelete?.rubric_desc}”吗？此操作无法撤销。`)}
+              {localized(locale, 'ui.confirmDeleteRubricNamed', { name: rubricToDelete?.rubric_desc ?? '' })}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

@@ -99,11 +99,11 @@ export function AdminDirectory() {
   }, [showInvite]);
 
   async function applyAction(action: 'disable_user' | 'enable_user' | 'force_logout', ids: number[]) {
-    if (!ids.length || !window.confirm(t(`Apply ${action.replace('_', ' ')} to ${ids.length} account(s)?`, `对 ${ids.length} 个账号执行此操作？`))) return;
+    if (!ids.length || !window.confirm(localized(language, 'ui.applyAccountActionConfirm', { action: action.replace('_', ' '), count: ids.length }))) return;
     setBusy(true);
     const results = await Promise.allSettled(ids.map((id) => adminUsersService.action(id, action)));
     const failures = results.filter((result) => result.status === 'rejected').length;
-    setError(failures ? t(`${failures} account(s) could not be updated.`, `${failures} 个账号未能更新。`) : '');
+    setError(failures ? localized(language, 'ui.accountsCouldNotBeUpdated', { count: failures }) : '');
     setChecked([]);
     refreshList();
     if (selectedId !== null) {
@@ -131,7 +131,7 @@ export function AdminDirectory() {
   }
 
   async function issueResetLink(user: DirectoryDetail) {
-    if (!window.confirm(t(`Issue a one-time password reset for ${user.user_email}?`, `为 ${user.user_email} 创建一次性密码重置链接？`))) return;
+    if (!window.confirm(localized(language, 'ui.issueOneTimeResetFor', { email: user.user_email }))) return;
     setBusy(true);
     try {
       const grant = await adminUsersService.issuePasswordReset(user.user_id);
