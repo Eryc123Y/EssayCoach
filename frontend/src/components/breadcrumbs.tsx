@@ -10,8 +10,11 @@ import {
 import { useBreadcrumbs } from '@/hooks/use-breadcrumbs';
 import { IconSlash } from '@tabler/icons-react';
 import { Fragment } from 'react';
+import { usePreferences } from '@/components/layout/preference-provider';
+import { navigationLabel } from '@/lib/navigation-labels';
 
 export function Breadcrumbs() {
+  const { locale } = usePreferences();
   const items = useBreadcrumbs();
   if (items.length === 0) return null;
 
@@ -22,7 +25,7 @@ export function Breadcrumbs() {
           <Fragment key={item.title}>
             {index !== items.length - 1 && (
               <BreadcrumbItem className='hidden md:block'>
-                <BreadcrumbLink href={item.link}>{item.title}</BreadcrumbLink>
+                <BreadcrumbLink href={item.link}>{navigationLabel(item.title, locale)}</BreadcrumbLink>
               </BreadcrumbItem>
             )}
             {index < items.length - 1 && (
@@ -31,7 +34,9 @@ export function Breadcrumbs() {
               </BreadcrumbSeparator>
             )}
             {index === items.length - 1 && (
-              <BreadcrumbPage>{item.title}</BreadcrumbPage>
+              <BreadcrumbItem>
+                <BreadcrumbPage>{navigationLabel(item.title, locale)}</BreadcrumbPage>
+              </BreadcrumbItem>
             )}
           </Fragment>
         ))}

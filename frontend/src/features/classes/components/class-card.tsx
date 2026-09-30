@@ -12,7 +12,7 @@ import {
 } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
-import { MoreVertical, Edit, Trash2, Eye, Users, Archive } from 'lucide-react';
+import { MoreVertical, Edit, Trash2, Eye, Users, Archive, Copy } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { useState } from 'react';
 import {
@@ -32,25 +32,46 @@ import {
   AlertDialogTitle
 } from '@/components/ui/alert-dialog';
 import { toast } from 'sonner';
+import { usePreferences } from '@/components/layout/preference-provider';
+import { classTermLabel } from './class-labels';
+import { localized } from '@/locales';
 
 interface ClassCardProps {
   classItem: ClassItem;
   onUpdate: () => void;
+  canManage: boolean;
+  canDuplicate: boolean;
 }
 
-export function ClassCard({ classItem, onUpdate }: ClassCardProps) {
+export function ClassCard({ classItem, onUpdate, canManage, canDuplicate }: ClassCardProps) {
   const router = useRouter();
+  const { locale } = usePreferences();
+  const zh = locale === 'zh';
   const [isDeleting, setIsDeleting] = useState(false);
   const [isArchiving, setIsArchiving] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [isDuplicating, setIsDuplicating] = useState(false);
+
+  const handleDuplicate = async () => {
+    setIsDuplicating(true);
+    try {
+      await classService.duplicateClass(classItem.class_id, `${classItem.class_name} ${localized(locale, 'ui.copy308dba')}`.slice(0, 100));
+      onUpdate();
+      toast.success(localized(locale, 'ui.createdAnEmptyClassCopy'));
+    } catch {
+      toast.error(localized(locale, 'ui.failedToDuplicateClass'));
+    } finally {
+      setIsDuplicating(false);
+    }
+  };
 
   const handleDelete = async () => {
     setIsDeleting(true);
     try {
       await classService.deleteClass(classItem.class_id);
       onUpdate();
-    } catch (error) {
-      toast.error('Failed to delete class. Please try again.');
+    } catch {
+      toast.error(localized(locale, 'ui.classesWithStudentsOrAssignmentsMustBeArchived'));
     } finally {
       setIsDeleting(false);
       setShowDeleteConfirm(false);
@@ -63,7 +84,7 @@ export function ClassCard({ classItem, onUpdate }: ClassCardProps) {
       await classService.archiveClass(classItem.class_id);
       onUpdate();
     } catch (error) {
-      toast.error('Failed to archive class. Please try again.');
+      toast.error(localized(locale, 'ui.failedToArchiveClassPleaseTryAgain'));
     } finally {
       setIsArchiving(false);
     }
@@ -77,7 +98,7 @@ export function ClassCard({ classItem, onUpdate }: ClassCardProps) {
             <div className='space-y-1'>
               <CardTitle className='text-lg'>{classItem.class_name}</CardTitle>
               <CardDescription className='line-clamp-2'>
-                {classItem.class_desc || 'No description'}
+                {classItem.class_desc || (localized(locale, 'ui.noDescription'))}
               </CardDescription>
             </div>
             <Badge
@@ -85,7 +106,7 @@ export function ClassCard({ classItem, onUpdate }: ClassCardProps) {
                 classItem.class_status === 'active' ? 'default' : 'secondary'
               }
             >
-              {classItem.class_status}
+              {classItem.class_status === 'active' ? (localized(locale, 'ui.activeb40ce1')) : (localized(locale, 'ui.archived'))}
             </Badge>
           </div>
         </CardHeader>
@@ -93,18 +114,18 @@ export function ClassCard({ classItem, onUpdate }: ClassCardProps) {
         <CardContent className='space-y-2'>
           <div className='text-muted-foreground flex items-center text-sm'>
             <Users className='mr-2 h-4 w-4' />
-            {classItem.class_size} students
+            {zh ? `${classItem.class_size} 名学生` : `${classItem.class_size} students`}
           </div>
           {classItem.class_join_code && (
             <div className='text-sm'>
-              Join Code:{' '}
+              {localized(locale, 'ui.joinCode')}
               <span className='bg-muted rounded px-2 py-0.5 font-mono'>
                 {classItem.class_join_code}
               </span>
             </div>
           )}
           <div className='text-muted-foreground text-sm'>
-            Term: {classItem.class_term} {classItem.class_year}
+            {localized(locale, 'ui.term')}{classTermLabel(classItem.class_term, locale)} {classItem.class_year}
           </div>
         </CardContent>
 
@@ -117,12 +138,12 @@ export function ClassCard({ classItem, onUpdate }: ClassCardProps) {
             }
           >
             <Eye className='mr-2 h-4 w-4' />
-            View
+            {localized(locale, 'ui.view')}
           </Button>
 
-          <DropdownMenu>
+          {canManage && <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <Button variant='ghost' size='sm'>
+              <Button variant='ghost' size='sm' aria-label={localized(locale, 'ui.classActions')}>
                 <MoreVertical className='h-4 w-4' />
               </Button>
             </DropdownMenuTrigger>
@@ -133,7 +154,7 @@ export function ClassCard({ classItem, onUpdate }: ClassCardProps) {
                 }
               >
                 <Edit className='mr-2 h-4 w-4' />
-                Edit
+                {localized(locale, 'nav.edit')}
               </DropdownMenuItem>
               {classItem.class_status === 'active' && (
                 <DropdownMenuItem
@@ -141,39 +162,41 @@ export function ClassCard({ classItem, onUpdate }: ClassCardProps) {
                   disabled={isArchiving}
                 >
                   <Archive className='mr-2 h-4 w-4' />
-                  {isArchiving ? 'Archiving...' : 'Archive'}
+                  {isArchiving ? (localized(locale, 'ui.archiving')) : (localized(locale, 'ui.archive'))}
                 </DropdownMenuItem>
               )}
+              {canDuplicate && <DropdownMenuItem onClick={handleDuplicate} disabled={isDuplicating}>
+                <Copy className='mr-2 h-4 w-4' />{localized(locale, 'ui.duplicateEmptyClass')}
+              </DropdownMenuItem>}
               <DropdownMenuItem
                 onClick={() => setShowDeleteConfirm(true)}
                 disabled={isDeleting}
                 className='text-destructive'
               >
                 <Trash2 className='mr-2 h-4 w-4' />
-                Delete
+                {localized(locale, 'ui.delete')}
               </DropdownMenuItem>
             </DropdownMenuContent>
-          </DropdownMenu>
+          </DropdownMenu>}
         </CardFooter>
       </Card>
 
-      <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
+      {canManage && <AlertDialog open={showDeleteConfirm} onOpenChange={setShowDeleteConfirm}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Delete class?</AlertDialogTitle>
+            <AlertDialogTitle>{localized(locale, 'ui.deleteClass')}</AlertDialogTitle>
             <AlertDialogDescription>
-              This will permanently delete &ldquo;{classItem.class_name}&rdquo;.
-              This action cannot be undone.
+              {zh ? `“${classItem.class_name}”将被永久删除，此操作无法撤销。` : <>This will permanently delete &ldquo;{classItem.class_name}&rdquo;. This action cannot be undone.</>}
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel disabled={isDeleting}>Cancel</AlertDialogCancel>
+            <AlertDialogCancel disabled={isDeleting}>{localized(locale, 'community.cancel')}</AlertDialogCancel>
             <AlertDialogAction onClick={handleDelete} disabled={isDeleting}>
-              {isDeleting ? 'Deleting...' : 'Delete'}
+              {isDeleting ? (localized(locale, 'ui.deletingd1b100')) : (localized(locale, 'ui.delete'))}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
-      </AlertDialog>
+      </AlertDialog>}
     </>
   );
 }

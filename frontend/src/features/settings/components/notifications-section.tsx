@@ -1,5 +1,7 @@
 'use client';
 
+import { localized } from '@/locales';
+
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -10,10 +12,10 @@ import {
   IconBell,
   IconFile,
   IconClipboard,
-  IconCalendar,
 } from '@tabler/icons-react';
 import type { UserPreferences } from '@/service/api/v2/types';
 import { toast } from 'sonner';
+import { usePreferences } from '@/components/layout/preference-provider';
 
 
 interface NotificationsSectionProps {
@@ -31,6 +33,8 @@ export function NotificationsSection({
   onUpdatePreferences,
   userRole,
 }: NotificationsSectionProps) {
+  const { locale } = usePreferences();
+  const t = (en: string, zh?: string) => localized(locale, en, zh);
   const [localPrefs, setLocalPrefs] = useState<Partial<UserPreferences>>({});
   const [hasChanges, setHasChanges] = useState(false);
 
@@ -38,7 +42,7 @@ export function NotificationsSection({
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Notification Preferences</CardTitle>
+          <CardTitle>{t('ui.notificationPreferences')}</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="animate-pulse space-y-4">
@@ -69,10 +73,10 @@ export function NotificationsSection({
       await onUpdatePreferences(localPrefs);
       setLocalPrefs({});
       setHasChanges(false);
-      toast.success('Notification preferences updated successfully');
+      toast.success(t('ui.notificationPreferencesUpdated'));
     } catch (error) {
       console.error('Failed to update preferences:', error);
-      toast.error('Failed to update notification preferences');
+      toast.error(t('ui.couldNotUpdateNotificationPreferences'));
     }
   };
 
@@ -85,21 +89,21 @@ export function NotificationsSection({
     <Card>
       <CardHeader>
         <CardTitle className="text-lg font-semibold">
-          Notification Preferences
+          {t('ui.notificationPreferences')}
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-6">
         <div className="space-y-4">
           {/* Email Notifications */}
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-3">
               <div className="flex size-10 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900">
                 <IconMail className="size-5 text-blue-600 dark:text-blue-400" />
               </div>
               <div>
-                <p className="font-medium">Email Notifications</p>
+                <p className="font-medium">{t('ui.emailNotifications')}</p>
                 <p className="text-sm text-muted-foreground">
-                  Receive email updates about your account
+                  {t('ui.emailAlertsAreSavedToTheLocalOutboxOrSent')}
                 </p>
               </div>
             </div>
@@ -115,15 +119,15 @@ export function NotificationsSection({
           <Separator />
 
           {/* In-App Notifications */}
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-3">
               <div className="flex size-10 items-center justify-center rounded-full bg-purple-100 dark:bg-purple-900">
                 <IconBell className="size-5 text-purple-600 dark:text-purple-400" />
               </div>
               <div>
-                <p className="font-medium">In-App Notifications</p>
+                <p className="font-medium">{t('ui.inAppNotifications')}</p>
                 <p className="text-sm text-muted-foreground">
-                  Get notified within the application
+                  {t('ui.getNotifiedWithinTheApplication')}
                 </p>
               </div>
             </div>
@@ -138,18 +142,37 @@ export function NotificationsSection({
 
           <Separator />
 
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3">
+              <div className="flex size-10 items-center justify-center rounded-full bg-teal-100 dark:bg-teal-900">
+                <IconBell className="size-5 text-teal-700 dark:text-teal-300" />
+              </div>
+              <div>
+                <p className="font-medium">{t('ui.communityActivity')}</p>
+                <p className="text-sm text-muted-foreground">{t('ui.likesCommentsAndPeerFeedbackOnYourSharedEssays')}</p>
+              </div>
+            </div>
+            <Switch
+              checked={currentPrefs.social_alerts ?? true}
+              onCheckedChange={(checked) => handleToggle('social_alerts', checked)}
+              disabled={isSaving}
+            />
+          </div>
+
+          <Separator />
+
           {/* Role-specific toggles */}
           {userRole === 'student' && (
             <>
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
                   <div className="flex size-10 items-center justify-center rounded-full bg-green-100 dark:bg-green-900">
                     <IconFile className="size-5 text-green-600 dark:text-green-400" />
                   </div>
                   <div>
-                    <p className="font-medium">Submission Alerts</p>
+                    <p className="font-medium">{t('ui.submissionAlerts')}</p>
                     <p className="text-sm text-muted-foreground">
-                      Get notified when you receive feedback
+                      {t('ui.getNotifiedWhenYouReceiveFeedback')}
                     </p>
                   </div>
                 </div>
@@ -168,15 +191,15 @@ export function NotificationsSection({
 
           {userRole === 'lecturer' && (
             <>
-              <div className="flex items-center justify-between">
+              <div className="flex items-center justify-between gap-3">
                 <div className="flex items-center gap-3">
                   <div className="flex size-10 items-center justify-center rounded-full bg-orange-100 dark:bg-orange-900">
                     <IconClipboard className="size-5 text-orange-600 dark:text-orange-400" />
                   </div>
                   <div>
-                    <p className="font-medium">Grading Alerts</p>
+                    <p className="font-medium">{t('ui.gradingAlerts')}</p>
                     <p className="text-sm text-muted-foreground">
-                      Get notified when students submit essays
+                      {t('ui.getNotifiedWhenStudentsSubmitEssays')}
                     </p>
                   </div>
                 </div>
@@ -193,36 +216,15 @@ export function NotificationsSection({
             </>
           )}
 
-          {/* Weekly Digest */}
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
-              <div className="flex size-10 items-center justify-center rounded-full bg-indigo-100 dark:bg-indigo-900">
-                <IconCalendar className="size-5 text-indigo-600 dark:text-indigo-400" />
-              </div>
-              <div>
-                <p className="font-medium">Weekly Digest</p>
-                <p className="text-sm text-muted-foreground">
-                  Receive a weekly summary of activity
-                </p>
-              </div>
-            </div>
-            <Switch
-              checked={currentPrefs.weekly_digest}
-              onCheckedChange={(checked) =>
-                handleToggle('weekly_digest', checked)
-              }
-              disabled={isSaving}
-            />
-          </div>
         </div>
 
         {hasChanges && (
           <div className="flex gap-2 pt-4">
             <Button onClick={handleSave} disabled={isSaving}>
-              {isSaving ? 'Saving...' : 'Save Changes'}
+              {isSaving ? t('ui.saving83ad29') : t('ui.saveChanges')}
             </Button>
             <Button variant="outline" onClick={handleReset}>
-              Reset
+              {t('ui.reset')}
             </Button>
           </div>
         )}

@@ -6,6 +6,9 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import type { Task } from '@/service/api/v2/types';
 import { TaskMetaFieldsSection, TaskSettingsSection, TaskTextFieldsSection } from './task-form-sections';
 import { useTaskForm } from './use-task-form';
+import { usePreferences } from '@/components/layout/preference-provider';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { localized } from '@/locales';
 
 interface TaskFormProps {
   taskId?: number;
@@ -20,28 +23,31 @@ interface TaskFormProps {
  */
 export function TaskForm({ taskId, initialData }: TaskFormProps) {
   const router = useRouter();
-  const { loading, classes, rubrics, formData, setFormData, handleSubmit } = useTaskForm({
+  const { locale } = usePreferences();
+  const zh = locale === 'zh';
+  const { loading, error, classes, units, rubrics, formData, setFormData, handleSubmit } = useTaskForm({
     taskId,
     initialData,
   });
-  const sectionProps = { formData, setFormData, classes, rubrics, loading, taskId };
+  const sectionProps = { formData, setFormData, classes, units, rubrics, loading, taskId };
 
   return (
-    <Card>
+    <Card className='mx-auto max-w-4xl'>
       <CardHeader>
-        <CardTitle>{taskId ? 'Edit Task' : 'Create New Task'}</CardTitle>
+        <CardTitle>{taskId ? (localized(locale, 'ui.editAssignment')) : (localized(locale, 'ui.createAssignment550e5f'))}</CardTitle>
         <CardDescription>
-          {taskId ? 'Update task details' : 'Create a new assignment for your students'}
+          {taskId ? (localized(locale, 'ui.updateAssignmentDetails')) : (localized(locale, 'ui.createAWritingAssignmentForYourStudents'))}
         </CardDescription>
       </CardHeader>
 
       <CardContent>
         <form onSubmit={handleSubmit} className="space-y-4">
+          {error && <Alert variant='destructive' role='alert'><AlertDescription>{zh ? (error.includes('options') ? '无法加载班级和量表，请刷新页面重试。' : error.includes('Choose a course') ? '保存前请选择课程、量表和截止时间。' : error.includes('Choose a class') ? '保存前请选择班级。' : error) : error}</AlertDescription></Alert>}
           <TaskTextFieldsSection {...sectionProps} />
           <TaskMetaFieldsSection {...sectionProps} />
           <TaskSettingsSection {...sectionProps} />
           <Button type="button" variant="outline" onClick={() => router.push('/dashboard/tasks')}>
-            Cancel
+            {localized(locale, 'community.cancel')}
           </Button>
         </form>
       </CardContent>

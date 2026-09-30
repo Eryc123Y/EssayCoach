@@ -70,6 +70,26 @@ class FeedbackSource(StrEnum):
     REVISED = "revised"
 
 
+class AssessmentStatus(StrEnum):
+    AI_PENDING = "ai_pending"
+    AI_DRAFT = "ai_draft"
+    LECTURER_REVIEWED = "lecturer_reviewed"
+    PUBLISHED = "published"
+
+
+class PracticeRunStatus(StrEnum):
+    PENDING = "pending"
+    RUNNING = "running"
+    SUCCEEDED = "succeeded"
+    FAILED = "failed"
+
+
+class EvidenceVerdict(StrEnum):
+    SUPPORTED = "supported"
+    CONTRADICTED = "contradicted"
+    UNRESOLVED = "unresolved"
+
+
 class ResponseMode(StrEnum):
     """AI workflow response mode."""
 
@@ -122,6 +142,13 @@ class InteractionType(StrEnum):
     LIKE = "like"
     COMMENT = "comment"
     BOOKMARK = "bookmark"
+    FEEDBACK = "feedback"
+
+
+class SocialVisibility(StrEnum):
+    PUBLIC = "public"
+    CLASS = "class"
+    ANONYMOUS = "anonymous"
 
 
 class ModerationAction(StrEnum):

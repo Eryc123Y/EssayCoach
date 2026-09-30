@@ -1,5 +1,7 @@
 'use client';
 
+import { localized } from '@/locales';
+
 import { useState, useCallback, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -21,18 +23,22 @@ import { toast } from 'sonner';
 import { Upload, Loader2, FileText, X, CloudUpload, Info } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { motion, AnimatePresence } from 'motion/react';
+import { usePreferences } from '@/components/layout/preference-provider';
 
 interface RubricUploadProps {
   onSuccess?: (response: RubricImportResponse) => void;
 }
 
 function InfoPopover() {
+  const { locale } = usePreferences();
+  const t = (en: string, zh?: string) => localized(locale, en, zh);
   return (
     <Popover>
       <PopoverTrigger asChild>
         <Button
           variant='ghost'
           size='icon'
+          aria-label={t('ui.importRequirements')}
           className='text-muted-foreground h-7 w-7 hover:bg-indigo-50 hover:text-indigo-600 dark:hover:bg-indigo-900/20 dark:hover:text-indigo-400'
         >
           <Info className='h-4 w-4' />
@@ -42,37 +48,37 @@ function InfoPopover() {
         <div className='space-y-4'>
           <div>
             <h4 className='text-foreground mb-2 text-sm font-semibold'>
-              AI Processing Workflow
+              {t('ui.howImportWorks')}
             </h4>
             <div className='space-y-2 text-xs'>
               <p className='text-muted-foreground leading-relaxed'>
-                Your PDF is processed through these steps:
+                {t('ui.yourPdfGoesThroughTheseSteps')}
               </p>
               <ol className='text-muted-foreground ml-4 list-decimal space-y-1.5'>
-                <li>AI analyzes document structure</li>
-                <li>Validates rubric format detection</li>
-                <li>Extracts dimensions and scoring levels</li>
-                <li>Auto-saves to your rubric library</li>
+                <li>{t('ui.analyzeDocumentStructure')}</li>
+                <li>{t('ui.checkThatItIsARubric')}</li>
+                <li>{t('ui.extractCriteriaAndScoreLevels')}</li>
+                <li>{t('ui.saveItToYourLibrary')}</li>
               </ol>
             </div>
           </div>
 
           <div className='border-border/50 border-t pt-3'>
             <h4 className='text-foreground mb-2 text-sm font-semibold'>
-              File Requirements
+              {t('ui.fileRequirements')}
             </h4>
             <div className='text-muted-foreground space-y-1.5 text-xs'>
               <p className='flex items-start gap-2'>
                 <span className='font-medium'>•</span>
-                PDF format only
+                {t('ui.pdfFormatOnly')}
               </p>
               <p className='flex items-start gap-2'>
                 <span className='font-medium'>•</span>
-                Maximum 10MB file size
+                {t('ui.upTo10MbAnd20Pages')}
               </p>
               <p className='flex items-start gap-2'>
                 <span className='font-medium'>•</span>
-                Valid rubric structure with dimensions
+                {t('ui.selectableTextAndClearScoringCriteria')}
               </p>
             </div>
           </div>
@@ -83,6 +89,8 @@ function InfoPopover() {
 }
 
 export function RubricUpload({ onSuccess }: RubricUploadProps) {
+  const { locale } = usePreferences();
+  const t = (en: string, zh?: string) => localized(locale, en, zh);
   const [file, setFile] = useState<File | null>(null);
   const [rubricName, setRubricName] = useState('');
   const [isUploading, setIsUploading] = useState(false);
@@ -91,16 +99,16 @@ export function RubricUpload({ onSuccess }: RubricUploadProps) {
 
   const validateFile = useCallback((file: File): string | null => {
     if (file.type !== 'application/pdf') {
-      return 'Please upload a PDF file';
+      return t('ui.pleaseUploadAPdfFile');
     }
 
     const maxSize = 10 * 1024 * 1024;
     if (file.size > maxSize) {
-      return 'File size must be less than 10MB';
+      return t('ui.fileMustBe10MbOrSmaller');
     }
 
     return null;
-  }, []);
+  }, [locale]);
 
   const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const selectedFile = e.target.files?.[0];
@@ -156,7 +164,7 @@ export function RubricUpload({ onSuccess }: RubricUploadProps) {
     e.preventDefault();
 
     if (!file) {
-      toast.error('Please select a PDF file');
+      toast.error(t('ui.pleaseSelectAPdfFile'));
       return;
     }
 
@@ -167,7 +175,7 @@ export function RubricUpload({ onSuccess }: RubricUploadProps) {
 
       if (response.success) {
         toast.success(
-          `Rubric "${response.rubric_name}" imported successfully! (${response.items_count} items, ${response.levels_count} levels)`
+          localized(locale, 'ui.rubricImportedSummary', { name: response.rubric_name, items: response.items_count, levels: response.levels_count })
         );
 
         setFile(null);
@@ -178,10 +186,10 @@ export function RubricUpload({ onSuccess }: RubricUploadProps) {
 
         onSuccess?.(response);
       } else {
-        toast.error(response.error || 'Failed to import rubric');
+        toast.error(response.error || t('ui.couldNotImportRubric'));
       }
     } catch (error: any) {
-      toast.error(error.message || 'Failed to upload rubric');
+      toast.error(error.message || t('ui.couldNotUploadRubric'));
     } finally {
       setIsUploading(false);
     }
@@ -196,8 +204,8 @@ export function RubricUpload({ onSuccess }: RubricUploadProps) {
               <Upload className='h-5 w-5' />
             </div>
             <div>
-              <CardTitle>Upload Rubric PDF</CardTitle>
-              <CardDescription>AI-powered rubric extraction</CardDescription>
+              <CardTitle>{t('ui.uploadRubricPdf')}</CardTitle>
+              <CardDescription>{t('ui.extractCriteriaWithCodexLuna')}</CardDescription>
             </div>
           </div>
           <InfoPopover />
@@ -210,12 +218,12 @@ export function RubricUpload({ onSuccess }: RubricUploadProps) {
               htmlFor='rubric-name'
               className='text-muted-foreground text-xs font-medium tracking-wider uppercase'
             >
-              Rubric Name
+              {t('ui.rubricName')}
             </Label>
             <Input
               id='rubric-name'
               type='text'
-              placeholder='e.g., Argumentative Essay Rubric'
+              placeholder={t('ui.eGArgumentativeEssayRubric')}
               value={rubricName}
               onChange={(e) => setRubricName(e.target.value)}
               disabled={isUploading}
@@ -225,7 +233,7 @@ export function RubricUpload({ onSuccess }: RubricUploadProps) {
 
           <div className='space-y-2'>
             <Label className='text-muted-foreground text-xs font-medium tracking-wider uppercase'>
-              PDF File
+              {t('ui.pdfFile')}
             </Label>
             <AnimatePresence mode='wait'>
               {!file ? (
@@ -246,6 +254,10 @@ export function RubricUpload({ onSuccess }: RubricUploadProps) {
                   onDragOver={handleDrag}
                   onDrop={handleDrop}
                   onClick={() => inputRef.current?.click()}
+                  role='button'
+                  tabIndex={0}
+                  aria-label={t('ui.chooseRubricPdf')}
+                  onKeyDown={(event) => { if (event.key === 'Enter' || event.key === ' ') { event.preventDefault(); inputRef.current?.click(); } }}
                 >
                   <input
                     ref={inputRef}
@@ -277,12 +289,12 @@ export function RubricUpload({ onSuccess }: RubricUploadProps) {
                     <div>
                       <div className='text-foreground text-sm font-medium'>
                         <span className='text-indigo-600 dark:text-indigo-400'>
-                          Click to upload
+                          {t('ui.clickToUpload')}
                         </span>{' '}
-                        or drag PDF
+                        {t('ui.orDragAPdfHere')}
                       </div>
                       <p className='text-muted-foreground mt-1 text-xs'>
-                        Max size 10MB
+                        {t('ui.upTo10Mb')}
                       </p>
                     </div>
                   </div>
@@ -337,12 +349,12 @@ export function RubricUpload({ onSuccess }: RubricUploadProps) {
             {isUploading ? (
               <>
                 <Loader2 className='mr-2 h-4 w-4 animate-spin' />
-                Processing Rubric...
+                {t('ui.processingRubric')}
               </>
             ) : (
               <>
                 <Upload className='mr-2 h-4 w-4' />
-                Start AI Import
+                {t('ui.importRubric')}
               </>
             )}
           </Button>

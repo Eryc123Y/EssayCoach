@@ -1,9 +1,12 @@
 'use client';
 
+import { localized } from '@/locales';
+
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import type { DashboardUserInfo, DashboardStats, LecturerStats, StudentStats, AdminStats } from '@/service/api/v2/types';
 import { IconAward, IconListCheck, IconPencil, IconTrendingUp } from '@tabler/icons-react';
 import { format } from 'date-fns';
+import { usePreferences } from '@/components/layout/preference-provider';
 
 interface DashboardHeaderProps {
   user: DashboardUserInfo;
@@ -18,7 +21,11 @@ interface DashboardHeaderProps {
  * Design: Matches EC-04A-Header, EC-04B-Header, EC-04C-Header from pencil-shadcn.pen
  */
 export function DashboardHeader({ user, stats, role }: DashboardHeaderProps) {
-  const currentDate = format(new Date(), 'EEEE, MMMM d, y · h:mm a');
+  const { locale } = usePreferences();
+  const t = (en: string, zh?: string) => localized(locale, en, zh);
+  const currentDate = locale === 'zh'
+    ? new Intl.DateTimeFormat('zh-CN', { dateStyle: 'full', timeStyle: 'short' }).format(new Date())
+    : format(new Date(), 'EEEE, MMMM d, y · h:mm a');
 
   // Get role-specific stat cards
   const getStatCards = () => {
@@ -33,20 +40,18 @@ export function DashboardHeader({ user, stats, role }: DashboardHeaderProps) {
           <StatCard
             icon={<IconAward className="h-4 w-4 text-emerald-500" />}
             value={reviewedToday.toString()}
-            label="Essays Reviewed Today"
-            trend={avgScore != null ? `${avgScore}% avg score` : undefined}
+            label={t('ui.essaysReviewedToday')}
+            trend={avgScore != null ? localized(locale, 'ui.avgScorePercent', { score: avgScore }) : undefined}
           />
           <StatCard
             icon={<IconListCheck className="h-4 w-4 text-amber-500" />}
             value={pendingReviews.toString()}
-            label="Pending Reviews"
-            trend="Due in 3 days"
+            label={t('ui.pendingReviews')}
           />
           <StatCard
             icon={<IconPencil className="h-4 w-4 text-violet-500" />}
             value={activeClasses.toString()}
-            label="Active Classes"
-            trend="This semester"
+            label={t('ui.activeClassesf9a013')}
           />
         </>
       );
@@ -62,20 +67,19 @@ export function DashboardHeader({ user, stats, role }: DashboardHeaderProps) {
           <StatCard
             icon={<IconAward className="h-4 w-4 text-emerald-500" />}
             value={totalEssays.toLocaleString()}
-            label="Total Essays"
-            trend="All time submissions"
+            label={t('ui.totalEssays')}
           />
           <StatCard
             icon={<IconListCheck className="h-4 w-4 text-amber-500" />}
             value={pendingGrading.toString()}
-            label="Pending Grading"
-            trend="Needs review"
+            label={t('ui.pendingGrading')}
+            trend={t('ui.needsReview')}
           />
           <StatCard
             icon={<IconTrendingUp className="h-4 w-4 text-blue-500" />}
             value={avgScore?.toString() ?? '0'}
-            label="Avg Score"
-            trend="Platform-wide"
+            label={t('ui.avgScore')}
+            trend={t('ui.publishedGrades')}
           />
         </>
       );
@@ -90,21 +94,20 @@ export function DashboardHeader({ user, stats, role }: DashboardHeaderProps) {
       <>
         <StatCard
           icon={<IconAward className="h-4 w-4 text-emerald-500" />}
-          value={studentAvgScore?.toFixed(1) ?? 'N/A'}
-          label="Average Score"
-          trend={studentAvgScore != null && studentAvgScore >= 80 ? 'Top 20%' : undefined}
+          value={studentAvgScore?.toFixed(1) ?? t('ui.nA')}
+          label={t('ui.averageScore272cc1')}
+          trend={studentAvgScore != null ? t('ui.publishedGrades') : undefined}
         />
         <StatCard
           icon={<IconListCheck className="h-4 w-4 text-amber-500" />}
           value={pendingTasks.toString()}
-          label="Pending Tasks"
-          trend={pendingTasks > 0 ? 'Due soon' : 'All clear'}
+          label={t('ui.awaitingResults')}
+          trend={pendingTasks > 0 ? t('ui.teacherReview') : t('ui.allClear')}
         />
         <StatCard
           icon={<IconPencil className="h-4 w-4 text-violet-500" />}
           value={essaysSubmitted.toString()}
-          label="Essays Submitted"
-          trend="All time"
+          label={t('ui.essaysSubmitted')}
         />
       </>
     );
@@ -114,12 +117,12 @@ export function DashboardHeader({ user, stats, role }: DashboardHeaderProps) {
     <div className="mb-6 space-y-4">
       {/* Welcome Section */}
       <div className="flex flex-col gap-2">
-        <div className="flex items-center gap-2">
-          <h1 className="text-[32px] font-semibold leading-tight tracking-tight text-slate-900 dark:text-slate-100">
-            {getGreeting(user.name)}
+        <div className="flex min-w-0 flex-wrap items-start gap-2">
+          <h1 className="min-w-0 max-w-full break-words text-2xl font-semibold leading-tight tracking-tight text-slate-900 [overflow-wrap:anywhere] dark:text-slate-100 sm:text-[32px]">
+            {getGreeting(user.name, locale)}
           </h1>
           {role && (
-            <RoleBadge role={role} />
+            <RoleBadge role={role} locale={locale} />
           )}
         </div>
         <p className="text-sm text-muted-foreground">{currentDate}</p>
@@ -173,7 +176,7 @@ function StatCard({ icon, value, label, trend, trendValue }: StatCardProps) {
   );
 }
 
-function RoleBadge({ role }: { role: 'student' | 'lecturer' | 'admin' }) {
+function RoleBadge({ role, locale }: { role: 'student' | 'lecturer' | 'admin'; locale: 'en' | 'zh' }) {
   const variants = {
     student: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
     lecturer: 'bg-violet-100 text-violet-700 dark:bg-violet-900/30 dark:text-violet-400',
@@ -182,13 +185,14 @@ function RoleBadge({ role }: { role: 'student' | 'lecturer' | 'admin' }) {
 
   return (
     <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium capitalize ${variants[role]}`}>
-      {role}
+      {locale === 'zh' ? { student: '学生', lecturer: '讲师', admin: '管理员' }[role] : role}
     </span>
   );
 }
 
-function getGreeting(name: string | null): string {
-  if (!name) return 'Welcome';
+function getGreeting(name: string | null, locale: 'en' | 'zh'): string {
+  if (!name) return localized(locale, 'ui.welcome');
+  const displayName = name.includes('@') ? name.split('@')[0] : name.split(' ')[0];
 
   const hour = new Date().getHours();
   let greeting = 'Good morning';
@@ -199,5 +203,9 @@ function getGreeting(name: string | null): string {
     greeting = 'Good evening';
   }
 
-  return `${greeting}, ${name.split(' ')[0]}`;
+  if (locale === 'zh') {
+    const zhGreeting = hour < 12 ? '早上好' : hour < 17 ? '下午好' : '晚上好';
+    return `${zhGreeting}，${displayName}`;
+  }
+  return `${greeting}, ${displayName}`;
 }

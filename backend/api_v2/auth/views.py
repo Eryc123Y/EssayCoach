@@ -2,30 +2,48 @@ from __future__ import annotations
 
 import logging
 from pathlib import Path
+from typing import cast
+from uuid import UUID
 
 from django.conf import settings
 from django.contrib.auth import authenticate
 from django.contrib.auth.password_validation import validate_password
-from django.contrib.sessions.models import Session
 from django.core.exceptions import ValidationError
 from django.http import HttpRequest
 from ninja import Router
 from ninja.errors import HttpError
 from ninja.files import UploadedFile
 
-from core.models import User
+from core.email_change import EmailChangeError, complete_email_change, issue_email_change, preview_email_change
+from core.invitations import InvitationError, InviteRole, accept_invitation, issue_invitation, preview_invitation
+from core.models import AuthSession, Class, Unit, User
+from core.password_reset import PasswordResetError, complete_password_reset, preview_password_reset
 
-from ..utils.auth import TokenAuth, delete_user_tokens
-from ..utils.jwt_auth import JWTAuth, blacklist_jwt_token, create_jwt_pair, refresh_jwt_token
+from ..utils.auth import TokenAuth
+from ..utils.jwt_auth import JWTAuth, blacklist_jwt_token, create_jwt_pair, refresh_jwt_token, verify_jwt_token
 from .schemas import (
     AuthResponse,
     AuthResponseWithRefresh,
     AvatarUploadOut,
+    EmailChangeCompleteIn,
+    EmailChangePreviewIn,
+    EmailChangePreviewOut,
+    EmailChangeRequestIn,
+    InvitationBatchFailureOut,
+    InvitationBatchIn,
+    InvitationBatchOut,
+    InvitationCreateIn,
+    InvitationCreateOut,
+    InvitationPreviewIn,
+    InvitationPreviewOut,
     LoginHistoryListOut,
     LoginHistoryOut,
     MessageResponse,
     PasswordChangeIn,
+    PasswordResetCompleteIn,
     PasswordResetIn,
+    PasswordResetPreviewIn,
+    PasswordResetPreviewOut,
     RefreshTokenIn,
     RefreshTokenOut,
     SessionListOut,
@@ -53,37 +71,111 @@ def _user_to_schema(user: User) -> UserOut:
         first_name=user.user_fname,
         last_name=user.user_lname,
         name=f"{user.user_fname or ''} {user.user_lname or ''}".strip() or user.user_email,
-        avatar=None,
+        avatar=f"/api/v2/core/profiles/{user.pk}/avatar/" if user.avatar_url else None,
         role=user.user_role or "student",
         status=user.user_status or "active",
         date_joined=user.date_joined.isoformat() if user.date_joined else "",
     )
 
 
+@router.post("/invitations/", response=InvitationCreateOut, auth=JWTAuth())
+def create_invitation(request: HttpRequest, data: InvitationCreateIn) -> InvitationCreateOut:
+    """Issue an expiring, one-time invitation for staff or a class student."""
+    if data.role.value not in ("student", "lecturer"):
+        raise HttpError(400, "Only student and lecturer accounts can be invited")
+    class_obj = None
+    if data.class_id is not None:
+        class_obj = Class.objects.filter(pk=data.class_id).first()
+        if class_obj is None:
+            raise HttpError(404, "Class not found")
+    lead_unit = None
+    if data.lead_unit_id is not None:
+        lead_unit = Unit.objects.filter(pk=data.lead_unit_id).first()
+        if lead_unit is None:
+            raise HttpError(404, "Course not found")
+    try:
+        invitation, token = issue_invitation(
+            actor=request.auth,
+            email=str(data.email),
+            role=cast(InviteRole, data.role.value),
+            class_obj=class_obj,
+            lead_unit=lead_unit,
+        )
+    except InvitationError as exc:
+        raise HttpError(exc.status, str(exc)) from exc
+    return InvitationCreateOut(
+        id=invitation.pk,
+        token=token,
+        email=invitation.email,
+        role=invitation.role,
+        expires_at=invitation.expires_at,
+    )
+
+
+@router.post("/invitations/preview/", response=InvitationPreviewOut)
+def get_invitation_preview(request: HttpRequest, data: InvitationPreviewIn) -> InvitationPreviewOut:
+    """Show the fixed account and class scope before activation."""
+    try:
+        invitation = preview_invitation(data.token)
+    except InvitationError as exc:
+        raise HttpError(exc.status, str(exc)) from exc
+    return InvitationPreviewOut(
+        email=invitation.email,
+        role=invitation.role,
+        class_name=invitation.class_id_class.class_name if invitation.class_id_class else None,
+        unit_name=invitation.lead_unit.unit_name if invitation.lead_unit else None,
+        expires_at=invitation.expires_at,
+    )
+
+
+@router.post("/invitations/batch/", response=InvitationBatchOut, auth=JWTAuth())
+def create_student_invitations(request: HttpRequest, data: InvitationBatchIn) -> InvitationBatchOut:
+    """Issue class invitation links for up to 50 distinct student addresses."""
+    class_obj = Class.objects.filter(pk=data.class_id).first()
+    if class_obj is None:
+        raise HttpError(404, "Class not found")
+    created: list[InvitationCreateOut] = []
+    failed: list[InvitationBatchFailureOut] = []
+    addresses = dict.fromkeys(str(email).strip().lower() for email in data.emails)
+    for email in addresses:
+        try:
+            invitation, token = issue_invitation(actor=request.auth, email=email, role="student", class_obj=class_obj)
+        except InvitationError as exc:
+            if exc.status == 403:
+                raise HttpError(403, str(exc)) from exc
+            failed.append(InvitationBatchFailureOut(email=email, reason=str(exc)))
+            continue
+        created.append(
+            InvitationCreateOut(
+                id=invitation.pk,
+                token=token,
+                email=invitation.email,
+                role=invitation.role,
+                expires_at=invitation.expires_at,
+            )
+        )
+    return InvitationBatchOut(created=created, failed=failed)
+
+
 @router.post("/register/", response=AuthResponseWithRefresh)
 def register(request: HttpRequest, data: UserRegistrationIn) -> AuthResponseWithRefresh:
+    """Activate an invitation; public self-registration is unavailable."""
     if data.password != data.password_confirm:
         raise HttpError(400, "Password fields didn't match")
 
     try:
-        validate_password(data.password)
-    except ValidationError as e:
-        raise HttpError(400, f"Password validation failed: {', '.join(e.messages)}")
+        user = accept_invitation(
+            token=data.invitation_token,
+            password=data.password,
+            first_name=data.first_name,
+            last_name=data.last_name,
+        )
+    except ValidationError as exc:
+        raise HttpError(400, f"Password validation failed: {', '.join(exc.messages)}") from exc
+    except InvitationError as exc:
+        raise HttpError(exc.status, str(exc)) from exc
 
-    if User.objects.filter(user_email=data.email).exists():
-        raise HttpError(409, "Email is already registered")
-
-    role = data.role or "student"
-    user = User.objects.create_user(
-        user_email=data.email,
-        password=data.password,
-        user_fname=data.first_name or "",
-        user_lname=data.last_name or "",
-        user_role=role,
-        user_status="active",
-    )
-
-    jwt_pair = create_jwt_pair(user)
+    jwt_pair = create_jwt_pair(user, request=request)
 
     return AuthResponseWithRefresh(
         data={
@@ -92,7 +184,7 @@ def register(request: HttpRequest, data: UserRegistrationIn) -> AuthResponseWith
             "expires_at": jwt_pair.expires_at.isoformat(),
             "user": _user_to_schema(user),
         },
-        message="User registered successfully",
+        message="Invitation activated successfully",
     )
 
 
@@ -109,7 +201,10 @@ def login(request: HttpRequest, data: UserLoginIn) -> AuthResponseWithRefresh:
             pass
         raise HttpError(401, "Invalid email or password")
 
-    jwt_pair = create_jwt_pair(user)
+    if user.user_status != "active":
+        raise HttpError(423, "Account is not active. Please contact an administrator.")
+
+    jwt_pair = create_jwt_pair(user, request=request)
 
     return AuthResponseWithRefresh(
         data={
@@ -124,8 +219,14 @@ def login(request: HttpRequest, data: UserLoginIn) -> AuthResponseWithRefresh:
 
 @router.post("/logout/", response=MessageResponse, auth=TokenAuth())
 def logout(request: HttpRequest) -> MessageResponse:
-    if hasattr(request, "auth") and request.auth:
-        delete_user_tokens(request.auth)
+    header = request.headers.get("Authorization", "")
+    payload = verify_jwt_token(header.removeprefix("Bearer ")) if header.startswith("Bearer ") else None
+    if payload:
+        from django.utils import timezone
+
+        AuthSession.objects.filter(pk=payload.get("session_id"), user=request.auth, revoked_at__isnull=True).update(
+            revoked_at=timezone.now()
+        )
     return MessageResponse(message="Successfully logged out")
 
 
@@ -174,30 +275,40 @@ def password_change(request: HttpRequest, data: PasswordChangeIn) -> MessageResp
         raise HttpError(400, f"Password validation failed: {', '.join(e.messages)}")
 
     user.set_password(data.new_password)
-    user.save()
+    user.auth_version += 1
+    user.save(update_fields=["password", "auth_version"])
+    from django.utils import timezone
+
+    AuthSession.objects.filter(user=user, revoked_at__isnull=True).update(revoked_at=timezone.now())
 
     return MessageResponse(message="Password changed successfully")
 
 
 @router.post("/password-reset/", response=MessageResponse)
 def password_reset(request: HttpRequest, data: PasswordResetIn) -> MessageResponse:
+    # The former endpoint accepted an email and new password without proof of
+    # account ownership. A token-based recovery flow will replace it.
+    raise HttpError(410, "Password recovery requires a verified reset link")
+
+
+@router.post("/password-reset/preview/", response=PasswordResetPreviewOut)
+def get_password_reset_preview(request: HttpRequest, data: PasswordResetPreviewIn):
+    try:
+        grant = preview_password_reset(data.token)
+    except PasswordResetError as exc:
+        raise HttpError(exc.status, str(exc)) from exc
+    return PasswordResetPreviewOut(email=grant.user.user_email, expires_at=grant.expires_at)
+
+
+@router.post("/password-reset/complete/", response=MessageResponse)
+def reset_password_with_token(request: HttpRequest, data: PasswordResetCompleteIn):
     if data.new_password != data.new_password_confirm:
-        raise HttpError(400, "Password fields didn't match")
-
+        raise HttpError(400, "Password fields do not match")
     try:
-        validate_password(data.new_password)
-    except ValidationError as e:
-        raise HttpError(400, f"Password validation failed: {', '.join(e.messages)}")
-
-    try:
-        user = User.objects.get(user_email=data.email)
-    except User.DoesNotExist:
-        raise HttpError(404, "Email is not registered")
-
-    user.set_password(data.new_password)
-    user.save()
-
-    return MessageResponse(message="Password reset successful")
+        complete_password_reset(data.token, data.new_password)
+    except PasswordResetError as exc:
+        raise HttpError(exc.status, str(exc)) from exc
+    return MessageResponse(message="Password reset complete. Sign in with the new password.")
 
 
 @router.post("/login-with-jwt/", response=AuthResponseWithRefresh)
@@ -218,8 +329,11 @@ def login_with_jwt(request: HttpRequest, data: UserLoginIn) -> AuthResponseWithR
             pass
         raise HttpError(401, "Invalid email or password")
 
+    if user.user_status != "active":
+        raise HttpError(423, "Account is not active. Please contact an administrator.")
+
     # Create JWT token pair
-    jwt_pair = create_jwt_pair(user)
+    jwt_pair = create_jwt_pair(user, request=request)
 
     return AuthResponseWithRefresh(
         data={
@@ -319,6 +433,33 @@ def logout_jwt(request: HttpRequest, refresh: str) -> MessageResponse:
 # =============================================================================
 
 
+@router.post("/email-change/request/", response=MessageResponse, auth=JWTAuth())
+def request_email_change(request: HttpRequest, data: EmailChangeRequestIn):
+    try:
+        issue_email_change(request.auth, str(data.new_email), data.current_password)
+    except EmailChangeError as exc:
+        raise HttpError(exc.status, str(exc)) from exc
+    return MessageResponse(message="Verification link sent to the new email address")
+
+
+@router.post("/email-change/preview/", response=EmailChangePreviewOut)
+def email_change_preview(request: HttpRequest, data: EmailChangePreviewIn):
+    try:
+        grant = preview_email_change(data.token)
+    except EmailChangeError as exc:
+        raise HttpError(exc.status, str(exc)) from exc
+    return EmailChangePreviewOut(new_email=grant.new_email, expires_at=grant.expires_at)
+
+
+@router.post("/email-change/complete/", response=MessageResponse)
+def confirm_email_change(request: HttpRequest, data: EmailChangeCompleteIn):
+    try:
+        complete_email_change(data.token)
+    except EmailChangeError as exc:
+        raise HttpError(exc.status, str(exc)) from exc
+    return MessageResponse(message="Email address updated. Sign in again with the new address.")
+
+
 def _get_default_preferences() -> dict:
     """Return default user preferences."""
     return {
@@ -326,6 +467,7 @@ def _get_default_preferences() -> dict:
         "in_app_notifications": True,
         "submission_alerts": True,
         "grading_alerts": False,
+        "social_alerts": True,
         "weekly_digest": False,
         "language": "en",
         "theme": "system",
@@ -426,9 +568,7 @@ def upload_avatar(request: HttpRequest, avatar: UploadedFile) -> AvatarUploadOut
     # Generate unique filename
     import uuid
 
-    # Safely handle avatar.name being None
-    avatar_name = avatar.name or "avatar.png"
-    file_extension = avatar_name.split(".")[-1] if "." in avatar_name else "png"
+    file_extension = "png" if avatar.content_type == "image/png" else "jpg"
     filename = f"{user.user_id}_{uuid.uuid4().hex}.{file_extension}"
     file_path = avatars_dir / filename
 
@@ -437,147 +577,79 @@ def upload_avatar(request: HttpRequest, avatar: UploadedFile) -> AvatarUploadOut
         for chunk in avatar.chunks():
             f.write(chunk)
 
-    # Generate avatar URL
+    # The file path stays server-side; the returned URL requires a valid profile viewer.
     avatar_url = f"/media/avatars/{filename}"
+    previous_avatar = user.avatar_url
+    user.avatar_url = avatar_url
+    user.save(update_fields=["avatar_url"])
+    if previous_avatar.startswith("/media/avatars/"):
+        (avatars_dir / Path(previous_avatar).name).unlink(missing_ok=True)
 
     return AvatarUploadOut(
         success=True,
-        avatar_url=avatar_url,
+        avatar_url=f"/api/v2/core/profiles/{user.pk}/avatar/",
         message="Avatar uploaded successfully",
     )
 
 
 @router.get("/settings/sessions/", response=SessionListOut, auth=JWTAuth())
 def get_sessions(request: HttpRequest) -> SessionListOut:
-    """
-    Get list of active sessions for current user.
-
-    Returns all active Django sessions with device and IP information.
-    """
+    """List actual persisted JWT sessions for the current account."""
     from django.utils import timezone
 
-    user = request.auth
-    current_session_key = request.session.session_key if request.session else None
-
-    # Get all active sessions
-    now = timezone.now()
-    active_sessions = Session.objects.filter(expire_date__gt=now)
-
-    sessions_data = []
-    for session in active_sessions:
-        # Get session data
-        session_data = session.get_decoded()
-        user_id = session_data.get("_auth_user_id")
-
-        # Only include sessions for current user
-        if user_id != user.user_id:
-            continue
-
-        # Get session metadata
-        ip_address = session_data.get("_auth_user_ip", None)
-
-        # Detect device from session data or default to Desktop
-        device = session_data.get("device", "Desktop")
-
-        # Get last activity from expiry date (approximation)
-        last_activity = session.expire_date
-
-        # Determine if this is the current session
-        is_current = session.session_key == current_session_key
-
-        sessions_data.append(
+    token = request.headers.get("Authorization", "").removeprefix("Bearer ")
+    current_id = (verify_jwt_token(token) or {}).get("session_id")
+    rows = AuthSession.objects.filter(
+        user=request.auth, revoked_at__isnull=True, expires_at__gt=timezone.now()
+    ).order_by("-last_activity")
+    return SessionListOut(
+        success=True,
+        data=[
             SessionOut(
-                session_key=session.session_key,
-                device=device,
-                ip_address=ip_address,
-                created_at=now,  # Django Session model doesn't track created_at
-                last_activity=last_activity,
-                is_current=is_current,
+                session_key=str(row.pk),
+                device=row.device,
+                ip_address=row.ip_address,
+                created_at=row.created_at,
+                last_activity=row.last_activity,
+                is_current=str(row.pk) == current_id,
             )
-        )
-
-    # Sort by last activity, most recent first
-    sessions_data.sort(key=lambda s: s.last_activity, reverse=True)
-
-    return SessionListOut(success=True, data=sessions_data)
+            for row in rows
+        ],
+    )
 
 
 @router.delete("/settings/sessions/{session_id}/", response=MessageResponse, auth=JWTAuth())
 def revoke_session(request: HttpRequest, session_id: str) -> MessageResponse:
-    """
-    Revoke a specific session.
+    """Revoke one other JWT session and its refresh capability."""
+    from django.utils import timezone
 
-    This will log out the user from that session/device.
-    Cannot revoke the current session.
-    """
-    user = request.auth
-    current_session_key = request.session.session_key if request.session else None
-
-    # Cannot revoke current session
-    if session_id == current_session_key:
+    token = request.headers.get("Authorization", "").removeprefix("Bearer ")
+    current_id = (verify_jwt_token(token) or {}).get("session_id")
+    if session_id == current_id:
         raise HttpError(400, "Cannot revoke current session. Use logout instead.")
-
-    # Get the session
     try:
-        session = Session.objects.get(session_key=session_id)
-    except Session.DoesNotExist:
+        UUID(session_id)
+    except ValueError as exc:
+        raise HttpError(404, "Session not found") from exc
+    session = AuthSession.objects.filter(pk=session_id, user=request.auth).first()
+    if session is None:
         raise HttpError(404, "Session not found")
-
-    # Verify session belongs to user
-    session_data = session.get_decoded()
-    if session_data.get("_auth_user_id") != user.user_id:
-        raise HttpError(403, "Cannot revoke session that doesn't belong to you")
-
-    # Delete the session
-    session.delete()
-
+    session.revoked_at = timezone.now()
+    session.save(update_fields=["revoked_at"])
     return MessageResponse(success=True, message="Session revoked successfully")
 
 
 @router.get("/settings/login-history/", response=LoginHistoryListOut, auth=JWTAuth())
 def get_login_history(request: HttpRequest) -> LoginHistoryListOut:
-    """
-    Get login history for current user.
-
-    Returns recent login attempts (success and failed) from Django session data.
-    Note: This is a basic implementation. For production, consider using
-    django-axes or similar for comprehensive login tracking.
-    """
+    """Show successful login events; no approximate timestamps or fabricated attempts."""
     from django.utils import timezone
 
-    user = request.auth
-
-    # Get all sessions (expired and active) for login history
-    # Note: Django doesn't track login history by default, so we'll return
-    # session-based activity as a proxy
-
-    # Get recent sessions (last 30 days)
     thirty_days_ago = timezone.now() - timezone.timedelta(days=30)
-    recent_sessions = Session.objects.filter(expire_date__gt=thirty_days_ago)
-
-    login_history = []
-    for session in recent_sessions:
-        session_data = session.get_decoded()
-        user_id = session_data.get("_auth_user_id")
-
-        if user_id != user.user_id:
-            continue
-
-        ip_address = session_data.get("_auth_user_ip", None)
-        device = session_data.get("device", "Desktop")
-
-        # Use expire_date as proxy for last activity
-        login_history.append(
-            LoginHistoryOut(
-                login_time=session.expire_date - timezone.timedelta(hours=2),  # Approximate
-                ip_address=ip_address,
-                device=device,
-                success=True,
-            )
-        )
-
-    # Sort by login time, most recent first
-    login_history.sort(key=lambda h: h.login_time, reverse=True)
-
-    # Return last 20 entries
-    return LoginHistoryListOut(success=True, data=login_history[:20])
+    rows = AuthSession.objects.filter(user=request.auth, created_at__gte=thirty_days_ago).order_by("-created_at")[:20]
+    return LoginHistoryListOut(
+        success=True,
+        data=[
+            LoginHistoryOut(login_time=row.created_at, ip_address=row.ip_address, device=row.device, success=True)
+            for row in rows
+        ],
+    )

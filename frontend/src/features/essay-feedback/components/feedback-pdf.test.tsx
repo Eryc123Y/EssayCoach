@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { render } from '@testing-library/react';
 import { FeedbackPDFDocument, FeedbackPDFData } from './feedback-pdf';
 import { pdf } from '@react-pdf/renderer';

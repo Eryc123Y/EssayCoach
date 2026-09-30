@@ -100,6 +100,7 @@ def test_classes_list_performance(create_test_data):
 
     request = HttpRequest()
     request.method = "GET"
+    request.auth = create_test_data["user"]
 
     # Create filter params (updated for FilterSchema)
     filters = ClassFilterParams()

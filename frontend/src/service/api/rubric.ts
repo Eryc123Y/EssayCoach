@@ -15,6 +15,7 @@ export interface RubricItem {
   rubric_item_id: number;
   rubric_item_name: string;
   rubric_item_weight: string;
+  exemplar_text: string;
   level_descriptions: RubricLevelDesc[];
 }
 
@@ -23,7 +24,27 @@ export interface RubricDetail {
   rubric_desc: string;
   rubric_create_time: string;
   rubric_items: RubricItem[];
+  user_id_user: number;
   visibility?: 'public' | 'private';
+}
+
+export interface ManualRubricInput {
+  rubric_desc: string;
+  visibility: 'public' | 'private';
+  items: Array<{
+    rubric_item_name: string;
+    rubric_item_weight: string;
+    exemplar_text: string;
+    levels: Array<{ level_min_score: number; level_max_score: number; level_desc: string }>;
+  }>;
+}
+
+export function createManualRubric(data: ManualRubricInput): Promise<RubricDetail> {
+  return request<RubricDetail>({
+    url: '/api/v2/core/rubrics/create-with-items/',
+    method: 'POST',
+    data
+  });
 }
 
 export interface RubricListItem {

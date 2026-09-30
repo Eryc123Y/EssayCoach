@@ -2,14 +2,14 @@
 
 from __future__ import annotations
 
-import json
 import logging
 from decimal import Decimal
 from typing import TYPE_CHECKING, Any
 
 from django.db import transaction
 
-from ai_feedback.rubric_parser import RubricParseError, SiliconFlowRubricParser
+from ai_feedback.codex_rubric_parser import CodexRubricParser
+from ai_feedback.rubric_parser import RubricParseError
 from core.models import MarkingRubric, RubricItem, RubricLevelDesc
 
 if TYPE_CHECKING:
@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 
     from core.models import User
 
-    logger = logging.getLogger(__name__)
+logger = logging.getLogger(__name__)
 
 
 class RubricImportError(Exception):
@@ -30,14 +30,14 @@ class RubricManager:
     """Manage rubric import from AI-parsed PDF files.
 
     Handles complete workflow:
-    1. Parse PDF using SiliconFlowRubricParser
+    1. Parse PDF using the configured rubric parser
     2. Detect if PDF is actually a rubric
     3. Validate rubric structure
     4. Save to database atomically
     """
 
-    def __init__(self, parser: SiliconFlowRubricParser | None = None):
-        self.parser = parser or SiliconFlowRubricParser()
+    def __init__(self, parser: CodexRubricParser | None = None):
+        self.parser = parser or CodexRubricParser()
 
     def import_rubric_with_ai(
         self, pdf_file: UploadedFile, user: User, rubric_name: str | None = None
@@ -181,6 +181,7 @@ class RubricManager:
             if not levels:
                 raise RubricImportError(f"Dimension '{dimension.get('name')}' has no levels")
 
+            score_ranges: list[tuple[int, int]] = []
             for level_idx, level in enumerate(levels):
                 if not level.get("name"):
                     raise RubricImportError(f"Level {level_idx} in dimension '{dimension.get('name')}' missing name")
@@ -188,31 +189,14 @@ class RubricManager:
                     raise RubricImportError(
                         f"Level '{level.get('name')}' in dimension '{dimension.get('name')}' missing score range"
                     )
-                if level["score_min"] > level["score_max"]:
-                    logger.error(
-                        f"Invalid score range detected. Full AI response:\n"
-                        f"{json.dumps(parsed_data, indent=2, ensure_ascii=False)}"
-                    )
-                    raise RubricImportError(
-                        f"Level '{level.get('name')}' has invalid score range: "
-                        f"{level['score_min']}-{level['score_max']}"
-                    )
-                elif level["score_min"] == level["score_max"]:
-                    level_name = level.get("name", "").lower()
-                    level_desc = level.get("description", "").lower()
-                    if level_name != "0" and "no submission" not in level_desc and "absent" not in level_desc:
-                        logger.error(
-                            f"Invalid score range detected. Full AI response:\n"
-                            f"{json.dumps(parsed_data, indent=2, ensure_ascii=False)}"
-                        )
-                        raise RubricImportError(
-                            f"Level '{level.get('name')}' has invalid score range: "
-                            f"{level['score_min']}-{level['score_max']}"
-                        )
-                    logger.info(
-                        f"Allowed special score range {level['score_min']}-"
-                        f"{level['score_max']} for level: '{level.get('name')}'"
-                    )
+                lower, upper = level["score_min"], level["score_max"]
+                if not isinstance(lower, int) or not isinstance(upper, int) or lower < 0 or upper < lower:
+                    raise RubricImportError(f"Level '{level.get('name')}' has invalid score range: {lower}-{upper}")
+                score_ranges.append((lower, upper))
+
+            for previous, current in zip(sorted(score_ranges), sorted(score_ranges)[1:]):
+                if current[0] <= previous[1]:
+                    raise RubricImportError(f"Dimension '{dimension['name']}' has overlapping score ranges")
 
         if not (Decimal("99") <= total_weight <= Decimal("101")):
             raise RubricImportError(

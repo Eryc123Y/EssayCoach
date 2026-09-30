@@ -1,4 +1,4 @@
-.PHONY: install dev dev-backend dev-frontend health health-check test test-performance lint clean db docs docs-generate docs-erd
+.PHONY: install dev dev-local dev-worker dev-backend dev-frontend health health-check test test-performance lint clean db docs docs-generate docs-erd
 
 BACKEND_PYTHON := backend/.venv/bin/python
 MKDOCS_CMD := uv run --with mkdocs==1.6.1 --with mkdocs-material==9.5.50 --with mkdocs-mermaid2-plugin==1.2.1 --with mkdocs-minify-plugin==0.8.0 mkdocs
@@ -6,30 +6,20 @@ MKDOCS_CMD := uv run --with mkdocs==1.6.1 --with mkdocs-material==9.5.50 --with 
 # Install all dependencies
 install:
 	@echo "Installing Python dependencies (in backend .venv)..."
-	@cd backend && uv venv .venv && uv pip install -e .
+	@cd backend && uv sync
 	@echo "Installing Node dependencies..."
 	@cd frontend && pnpm install
 
-# Start all services (backend, frontend, and db)
+# Start PostgreSQL, migrate, and run the frontend, API, and AI worker.
 dev: db
-	@echo ""
-	@echo "╔════════════════════════════════════════════════════════════════╗"
-	@echo "║                   🚀 EssayCoach Dev Server                     ║"
-	@echo "╠════════════════════════════════════════════════════════════════╣"
-	@echo "║  🌐 Frontend:    http://127.0.0.1:5100                        ║"
-	@echo "║  🔧 Backend:     http://127.0.0.1:8000                        ║"
-	@echo "║  📚 API Docs:    http://127.0.0.1:8000/api/docs/              ║"
-	@echo "║  📚 API v2 Docs: http://127.0.0.1:8000/api/v2/docs/           ║"
-	@echo "╠════════════════════════════════════════════════════════════════╣"
-	@echo "║  👤 Test Accounts:                                              ║"
-	@echo "║     admin@example.com    / admin123    (admin)                 ║"
-	@echo "║     lecturer@example.com / lecturer123 (lecturer)              ║"
-	@echo "║     student@example.com / student123  (student)               ║"
-	@echo "╠════════════════════════════════════════════════════════════════╣"
-	@echo "║  💡 Tip: Press Ctrl+C to stop all services                    ║"
-	@echo "╚════════════════════════════════════════════════════════════════╝"
-	@echo ""
-	@make -j2 dev-backend dev-frontend
+	@$(MAKE) dev-local
+
+# Run against an already-started local PostgreSQL instance, without Docker.
+dev-local: migrate
+	@$(MAKE) -j3 dev-backend dev-frontend dev-worker
+
+dev-worker:
+	@cd backend && .venv/bin/python manage.py run_ai_worker
 
 # Start backend only
 dev-backend:
@@ -94,7 +84,7 @@ seed-db:
 # Testing
 test:
 	@echo "Running API v2 tests (excluding performance)..."
-	@cd backend && .venv/bin/pytest -m "not performance" -v --timeout=120
+	@cd backend && .venv/bin/pytest api_v2 ai_feedback core -m "not performance" -v --timeout=120
 	@echo ""
 	@echo "Running Node tests..."
 	@cd frontend && pnpm test

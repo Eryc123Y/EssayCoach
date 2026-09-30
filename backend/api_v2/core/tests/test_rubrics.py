@@ -414,8 +414,8 @@ class TestRubricCreateUpdate:
         data = response.json()
         assert data["visibility"] == "private"
 
-    def test_create_rubric_student_forbidden(self, student_user):
-        """Students cannot create rubrics."""
+    def test_create_rubric_student_private_only(self, student_user):
+        """Students can create private rubrics, but cannot publish them."""
         client = Client()
         jwt_pair = create_jwt_pair(student_user)
         client.defaults["HTTP_AUTHORIZATION"] = f"Bearer {jwt_pair.access}"
@@ -425,7 +425,22 @@ class TestRubricCreateUpdate:
             content_type="application/json",
             data={"rubric_desc": "Student Rubric", "visibility": "private"},
         )
-        assert response.status_code == 403
+        assert response.status_code == 200
+        assert response.json()["visibility"] == "private"
+        rubric_id = response.json()["rubric_id"]
+        assert client.get("/api/v2/core/rubrics/").json()[0]["rubric_id"] == rubric_id
+        public = client.post(
+            "/api/v2/core/rubrics/",
+            content_type="application/json",
+            data={"rubric_desc": "Public study rubric", "visibility": "public"},
+        )
+        assert public.status_code == 403
+        publish = client.patch(
+            f"/api/v2/core/rubrics/{rubric_id}/visibility/",
+            content_type="application/json",
+            data={"visibility": "public"},
+        )
+        assert publish.status_code == 403
 
     def test_update_rubric_visibility(self, lecturer_user, private_rubric):
         """Update rubric can change visibility via PUT."""

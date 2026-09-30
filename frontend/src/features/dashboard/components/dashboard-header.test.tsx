@@ -16,6 +16,10 @@ import { render, screen } from '@testing-library/react';
 import { DashboardHeader } from '@/features/dashboard/components/dashboard-header';
 import type { DashboardUserInfo, DashboardStats } from '@/service/api/v2/types';
 
+vi.mock('@/components/layout/preference-provider', () => ({
+  usePreferences: () => ({ locale: 'en' }),
+}));
+
 // Mock shadcn/ui components
 vi.mock('@/components/ui/card', () => ({
   Card: ({ children, className, ...props }: any) => (
@@ -193,14 +197,14 @@ describe('DashboardHeader', () => {
       );
 
       expect(screen.getByText('Average Score')).toBeInTheDocument();
-      expect(screen.getByText('Pending Tasks')).toBeInTheDocument();
+      expect(screen.getByText('Awaiting Results')).toBeInTheDocument();
       expect(screen.getByText('Essays Submitted')).toBeInTheDocument();
       expect(screen.getByText('85.5')).toBeInTheDocument();
       expect(screen.getByText('3')).toBeInTheDocument();
       expect(screen.getByText('25')).toBeInTheDocument();
     });
 
-    it('should show Top 20% trend for high scores (>=80)', () => {
+    it('labels the average as published grades', () => {
       const highScoreStats = { ...mockStats, averageScore: 85 };
 
       render(
@@ -211,10 +215,10 @@ describe('DashboardHeader', () => {
         />
       );
 
-      expect(screen.getByText('Top 20%')).toBeInTheDocument();
+      expect(screen.getByText('Published grades')).toBeInTheDocument();
     });
 
-    it('should not show trend for low scores (<80)', () => {
+    it('does not infer percentile rank from a low score', () => {
       const lowScoreStats = { ...mockStats, averageScore: 75 };
 
       render(
@@ -225,6 +229,7 @@ describe('DashboardHeader', () => {
         />
       );
 
+      expect(screen.getByText('Published grades')).toBeInTheDocument();
       expect(screen.queryByText('Top 20%')).not.toBeInTheDocument();
     });
 
@@ -339,7 +344,7 @@ describe('DashboardHeader', () => {
       );
 
       expect(screen.getByText('Average Score')).toBeInTheDocument();
-      expect(screen.getByText('Pending Tasks')).toBeInTheDocument();
+      expect(screen.getByText('Awaiting Results')).toBeInTheDocument();
       expect(screen.getByText('Essays Submitted')).toBeInTheDocument();
     });
   });

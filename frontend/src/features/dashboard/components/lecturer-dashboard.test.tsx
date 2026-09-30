@@ -17,6 +17,10 @@ import { render, screen } from '@testing-library/react';
 import { LecturerDashboard, LecturerDashboardSkeleton } from '@/features/dashboard/components/lecturer-dashboard';
 import type { LecturerDashboardResponse, ClassOverview, GradingQueueItem } from '@/service/api/v2/types';
 
+vi.mock('@/components/layout/preference-provider', () => ({
+  usePreferences: () => ({ locale: 'en' }),
+}));
+
 // Mock shadcn/ui components
 vi.mock('@/components/ui/card', () => ({
   Card: ({ children, className, ...props }: any) => (
@@ -210,7 +214,7 @@ describe('LecturerDashboard', () => {
     it('should link to essay analysis page', () => {
       render(<LecturerDashboard data={mockLecturerData} />);
 
-      const reviewLinks = document.querySelectorAll('a[href*="/dashboard/essay-analysis"]');
+      const reviewLinks = document.querySelectorAll('a[href*="/dashboard/review/"]');
       expect(reviewLinks.length).toBe(2);
     });
   });
@@ -288,12 +292,10 @@ describe('LecturerDashboard', () => {
       expect(screen.getByText('2 pending')).toBeInTheDocument();
     });
 
-    it('should display completion rate', () => {
+    it('should display the share of submitted essays awaiting review', () => {
       render(<LecturerDashboard data={mockLecturerData} />);
 
-      // English 101: 45/25 = 180% (capped at 100% in progress bar)
-      // English 202: 35/20 = 175% (capped at 100% in progress bar)
-      expect(screen.getAllByText('Completion Rate').length).toBe(2);
+      expect(screen.getAllByText('Reviews pending').length).toBe(2);
     });
 
     it('should display View Class button for each class', () => {
@@ -371,7 +373,7 @@ describe('LecturerDashboard', () => {
       expect(progressBars.length).toBe(2);
     });
 
-    it('should calculate completion rate correctly', () => {
+    it('should calculate the share of submissions awaiting review', () => {
       const customData: LecturerDashboardResponse = {
         ...mockLecturerData,
         classes: [
@@ -382,15 +384,14 @@ describe('LecturerDashboard', () => {
             studentCount: 10,
             essayCount: 5,
             avgScore: 75,
-            pendingReviews: 0,
+            pendingReviews: 2,
           },
         ],
       };
 
       render(<LecturerDashboard data={customData} />);
 
-      // 5/10 = 50%
-      expect(screen.getByText('50%')).toBeInTheDocument();
+      expect(screen.getByText('40%')).toBeInTheDocument();
     });
 
     it('should handle zero essay count', () => {

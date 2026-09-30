@@ -176,6 +176,9 @@ class ClassDetailOut(Schema):
     class_term: ClassTerm | None = None
     class_year: int | None = None
     class_status: ClassStatus | None = None
+    class_size: int = 0
+    class_archived_at: datetime | None = None
+    unit_name: str | None = None
 
 
 # =============================================================================
@@ -244,6 +247,7 @@ class RubricItemIn(Schema):
     rubric_id_marking_rubric: RubricId
     rubric_item_name: str = Field(..., max_length=50)
     rubric_item_weight: Decimal
+    exemplar_text: str = ""
 
 
 class RubricItemOut(ModelSchema):
@@ -256,7 +260,27 @@ class RubricItemOut(ModelSchema):
             "rubric_id_marking_rubric",
             "rubric_item_name",
             "rubric_item_weight",
+            "exemplar_text",
         ]
+
+
+class ManualRubricLevelIn(Schema):
+    level_min_score: int
+    level_max_score: int
+    level_desc: str
+
+
+class ManualRubricItemIn(Schema):
+    rubric_item_name: str = Field(..., max_length=50)
+    rubric_item_weight: Decimal
+    exemplar_text: str = ""
+    levels: list[ManualRubricLevelIn]
+
+
+class ManualRubricIn(Schema):
+    rubric_desc: str = Field(..., max_length=100)
+    visibility: Visibility = Visibility.PRIVATE
+    items: list[ManualRubricItemIn]
 
 
 # =============================================================================
@@ -304,6 +328,7 @@ class TaskIn(Schema):
     class_id_class: ClassId | None = None
     task_status: TaskStatus = TaskStatus.DRAFT
     task_allow_late_submission: bool = False
+    task_allow_resubmission: bool = False
 
 
 class TaskOut(ModelSchema):
@@ -325,6 +350,7 @@ class TaskOut(ModelSchema):
             "class_id_class",
             "task_status",
             "task_allow_late_submission",
+            "task_allow_resubmission",
         ]
 
 
@@ -343,6 +369,18 @@ class SubmissionIn(Schema):
 
 class SubmissionOut(ModelSchema):
     """Output schema for submissions - auto-generated from Submission model."""
+
+    student_name: str
+    student_email: str
+
+    @staticmethod
+    def resolve_student_name(obj):
+        student = obj.user_id_user
+        return f"{student.user_fname or ''} {student.user_lname or ''}".strip() or student.user_email
+
+    @staticmethod
+    def resolve_student_email(obj):
+        return obj.user_id_user.user_email
 
     class Meta:
         model = Submission
@@ -703,6 +741,7 @@ class GradingQueueItemOut(Schema):
     """Pending grading queue item for lecturer dashboard."""
 
     submissionId: int
+    classId: int | None = None
     studentName: str
     essayTitle: str
     submittedAt: datetime

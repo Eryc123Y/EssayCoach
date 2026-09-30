@@ -3,27 +3,77 @@ from __future__ import annotations
 from datetime import datetime
 
 from ninja import Schema
-from pydantic import Field, field_validator
+from pydantic import EmailStr, Field
 
 from api_v2.types.enums import ThemePreference, UserRole, UserStatus
 
 
 class UserRegistrationIn(Schema):
-    email: str = Field(..., max_length=254)
+    invitation_token: str = Field(..., min_length=32)
     password: str = Field(..., min_length=8)
     password_confirm: str = Field(...)
     first_name: str | None = Field(None, max_length=20)
     last_name: str | None = Field(None, max_length=20)
-    role: UserRole | None = Field(None, max_length=10)
 
-    @field_validator("role")
-    @classmethod
-    def validate_role(cls, v: UserRole | None) -> UserRole | None:
-        if v is not None:
-            allowed_roles = [UserRole.STUDENT, UserRole.LECTURER, UserRole.ADMIN]
-            if v not in allowed_roles:
-                raise ValueError(f"Role must be one of: {', '.join(str(r) for r in allowed_roles)}")
-        return v
+
+class InvitationCreateIn(Schema):
+    email: EmailStr
+    role: UserRole
+    class_id: int | None = None
+    lead_unit_id: str | None = None
+
+
+class InvitationCreateOut(Schema):
+    id: int
+    token: str
+    email: EmailStr
+    role: UserRole
+    expires_at: datetime
+
+
+class InvitationBatchIn(Schema):
+    class_id: int
+    emails: list[EmailStr] = Field(..., min_length=1, max_length=50)
+
+
+class InvitationBatchFailureOut(Schema):
+    email: EmailStr
+    reason: str
+
+
+class InvitationBatchOut(Schema):
+    created: list[InvitationCreateOut]
+    failed: list[InvitationBatchFailureOut]
+
+
+class InvitationPreviewIn(Schema):
+    token: str = Field(..., min_length=32)
+
+
+class InvitationPreviewOut(Schema):
+    email: EmailStr
+    role: UserRole
+    class_name: str | None
+    unit_name: str | None
+    expires_at: datetime
+
+
+class EmailChangeRequestIn(Schema):
+    new_email: EmailStr
+    current_password: str = Field(..., min_length=1)
+
+
+class EmailChangePreviewIn(Schema):
+    token: str = Field(..., min_length=32)
+
+
+class EmailChangePreviewOut(Schema):
+    new_email: EmailStr
+    expires_at: datetime
+
+
+class EmailChangeCompleteIn(Schema):
+    token: str = Field(..., min_length=32)
 
 
 class UserLoginIn(Schema):
@@ -56,8 +106,9 @@ class UserPreferencesIn(Schema):
     in_app_notifications: bool | None = None
     submission_alerts: bool | None = None
     grading_alerts: bool | None = None
+    social_alerts: bool | None = None
     weekly_digest: bool | None = None
-    language: str | None = None
+    language: str | None = Field(None, pattern="^(en|zh)$")
     theme: ThemePreference | None = None
 
 
@@ -68,6 +119,7 @@ class UserPreferencesOut(Schema):
     in_app_notifications: bool = True
     submission_alerts: bool = True
     grading_alerts: bool = False
+    social_alerts: bool = True
     weekly_digest: bool = False
     language: str = "en"
     theme: ThemePreference = ThemePreference.SYSTEM
@@ -144,6 +196,21 @@ class PasswordResetIn(Schema):
     email: str = Field(...)
     new_password: str = Field(..., min_length=8)
     new_password_confirm: str = Field(...)
+
+
+class PasswordResetPreviewIn(Schema):
+    token: str = Field(..., min_length=32)
+
+
+class PasswordResetPreviewOut(Schema):
+    email: EmailStr
+    expires_at: datetime
+
+
+class PasswordResetCompleteIn(Schema):
+    token: str = Field(..., min_length=32)
+    new_password: str = Field(..., min_length=8, max_length=128)
+    new_password_confirm: str
 
 
 class UserUpdateIn(Schema):

@@ -20,6 +20,10 @@ import {
 } from '@/features/dashboard/components/student-dashboard';
 import type { StudentDashboardResponse, StudentEssay } from '@/service/api/v2/types';
 
+vi.mock('@/components/layout/preference-provider', () => ({
+  usePreferences: () => ({ locale: 'en' }),
+}));
+
 // Mock shadcn/ui components
 vi.mock('@/components/ui/card', () => ({
   Card: ({ children, className, ...props }: any) => (
@@ -184,7 +188,7 @@ describe('StudentDashboard', () => {
     it('should display AI Graded badge', () => {
       render(<StudentDashboard data={mockStudentData} />);
 
-      expect(screen.getByText('AI Graded')).toBeInTheDocument();
+      expect(screen.getByText('Awaiting review')).toBeInTheDocument();
     });
 
     it('should display Reviewed badge', () => {
@@ -263,10 +267,10 @@ describe('StudentDashboard', () => {
       expect(editLinks.length).toBe(1);
     });
 
-    it('should link graded essays to analysis page', () => {
+    it('should link formal essays to their submission detail', () => {
       render(<StudentDashboard data={mockStudentData} />);
 
-      const analysisLinks = document.querySelectorAll('a[href*="/dashboard/essay-analysis/"]');
+      const analysisLinks = document.querySelectorAll('a[href*="/dashboard/submissions/"]');
       expect(analysisLinks.length).toBeGreaterThan(0);
     });
   });
@@ -290,15 +294,15 @@ describe('StudentDashboard', () => {
     it('should display improvement trend', () => {
       render(<StudentDashboard data={mockStudentData} />);
 
-      // First score: 78, Last score: 90, Trend: up
-      expect(screen.getByText('+12.0%')).toBeInTheDocument();
+      // Chronological first score: 90; latest: 85.
+      expect(screen.getByText('-5.0%')).toBeInTheDocument();
     });
 
-    it('should show up arrow for improving trend', () => {
+    it('should show the direction of the actual chronological trend', () => {
       render(<StudentDashboard data={mockStudentData} />);
 
       // Check for trend indicator
-      const trendElement = screen.getByText('+12.0%');
+      const trendElement = screen.getByText('-5.0%');
       expect(trendElement).toBeInTheDocument();
     });
 

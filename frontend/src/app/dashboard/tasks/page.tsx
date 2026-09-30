@@ -1,15 +1,10 @@
-'use client';
+import { cookies } from 'next/headers';
+import { redirect } from 'next/navigation';
+import { TaskList } from '@/features/tasks/components/task-list';
+import { resolveDashboardRole } from '@/lib/server-dashboard-auth';
 
-import { useAuth } from '@/components/layout/simple-auth-context';
-import { TaskList } from '@/features/tasks';
-
-export default function TasksPage() {
-  const { user } = useAuth();
-  const userRole = user?.role || 'student';
-
-  return (
-    <div className="container mx-auto p-6 space-y-6">
-      <TaskList userRole={userRole} />
-    </div>
-  );
+export default async function TasksPage() {
+  const role = await resolveDashboardRole((await cookies()).get('access_token')?.value);
+  if (!role) redirect('/auth/sign-in');
+  return <main className='mx-auto max-w-7xl px-5 py-8 md:px-9'><TaskList userRole={role} /></main>;
 }

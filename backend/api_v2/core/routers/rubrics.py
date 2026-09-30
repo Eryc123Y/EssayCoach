@@ -1,9 +1,11 @@
 from __future__ import annotations
 
-from django.conf import settings
+from decimal import Decimal
+
+from django.db import transaction
 from django.db.models import Q
 from django.http import HttpRequest
-from ninja import Router
+from ninja import Form, Router, Status
 from ninja.errors import HttpError
 from ninja.files import UploadedFile
 
@@ -16,21 +18,23 @@ from api_v2.types.ids import (
 from api_v2.utils.auth import JWTAuth
 from api_v2.utils.permissions import has_role
 from core.models import (
+    FeedbackItem,
     MarkingRubric,
     RubricItem,
     RubricLevelDesc,
+    Task,
 )
 from core.models import RubricLevelDesc as RubricLevelDescModel
 from core.services import RubricService
 
 from ..schemas import (
+    ManualRubricIn,
     MarkingRubricIn,
     MarkingRubricOut,
     RubricDetailOut,
     RubricDuplicateIn,
     RubricFilterParams,
     RubricImportOut,
-    RubricItemDetailOut,
     RubricItemFilterParams,
     RubricItemIn,
     RubricItemOut,
@@ -63,9 +67,23 @@ def _check_rubric_owner_or_admin(request: HttpRequest, rubric: MarkingRubric, ac
     user = request.auth
     if has_role(user, [UserRole.ADMIN]):
         return
-    if has_role(user, [UserRole.LECTURER]) and rubric.user_id_user_id == user.user_id:
+    if rubric.user_id_user_id == user.user_id:
         return
     raise HttpError(403, f"You do not have permission to {action} this rubric")
+
+
+def _check_rubric_visible(request: HttpRequest, rubric: MarkingRubric) -> None:
+    if rubric.visibility == "public" or request.auth.user_role == "admin":
+        return
+    if rubric.user_id_user_id == request.auth.user_id:
+        return
+    raise HttpError(403, "You do not have permission to view this private rubric")
+
+
+def _visible_rubrics(request: HttpRequest):
+    if request.auth.user_role == "admin":
+        return MarkingRubric.objects.all()
+    return MarkingRubric.objects.filter(Q(visibility="public") | Q(user_id_user=request.auth))
 
 
 # =============================================================================
@@ -80,7 +98,7 @@ def list_rubrics(request: HttpRequest, filters: RubricFilterParams = RubricFilte
 
     - Public rubrics: Visible to all authenticated users
     - Private rubrics: Only visible to creator or admin
-    - Students: Only see public rubrics
+    - Students: See public rubrics and their own private rubrics
     - Admins: See all rubrics (public and private)
 
     Query params:
@@ -92,15 +110,7 @@ def list_rubrics(request: HttpRequest, filters: RubricFilterParams = RubricFilte
     visibility_filter = request.GET.get("visibility")
 
     # Build base queryset based on role
-    if user.user_role == "student":
-        # Students can only see public rubrics
-        qs = MarkingRubric.objects.filter(visibility="public")
-    elif user.user_role == "admin":
-        # Admins see all rubrics
-        qs = MarkingRubric.objects.all()
-    else:
-        # Lecturers see their own private rubrics + all public rubrics
-        qs = MarkingRubric.objects.filter(Q(visibility="public") | Q(user_id_user=user))
+    qs = _visible_rubrics(request)
 
     # If visibility filter is explicitly provided, apply it on top
     # This allows admins/lecturers to filter by specific visibility
@@ -116,7 +126,6 @@ def list_rubrics(request: HttpRequest, filters: RubricFilterParams = RubricFilte
                 # Only show lecturer's own private rubrics
                 qs = MarkingRubric.objects.filter(visibility="private", user_id_user=user)
         elif user.user_role == "student":
-            # Students can only filter public (they can't see private at all)
             qs = qs.filter(visibility=visibility_filter)
 
     # Apply other filters (user_id_user, rubric_desc)
@@ -145,10 +154,10 @@ def list_public_rubrics(request: HttpRequest, filters: RubricFilterParams = Rubr
 
 @router.post("/rubrics/", response=MarkingRubricOut)
 def create_rubric(request: HttpRequest, data: MarkingRubricIn):
-    """Create a new rubric (lecturer/admin only)."""
+    """Create a rubric; students may create private study rubrics."""
     user = request.auth
-    if user.user_role not in ["lecturer", "admin"]:
-        raise HttpError(403, "Only lecturers and admins can create rubrics")
+    if user.user_role == "student" and data.visibility != "private":
+        raise HttpError(403, "Students may only create private rubrics")
 
     # Validate visibility value
     if data.visibility not in ["public", "private"]:
@@ -170,25 +179,85 @@ def create_rubric(request: HttpRequest, data: MarkingRubricIn):
     }
 
 
-@router.post("/rubrics/import_from_pdf_with_ai/", response=RubricImportOut)
-def import_rubric_from_pdf_with_ai(request: HttpRequest, file: UploadedFile, rubric_name: str | None = None):
-    from ai_feedback.rubric_parser import RubricParseError, SiliconFlowRubricParser
+@router.post("/rubrics/create-with-items/", response=RubricDetailOut)
+def create_manual_rubric(request: HttpRequest, data: ManualRubricIn):
+    """Create a complete valid rubric in one transaction."""
+    if request.auth.user_role == "student" and data.visibility != "private":
+        raise HttpError(403, "Students may only create private rubrics")
+    if not data.rubric_desc.strip() or not data.items:
+        raise HttpError(400, "A name and at least one criterion are required")
+    if sum((item.rubric_item_weight for item in data.items), Decimal("0")) != Decimal("100"):
+        raise HttpError(400, "Criterion weights must total 100%")
+    for item in data.items:
+        if not item.rubric_item_name.strip() or item.rubric_item_weight <= 0 or item.rubric_item_weight > 100:
+            raise HttpError(400, "Criterion name and weight must be valid")
+        # as_tuple().exponent is a string only for NaN/Infinity, which the schema already rejects.
+        exponent = item.rubric_item_weight.as_tuple().exponent
+        if isinstance(exponent, int) and exponent < -1:
+            raise HttpError(400, "Criterion weights support one decimal place")
+        if not item.levels:
+            raise HttpError(400, "Every criterion requires score levels")
+        next_score = 0
+        for level in sorted(item.levels, key=lambda value: value.level_min_score):
+            if (
+                not level.level_desc.strip()
+                or level.level_min_score != next_score
+                or level.level_max_score < level.level_min_score
+                or level.level_max_score > 100
+            ):
+                raise HttpError(400, "Score levels must cover a contiguous range beginning at zero")
+            next_score = level.level_max_score + 1
+    with transaction.atomic():
+        rubric = MarkingRubric.objects.create(
+            user_id_user=request.auth,
+            rubric_desc=data.rubric_desc.strip(),
+            visibility=data.visibility,
+        )
+        for criterion in data.items:
+            item = RubricItem.objects.create(
+                rubric_id_marking_rubric=rubric,
+                rubric_item_name=criterion.rubric_item_name.strip(),
+                rubric_item_weight=criterion.rubric_item_weight,
+                exemplar_text=criterion.exemplar_text.strip(),
+            )
+            for level in criterion.levels:
+                RubricLevelDesc.objects.create(
+                    rubric_item_id_rubric_item=item,
+                    level_min_score=level.level_min_score,
+                    level_max_score=level.level_max_score,
+                    level_desc=level.level_desc.strip(),
+                )
+    return get_rubric_detail(request, rubric.rubric_id)
+
+
+@router.post(
+    "/rubrics/import_from_pdf_with_ai/",
+    response={200: RubricImportOut, 201: RubricImportOut, 400: RubricImportOut},
+)
+def import_rubric_from_pdf_with_ai(
+    request: HttpRequest, file: UploadedFile, rubric_name: str | None = Form(None),
+):
+    from ai_feedback.codex_rubric_parser import CodexRubricParser
+    from ai_feedback.rubric_parser import RubricParseError
     from core.rubric_manager import RubricImportError, RubricManager
 
     if not file:
         raise HttpError(400, "PDF file is required")
 
+    if request.auth.user_role not in {"lecturer", "admin"}:
+        raise HttpError(403, "Only lecturers and admins can import rubrics")
+
     if file.content_type and file.content_type != "application/pdf":
         raise HttpError(400, "Only PDF files are supported")
 
     try:
-        parser = SiliconFlowRubricParser(api_key=settings.SILICONFLOW_API_KEY)
+        parser = CodexRubricParser()
         manager = RubricManager(parser)
 
         result = manager.import_rubric_with_ai(file, request.auth, rubric_name)
 
         if not result.get("detection", {}).get("is_rubric", False):
-            return (
+            return Status(
                 400,
                 RubricImportOut(
                     success=False,
@@ -199,9 +268,9 @@ def import_rubric_from_pdf_with_ai(request: HttpRequest, file: UploadedFile, rub
                 ),
             )
 
-        return (201, RubricImportOut(**result))
+        return Status(201, RubricImportOut(**result))
     except (RubricParseError, RubricImportError, ValueError) as exc:
-        return (400, RubricImportOut(success=False, error=str(exc)))
+        return Status(400, RubricImportOut(success=False, error=str(exc)))
 
 
 @router.get("/rubrics/{rubric_id}/", response=MarkingRubricOut)
@@ -213,17 +282,10 @@ def get_rubric(request: HttpRequest, rubric_id: RubricId):
     - Public rubrics: Visible to all authenticated users
     - Private rubrics: Only visible to creator or admin
     """
-    user = request.auth
-
     try:
         rubric = MarkingRubric.objects.select_related("user_id_user").get(rubric_id=rubric_id)
 
-        # Check permissions
-        if rubric.visibility == "private":
-            if user.user_role not in ["admin", "lecturer"] and rubric.user_id_user != user:
-                raise HttpError(403, "You do not have permission to view this private rubric")
-            if user.user_role == "lecturer" and rubric.user_id_user != user:
-                raise HttpError(403, "You can only view your own private rubrics")
+        _check_rubric_visible(request, rubric)
 
         # Return dict to ensure proper serialization (user_id_user_id -> user_id_user)
         return {
@@ -246,17 +308,10 @@ def get_rubric_detail(request: HttpRequest, rubric_id: RubricId):
     - Public rubrics: Visible to all authenticated users
     - Private rubrics: Only visible to creator or admin
     """
-    user = request.auth
-
     try:
         rubric = MarkingRubric.objects.get(rubric_id=rubric_id)
 
-        # Check permissions for private rubrics
-        if rubric.visibility == "private":
-            if user.user_role not in ["admin", "lecturer"] and rubric.user_id_user != user:
-                raise HttpError(403, "You do not have permission to view this private rubric")
-            if user.user_role == "lecturer" and rubric.user_id_user != user:
-                raise HttpError(403, "You can only view your own private rubrics")
+        _check_rubric_visible(request, rubric)
 
         rubric_items = list(RubricItem.objects.filter(rubric_id_marking_rubric=rubric))
 
@@ -265,27 +320,6 @@ def get_rubric_detail(request: HttpRequest, rubric_id: RubricId):
         levels_by_item: dict[int, list[RubricLevelDescModel]] = {}
         for level in levels:
             levels_by_item.setdefault(level.rubric_item_id_rubric_item_id, []).append(level)
-
-        rubric_item_out = []
-        for item in rubric_items:
-            rubric_item_out.append(
-                RubricItemDetailOut(
-                    rubric_item_id=item.rubric_item_id,
-                    rubric_id_marking_rubric=item.rubric_id_marking_rubric_id,
-                    rubric_item_name=item.rubric_item_name,
-                    rubric_item_weight=item.rubric_item_weight,
-                    level_descriptions=[
-                        RubricLevelDescOut(
-                            level_desc_id=level.level_desc_id,
-                            rubric_item_id_rubric_item=level.rubric_item_id_rubric_item_id,
-                            level_min_score=level.level_min_score,
-                            level_max_score=level.level_max_score,
-                            level_desc=level.level_desc,
-                        )
-                        for level in levels_by_item.get(item.rubric_item_id, [])
-                    ],
-                )
-            )
 
         # Return as dict - Ninja will serialize to RubricDetailOut
         # Note: Must use user_id_user_id (the alias) for proper serialization
@@ -298,13 +332,14 @@ def get_rubric_detail(request: HttpRequest, rubric_id: RubricId):
             "rubric_items": [
                 {
                     "rubric_item_id": item.rubric_item_id,
-                    "rubric_id_marking_rubric": item.rubric_id_marking_rubric_id,
+                    "rubric_id_marking_rubric_id": item.rubric_id_marking_rubric_id,
                     "rubric_item_name": item.rubric_item_name,
                     "rubric_item_weight": item.rubric_item_weight,
+                    "exemplar_text": item.exemplar_text,
                     "level_descriptions": [
                         {
                             "level_desc_id": level.level_desc_id,
-                            "rubric_item_id_rubric_item": level.rubric_item_id_rubric_item_id,
+                            "rubric_item_id_rubric_item_id": level.rubric_item_id_rubric_item_id,
                             "level_min_score": level.level_min_score,
                             "level_max_score": level.level_max_score,
                             "level_desc": level.level_desc,
@@ -347,6 +382,8 @@ def update_rubric(request: HttpRequest, rubric_id: RubricId, data: MarkingRubric
 
         rubric.rubric_desc = data.rubric_desc
         if data.visibility:
+            if rubric.user_id_user.user_role == "student" and data.visibility == "public":
+                raise HttpError(403, "Student rubrics must remain private")
             rubric.visibility = data.visibility
         rubric.save()
 
@@ -382,6 +419,8 @@ def update_rubric_visibility(request: HttpRequest, rubric_id: RubricId, data: Ru
         # Check permissions - only creator or admin can change visibility
         if user.user_role != "admin" and rubric.user_id_user != user:
             raise HttpError(403, "Only the rubric creator or admin can change visibility")
+        if rubric.user_id_user.user_role == "student" and data.visibility == "public":
+            raise HttpError(403, "Student rubrics must remain private")
 
         rubric.visibility = data.visibility
         rubric.save()
@@ -414,6 +453,8 @@ def delete_rubric(request: HttpRequest, rubric_id: RubricId) -> SuccessResponse:
         # Check permissions
         if user.user_role not in ["admin"] and rubric.user_id_user != user:
             raise HttpError(403, "You do not have permission to delete this rubric")
+        if Task.objects.filter(rubric_id_marking_rubric=rubric).exists():
+            raise HttpError(409, "Rubrics attached to assignments cannot be deleted")
 
         rubric.delete()
         return SuccessResponse(success=True)
@@ -428,7 +469,7 @@ def delete_rubric(request: HttpRequest, rubric_id: RubricId) -> SuccessResponse:
 
 @router.get("/rubric-items/", response=list[RubricItemOut])
 def list_rubric_items(request: HttpRequest, filters: RubricItemFilterParams = RubricItemFilterParams()):
-    qs = filters.filter(RubricItem.objects.all())
+    qs = filters.filter(RubricItem.objects.filter(rubric_id_marking_rubric__in=_visible_rubrics(request)))
     return paginate(qs, PaginationParams())["results"]
 
 
@@ -444,6 +485,7 @@ def create_rubric_item(request: HttpRequest, data: RubricItemIn):
         rubric_id_marking_rubric=rubric,
         rubric_item_name=data.rubric_item_name,
         rubric_item_weight=data.rubric_item_weight,
+        exemplar_text=data.exemplar_text,
     )
     return item
 
@@ -451,7 +493,9 @@ def create_rubric_item(request: HttpRequest, data: RubricItemIn):
 @router.get("/rubric-items/{item_id}/", response=RubricItemOut)
 def get_rubric_item(request: HttpRequest, item_id: RubricItemId):
     try:
-        return RubricItem.objects.get(rubric_item_id=item_id)
+        item = RubricItem.objects.get(rubric_item_id=item_id)
+        _check_rubric_visible(request, item.rubric_id_marking_rubric)
+        return item
     except RubricItem.DoesNotExist:
         raise HttpError(404, "Rubric item not found")
 
@@ -463,6 +507,7 @@ def update_rubric_item(request: HttpRequest, item_id: RubricItemId, data: Rubric
         _check_rubric_owner_or_admin(request, item.rubric_id_marking_rubric, "modify")
         item.rubric_item_name = data.rubric_item_name
         item.rubric_item_weight = data.rubric_item_weight
+        item.exemplar_text = data.exemplar_text
         item.save()
         return item
     except RubricItem.DoesNotExist:
@@ -474,6 +519,11 @@ def delete_rubric_item(request: HttpRequest, item_id: RubricItemId) -> SuccessRe
     try:
         item = RubricItem.objects.get(rubric_item_id=item_id)
         _check_rubric_owner_or_admin(request, item.rubric_id_marking_rubric, "modify")
+        if FeedbackItem.objects.filter(rubric_item_id_rubric_item=item).exists() or Task.objects.filter(
+            rubric_id_marking_rubric=item.rubric_id_marking_rubric,
+            task_status__in=["published", "unpublished", "archived"],
+        ).exists():
+            raise HttpError(409, "Criteria used by published assignments or feedback cannot be deleted")
         item.delete()
         return SuccessResponse(success=True)
     except RubricItem.DoesNotExist:
@@ -487,7 +537,9 @@ def delete_rubric_item(request: HttpRequest, item_id: RubricItemId) -> SuccessRe
 
 @router.get("/rubric-levels/", response=list[RubricLevelDescOut])
 def list_rubric_levels(request: HttpRequest, filters: RubricLevelDescFilterParams = RubricLevelDescFilterParams()):
-    qs = filters.filter(RubricLevelDesc.objects.all())
+    qs = filters.filter(RubricLevelDesc.objects.filter(
+        rubric_item_id_rubric_item__rubric_id_marking_rubric__in=_visible_rubrics(request)
+    ))
     return paginate(qs, PaginationParams())["results"]
 
 
@@ -511,7 +563,9 @@ def create_rubric_level(request: HttpRequest, data: RubricLevelDescIn):
 @router.get("/rubric-levels/{level_id}/", response=RubricLevelDescOut)
 def get_rubric_level(request: HttpRequest, level_id: int):
     try:
-        return RubricLevelDesc.objects.get(level_desc_id=level_id)
+        level = RubricLevelDesc.objects.get(level_desc_id=level_id)
+        _check_rubric_visible(request, level.rubric_item_id_rubric_item.rubric_id_marking_rubric)
+        return level
     except RubricLevelDesc.DoesNotExist:
         raise HttpError(404, "Rubric level not found")
 
@@ -558,6 +612,8 @@ def duplicate_rubric(request: HttpRequest, rubric_id: RubricId, data: RubricDupl
         and user.user_role != "admin"
     ):
         raise HttpError(403, "Cannot duplicate a private rubric you don't own")
+    if user.user_role == "student" and data.visibility != "private":
+        raise HttpError(403, "Students may only create private rubrics")
 
     new_rubric = RubricService.duplicate_rubric(source_rubric, user, data.rubric_desc, data.visibility)
 

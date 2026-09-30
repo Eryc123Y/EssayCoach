@@ -58,6 +58,9 @@ coverage.xml
 
 # Django stuff:
 *.log
+backend/outbox/
+backend/media/
+backend/logs/
 local_settings.py
 db.sqlite3
 db.sqlite3-journal
@@ -224,6 +227,7 @@ nitro.json
 
 # Temporary folders
 tasks/
+!frontend/src/features/tasks/
 temp/
 tmp/
 
@@ -248,3 +252,5 @@ backend/api_v1/
 * 9.*
 * 10.*
 
+# Source-check evaluation output
+backend/source-eval-results/

@@ -27,18 +27,16 @@ type UserFormValue = z.infer<typeof formSchema>;
 export default function UserAuthForm() {
   const searchParams = useSearchParams();
   const callbackUrl = searchParams?.get('callbackUrl');
-  const [loading] = useState(false);
+  const [loading, setLoading] = useState(false);
   const router = useRouter();
-  const defaultValues = {
-    email: 'student@example.com',
-    password: 'student123'
-  };
+  const defaultValues = { email: '', password: '' };
   const form = useForm<UserFormValue>({
     resolver: zodResolver(formSchema),
     defaultValues
   });
 
   const onSubmit = async (data: UserFormValue) => {
+    setLoading(true);
     try {
       const response = await fetch('/api/v2/auth/login', {
         method: 'POST',
@@ -67,11 +65,13 @@ export default function UserAuthForm() {
       }
       
       toast.success('Signed in successfully');
-      const target = callbackUrl || '/dashboard/overview';
+      const target = callbackUrl || '/dashboard';
       router.push(target);
     } catch (error: unknown) {
       const message = error instanceof Error ? error.message : 'Unknown error';
       toast.error(`Sign in failed: ${message}`);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -151,59 +151,13 @@ export default function UserAuthForm() {
         </form>
       </Form>
 
-      {/* Quick-fill test accounts for debugging */}
-      <div className="mt-6 space-y-3">
-        <div className="text-center text-xs text-slate-400">— Quick Test Accounts —</div>
-        <div className="grid grid-cols-3 gap-2">
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              form.setValue('email', 'student@example.com');
-              form.setValue('password', 'student123');
-              toast.success('Student account loaded');
-            }}
-            className="text-xs"
-          >
-            Student
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              form.setValue('email', 'lecturer@example.com');
-              form.setValue('password', 'lecturer123');
-              toast.success('Lecturer account loaded');
-            }}
-            className="text-xs"
-          >
-            Lecturer
-          </Button>
-          <Button
-            type="button"
-            variant="outline"
-            size="sm"
-            onClick={() => {
-              form.setValue('email', 'admin@example.com');
-              form.setValue('password', 'admin123');
-              toast.success('Admin account loaded');
-            }}
-            className="text-xs"
-          >
-            Admin
-          </Button>
-        </div>
-      </div>
-
       <p className="mt-4 text-center text-sm text-slate-500">
-        Don&apos;t have an account?{" "}
+        Have an invitation?{" "}
         <Link
           href="/auth/sign-up"
           className="font-medium text-blue-600 hover:text-blue-700 hover:underline underline-offset-4 transition-colors dark:text-blue-400"
         >
-          Sign up
+          Activate your account
         </Link>
       </p>
     </>

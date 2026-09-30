@@ -3,13 +3,13 @@
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { ScrollArea } from '@/components/ui/scroll-area';
+import { usePreferences } from '@/components/layout/preference-provider';
 import {
   IconUser,
   IconShield,
   IconBell,
   IconLayoutDashboard,
   IconBuilding,
-  IconKey,
 } from '@tabler/icons-react';
 
 export type SettingsSection =
@@ -17,8 +17,7 @@ export type SettingsSection =
   | 'security'
   | 'notifications'
   | 'display'
-  | 'organization'
-  | 'api';
+  | 'organization';
 
 interface SettingsSidebarProps {
   currentSection: SettingsSection;
@@ -29,43 +28,43 @@ interface SettingsSidebarProps {
 const navItems: {
   id: SettingsSection;
   label: string;
+  labelZh: string;
   icon: React.ReactNode;
   roles: ('student' | 'lecturer' | 'admin')[];
 }[] = [
   {
     id: 'account',
     label: 'Account',
+    labelZh: '账户',
     icon: <IconUser className="size-4" />,
     roles: ['student', 'lecturer', 'admin'],
   },
   {
     id: 'security',
     label: 'Security',
+    labelZh: '安全',
     icon: <IconShield className="size-4" />,
     roles: ['student', 'lecturer', 'admin'],
   },
   {
     id: 'notifications',
     label: 'Notifications',
+    labelZh: '通知',
     icon: <IconBell className="size-4" />,
     roles: ['student', 'lecturer', 'admin'],
   },
   {
     id: 'display',
     label: 'Display',
+    labelZh: '显示',
     icon: <IconLayoutDashboard className="size-4" />,
     roles: ['student', 'lecturer', 'admin'],
   },
   {
     id: 'organization',
     label: 'Organization',
+    labelZh: '机构',
     icon: <IconBuilding className="size-4" />,
-    roles: ['admin'],
-  },
-  {
-    id: 'api',
-    label: 'API Keys',
-    icon: <IconKey className="size-4" />,
     roles: ['admin'],
   },
 ];
@@ -75,24 +74,25 @@ export function SettingsSidebar({
   onSectionChange,
   userRole,
 }: SettingsSidebarProps) {
+  const { locale } = usePreferences();
   const filteredItems = navItems.filter((item) => item.roles.includes(userRole));
 
   return (
-    <aside className="w-64 flex-shrink-0 border-r border-border bg-sidebar">
-      <ScrollArea className="h-full py-4">
-        <nav className="space-y-1 px-3">
+    <aside className="w-full flex-shrink-0 border-b border-border bg-sidebar lg:w-64 lg:border-b-0 lg:border-r">
+      <ScrollArea className="w-full py-2 lg:py-4">
+        <nav className="flex gap-1 px-2 lg:block lg:space-y-1 lg:px-3">
           {filteredItems.map((item) => (
             <Button
               key={item.id}
               variant={currentSection === item.id ? 'secondary' : 'ghost'}
               className={cn(
-                'w-full justify-start gap-2',
+                'min-w-fit justify-start gap-2 lg:w-full',
                 currentSection === item.id && 'bg-sidebar-accent'
               )}
               onClick={() => onSectionChange(item.id)}
             >
               {item.icon}
-              {item.label}
+              {locale === 'zh' ? item.labelZh : item.label}
             </Button>
           ))}
         </nav>

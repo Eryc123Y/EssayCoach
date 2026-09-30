@@ -35,24 +35,18 @@ export default async function RoleDashboardPage({ params }: RoleDashboardPagePro
   }
 
   if (!isDashboardRole(role)) {
-    redirect('/dashboard/overview');
+    redirect('/dashboard');
   }
 
   const apiUrl = getServerApiUrl();
-  let dashboardData: RoleDashboardData;
-  try {
-    dashboardData = await fetchRoleDashboardData(apiUrl, role, access);
-  } catch (error) {
-    console.error('Failed to fetch dashboard data:', error);
-    redirect('/dashboard/overview');
-  }
+  const dashboardData: RoleDashboardData = await fetchRoleDashboardData(apiUrl, role, access);
 
   if (!dashboardData) {
-    redirect('/dashboard/overview');
+    throw new Error('Dashboard data is unavailable');
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 px-4 py-6 sm:px-6 lg:px-8">
       {/* Dashboard Header with Stats */}
       <DashboardHeader
         user={dashboardData.user}

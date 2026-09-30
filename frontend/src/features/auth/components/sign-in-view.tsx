@@ -115,23 +115,6 @@ export default function SignInViewPage() {
 
           <UserAuthForm />
 
-          <p className="text-center text-sm text-slate-500">
-            By clicking continue, you agree to our{' '}
-            <Link
-              href="/terms"
-              className="font-medium text-blue-600 hover:text-blue-700 hover:underline underline-offset-4 transition-colors"
-            >
-              Terms of Service
-            </Link>{' '}
-            and{' '}
-            <Link
-              href="/privacy"
-              className="font-medium text-blue-600 hover:text-blue-700 hover:underline underline-offset-4 transition-colors"
-            >
-              Privacy Policy
-            </Link>
-            .
-          </p>
         </div>
       </div>
     </div>

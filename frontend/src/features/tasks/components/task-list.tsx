@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { taskService } from '@/service/api/v2';
+import { classService, taskService } from '@/service/api/v2';
 import type { Task } from '@/service/api/v2/types';
 import { TaskCard } from './task-card';
 import { Button } from '@/components/ui/button';
@@ -16,6 +16,8 @@ import {
 } from '@/components/ui/select';
 import { PlusCircle, Search } from 'lucide-react';
 import { toast } from 'sonner';
+import { usePreferences } from '@/components/layout/preference-provider';
+import { localized } from '@/locales';
 
 interface TaskListProps {
   userRole: 'student' | 'lecturer' | 'admin';
@@ -23,7 +25,9 @@ interface TaskListProps {
 
 export function TaskList({ userRole }: TaskListProps) {
   const router = useRouter();
+  const { locale } = usePreferences();
   const [tasks, setTasks] = useState<Task[]>([]);
+  const [classNames, setClassNames] = useState<Record<number, string>>({});
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState<string>('all');
@@ -32,6 +36,12 @@ export function TaskList({ userRole }: TaskListProps) {
   useEffect(() => {
     loadTasks();
   }, [statusFilter]);
+
+  useEffect(() => {
+    classService.listClasses()
+      .then((classes) => setClassNames(Object.fromEntries(classes.map((item) => [item.class_id, item.class_name]))))
+      .catch(() => {});
+  }, []);
 
   const loadTasks = async () => {
     try {
@@ -44,8 +54,8 @@ export function TaskList({ userRole }: TaskListProps) {
       setTasks(data);
       setError(null);
     } catch (err) {
-      toast.error('Failed to load tasks. Please try again.');
-      setError('Failed to load tasks');
+      toast.error(localized(locale, 'ui.failedToLoadAssignmentsPleaseTryAgain'));
+      setError(localized(locale, 'ui.failedToLoadAssignments'));
     } finally {
       setLoading(false);
     }
@@ -71,73 +81,75 @@ export function TaskList({ userRole }: TaskListProps) {
   return (
     <div className='space-y-6'>
       {/* Header */}
-      <div className='flex items-center justify-between'>
+      <div className='flex flex-wrap items-center justify-between gap-4'>
         <div>
-          <h1 className='text-3xl font-bold'>Tasks</h1>
+          <h1 className='text-3xl font-bold'>{localized(locale, 'ui.assignments')}</h1>
           <p className='text-muted-foreground mt-1'>
-            Manage assignments and submissions
+            {localized(locale, 'ui.manageAssignmentsAndSubmissions')}
           </p>
         </div>
         {canCreateTask && (
           <Button onClick={() => router.push('/dashboard/tasks/new')}>
             <PlusCircle className='mr-2 h-4 w-4' />
-            New Task
+            {localized(locale, 'ui.newAssignment')}
           </Button>
         )}
       </div>
 
       {/* Filters */}
-      <div className='flex items-center gap-4'>
+      <div className='flex flex-wrap items-center gap-4'>
         <div className='relative max-w-sm flex-1'>
           <Search className='text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform' />
           <Input
-            placeholder='Search tasks...'
+            placeholder={localized(locale, 'ui.searchAssignments9c579c')}
+            aria-label={localized(locale, 'ui.searchAssignments')}
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className='pl-10'
           />
         </div>
         <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className='w-[180px]'>
-            <SelectValue placeholder='Filter by status' />
+          <SelectTrigger aria-label={localized(locale, 'ui.filterByStatus')} className='w-[180px]'>
+            <SelectValue placeholder={localized(locale, 'ui.filterByStatus')} />
           </SelectTrigger>
           <SelectContent>
-            <SelectItem value='all'>All Status</SelectItem>
-            <SelectItem value='draft'>Draft</SelectItem>
-            <SelectItem value='published'>Published</SelectItem>
-            <SelectItem value='unpublished'>Unpublished</SelectItem>
-            <SelectItem value='archived'>Archived</SelectItem>
+            <SelectItem value='all'>{localized(locale, 'ui.allStatusesef4cc7')}</SelectItem>
+            <SelectItem value='draft'>{localized(locale, 'ui.draft')}</SelectItem>
+            <SelectItem value='published'>{localized(locale, 'ui.published')}</SelectItem>
+            <SelectItem value='unpublished'>{localized(locale, 'ui.unpublished')}</SelectItem>
+            <SelectItem value='archived'>{localized(locale, 'ui.archived')}</SelectItem>
           </SelectContent>
         </Select>
       </div>
 
       {/* Error */}
       {error && (
-        <div className='bg-destructive/10 text-destructive rounded-lg p-4'>
-          {error}
+        <div className='bg-destructive/10 text-destructive rounded-lg p-4' role='alert'>
+          {error} <Button variant='outline' size='sm' onClick={() => void loadTasks()}>{localized(locale, 'ui.retry')}</Button>
         </div>
       )}
 
       {/* Task List */}
-      {filteredTasks.length === 0 ? (
+      {!error && filteredTasks.length === 0 ? (
         <div className='py-12 text-center'>
-          <p className='text-muted-foreground'>No tasks found</p>
+          <p className='text-muted-foreground'>{localized(locale, 'ui.noAssignmentsFound')}</p>
           {canCreateTask && (
             <Button
               variant='link'
               onClick={() => router.push('/dashboard/tasks/new')}
               className='mt-2'
             >
-              Create your first task
+              {localized(locale, 'ui.createYourFirstAssignment')}
             </Button>
           )}
         </div>
-      ) : (
+      ) : !error && (
         <div className='grid gap-4 md:grid-cols-2 lg:grid-cols-3'>
           {filteredTasks.map((task) => (
             <TaskCard
               key={task.task_id}
               task={task}
+              className={task.class_id_class ? classNames[task.class_id_class] : undefined}
               userRole={userRole}
               onUpdate={loadTasks}
             />

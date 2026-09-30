@@ -23,6 +23,7 @@ export interface UserInfo {
   user_lname: string | null;
   user_role: 'admin' | 'lecturer' | 'teacher' | 'student';
   is_active: boolean;
+  avatar?: string | null;
 }
 
 export interface RubricLevelDesc {
@@ -36,6 +37,7 @@ export interface RubricItem {
   rubric_item_id: number;
   rubric_item_name: string;
   rubric_item_weight: string;
+  exemplar_text?: string;
   level_descriptions: RubricLevelDesc[];
 }
 
@@ -76,6 +78,93 @@ export interface RubricListResponse {
   next: string | null;
   previous: string | null;
   results: RubricListItem[];
+}
+
+export interface PracticeEssay {
+  essay_id: string;
+  goal: string;
+  content: string;
+  language: 'en' | 'zh';
+  audience: string;
+  tone: string;
+  rubric_id: number | null;
+  version: number;
+  created_at: string;
+  updated_at: string;
+  revision_count: number;
+}
+
+export interface PracticeEvidence {
+  claim: string;
+  query: string;
+  verdict: 'supported' | 'contradicted' | 'unresolved';
+  rationale: string;
+  source_title: string;
+  source_url: string;
+  source_excerpt: string;
+  supporting_quote: string;
+  retrieved_at: string | null;
+}
+
+export interface PracticeReport {
+  overall_score: number;
+  headline: string;
+  general_feedback: string;
+  strengths: string[];
+  next_steps: string[];
+  skills: Record<'grammar' | 'logic' | 'tone' | 'structure' | 'vocabulary', number>;
+  annotations: Array<{
+    quote: string;
+    category: string;
+    explanation: string;
+    suggestion: string;
+  }>;
+  rubric_results: Array<{
+    criterion: string;
+    score: number;
+    max_score: number;
+    justification: string;
+  }>;
+}
+
+export interface PracticeRubricCriterion {
+  id: number;
+  name: string;
+  weight: string;
+  max_score: number;
+  exemplar_text?: string;
+  levels: Array<{ min: number; max: number; description: string }>;
+}
+
+export interface PracticeRun {
+  run_id: string;
+  essay_id: string;
+  revision_number: number;
+  revision_goal: string;
+  revision_content: string;
+  revision_rubric: PracticeRubricCriterion[] | null;
+  status: 'pending' | 'running' | 'succeeded' | 'failed';
+  attempts: number;
+  model: string;
+  report: PracticeReport | null;
+  evidence: PracticeEvidence[];
+  error_category: string | null;
+  error_message: string | null;
+  created_at: string;
+  started_at: string | null;
+  finished_at: string | null;
+}
+
+export interface PracticeChatTurn {
+  turn_id: string;
+  run_id: string;
+  question: string;
+  answer: string | null;
+  status: 'pending' | 'running' | 'succeeded' | 'failed';
+  attempts: number;
+  error_message: string | null;
+  created_at: string;
+  finished_at: string | null;
 }
 
 export interface WorkflowRunRequest {
@@ -193,6 +282,7 @@ export interface ClassOverview {
 // Grading queue item
 export interface GradingQueueItem {
   submissionId: number;
+  classId?: number | null;
   studentName: string;
   essayTitle: string;
   submittedAt: string;
@@ -277,6 +367,7 @@ export interface Task {
   class_id_class: number | null;
   task_status: 'draft' | 'published' | 'unpublished' | 'archived';
   task_allow_late_submission: boolean;
+  task_allow_resubmission: boolean;
 }
 
 export interface TaskCreateInput {
@@ -289,6 +380,7 @@ export interface TaskCreateInput {
   class_id_class?: number | null;
   task_status?: 'draft' | 'published' | 'unpublished' | 'archived';
   task_allow_late_submission?: boolean;
+  task_allow_resubmission?: boolean;
 }
 
 export interface TaskUpdateInput {
@@ -301,6 +393,7 @@ export interface TaskUpdateInput {
   class_id_class?: number | null;
   task_status?: 'draft' | 'published' | 'unpublished' | 'archived';
   task_allow_late_submission?: boolean;
+  task_allow_resubmission?: boolean;
 }
 
 export interface TaskSubmission {
@@ -328,6 +421,22 @@ export interface ClassItem {
   class_status: 'active' | 'archived';
   class_archived_at: string | null;
   class_size: number;
+}
+
+export interface ClassCreatableUnit {
+  unit_id: string;
+  unit_name: string;
+  unit_desc: string | null;
+}
+
+export interface ClassLeaveRequest {
+  id: number;
+  student_id: number;
+  student_name: string;
+  status: 'pending' | 'approved' | 'declined';
+  reason: string;
+  requested_at: string;
+  decided_at: string | null;
 }
 
 export interface ClassCreateInput {
@@ -380,6 +489,7 @@ export interface UserPreferences {
   in_app_notifications: boolean;
   submission_alerts: boolean;
   grading_alerts: boolean;
+  social_alerts: boolean;
   weekly_digest: boolean;
   language: string;
   theme: 'light' | 'dark' | 'system';
@@ -390,6 +500,7 @@ export interface UserPreferencesInput {
   in_app_notifications?: boolean;
   submission_alerts?: boolean;
   grading_alerts?: boolean;
+  social_alerts?: boolean;
   weekly_digest?: boolean;
   language?: string;
   theme?: 'light' | 'dark' | 'system';
@@ -512,37 +623,45 @@ export interface TaskExtendResponse {
   extension: DeadlineExtension | null;
 }
 
-// =============================================================================
-// Advanced Class Action Types (PRD-10)
-// =============================================================================
-
-export interface BatchEnrollInput {
-  class_id: number;
-  student_emails: string[];
-}
-
-export interface BatchEnrollResult {
-  success: boolean;
-  message: string;
-  enrolled_count: number;
-  created_count: number;
-  already_enrolled: string[];
-  newly_created: string[];
-  failed: string[];
-}
-
-export interface InviteLecturerInput {
-  email: string;
-  first_name?: string | null;
-  last_name?: string | null;
-}
-
-export interface InviteLecturerResult {
-  success: boolean;
-  message: string;
+export interface TaskEligibleStudent {
   user_id: number;
+  user_email: string;
+  display_name: string;
+}
+
+export interface TaskStudentDeadline {
+  task_id: number;
+  global_deadline: string;
+  effective_deadline: string;
+  is_extended: boolean;
+  submission_count: number;
+}
+
+export interface TaskSubmissionSummary {
+  task_id: number;
+  eligible_students: number;
+  submitted_students: number;
+  submission_versions: number;
+}
+
+export interface InvitationCreateInput {
   email: string;
-  status: 'created' | 'existing';
+  role: 'student' | 'lecturer';
+  class_id?: number;
+  lead_unit_id?: string;
+}
+
+export interface InvitationCreateResult {
+  id: number;
+  token: string;
+  email: string;
+  role: 'student' | 'lecturer';
+  expires_at: string;
+}
+
+export interface BatchStudentInvitationResult {
+  created: InvitationCreateResult[];
+  failed: { email: string; reason: string }[];
 }
 
 // =============================================================================

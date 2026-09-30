@@ -234,7 +234,7 @@ describe('FeedbackViewer', () => {
     workflow_run_id: 'test-run-123',
     task_id: 'test-task-456',
     status: 'succeeded',
-    outputs: createLegacyOutputs(),
+    outputs: createLegacyOutputs() as unknown as WorkflowStatusResponse['outputs'],
     error_message: null,
     elapsed_time_seconds: 12.5,
     token_usage: { total: 1500, prompt: 800, completion: 700 },

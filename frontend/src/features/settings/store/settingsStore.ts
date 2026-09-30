@@ -7,6 +7,9 @@ import type {
   LoginHistoryItem,
 } from '@/service/api/v2/types';
 import { toast } from 'sonner';
+import { message, type MessageId } from '@/locales';
+
+const currentMessage = (id: MessageId) => message(id, document.documentElement.lang.startsWith('zh') ? 'zh' : 'en');
 
 interface SettingsState {
   // Preferences
@@ -36,12 +39,13 @@ const DEFAULT_PREFERENCES: UserPreferences = {
   in_app_notifications: true,
   submission_alerts: true,
   grading_alerts: false,
-  weekly_digest: true,
+  social_alerts: true,
+  weekly_digest: false,
   language: 'en',
   theme: 'system',
 };
 
-export const useSettingsStore = create<SettingsState>((set, get) => ({
+export const useSettingsStore = create<SettingsState>((set) => ({
   // Initial state
   preferences: null,
   isLoading: false,
@@ -59,7 +63,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     } catch (error) {
       console.error('Failed to fetch preferences:', error);
       set({ preferences: DEFAULT_PREFERENCES, isLoading: false });
-      toast.error('Failed to load preferences');
+      toast.error(currentMessage('settings.failedToLoadPreferences'));
     }
   },
 
@@ -68,11 +72,9 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     try {
       const response = await settingsService.updatePreferences(data);
       set({ preferences: response.data, isSaving: false });
-      toast.success('Preferences updated successfully');
     } catch (error) {
       console.error('Failed to update preferences:', error);
       set({ isSaving: false });
-      toast.error('Failed to update preferences');
       throw error;
     }
   },
@@ -85,7 +87,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     } catch (error) {
       console.error('Failed to fetch sessions:', error);
       set({ isLoadingSessions: false });
-      toast.error('Failed to load active sessions');
+      toast.error(currentMessage('settings.failedToLoadSessions'));
     }
   },
 
@@ -96,10 +98,10 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
       set((state) => ({
         sessions: state.sessions.filter((s) => s.session_key !== sessionKey),
       }));
-      toast.success('Session revoked successfully');
+      toast.success(currentMessage('settings.sessionRevoked'));
     } catch (error) {
       console.error('Failed to revoke session:', error);
-      toast.error('Failed to revoke session');
+      toast.error(currentMessage('settings.failedToRevokeSession'));
       throw error;
     }
   },
@@ -112,7 +114,7 @@ export const useSettingsStore = create<SettingsState>((set, get) => ({
     } catch (error) {
       console.error('Failed to fetch login history:', error);
       set({ isLoadingHistory: false });
-      toast.error('Failed to load login history');
+      toast.error(currentMessage('settings.failedToLoadHistory'));
     }
   },
 

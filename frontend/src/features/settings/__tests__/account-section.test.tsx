@@ -3,6 +3,10 @@ import userEvent from '@testing-library/user-event';
 import { describe, it, expect, vi } from 'vitest';
 import { AccountSection } from '../components/account-section';
 
+vi.mock('@/components/layout/preference-provider', () => ({
+  usePreferences: () => ({ locale: 'en' }),
+}));
+
 describe('AccountSection', () => {
   it('calls onSaveUser when the profile form is submitted', async () => {
     const mockOnSaveUser = vi.fn().mockResolvedValue(undefined);

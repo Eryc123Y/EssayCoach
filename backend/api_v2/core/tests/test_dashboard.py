@@ -18,7 +18,18 @@ from django.test import Client
 from django.utils import timezone as django_timezone
 
 from api_v2.utils.jwt_auth import create_jwt_pair
-from core.models import Class, Enrollment, Feedback, MarkingRubric, Submission, Task, TeachingAssn, Unit, User
+from core.models import (
+    Class,
+    CourseLeadAssignment,
+    Enrollment,
+    Feedback,
+    MarkingRubric,
+    Submission,
+    Task,
+    TeachingAssn,
+    Unit,
+    User,
+)
 
 # =============================================================================
 # Test Fixtures
@@ -295,6 +306,18 @@ def test_lecturer_dashboard_grading_queue(lecturer_user, class_instance, task, s
     data = response.json()
     # Lecturer should see submissions in grading queue
     assert "gradingQueue" in data
+    assert [item["submissionId"] for item in data["gradingQueue"]] == [submission.pk]
+    assert data["stats"]["pendingReviews"] == 1
+
+    feedback = Feedback.objects.create(submission_id_submission=submission, status="ai_draft")
+    response = client.get("/api/v2/core/dashboard/")
+    assert response.json()["gradingQueue"][0]["status"] == "ai_graded"
+
+    feedback.status = "published"
+    feedback.save(update_fields=["status"])
+    response = client.get("/api/v2/core/dashboard/")
+    assert response.json()["gradingQueue"] == []
+    assert response.json()["stats"]["pendingReviews"] == 0
 
 
 @pytest.mark.django_db
@@ -316,6 +339,17 @@ def test_lecturer_dashboard_empty_state():
     data = response.json()
     assert data["classes"] == []
     assert data["gradingQueue"] == []
+
+
+@pytest.mark.django_db
+def test_course_lead_sees_unit_queue_without_class_teaching_assignment(lecturer_user, unit, class_instance, submission):
+    CourseLeadAssignment.objects.create(user_id_user=lecturer_user, unit_id_unit=unit, assigned_by=lecturer_user)
+    client = Client()
+    client.defaults["HTTP_AUTHORIZATION"] = f"Bearer {create_jwt_pair(lecturer_user).access}"
+    response = client.get("/api/v2/core/dashboard/lecturer/")
+    assert response.status_code == 200
+    assert response.json()["gradingQueue"][0]["submissionId"] == submission.pk
+    assert response.json()["classes"][0]["id"] == class_instance.pk
 
 
 # =============================================================================

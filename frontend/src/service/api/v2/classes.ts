@@ -4,17 +4,20 @@ import type {
   ClassCreateInput,
   ClassUpdateInput,
   ClassDetail,
+  ClassCreatableUnit,
+  ClassLeaveRequest,
   StudentInfo,
-  LeaveClassResponse,
-  BatchEnrollInput,
-  BatchEnrollResult,
-  InviteLecturerInput,
-  InviteLecturerResult,
 } from './types';
 
 const BASE_URL = '/api/v2';
 
 export const classService = {
+  async listCreatableUnits(): Promise<ClassCreatableUnit[]> {
+    return request<ClassCreatableUnit[]>({
+      url: `${BASE_URL}/core/classes/create-options/`,
+      method: 'GET',
+    });
+  },
   async listClasses(params?: {
     unit_id_unit?: string;
     class_size__gte?: number;
@@ -59,6 +62,14 @@ export const classService = {
     });
   },
 
+  async duplicateClass(classId: number, className: string): Promise<ClassItem> {
+    return request<ClassItem>({
+      url: `${BASE_URL}/core/classes/${classId}/duplicate/`,
+      method: 'POST',
+      data: { class_name: className },
+    });
+  },
+
   async joinClass(joinCode: string): Promise<ClassItem> {
     return request<ClassItem>({
       url: `${BASE_URL}/core/classes/join/?join_code=${encodeURIComponent(joinCode)}`,
@@ -66,10 +77,20 @@ export const classService = {
     });
   },
 
-  async leaveClass(classId: number): Promise<LeaveClassResponse> {
-    return request<LeaveClassResponse>({
-      url: `${BASE_URL}/core/classes/${classId}/leave/`,
-      method: 'DELETE',
+  async listLeaveRequests(classId: number): Promise<ClassLeaveRequest[]> {
+    return request<ClassLeaveRequest[]>({ url: `${BASE_URL}/core/classes/${classId}/leave-requests/`, method: 'GET' });
+  },
+
+  async requestLeave(classId: number, reason: string): Promise<ClassLeaveRequest> {
+    return request<ClassLeaveRequest>({
+      url: `${BASE_URL}/core/classes/${classId}/leave-requests/`, method: 'POST', data: { reason },
+    });
+  },
+
+  async decideLeave(classId: number, requestId: number, approve: boolean): Promise<ClassLeaveRequest> {
+    return request<ClassLeaveRequest>({
+      url: `${BASE_URL}/core/classes/${classId}/leave-requests/${requestId}/decision/`,
+      method: 'POST', data: { approve },
     });
   },
 
@@ -101,29 +122,4 @@ export const classService = {
     });
   },
 
-  /**
-   * Batch enroll students by email into a class.
-   * Creates unregistered accounts for unknown emails.
-   * @adminOnly - returns HTTP 403 for non-admin callers.
-   */
-  async batchEnrollStudents(data: BatchEnrollInput): Promise<BatchEnrollResult> {
-    return request<BatchEnrollResult>({
-      url: `${BASE_URL}/core/admin/classes/batch-enroll/`,
-      method: 'POST',
-      data,
-    });
-  },
-
-  /**
-   * Invite a new lecturer by email.
-   * Creates an unregistered lecturer account if the email is not yet in the system.
-   * @adminOnly - returns HTTP 403 for non-admin callers.
-   */
-  async inviteLecturer(data: InviteLecturerInput): Promise<InviteLecturerResult> {
-    return request<InviteLecturerResult>({
-      url: `${BASE_URL}/core/admin/users/invite-lecturer/`,
-      method: 'POST',
-      data,
-    });
-  },
 };

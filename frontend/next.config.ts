@@ -19,7 +19,8 @@ let configWithPlugins = baseConfig;
 
 // Conditionally enable Sentry configuration
 if (
-  !process.env.NEXT_PUBLIC_SENTRY_DISABLED &&
+  process.env.NEXT_PUBLIC_SENTRY_DSN &&
+  process.env.NEXT_PUBLIC_SENTRY_DISABLED !== 'true' &&
   process.env.NODE_ENV === 'production'
 ) {
   configWithPlugins = withSentryConfig(configWithPlugins, {

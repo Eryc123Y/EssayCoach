@@ -12,7 +12,7 @@
  * Run with: pnpm exec vitest run src/features/essay-feedback/hooks/useSkillRadar.test.ts
  */
 
-import { describe, it, expect, beforeEach } from 'vitest';
+import { describe, it, expect, beforeEach, vi } from 'vitest';
 import { renderHook } from '@testing-library/react';
 import { useSkillRadar } from './useSkillRadar';
 

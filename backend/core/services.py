@@ -13,7 +13,17 @@ from typing import TYPE_CHECKING
 from django.db.models import Avg, Count
 from django.utils import timezone as django_timezone
 
-from core.models import Class, DeadlineExtension, Feedback, FeedbackItem, Submission, Task, TeachingAssn, User
+from core.models import (
+    Class,
+    DeadlineExtension,
+    Feedback,
+    FeedbackItem,
+    Notification,
+    Submission,
+    Task,
+    TeachingAssn,
+    User,
+)
 
 if TYPE_CHECKING:
     from api_v2.core.schemas import (
@@ -63,8 +73,9 @@ class DashboardService:
         week_ago = django_timezone.now() - timedelta(days=7)
         recent_activity = Submission.objects.filter(user_id_user=user, submission_time__gte=week_ago).count()
 
-        # Count pending notifications (placeholder - implement notifications module later)
-        pending_notifications = 0
+        pending_notifications = Notification.objects.filter(
+            user=user, read_at__isnull=True, in_app_visible=True
+        ).count()
 
         return DashboardStatsOut(
             total_submissions=total_submissions,
@@ -601,6 +612,7 @@ class TaskService:
     @staticmethod
     def duplicate_task(source_task, user, target_class_id: int | None, new_title: str | None, new_deadline) -> Task:
         from django.utils import timezone
+        from ninja.errors import HttpError
 
         from core.models import Class, Task
 
@@ -617,11 +629,17 @@ class TaskService:
         else:
             new_task.task_title = f"Copy of {source_task.task_title}"
 
-        if new_deadline:
-            new_task.task_due_datetime = new_deadline
+        now = timezone.now()
+        if new_deadline and new_deadline <= now:
+            raise HttpError(400, "New assignment deadline must be in the future")
+        new_task.task_due_datetime = new_deadline or source_task.task_due_datetime
+        if new_task.task_due_datetime <= now:
+            new_task.task_due_datetime = now + timedelta(days=7)
 
         new_task.task_status = "draft"
-        new_task.task_publish_datetime = timezone.now()
+        new_task.rubric_snapshot = None
+        new_task.rubric_version = 0
+        new_task.task_publish_datetime = now
         new_task.save()
         return new_task
 
@@ -636,18 +654,27 @@ class TaskService:
         if new_deadline <= timezone.now():
             raise HttpError(400, "New deadline must be in the future")
 
+        if new_deadline <= task.task_due_datetime:
+            raise HttpError(400, "New deadline must extend the current deadline")
+
         task.task_due_datetime = new_deadline
         task.save()
         return task
 
     @staticmethod
     def extend_deadline_per_student(task, student, new_deadline, reason: str, granted_by) -> DeadlineExtension:
+        from django.utils import timezone
         from ninja.errors import HttpError
 
         from core.models import DeadlineExtension
 
         if new_deadline <= task.task_due_datetime:
             raise HttpError(400, "Per-student deadline must be after the global deadline")
+        if new_deadline <= timezone.now():
+            raise HttpError(400, "New deadline must be in the future")
+        existing = DeadlineExtension.objects.filter(task_id_task=task, user_id_user=student).first()
+        if existing and new_deadline <= existing.extended_deadline:
+            raise HttpError(400, "New deadline must extend the existing student deadline")
 
         extension, created = DeadlineExtension.objects.update_or_create(
             task_id_task=task,
@@ -660,87 +687,6 @@ class TaskService:
             },
         )
         return extension
-
-
-class EnrollmentService:
-    @staticmethod
-    def batch_enroll(class_obj, student_emails: list[str]):
-        import secrets
-
-        from django.db import transaction
-
-        from core.models import Enrollment, User
-
-        result = {
-            "success": True,
-            "message": "Batch enrollment completed",
-            "enrolled_count": 0,
-            "created_count": 0,
-            "already_enrolled": [],
-            "newly_created": [],
-            "failed": [],
-        }
-
-        with transaction.atomic():
-            for email in student_emails:
-                try:
-                    user = User.objects.filter(user_email=email).first()
-                    if not user:
-                        # Create unregistered user
-                        user = User.objects.create(
-                            user_email=email,
-                            user_role="student",
-                            user_status="unregistered",
-                            user_fname="",
-                            user_lname="",
-                            user_hash=secrets.token_urlsafe(16),
-                        )
-                        result["newly_created"].append(email)
-                        result["created_count"] += 1
-
-                    # Attempt enrollment
-                    enrollment, created = Enrollment.objects.get_or_create(
-                        user_id_user=user, class_id_class=class_obj, unit_id_unit=class_obj.unit_id_unit
-                    )
-
-                    if created:
-                        result["enrolled_count"] += 1
-                    else:
-                        result["already_enrolled"].append(email)
-
-                except Exception:
-                    result["failed"].append(email)
-
-            # Update class size
-            class_obj.class_size = Enrollment.objects.filter(class_id_class=class_obj).count()
-            class_obj.save()
-
-        return result
-
-    @staticmethod
-    def invite_lecturer(email: str, first_name: str | None, last_name: str | None):
-        import secrets
-
-        from ninja.errors import HttpError
-
-        from core.models import User
-
-        user = User.objects.filter(user_email=email).first()
-        if user:
-            if user.user_role == "lecturer":
-                return {"user": user, "status": "existing"}
-            else:
-                raise HttpError(409, f"User with email {email} already exists but is not a lecturer")
-
-        user = User.objects.create(
-            user_email=email,
-            user_role="lecturer",
-            user_status="unregistered",
-            user_fname=first_name or "",
-            user_lname=last_name or "",
-            user_hash=secrets.token_urlsafe(16),
-        )
-        return {"user": user, "status": "created"}
 
 
 class RubricService:
@@ -767,9 +713,9 @@ class RubricService:
                 new_item.save()
 
                 for level in item.level_descriptions.all():
-                    new_level = RubricLevelDesc.objects.get(rubric_level_desc_id=level.rubric_level_desc_id)
+                    new_level = RubricLevelDesc.objects.get(level_desc_id=level.level_desc_id)
                     new_level.pk = None
-                    new_level.rubric_level_desc_id = None
+                    new_level.level_desc_id = None
                     new_level.rubric_item_id_rubric_item = new_item
                     new_level.save()
 

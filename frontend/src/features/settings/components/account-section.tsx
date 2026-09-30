@@ -1,6 +1,8 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { localized } from '@/locales';
+
+import { useState, useRef, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -9,8 +11,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Separator } from '@/components/ui/separator';
 import { IconCamera, IconLock } from '@tabler/icons-react';
 import { toast } from 'sonner';
-import { settingsService } from '@/service/api/v2/auth';
 import type { UserInfo } from '@/service/api/v2/types';
+import { usePreferences } from '@/components/layout/preference-provider';
 
 interface AccountSectionProps {
   user: UserInfo | null;
@@ -35,7 +37,10 @@ export function AccountSection({
   onUploadAvatar,
   onChangePassword,
 }: AccountSectionProps) {
+  const { locale } = usePreferences();
+  const t = (en: string, zh?: string) => localized(locale, en, zh);
   const [isEditing, setIsEditing] = useState(false);
+  const [avatarUrl, setAvatarUrl] = useState(user?.avatar ?? undefined);
   const [formData, setFormData] = useState({
     user_fname: user?.user_fname || '',
     user_lname: user?.user_lname || '',
@@ -51,6 +56,13 @@ export function AccountSection({
   const [passwordStrength, setPasswordStrength] = useState(0);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  useEffect(() => {
+    if (user && !isEditing) {
+      setFormData({ user_fname: user.user_fname || '', user_lname: user.user_lname || '', user_email: user.user_email || '' });
+      setAvatarUrl(user.avatar ?? undefined);
+    }
+  }, [user, isEditing]);
+
   const handleAvatarClick = () => {
     fileInputRef.current?.click();
   };
@@ -63,20 +75,20 @@ export function AccountSection({
 
     // Validate file type
     if (!file.type.startsWith('image/')) {
-      toast.error('Please select an image file');
+      toast.error(t('ui.pleaseSelectAnImageFile'));
       return;
     }
 
     // Validate file size (max 5MB)
     if (file.size > 5 * 1024 * 1024) {
-      toast.error('Image size should be less than 5MB');
+      toast.error(t('ui.imageMustBeUnder5Mb'));
       return;
     }
 
     try {
-      const avatarUrl = await onUploadAvatar(file);
-      toast.success('Avatar updated successfully');
-      // The avatar will be updated via the returned URL
+      const nextUrl = await onUploadAvatar(file);
+      setAvatarUrl(`${nextUrl}?v=${Date.now()}`);
+      toast.success(t('ui.avatarUpdated1e42f9'));
     } catch (error) {
       console.error('Failed to upload avatar:', error);
     }
@@ -86,7 +98,7 @@ export function AccountSection({
     setIsSaving(true);
     try {
       await onSaveUser(formData);
-      toast.success('Profile updated successfully');
+      toast.success(t('ui.profileUpdated'));
       setIsEditing(false);
     } catch (error) {
       console.error('Failed to update profile:', error);
@@ -107,12 +119,12 @@ export function AccountSection({
 
   const handlePasswordChange = async () => {
     if (passwordData.new_password !== passwordData.new_password_confirm) {
-      toast.error('Passwords do not match');
+      toast.error(t('ui.passwordsDoNotMatchab9c00'));
       return;
     }
 
     if (passwordData.new_password.length < 8) {
-      toast.error('Password must be at least 8 characters');
+      toast.error(t('ui.passwordMustBeAtLeast8Characters'));
       return;
     }
 
@@ -122,7 +134,8 @@ export function AccountSection({
         passwordData.new_password,
         passwordData.new_password_confirm
       );
-      toast.success('Password changed successfully');
+      // The server revokes every session, so the workspace signs the user out next.
+      toast.success(t('ui.yourOldSessionsHaveBeenSignedOutUseYourNew'));
       setPasswordData({
         current_password: '',
         new_password: '',
@@ -141,16 +154,16 @@ export function AccountSection({
   };
 
   const getPasswordStrengthLabel = (strength: number) => {
-    if (strength <= 2) return 'Weak';
-    if (strength <= 3) return 'Medium';
-    return 'Strong';
+    if (strength <= 2) return t('ui.weak');
+    if (strength <= 3) return t('ui.medium');
+    return t('ui.strong');
   };
 
   if (isLoading) {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Profile Information</CardTitle>
+          <CardTitle>{t('ui.profileInformation')}</CardTitle>
         </CardHeader>
         <CardContent>
           <div className="animate-pulse space-y-4">
@@ -171,14 +184,14 @@ export function AccountSection({
       <Card>
         <CardHeader>
           <CardTitle className="text-lg font-semibold">
-            Profile Information
+            {t('ui.profileInformation')}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-6">
           {/* Avatar Upload */}
           <div className="flex items-center gap-4">
             <Avatar className="size-20">
-              <AvatarImage src={user?.user_fname ?? undefined} alt="Avatar" />
+              <AvatarImage src={avatarUrl} alt={t('ui.avatar')} />
               <AvatarFallback className="text-lg">{initials}</AvatarFallback>
             </Avatar>
             <div className="space-y-2">
@@ -191,10 +204,10 @@ export function AccountSection({
               />
               <Button variant="outline" size="sm" onClick={handleAvatarClick}>
                 <IconCamera className="mr-2 size-4" />
-                Change Avatar
+                {t('ui.changeAvatar')}
               </Button>
               <p className="text-xs text-muted-foreground">
-                JPG, GIF or PNG. Max size 5MB.
+                {t('ui.jpgOrPngUpTo5Mb')}
               </p>
             </div>
           </div>
@@ -205,7 +218,7 @@ export function AccountSection({
           <div className="space-y-4">
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-2">
-                <Label htmlFor="first-name">First Name</Label>
+                <Label htmlFor="first-name">{t('ui.firstName')}</Label>
                 <Input
                   id="first-name"
                   value={formData.user_fname}
@@ -216,7 +229,7 @@ export function AccountSection({
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="last-name">Last Name</Label>
+                <Label htmlFor="last-name">{t('ui.lastName')}</Label>
                 <Input
                   id="last-name"
                   value={formData.user_lname}
@@ -228,22 +241,20 @@ export function AccountSection({
               </div>
             </div>
             <div className="space-y-2">
-              <Label htmlFor="email">Email</Label>
+              <Label htmlFor="email">{t('ui.email')}</Label>
               <Input
                 id="email"
                 type="email"
                 value={formData.user_email}
-                onChange={(e) =>
-                  setFormData({ ...formData, user_email: e.target.value })
-                }
-                disabled={!isEditing}
+                readOnly
               />
+              <p className="text-xs text-muted-foreground">{t('ui.useTheVerificationFormBelowToChangeThisAddress')}</p>
             </div>
 
             {isEditing ? (
               <div className="flex gap-2">
                 <Button onClick={handleSaveUser} disabled={isSaving}>
-                  {isSaving ? 'Saving...' : 'Save Changes'}
+                  {isSaving ? t('ui.saving83ad29') : t('ui.saveChanges')}
                 </Button>
                 <Button
                   variant="outline"
@@ -256,11 +267,11 @@ export function AccountSection({
                     });
                   }}
                 >
-                  Cancel
+                  {t('ui.cancel')}
                 </Button>
               </div>
             ) : (
-              <Button onClick={() => setIsEditing(true)}>Edit Profile</Button>
+              <Button onClick={() => setIsEditing(true)}>{t('ui.editProfileb7bbb1')}</Button>
             )}
           </div>
         </CardContent>
@@ -270,7 +281,7 @@ export function AccountSection({
       <Card>
         <CardHeader>
           <CardTitle className="text-lg font-semibold">
-            Change Password
+            {t('ui.changePassword')}
           </CardTitle>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -280,12 +291,12 @@ export function AccountSection({
               onClick={() => setShowPasswordForm(true)}
             >
               <IconLock className="mr-2 size-4" />
-              Change Password
+              {t('ui.changePassword')}
             </Button>
           ) : (
             <div className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="current-password">Current Password</Label>
+                <Label htmlFor="current-password">{t('ui.currentPassword')}</Label>
                 <Input
                   id="current-password"
                   type="password"
@@ -296,11 +307,11 @@ export function AccountSection({
                       current_password: e.target.value,
                     })
                   }
-                  placeholder="Enter current password"
+                  placeholder={t('ui.enterCurrentPassword')}
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="new-password">New Password</Label>
+                <Label htmlFor="new-password">{t('ui.newPassword')}</Label>
                 <Input
                   id="new-password"
                   type="password"
@@ -314,7 +325,7 @@ export function AccountSection({
                       calculatePasswordStrength(e.target.value)
                     );
                   }}
-                  placeholder="Enter new password"
+                  placeholder={t('ui.enterNewPassword')}
                 />
                 {passwordData.new_password && (
                   <div className="flex items-center gap-2">
@@ -333,7 +344,7 @@ export function AccountSection({
                 )}
               </div>
               <div className="space-y-2">
-                <Label htmlFor="confirm-password">Confirm New Password</Label>
+                <Label htmlFor="confirm-password">{t('ui.confirmNewPassword')}</Label>
                 <Input
                   id="confirm-password"
                   type="password"
@@ -344,11 +355,11 @@ export function AccountSection({
                       new_password_confirm: e.target.value,
                     })
                   }
-                  placeholder="Confirm new password"
+                  placeholder={t('ui.confirmNewPasswordff7019')}
                 />
               </div>
               <div className="flex gap-2">
-                <Button onClick={handlePasswordChange}>Confirm Change</Button>
+                <Button onClick={handlePasswordChange}>{t('ui.confirmChange')}</Button>
                 <Button
                   variant="outline"
                   onClick={() => {
@@ -361,7 +372,7 @@ export function AccountSection({
                     setPasswordStrength(0);
                   }}
                 >
-                  Cancel
+                  {t('ui.cancel')}
                 </Button>
               </div>
             </div>

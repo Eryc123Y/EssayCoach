@@ -4,6 +4,7 @@ import {
   fromOptionalSelectValue,
   fromRequiredSelectValue,
   toOptionalSelectValue,
+  toDatetimeLocalValue,
 } from './task-form-utils';
 
 describe('task-form-utils', () => {
@@ -20,5 +21,10 @@ describe('task-form-utils', () => {
     expect(fromOptionalSelectValue('abc')).toBeUndefined();
     expect(fromRequiredSelectValue('abc', 7)).toBe(7);
     expect(fromRequiredSelectValue('42', 7)).toBe(42);
+  });
+
+  it('round trips a local due time through the API ISO value', () => {
+    const chosenLocalTime = '2026-10-02T12:00';
+    expect(toDatetimeLocalValue(new Date(chosenLocalTime).toISOString())).toBe(chosenLocalTime);
   });
 });

@@ -1,6 +1,8 @@
 ---
-description: Canonical project + agent instructions for EssayCoach
+description: Repository contract for EssayCoach
 alwaysApply: true
 ---
 
-Use **root `AGENTS.md`** as the single source of truth for commands, architecture, status, priorities, env vars, and gotchas. `CLAUDE.md` is only a short redirect; do not duplicate long-form content there—update **`AGENTS.md`** after significant changes.
+Read root `AGENTS.md` and the nearest nested `AGENTS.md` for the affected
+subtree. They own working rules; current source, PRDs, and Makefile own behavior,
+requirements, and commands. Keep this compatibility entry point short.

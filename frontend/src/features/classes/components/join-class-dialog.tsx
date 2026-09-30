@@ -6,6 +6,8 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { usePreferences } from '@/components/layout/preference-provider';
+import { localized } from '@/locales';
 
 interface JoinClassDialogProps {
   open: boolean;
@@ -14,13 +16,14 @@ interface JoinClassDialogProps {
 }
 
 export function JoinClassDialog({ open, onOpenChange, onJoin }: JoinClassDialogProps) {
+  const { locale } = usePreferences();
   const [joinCode, setJoinCode] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const handleJoin = async () => {
     if (!joinCode.trim()) {
-      setError('Please enter a join code');
+      setError(localized(locale, 'ui.pleaseEnterAJoinCode'));
       return;
     }
 
@@ -32,8 +35,8 @@ export function JoinClassDialog({ open, onOpenChange, onJoin }: JoinClassDialogP
       onJoin();
       onOpenChange(false);
       setJoinCode('');
-    } catch (err: any) {
-      setError(err.message || 'Failed to join class. Please check the code.');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : (localized(locale, 'ui.failedToJoinClassPleaseCheckTheCode')));
     } finally {
       setLoading(false);
     }
@@ -43,26 +46,26 @@ export function JoinClassDialog({ open, onOpenChange, onJoin }: JoinClassDialogP
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Join Class</DialogTitle>
+          <DialogTitle>{localized(locale, 'ui.joinClassd83ce0')}</DialogTitle>
           <DialogDescription>
-            Enter the join code provided by your lecturer to enroll in a class.
+            {localized(locale, 'ui.enterTheCodeFromYourLecturerToJoin')}
           </DialogDescription>
         </DialogHeader>
 
         <div className="space-y-4 py-4">
           {error && (
-            <div className="p-3 bg-destructive/10 text-destructive text-sm rounded-lg">
+            <div className="p-3 bg-destructive/10 text-destructive text-sm rounded-lg" role='alert'>
               {error}
             </div>
           )}
           
           <div className="space-y-2">
-            <Label htmlFor="join-code">Join Code</Label>
+            <Label htmlFor="join-code">{localized(locale, 'ui.joinCodea0bbc8')}</Label>
             <Input
               id="join-code"
               value={joinCode}
               onChange={(e) => setJoinCode(e.target.value.toUpperCase())}
-              placeholder="e.g., ENG101"
+              placeholder={localized(locale, 'ui.eGAbc123')}
               className="uppercase tracking-wider text-center text-lg"
               maxLength={10}
             />
@@ -71,10 +74,10 @@ export function JoinClassDialog({ open, onOpenChange, onJoin }: JoinClassDialogP
 
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
+            {localized(locale, 'community.cancel')}
           </Button>
           <Button onClick={handleJoin} disabled={loading}>
-            {loading ? 'Joining...' : 'Join Class'}
+            {loading ? (localized(locale, 'ui.joining')) : (localized(locale, 'ui.joinClassd83ce0'))}
           </Button>
         </DialogFooter>
       </DialogContent>

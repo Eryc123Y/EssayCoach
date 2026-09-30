@@ -9,7 +9,7 @@ export default function GlobalError({
   error: Error & { digest?: string };
 }) {
   useEffect(() => {
-    if (process.env.NODE_ENV === 'production') {
+    if (process.env.NEXT_PUBLIC_SENTRY_DSN && process.env.NEXT_PUBLIC_SENTRY_DISABLED !== 'true' && process.env.NODE_ENV === 'production') {
       import('@sentry/nextjs').then((Sentry) => {
         Sentry.captureException(error);
       });

@@ -11,9 +11,11 @@ import logging
 from datetime import UTC, datetime, timedelta
 from threading import Lock
 from typing import TYPE_CHECKING
+from uuid import UUID
 
 import jwt
 from django.conf import settings
+from django.utils import timezone
 from ninja.security import HttpBearer
 from rest_framework_simplejwt.exceptions import TokenError
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -81,7 +83,7 @@ class JWTPair:
         self.expires_at = expires_at
 
 
-def create_jwt_pair(user: User) -> JWTPair:
+def create_jwt_pair(user: User, *, request=None, session=None) -> JWTPair:
     """
     Create a JWT token pair for a user.
 
@@ -93,6 +95,16 @@ def create_jwt_pair(user: User) -> JWTPair:
     Returns:
         JWTPair containing access token, refresh token, and expiration
     """
+    from core.models import AuthSession
+
+    if session is None:
+        session = AuthSession.objects.create(
+            user=user,
+            device=(request.META.get("HTTP_USER_AGENT", "Unknown device")[:200] if request else "Test or API client"),
+            ip_address=(request.META.get("REMOTE_ADDR") if request else None),
+            expires_at=timezone.now() + get_refresh_token_lifetime(),
+        )
+
     # Use DRF SimpleJWT's built-in token generation
     refresh = RefreshToken.for_user(user)
 
@@ -102,6 +114,11 @@ def create_jwt_pair(user: User) -> JWTPair:
     role = user.user_role or "student"
     refresh["role"] = role
     refresh["user_role"] = role
+    refresh["auth_version"] = user.auth_version
+    refresh["session_id"] = str(session.pk)
+    session.refresh_jti = str(refresh["jti"])
+    session.expires_at = timezone.now() + get_refresh_token_lifetime()
+    session.save(update_fields=["refresh_jti", "expires_at", "last_activity"])
 
     # Get access token from refresh token
     access = refresh.access_token
@@ -144,6 +161,24 @@ def _add_to_blacklist(jti: str) -> None:
         _token_blacklist.add(jti)
 
 
+def _session_is_valid(payload: dict) -> bool:
+    from core.models import AuthSession
+
+    session_id = payload.get("session_id")
+    if not session_id:
+        return False
+    try:
+        UUID(str(session_id))
+    except ValueError:
+        return False
+    return AuthSession.objects.filter(
+        pk=session_id,
+        user_id=payload.get("user_id"),
+        revoked_at__isnull=True,
+        expires_at__gt=timezone.now(),
+    ).exists()
+
+
 def verify_jwt_token(token: str) -> dict | None:
     """
     Verify a JWT token and return its payload.
@@ -170,6 +205,8 @@ def verify_jwt_token(token: str) -> dict | None:
         if not role or not isinstance(role, str):
             return None
 
+        if not _session_is_valid(payload):
+            return None
         payload["user_role"] = role
         payload["role"] = role
         return payload
@@ -205,6 +242,8 @@ def verify_jwt_token(token: str) -> dict | None:
         if not role or not isinstance(role, str):
             return None
 
+        if not _session_is_valid(payload):
+            return None
         payload["user_role"] = role
         payload["role"] = role
         return payload
@@ -256,8 +295,25 @@ def refresh_jwt_token(refresh_token: str) -> JWTPair | None:
         except User.DoesNotExist:
             return None
 
+        if not user.is_active or user.user_status != "active":
+            return None
+        if old_refresh.get("auth_version", 0) != user.auth_version:
+            return None
+
+        from core.models import AuthSession
+
+        session = AuthSession.objects.filter(
+            pk=old_refresh.get("session_id"),
+            user=user,
+            revoked_at__isnull=True,
+            expires_at__gt=timezone.now(),
+            refresh_jti=old_jti,
+        ).first()
+        if session is None:
+            return None
+
         # Create BRAND NEW token pair (this ensures rotation)
-        new_pair = create_jwt_pair(user)
+        new_pair = create_jwt_pair(user, session=session)
 
         # Blacklist the old refresh token AFTER generating new ones
         if old_jti:
@@ -332,7 +388,9 @@ class JWTAuth(HttpBearer):
             from core.models import User
 
             user = User.objects.get(user_id=user_id)
-            if not user.is_active:
+            if not user.is_active or user.user_status != "active":
+                return None
+            if payload.get("auth_version", 0) != user.auth_version:
                 return None
             return user
         except User.DoesNotExist:
