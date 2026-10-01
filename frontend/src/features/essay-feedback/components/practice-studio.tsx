@@ -7,6 +7,7 @@ import { ArrowLeft, Check, ChevronRight, FileText, History, Loader2, PenLine, Se
 import { practiceService } from '@/service/api/v2/practice';
 import type { PracticeChatTurn, PracticeEssay, PracticeReport, PracticeRun, RubricListItem } from '@/service/api/v2/types';
 import { usePreferences } from '@/components/layout/preference-provider';
+import { expandPracticeExemplarsForPrint } from './practice-print';
 import './practice-studio.css';
 
 type Language = 'en' | 'zh';
@@ -125,6 +126,25 @@ export function PracticeStudio() {
   const generationRef = useRef(0);
   const loadedRef = useRef(false);
   const t = useCallback((en: string, zh?: string) => localized(uiLanguage, en, zh), [uiLanguage]);
+
+  useEffect(() => {
+    let restoreExemplars = () => {};
+    const beforePrint = () => {
+      restoreExemplars();
+      restoreExemplars = expandPracticeExemplarsForPrint();
+    };
+    const afterPrint = () => {
+      restoreExemplars();
+      restoreExemplars = () => {};
+    };
+    window.addEventListener('beforeprint', beforePrint);
+    window.addEventListener('afterprint', afterPrint);
+    return () => {
+      window.removeEventListener('beforeprint', beforePrint);
+      window.removeEventListener('afterprint', afterPrint);
+      restoreExemplars();
+    };
+  }, []);
 
   const openEssay = useCallback(async (essay: PracticeEssay) => {
     generationRef.current += 1;
@@ -328,7 +348,7 @@ export function PracticeStudio() {
       {loading ? <div className='practice-loading'><Loader2 className='animate-spin' />{t('ui.openingYourStudio')}</div> : <>
         {essays.length > 0 && <div className='practice-history-strip' aria-label={t('ui.savedDrafts')}>
           <History size={16} />
-          {essays.slice(0, 5).map(item => <button type='button' key={item.essay_id} className={essayId === item.essay_id ? 'selected' : ''} onClick={() => void openEssay(item)}>{item.goal}</button>)}
+          {essays.map(item => <button type='button' key={item.essay_id} className={essayId === item.essay_id ? 'selected' : ''} onClick={() => void openEssay(item)}>{item.goal}</button>)}
         </div>}
         {mode === 'write' ? <div className='practice-workspace'>
           <section className='practice-main-column'>

@@ -12,6 +12,7 @@ from django.utils import timezone
 
 from ai_feedback.practice_provider import CodexPracticeChatProvider, PracticeChatResult
 from core.models import PracticeChatTurn, PracticeRun
+from core.observability import bind_ai_job, classify_ai_error, reset_ai_job, safe_ai_error_message
 
 logger = logging.getLogger(__name__)
 LEASE_DURATION = timedelta(minutes=15)
@@ -80,6 +81,7 @@ def process_next_turn(provider: ChatProvider | None = None) -> PracticeChatTurn 
     turn = claim_next_turn()
     if turn is None:
         return None
+    trace_token = bind_ai_job("chat", turn.pk)
     logger.info("Practice chat claimed turn_id=%s attempt=%s", turn.pk, turn.attempts)
     try:
         run = PracticeRun.objects.select_related("revision").get(pk=turn.run_id)
@@ -111,13 +113,15 @@ def process_next_turn(provider: ChatProvider | None = None) -> PracticeChatTurn 
             locked = PracticeChatTurn.objects.select_for_update().get(pk=turn.pk)
             if locked.status == "running" and locked.attempts == turn.attempts:
                 locked.status = "failed"
-                locked.error_category = "provider"
-                locked.error_message = "Coach reply failed; check the local AI worker logs"
+                locked.error_category = classify_ai_error(exc)
+                locked.error_message = safe_ai_error_message(category=locked.error_category, workflow="Coach reply")
                 locked.finished_at = timezone.now()
                 locked.lease_expires_at = None
                 locked.save(update_fields=[
                     "status", "error_category", "error_message", "finished_at", "lease_expires_at",
                 ])
+    finally:
+        reset_ai_job(trace_token)
     return turn
 
 

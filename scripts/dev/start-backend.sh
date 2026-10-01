@@ -7,4 +7,6 @@ set -euo pipefail
 echo "Starting Django backend on http://127.0.0.1:8000..."
 echo "API Docs available at: http://127.0.0.1:8000/api/schema/"
 
-cd backend && uv run python manage.py runserver 127.0.0.1:8000
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$SCRIPT_DIR/../.."
+exec make dev-backend

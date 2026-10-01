@@ -2,9 +2,6 @@
 
 from __future__ import annotations
 
-import json
-import os
-import shutil
 from datetime import timedelta
 
 from django.conf import settings
@@ -12,17 +9,33 @@ from django.db import connection
 from django.db.models import Count
 from django.http import HttpRequest
 from django.utils import timezone
-from ninja import Router
+from ninja import Router, Status
 
 from api_v2.utils.auth import JWTAuth
 from api_v2.utils.permissions import IsAdmin
 from core.models import AIJob, PracticeChatTurn, PracticeRun, WorkerHeartbeat
+from core.observability import codex_runtime_status, read_recent_traces
 
 router = Router(tags=["Observability"], auth=JWTAuth())
+health_router = Router(tags=["Readiness"])
 
 
 def _status_counts(model) -> dict[str, int]:
     return dict(model.objects.values("status").annotate(count=Count("status")).values_list("status", "count"))
+
+
+@health_router.get("/health/", response={200: dict, 503: dict})
+def health(request: HttpRequest):
+    """Unauthenticated local readiness check with no operational details."""
+    try:
+        with connection.cursor() as cursor:
+            cursor.execute("SELECT 1")
+            ready = cursor.fetchone()[0] == 1
+    except Exception:
+        ready = False
+    if ready:
+        return {"ready": True}
+    return Status(503, {"ready": False})
 
 
 @router.get("/overview/", response=dict)
@@ -36,14 +49,14 @@ def overview(request: HttpRequest):
         database_ok = False
     heartbeat = WorkerHeartbeat.objects.filter(pk=1).first() if database_ok else None
     worker_ok = bool(heartbeat and heartbeat.last_seen_at >= timezone.now() - timedelta(seconds=15))
-    codex_bin = os.environ.get("CODEX_BIN") or shutil.which("codex")
+    runtime = codex_runtime_status()
     if not database_ok:
         return {
             "database_ok": False,
             "worker_ok": False,
             "worker_last_seen_at": None,
             "worker_processed_jobs": 0,
-            "codex_binary_found": bool(codex_bin and os.path.isfile(codex_bin)),
+            **runtime,
             "counts": {"formal": {}, "practice": {}, "chat": {}},
             "jobs": [],
         }
@@ -72,7 +85,7 @@ def overview(request: HttpRequest):
         "worker_ok": worker_ok,
         "worker_last_seen_at": heartbeat.last_seen_at if heartbeat else None,
         "worker_processed_jobs": heartbeat.processed_jobs if heartbeat else 0,
-        "codex_binary_found": bool(codex_bin and os.path.isfile(codex_bin)),
+        **runtime,
         "counts": {
             "formal": _status_counts(AIJob),
             "practice": _status_counts(PracticeRun),
@@ -85,22 +98,4 @@ def overview(request: HttpRequest):
 @router.get("/traces/", response=list[dict])
 def list_traces(request: HttpRequest, job_id: str = "", limit: int = 100):
     IsAdmin().check(request)
-    limit = max(1, min(limit, 200))
-    rows = []
-    for path in settings.LOG_DIR.glob("traces-*.jsonl"):
-        if not path.is_file():
-            continue
-        try:
-            with path.open(encoding="utf-8") as source:
-                for line in source:
-                    try:
-                        row = json.loads(line)
-                    except json.JSONDecodeError:
-                        continue
-                    if job_id and row.get("attributes", {}).get("job.id") != job_id:
-                        continue
-                    rows.append(row)
-        except OSError:
-            continue
-    rows.sort(key=lambda row: row.get("started_at", ""), reverse=True)
-    return rows[:limit]
+    return read_recent_traces(settings.LOG_DIR, job_id=job_id, limit=limit)

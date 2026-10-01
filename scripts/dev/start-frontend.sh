@@ -6,4 +6,6 @@ set -euo pipefail
 
 echo "Starting Next.js frontend on port 5100..."
 
-cd frontend && pnpm dev
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+cd "$SCRIPT_DIR/../.."
+exec make dev-frontend

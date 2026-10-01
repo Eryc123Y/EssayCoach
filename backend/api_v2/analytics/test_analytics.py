@@ -12,6 +12,7 @@ from core.models import (
     Enrollment,
     Feedback,
     FeedbackItem,
+    LoginEvent,
     MarkingRubric,
     RubricItem,
     Submission,
@@ -113,3 +114,36 @@ def test_export_escapes_spreadsheet_formulas():
 
     assert _safe_csv("=SUM(1,1)") == "'=SUM(1,1)"
     assert _safe_csv(" @SUM(1,1)") == "' @SUM(1,1)"
+
+
+@pytest.mark.django_db
+def test_login_counts_are_persisted_and_respect_date_and_course_scope():
+    admin = User.objects.create_user(
+        user_email="login-analytics-admin@example.com", password="TestPass123!", user_role="admin"
+    )
+    teacher = User.objects.create_user(
+        user_email="login-analytics-teacher@example.com", password="TestPass123!", user_role="lecturer"
+    )
+    student = User.objects.create_user(user_email="login-analytics-student@example.com", password="TestPass123!")
+    outsider = User.objects.create_user(user_email="login-analytics-outsider@example.com", password="TestPass123!")
+    unit = Unit.objects.create(unit_id="LOG101", unit_name="Writing")
+    class_obj = Class.objects.create(unit_id_unit=unit, class_name="Seminar")
+    Enrollment.objects.create(user_id_user=student, class_id_class=class_obj, unit_id_unit=unit)
+    TeachingAssn.objects.create(user_id_user=teacher, class_id_class=class_obj)
+    today = timezone.now()
+    LoginEvent.objects.create(user=student)
+    LoginEvent.objects.create(user=teacher)
+    LoginEvent.objects.create(user=outsider)
+    LoginEvent.objects.filter(user=outsider).update(created_at=today - timedelta(days=8))
+
+    admin_client = _client(admin)
+    teacher_client = _client(teacher)
+    institution = admin_client.get("/api/v2/analytics/institution/").json()
+    assert institution["login_count"] == 3
+    assert institution["login_users"] == 3
+    today_only = admin_client.get("/api/v2/analytics/institution/?start_date=" + today.date().isoformat()).json()
+    assert today_only["login_count"] == 2
+    class_report = teacher_client.get(f"/api/v2/analytics/classes/{class_obj.pk}/").json()
+    assert class_report["login_count"] == 2
+    assert class_report["login_users"] == 2
+    assert _client(student).get("/api/v2/analytics/institution/").status_code == 403

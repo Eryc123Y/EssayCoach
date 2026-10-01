@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime, timedelta
 
-from django.db import models
+from django.db import models, transaction
 from django.db.models import ProtectedError
 from django.db.models.deletion import Collector
 from django.http import HttpRequest
@@ -17,8 +17,11 @@ from api_v2.types.ids import (
 from api_v2.utils.auth import JWTAuth
 from api_v2.utils.course_scope import require_visible_user, visible_classes, visible_users
 from core.models import (
+    AdminAuditEvent,
     AuthSession,
+    EmailChangeGrant,
     Feedback,
+    PasswordResetGrant,
     Submission,
     User,
     UserBadge,
@@ -148,21 +151,31 @@ def delete_user(request: HttpRequest, user_id: UserId) -> SuccessResponse:
 
     # Admins cannot delete other admins
     try:
-        target_user = User.objects.get(user_id=user_id)
-        if target_user.user_role == "admin":
-            raise HttpError(403, "Cannot delete admin accounts")
-        conflict = "Accounts with related records must be disabled, not deleted"
-        collector = Collector(using=target_user._state.db or "default")
-        try:
-            collector.collect([target_user])
-        except ProtectedError as exc:
-            # Shared essays and content reports use PROTECT, so the collector refuses before the check below.
-            raise HttpError(409, conflict) from exc
-        if any(model is not User and objects for model, objects in collector.data.items()) or any(
-            queryset.exists() for queryset in collector.fast_deletes
-        ):
-            raise HttpError(409, conflict)
-        target_user.delete()
+        with transaction.atomic():
+            target_user = User.objects.select_for_update().get(user_id=user_id)
+            if target_user.pk == current_user.pk:
+                raise HttpError(403, "Cannot delete your own account")
+            if target_user.user_role == "admin":
+                raise HttpError(403, "Cannot delete admin accounts")
+            conflict = "Accounts with related records must be disabled, not deleted"
+            collector = Collector(using=target_user._state.db or "default")
+            try:
+                collector.collect([target_user])
+            except ProtectedError as exc:
+                raise HttpError(409, conflict) from exc
+            # Revocable login credentials can be removed. Course, writing and
+            # support records remain protected; audit/login events use SET_NULL.
+            disposable = {User, AuthSession, PasswordResetGrant, EmailChangeGrant}
+            if any(model not in disposable and objects for model, objects in collector.data.items()) or any(
+                queryset.model not in disposable and queryset.exists() for queryset in collector.fast_deletes
+            ):
+                raise HttpError(409, conflict)
+            email = target_user.user_email
+            AdminAuditEvent.objects.filter(target=target_user).update(target_email=email)
+            target_user.delete()
+            AdminAuditEvent.objects.create(
+                actor=current_user, target=None, target_email=email, action="delete_user"
+            )
         return SuccessResponse(success=True)
     except User.DoesNotExist:
         raise HttpError(404, "User not found")

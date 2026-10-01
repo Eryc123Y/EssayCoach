@@ -23,7 +23,13 @@ def test_help_articles_are_bilingual_searchable_and_role_scoped():
     articles = student_client.get("/api/v2/help/articles/?language=zh").json()
     assert any(item["slug"] == "practice-and-sources" and item["language"] == "zh" for item in articles)
     assert not any(item["slug"] == "set-up-a-course" for item in articles)
+    assert any(item["slug"] == "student-first-steps" for item in articles)
+    assert not any(item["slug"] == "lecturer-first-steps" for item in articles)
     assert _client(teacher).get("/api/v2/help/articles/set-up-a-course/?language=zh").status_code == 200
+    assert any(item["slug"] == "lecturer-first-steps" for item in _client(teacher).get("/api/v2/help/articles/").json())
+    admin = User.objects.create_user(user_email="help-admin@example.com", password="TestPass123!", user_role="admin")
+    assert any(item["slug"] == "admin-first-steps" for item in _client(admin).get("/api/v2/help/articles/").json())
+    assert student_client.get("/api/v2/help/faqs/?language=zh").json()[0]["question"]
     assert student_client.get("/api/v2/help/articles/set-up-a-course/").status_code == 404
     result = student_client.get("/api/v2/help/articles/?query=grade&language=en").json()
     assert any(item["slug"] == "submit-an-assignment" for item in result)
@@ -39,6 +45,15 @@ def test_help_articles_are_bilingual_searchable_and_role_scoped():
     assert student_client.post(
         "/api/v2/help/articles/set-up-a-course/feedback/", {"helpful": True}, content_type="application/json"
     ).status_code == 404
+
+
+@pytest.mark.django_db
+def test_support_contact_reports_configured_and_missing_email(monkeypatch):
+    client = _client(User.objects.create_user(user_email="support@example.com", password="TestPass123!"))
+    monkeypatch.delenv("SUPPORT_EMAIL", raising=False)
+    assert client.get("/api/v2/help/support/contact/").json() == {"email": None, "configured": False}
+    monkeypatch.setenv("SUPPORT_EMAIL", "help@example.org")
+    assert client.get("/api/v2/help/support/contact/").json() == {"email": "help@example.org", "configured": True}
 
 
 @pytest.mark.django_db

@@ -299,6 +299,10 @@ def remove_interaction(request: HttpRequest, interaction_id: int):
     item = get_object_or_404(SocialInteraction.objects.select_related("share__class_obj"), pk=interaction_id)
     if item.user_id != request.auth.pk and not _can_moderate(request.auth, item.share):
         raise HttpError(403, "Cannot remove this response")
+    if ContentReport.objects.filter(
+        interaction=item, status__in=["open", "investigating"]
+    ).exists():
+        raise HttpError(409, "This response cannot be removed while its report is under review")
     item.delete()
     return {"success": True}
 
@@ -324,6 +328,8 @@ def report_content(request: HttpRequest, data: ContentReportIn):
         if data.submission_id is not None and interaction.share.submission_id != data.submission_id:
             raise HttpError(400, "Report targets do not match")
         submission_id = interaction.share.submission_id
+        if interaction.interaction_type not in {"comment", "feedback"}:
+            raise HttpError(400, "Only comments and feedback can be reported")
     else:
         submission_id = data.submission_id
     share = _require_share(request.auth, submission_id)
@@ -338,10 +344,18 @@ def report_content(request: HttpRequest, data: ContentReportIn):
 
 
 def _report_row(report: ContentReport) -> dict:
+    interaction = report.interaction
     return {
         "id": report.pk,
         "submission_id": report.share.submission_id,
         "interaction_id": report.interaction_id,
+        "target_type": interaction.interaction_type if interaction else "essay",
+        "target_content": interaction.content if interaction else report.share.submission.submission_txt[:500],
+        "target_author": (
+            interaction.user.get_full_name() or interaction.user.user_email
+            if interaction
+            else report.share.owner.get_full_name() or report.share.owner.user_email
+        ),
         "reporter_id": report.reporter_id,
         "reason": report.reason,
         "description": report.description,
@@ -362,7 +376,9 @@ def my_reports(request: HttpRequest):
 def moderation_reports(request: HttpRequest, status: str = "open"):
     if request.auth.user_role == "student":
         raise HttpError(403, "Teaching staff only")
-    queryset = ContentReport.objects.select_related("share__class_obj", "reporter")
+    queryset = ContentReport.objects.select_related(
+        "share__class_obj", "share__submission", "share__owner", "reporter", "interaction__user"
+    )
     if status != "all":
         queryset = queryset.filter(status=status)
     return [
@@ -385,13 +401,19 @@ def resolve_report(request: HttpRequest, report_id: int, data: ResolveReportIn):
             report.share.status = "hidden"
             report.share.save(update_fields=["status", "updated_at"])
         elif data.decision == "remove":
-            report.share.status = "removed"
-            report.share.save(update_fields=["status", "updated_at"])
+            if report.interaction_id:
+                report.interaction.delete()
+                report.interaction = None
+                report.interaction_id = None
+            else:
+                report.share.status = "removed"
+                report.share.save(update_fields=["status", "updated_at"])
         report.status = "dismissed" if data.decision == "keep" else "resolved"
         report.decision = data.decision
         report.resolved_by = request.auth
         report.resolved_at = timezone.now()
         report.save(update_fields=["status", "decision", "resolved_by", "resolved_at", "updated_at"])
+        report.refresh_from_db()
     return _report_row(report)
 
 

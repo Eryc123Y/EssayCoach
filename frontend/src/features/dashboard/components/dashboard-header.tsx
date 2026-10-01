@@ -7,6 +7,7 @@ import type { DashboardUserInfo, DashboardStats, LecturerStats, StudentStats, Ad
 import { IconAward, IconListCheck, IconPencil, IconTrendingUp } from '@tabler/icons-react';
 import { format } from 'date-fns';
 import { usePreferences } from '@/components/layout/preference-provider';
+import { useEffect, useState } from 'react';
 
 interface DashboardHeaderProps {
   user: DashboardUserInfo;
@@ -23,9 +24,15 @@ interface DashboardHeaderProps {
 export function DashboardHeader({ user, stats, role }: DashboardHeaderProps) {
   const { locale } = usePreferences();
   const t = (en: string, zh?: string) => localized(locale, en, zh);
-  const currentDate = locale === 'zh'
-    ? new Intl.DateTimeFormat('zh-CN', { dateStyle: 'full', timeStyle: 'short' }).format(new Date())
-    : format(new Date(), 'EEEE, MMMM d, y · h:mm a');
+  const [currentTime, setCurrentTime] = useState<Date | null>(null);
+
+  useEffect(() => {
+    setCurrentTime(new Date());
+  }, []);
+
+  const currentDate = currentTime && (locale === 'zh'
+    ? new Intl.DateTimeFormat('zh-CN', { dateStyle: 'full', timeStyle: 'short' }).format(currentTime)
+    : format(currentTime, 'EEEE, MMMM d, y · h:mm a'));
 
   // Get role-specific stat cards
   const getStatCards = () => {
@@ -119,7 +126,7 @@ export function DashboardHeader({ user, stats, role }: DashboardHeaderProps) {
       <div className="flex flex-col gap-2">
         <div className="flex min-w-0 flex-wrap items-start gap-2">
           <h1 className="min-w-0 max-w-full break-words text-2xl font-semibold leading-tight tracking-tight text-slate-900 [overflow-wrap:anywhere] dark:text-slate-100 sm:text-[32px]">
-            {getGreeting(user.name, locale)}
+            {getGreeting(user.name, locale, currentTime)}
           </h1>
           {role && (
             <RoleBadge role={role} locale={locale} />
@@ -190,11 +197,13 @@ function RoleBadge({ role, locale }: { role: 'student' | 'lecturer' | 'admin'; l
   );
 }
 
-function getGreeting(name: string | null, locale: 'en' | 'zh'): string {
+function getGreeting(name: string | null, locale: 'en' | 'zh', currentTime: Date | null): string {
   if (!name) return localized(locale, 'ui.welcome');
   const displayName = name.includes('@') ? name.split('@')[0] : name.split(' ')[0];
 
-  const hour = new Date().getHours();
+  if (!currentTime) return `${localized(locale, 'ui.welcome')}, ${displayName}`;
+
+  const hour = currentTime.getHours();
   let greeting = 'Good morning';
 
   if (hour >= 12 && hour < 17) {

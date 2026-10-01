@@ -104,8 +104,9 @@ def test_scoring_returns_items_thread_and_model(monkeypatch):
 
 def test_scoring_refuses_a_non_chatgpt_login(monkeypatch):
     _install_fake_codex(monkeypatch, account_type="apiKey")
-    with pytest.raises(CodexProviderError, match="ChatGPT subscription login"):
+    with pytest.raises(CodexProviderError, match="ChatGPT subscription login") as error:
         _score(CodexScoringProvider(codex_bin="fake-codex"))
+    assert error.value.category == "subscription_login"
 
 
 @pytest.mark.parametrize(
@@ -121,8 +122,9 @@ def test_scoring_refuses_a_non_chatgpt_login(monkeypatch):
 )
 def test_scoring_rejects_unusable_model_output(monkeypatch, status, final_response, message):
     _install_fake_codex(monkeypatch, status=status, final_response=final_response)
-    with pytest.raises(CodexProviderError, match=message):
+    with pytest.raises(CodexProviderError, match=message) as error:
         _score(CodexScoringProvider(codex_bin="fake-codex"))
+    assert error.value.category in {"provider", "model_output"}
 
 
 def test_scoring_provider_requires_a_runtime_and_a_positive_timeout(monkeypatch):

@@ -4,7 +4,7 @@
 - Audience: engineers building and reviewing the local product
 - Scope: one institution, four user experiences, Chinese and English, all 14 PRDs
 
-This document fixes the boundaries for turning the [interactive prototype](interactive-prototype.md) into a local product. The numbered [PRDs](../prd/) remain the feature source of truth; the product decisions already agreed with the owner override older open-registration, Dify, and automatic-grade-publication language in those documents. The code is the source of truth for what works today. [Completion plan](product-completion-plan.md) tracks the implementation order.
+This document fixes the boundaries for turning the [interactive prototype](interactive-prototype.md) into a local product. The numbered PRDs in `docs/prd/` remain the feature source of truth; the product decisions already agreed with the owner override older open-registration, Dify, and automatic-grade-publication language in those documents. The code is the source of truth for what works today. [Completion plan](product-completion-plan.md) tracks the implementation order; the [2026-10-01 acceptance record](../development/release-acceptance-2026-10-01.md) records the current verification.
 
 ## Initial context and gaps at the start of implementation
 

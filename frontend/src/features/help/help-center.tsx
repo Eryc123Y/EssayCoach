@@ -10,13 +10,20 @@ import type { DashboardRole } from '@/lib/server-dashboard-auth';
 import { helpService, type HelpArticle, type SupportTicket } from '@/service/api/v2/help';
 
 const CATEGORIES = [
-  ['all', 'All topics', '全部主题'],
-  ['getting_started', 'Getting started', '开始使用'],
-  ['essays', 'Writing & feedback', '写作与反馈'],
-  ['rubrics', 'Teaching & grading', '教学与评分'],
-  ['account', 'Accounts', '账号'],
-  ['faq', 'Troubleshooting', '疑难解答'],
+  ['all', 'ui.helpCategoryAllTopics'],
+  ['getting_started', 'ui.helpCategoryGettingStarted'],
+  ['essays', 'ui.helpCategoryWritingFeedback'],
+  ['rubrics', 'ui.helpCategoryTeachingGrading'],
+  ['account', 'ui.helpCategoryAccounts'],
+  ['faq', 'ui.helpCategoryTroubleshooting'],
 ] as const;
+
+const TICKET_STATUS_LABELS: Record<SupportTicket['status'], string> = {
+  open: 'ui.ticketStatusOpen',
+  in_progress: 'ui.ticketStatusInProgress',
+  resolved: 'ui.ticketStatusResolved',
+  closed: 'ui.ticketStatusClosed',
+};
 
 export function HelpCenter({ role }: { role: DashboardRole }) {
   const { locale: language, changeLocale: setLanguage } = usePreferences();
@@ -31,24 +38,36 @@ export function HelpCenter({ role }: { role: DashboardRole }) {
   const [subject, setSubject] = useState('');
   const [description, setDescription] = useState('');
   const [sending, setSending] = useState(false);
+  const [faqs, setFaqs] = useState<{ question: string; answer: string }[]>([]);
+  const [supportEmail, setSupportEmail] = useState<string | null>(null);
   const t = (en: string, zh?: string) => localized(language, en, zh);
+
+  useEffect(() => {
+    const requested = new URLSearchParams(window.location.search).get('category');
+    if (requested && CATEGORIES.some(([value]) => value === requested)) setCategory(requested);
+  }, []);
 
   useEffect(() => {
     let active = true;
     setLoading(true);
     helpService.listArticles(language, deferredQuery, category === 'all' ? '' : category)
       .then((items) => { if (active) { setArticles(items); setError(''); } })
-      .catch(() => { if (active) setError('Could not load help articles. Please try again.'); })
+      .catch(() => { if (active) setError(localized(language, 'ui.couldNotLoadHelpArticles')); })
       .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
   }, [language, deferredQuery, category]);
 
   useEffect(() => {
-    helpService.listTickets().then(setTickets).catch(() => setError('Could not load support tickets.'));
+    helpService.listFaqs(language).then(setFaqs).catch(() => setFaqs([]));
+    helpService.getSupportContact().then((contact) => setSupportEmail(contact.email)).catch(() => setSupportEmail(null));
+  }, [language]);
+
+  useEffect(() => {
+    helpService.listTickets().then(setTickets).catch(() => setError(localized(language, 'ui.couldNotLoadSupportTickets')));
     if (role === 'admin') {
-      helpService.listAdminTickets().then(setAdminTickets).catch(() => setError('Could not load the support queue.'));
+      helpService.listAdminTickets().then(setAdminTickets).catch(() => setError(localized(language, 'ui.couldNotLoadSupportQueue')));
     }
-  }, [role]);
+  }, [role, language]);
 
   async function submitTicket(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -62,7 +81,7 @@ export function HelpCenter({ role }: { role: DashboardRole }) {
       setDescription('');
       setError('');
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'Could not send your request.');
+      setError(cause instanceof Error ? cause.message : t('ui.couldNotSendRequest'));
     } finally {
       setSending(false);
     }
@@ -77,7 +96,7 @@ export function HelpCenter({ role }: { role: DashboardRole }) {
       setTickets((current) => current.map((item) => item.id === updated.id ? updated : item));
       setError('');
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'Could not update the request.');
+      setError(cause instanceof Error ? cause.message : t('ui.couldNotUpdateRequest'));
     }
   }
 
@@ -95,7 +114,7 @@ export function HelpCenter({ role }: { role: DashboardRole }) {
         <IconSearch size={20} className='text-slate-500' />
         <input value={query} onChange={(event) => setQuery(event.target.value)} placeholder={t('ui.searchQuestionsAndGuides')} aria-label={t('ui.searchHelp')} className='w-full bg-transparent text-base text-slate-900 outline-none placeholder:text-slate-500' />
       </label>
-      <div className='mt-5 flex flex-wrap gap-2'>{CATEGORIES.map(([value, en, zh]) => <button type='button' key={value} onClick={() => setCategory(value)} aria-pressed={category === value} className={`rounded-full px-4 py-2 text-sm font-medium ${category === value ? 'bg-teal-800 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}>{t(en, zh)}</button>)}</div>
+      <div className='mt-5 flex flex-wrap gap-2'>{CATEGORIES.map(([value, label]) => <button type='button' key={value} onClick={() => setCategory(value)} aria-pressed={category === value} className={`rounded-full px-4 py-2 text-sm font-medium ${category === value ? 'bg-teal-800 text-white' : 'bg-slate-100 text-slate-700 hover:bg-slate-200'}`}>{t(label)}</button>)}</div>
       {error && <p role='alert' className='mt-5 rounded-xl bg-rose-50 p-3 text-sm text-rose-800'>{error}</p>}
       <div className='mt-7 grid gap-3 md:grid-cols-2'>
         {loading ? <p className='text-slate-500'>{t('ui.loadingGuides')}</p> : articles.length ? articles.map((article) => <Link key={article.slug} href={`/dashboard/help/${article.slug}?language=${language}`} className='group rounded-2xl border border-slate-200 p-5 transition hover:border-teal-500 hover:bg-teal-50/50'>
@@ -105,10 +124,13 @@ export function HelpCenter({ role }: { role: DashboardRole }) {
       </div>
     </section>
 
+    <section className='mt-9 rounded-[2rem] border border-slate-200 bg-white p-6 md:p-8'><h2 className='text-2xl font-semibold text-slate-950'>{t('ui.frequentlyAskedQuestions')}</h2><div className='mt-4 divide-y divide-slate-200'>{faqs.map((faq) => <details key={faq.question} className='py-4'><summary className='cursor-pointer font-semibold text-slate-900'>{faq.question}</summary><p className='mt-3 text-sm leading-6 text-slate-600'>{faq.answer}</p></details>)}</div></section>
+
     <section className='mt-9 grid gap-6 lg:grid-cols-[1.2fr_0.8fr]'>
       <div className='rounded-[2rem] bg-slate-900 p-7 text-white md:p-9'><IconLifebuoy size={28} className='text-teal-300' />
         <h2 className='mt-4 text-2xl font-semibold'>{t('ui.stillNeedHelp')}</h2>
         <p className='mt-2 text-sm leading-6 text-slate-300'>{t('ui.sendARequestToYourInstitutionSLocalSupportTeam')}</p>
+        {supportEmail ? <p className='mt-2 text-sm text-teal-200'>{t('ui.emailSupport')}：<a className='underline' href={`mailto:${supportEmail}`}>{supportEmail}</a></p> : <p className='mt-2 text-sm text-slate-300'>{t('ui.noSupportEmailConfigured')}</p>}
         <form onSubmit={submitTicket} className='mt-6 space-y-3'>
           <input required maxLength={200} value={subject} onChange={(event) => setSubject(event.target.value)} placeholder={t('ui.subject')} aria-label={t('ui.subject')} className='w-full rounded-xl border border-slate-600 bg-slate-800 px-4 py-3 text-white outline-none focus:border-teal-300' />
           <textarea required minLength={10} rows={4} value={description} onChange={(event) => setDescription(event.target.value)} placeholder={t('ui.describeTheIssueAtLeast10Characters')} aria-label={t('ui.description')} className='w-full resize-y rounded-xl border border-slate-600 bg-slate-800 px-4 py-3 text-white outline-none focus:border-teal-300' />
@@ -117,7 +139,7 @@ export function HelpCenter({ role }: { role: DashboardRole }) {
       </div>
       <div className='rounded-[2rem] border border-slate-200 bg-white p-7 md:p-9'><h2 className='text-2xl font-semibold text-slate-950'>{t('ui.yourRequests')}</h2>
         <div className='mt-5 space-y-3'>{tickets.length ? tickets.map((ticket) => <article key={ticket.id} className='rounded-xl border border-slate-200 p-4'>
-          <div className='flex items-center justify-between gap-3'><strong className='text-sm text-slate-900'>{ticket.subject}</strong><span className='rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-700'>{ticket.status.replace('_', ' ')}</span></div>
+          <div className='flex items-center justify-between gap-3'><strong className='text-sm text-slate-900'>{ticket.subject}</strong><span className='shrink-0 whitespace-nowrap rounded-full bg-slate-100 px-2.5 py-1 text-xs text-slate-700'>{t(TICKET_STATUS_LABELS[ticket.status])}</span></div>
           {ticket.staff_reply && <p className='mt-2 text-sm leading-6 text-slate-600'>{ticket.staff_reply}</p>}
         </article>) : <p className='text-sm text-slate-500'>{t('ui.noRequestsYet')}</p>}</div>
       </div>

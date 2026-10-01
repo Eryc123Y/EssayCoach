@@ -1,5 +1,7 @@
 # Local release acceptance record
 
+This is the historical September record. See the [2026-10-01 acceptance record](release-acceptance-2026-10-01.md) for the current local build, tests, and live-provider evidence.
+
 This record describes the one-institution, private local product on 2026-09-25. The 14 original PRDs were written for a broader public service. The owner's later decisions control this build: invitation-only accounts, English and Chinese, Codex subscription login with Luna, teacher review followed by course-lead publication, and no public deployment. The same lecturer may perform both assessment actions; they create separate audit events.
 
 ## Implemented journeys

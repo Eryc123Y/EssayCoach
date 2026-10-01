@@ -24,6 +24,8 @@ export type ClassAnalytics = {
   task_count: number;
   submission_count: number;
   published_count: number;
+  login_count: number;
+  login_users: number;
   average_score: number | null;
   completion_rate: number;
   distribution: Array<{ range: string; count: number }>;
@@ -38,6 +40,8 @@ export type InstitutionAnalytics = {
   active_students: number;
   active_lecturers: number;
   active_classes: number;
+  login_count: number;
+  login_users: number;
   submission_count: number;
   published_count: number;
   average_score: number | null;

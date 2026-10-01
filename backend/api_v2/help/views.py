@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+import os
+
 from django.http import HttpRequest
 from ninja import Query, Router
 from ninja.errors import HttpError
@@ -16,12 +18,54 @@ from .schemas import (
     ArticleSearchIn,
     ArticleVoteIn,
     ArticleVoteOut,
+    FAQOut,
+    SupportContactOut,
     SupportTicketIn,
     SupportTicketOut,
     SupportTicketUpdateIn,
 )
 
 router = Router(tags=["Help Center"], auth=JWTAuth())
+
+FAQS = [
+    {
+        "question": {"en": "How do I get access?", "zh": "如何获得访问权限？"},
+        "answer": {
+            "en": "Use an invitation from your institution. Contact your course team if you need one.",
+            "zh": "请使用所在机构发出的邀请。如需邀请，请联系课程团队。",
+        },
+    },
+    {
+        "question": {"en": "Does practice feedback affect my grade?", "zh": "练习反馈会影响成绩吗？"},
+        "answer": {
+            "en": "No. Practice feedback is separate from formal assessment and grades.",
+            "zh": "不会。练习反馈与正式考核和成绩分开。",
+        },
+    },
+    {
+        "question": {"en": "Why can’t I see an assignment or grade?", "zh": "为什么看不到作业或成绩？"},
+        "answer": {
+            "en": (
+                "Check class enrollment and whether the assignment is published. Grades appear after teaching staff "
+                "review and release them."
+            ),
+            "zh": "请检查班级选课状态和作业是否已发布。成绩须经教师复核并发布后才会显示。",
+        },
+    },
+]
+
+
+@router.get("/faqs/", response=list[FAQOut])
+def list_faqs(request: HttpRequest, language: str = "en"):
+    if language not in ("en", "zh"):
+        raise HttpError(400, "Unsupported language")
+    return [{"question": item["question"][language], "answer": item["answer"][language]} for item in FAQS]
+
+
+@router.get("/support/contact/", response=SupportContactOut)
+def support_contact(request: HttpRequest):
+    email = os.environ.get("SUPPORT_EMAIL", "").strip() or None
+    return {"email": email, "configured": email is not None}
 
 
 def _ticket_out(ticket: SupportTicket) -> dict:

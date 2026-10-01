@@ -16,7 +16,7 @@ dependencies = [
     "typing-extensions[dev]>=4.0.0",
     "django-ninja>=1.0,<2.0",
     "djangorestframework-simplejwt>=5.5.1",
-    "openai-codex>=0.147.0",
+    "openai-codex>=0.159.3",
     "opentelemetry-api>=1.44.0",
     "opentelemetry-sdk>=1.44.0",
 ]

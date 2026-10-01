@@ -13,6 +13,7 @@
 
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
+import { renderToString } from 'react-dom/server';
 import { DashboardHeader } from '@/features/dashboard/components/dashboard-header';
 import type { DashboardUserInfo, DashboardStats } from '@/service/api/v2/types';
 
@@ -76,6 +77,21 @@ describe('DashboardHeader', () => {
 
   afterEach(() => {
     vi.restoreAllMocks();
+  });
+
+  it('renders identical server markup at different times before client hydration', () => {
+    vi.useFakeTimers();
+    try {
+      vi.setSystemTime(new Date('2026-10-01T08:00:00Z'));
+      const morning = renderToString(<DashboardHeader user={mockAdminUser} stats={mockStats} role="admin" />);
+      vi.setSystemTime(new Date('2026-10-01T20:00:00Z'));
+      const evening = renderToString(<DashboardHeader user={mockAdminUser} stats={mockStats} role="admin" />);
+
+      expect(morning).toBe(evening);
+      expect(morning).toContain('Welcome, Admin');
+    } finally {
+      vi.useRealTimers();
+    }
   });
 
   describe('Greeting Display', () => {

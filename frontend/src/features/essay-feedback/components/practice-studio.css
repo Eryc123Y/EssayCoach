@@ -132,4 +132,20 @@
 .practice-chat-input button { width: 34px; height: 34px; border: 0; border-radius: 7px; display: grid; place-items: center; background: var(--practice-blue); color: white; flex: none; }
 @media (max-width: 1050px) { .practice-workspace, .practice-report-grid { grid-template-columns: 1fr; } .practice-rail { grid-template-columns: repeat(3, 1fr); } .practice-rail-section, .practice-revisions { grid-column: 1 / -1; } }
 @media (max-width: 650px) { .practice-studio { padding: 20px 15px; } .practice-topline { flex-direction: column; } .practice-top-actions { width: 100%; justify-content: space-between; } .practice-rail { grid-template-columns: 1fr; } .practice-report-head { align-items: flex-start; } .practice-score strong { font-size: 58px; } .practice-feedback-columns { grid-template-columns: 1fr; gap: 0; } .practice-paper textarea { padding: 24px 20px; } .practice-paper-foot span:last-child { display: none; } }
-@media print { .practice-topline, .practice-history-strip, .practice-back, .practice-print, .practice-action-row { display: none !important; } .practice-studio { padding: 0; background: #fff; } .practice-report-grid { grid-template-columns: minmax(0, 1fr) 240px; } .practice-report-section, .practice-report-rail section, .practice-report-head { break-inside: avoid; } }
+@media print {
+  [data-slot='sidebar'], [data-dashboard-print-shell] > header { display: none !important; }
+  [data-dashboard-print-shell] { display: block !important; height: auto !important; min-height: 0 !important; }
+  [data-dashboard-print-content] { display: block !important; overflow: visible !important; height: auto !important; width: 100% !important; }
+  .practice-topline, .practice-history-strip, .practice-back, .practice-print, .practice-action-row, .practice-chat-input, .practice-chat-error button, .practice-chat-pending { display: none !important; }
+  .practice-studio { padding: 0; background: #fff; }
+  .practice-report-grid { grid-template-columns: minmax(0, 1fr); }
+  .practice-report-main, .practice-report-rail { min-width: 0; }
+  .practice-chat-history { max-height: none; overflow: visible; }
+  .practice-evidence, .practice-chat-question, .practice-chat-answer { overflow-wrap: anywhere; }
+  .practice-exemplar > p { display: block !important; }
+  .practice-exemplar summary { cursor: default; list-style: none; }
+  .practice-exemplar summary::-webkit-details-marker { display: none; }
+  .practice-report-section, .practice-report-rail section, .practice-report-head { break-inside: avoid; }
+  .practice-coach { break-inside: auto !important; }
+  .practice-chat-turn { break-inside: avoid; }
+}

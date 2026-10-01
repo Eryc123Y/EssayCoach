@@ -103,6 +103,118 @@ jobs:
         working-directory: ./frontend
         run: pnpm build
 
+  e2e-formal-assessment:
+    runs-on: ubuntu-latest
+    needs: [backend-test, frontend-test]
+
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_USER: postgres
+          POSTGRES_DB: essaycoach_e2e
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup uv
+        uses: astral-sh/setup-uv@v4
+        with:
+          enable-cache: false
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
+        with:
+          version: 10
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: pnpm
+          cache-dependency-path: frontend/pnpm-lock.yaml
+
+      - name: Install dependencies and Chromium
+        run: |
+          cd backend && uv sync
+          cd ../frontend && pnpm install --frozen-lockfile
+          pnpm exec playwright install --with-deps chromium
+
+      - name: Build production frontend for E2E
+        env:
+          JWT_SECRET: e2e-only-jwt-secret
+          NEXT_PUBLIC_API_URL: http://127.0.0.1:8000
+          DJANGO_API_URL: http://127.0.0.1:8000
+        working-directory: ./frontend
+        run: pnpm build
+
+      - name: Migrate and start the disposable E2E stack
+        env:
+          POSTGRES_HOST: 127.0.0.1
+          POSTGRES_PORT: '5432'
+          POSTGRES_DB: essaycoach_e2e
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          # Django signs its JWTs with DJANGO_SECRET_KEY; the Next server uses
+          # JWT_SECRET to validate the same tokens during dashboard redirects.
+          DJANGO_SECRET_KEY: e2e-only-jwt-secret
+          JWT_SECRET: e2e-only-jwt-secret
+          NEXT_PUBLIC_API_URL: http://127.0.0.1:8000
+          DJANGO_API_URL: http://127.0.0.1:8000
+        run: |
+          cd backend && uv run python manage.py migrate --noinput
+          uv run python manage.py runserver 127.0.0.1:8000 > ../backend-e2e.log 2>&1 &
+          cd ../frontend && pnpm exec next start -H 127.0.0.1 -p 5100 > ../frontend-e2e.log 2>&1 &
+          for attempt in {1..40}; do
+            if curl --fail --silent --show-error --location http://127.0.0.1:8000/api/v2/observability/health/ > /dev/null && \
+              curl --fail --silent --show-error --location http://127.0.0.1:5100/auth/sign-in/ > /dev/null; then
+              break
+            fi
+            sleep 1
+          done
+          curl --fail --silent --show-error --location http://127.0.0.1:8000/api/v2/observability/health/ > /dev/null
+          curl --fail --silent --show-error --location http://127.0.0.1:5100/auth/sign-in/ > /dev/null
+
+      - name: Run formal assessment browser workflow
+        env:
+          POSTGRES_HOST: 127.0.0.1
+          POSTGRES_PORT: '5432'
+          POSTGRES_DB: essaycoach_e2e
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          DJANGO_SECRET_KEY: e2e-only-jwt-secret
+          JWT_SECRET: e2e-only-jwt-secret
+          PLAYWRIGHT_BASE_URL: http://127.0.0.1:5100
+          E2E_BACKEND_DIR: ${{ github.workspace }}/backend
+          E2E_BACKEND_PYTHON: ${{ github.workspace }}/backend/.venv/bin/python
+        working-directory: ./frontend
+        run: pnpm test:e2e
+
+      - name: Upload browser evidence on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: formal-assessment-e2e-artifacts
+          path: |
+            frontend/playwright-report
+            frontend/test-results
+            backend-e2e.log
+            frontend-e2e.log
+
   docs-build:
     runs-on: ubuntu-latest
 
