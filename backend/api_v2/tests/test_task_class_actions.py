@@ -3,10 +3,11 @@ Test Task and Class action endpoints.
 Run with: uv run pytest api_v2/tests/test_task_class_actions.py -v
 """
 
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 import pytest
 from django.test import Client
+from django.utils import timezone
 
 from api_v2.utils.jwt_auth import create_jwt_pair
 from core.models import (
@@ -108,7 +109,7 @@ def task_draft(db, unit, rubric, class_obj):
         task_title="Test Essay",
         task_desc="Write an essay",
         task_instructions="Submit your essay here",
-        task_due_datetime=datetime.now() + timedelta(days=7),
+        task_due_datetime=timezone.now() + timedelta(days=7),
         class_id_class=class_obj,
         task_status="draft",
     )
@@ -123,7 +124,7 @@ def task_published(db, unit, rubric, class_obj):
         task_title="Published Essay",
         task_desc="Write an essay",
         task_instructions="Submit your essay here",
-        task_due_datetime=datetime.now() + timedelta(days=7),
+        task_due_datetime=timezone.now() + timedelta(days=7),
         class_id_class=class_obj,
         task_status="published",
     )

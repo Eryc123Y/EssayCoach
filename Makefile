@@ -37,7 +37,6 @@ dev-worker:
 # Start backend only
 dev-backend:
 	@echo "Starting Django backend on http://127.0.0.1:8000..."
-	@echo "📚 API v1 Docs: http://127.0.0.1:8000/api/docs/"
 	@echo "📚 API v2 Docs: http://127.0.0.1:8000/api/v2/docs/"
 	@cd backend && .venv/bin/python manage.py runserver 127.0.0.1:8000
 

@@ -15,7 +15,7 @@
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
 import { LecturerDashboard, LecturerDashboardSkeleton } from '@/features/dashboard/components/lecturer-dashboard';
-import type { LecturerDashboardResponse, ClassOverview, GradingQueueItem } from '@/service/api/v2/types';
+import type { LecturerDashboardResponse } from '@/service/api/v2/types';
 
 vi.mock('@/components/layout/preference-provider', () => ({
   usePreferences: () => ({ locale: 'en' }),
@@ -54,7 +54,7 @@ vi.mock('@/components/ui/select', () => ({
 }));
 vi.mock('@/components/ui/button', () => ({
   Button: ({ children, className, asChild, size, variant, onClick, ...props }: any) => (
-    <button className={className} data-size={size} data-variant={variant} onClick={onClick} {...props}>
+    <button className={className} data-as-child={asChild} data-size={size} data-variant={variant} onClick={onClick} {...props}>
       {children}
     </button>
   ),

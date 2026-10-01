@@ -37,10 +37,10 @@ Implementation entry points are the matching `frontend/src/features/` modules an
 
 ## Automated verification
 
-- Backend: **491 passed**, 6 performance tests deselected, 8 legacy naive-datetime warnings. All **6 performance tests** separately pass.
-- Frontend: **48 test files / 577 tests passed**. These counts include the SDK, auth, date, token-fragment and print regressions where applicable; partial runs are not added to the total.
+- Backend after cleanup: **497 passed** (491 regular and 6 performance tests) with no warnings. Legacy fixtures now use timezone-aware dates.
+- Frontend after cleanup: **40 test files / 398 tests passed**. Eight test files covering unused legacy components and authentication code were removed with their source (179 tests); active product tests remain. Auth, date, token-fragment, print and current workflow regressions are included; partial runs are not added to the total.
 - Local setup: **10 focused tests passed**.
-- Ruff, Pyright, TypeScript, Django checks and migration checks pass. ESLint has **0 errors / 104 existing warnings**.
+- Ruff, Pyright, TypeScript, Django checks and migration checks pass. ESLint has **0 errors / 35 existing warnings**.
 - The final production Next.js build passes, including token-fragment, print-event, auth-response, older-draft access and Chinese protected-account repairs. The final production-browser formal workflow also passes (one test, 7.4 seconds including setup).
 - Documentation build passes; API schema and model diagram are generated from current source. No remote GitHub CI run or deployment is claimed.
 
@@ -71,3 +71,22 @@ Ignored local browser records live under `/private/tmp/essaycoach-admin-delete-f
 ## Completion boundary
 
 Development and local acceptance are complete for the approved private English/Chinese product scope. Real provider runs, local browser workflows, data persistence and automated suites support that conclusion. Public deployment, a real institutional pilot, general AI accuracy and human screen-reader validation are separate outcomes and are not claimed here.
+
+## Code cleanup (2026-10-01)
+
+- Removed 118 tracked files: unreachable template components/helpers, duplicate
+  auth/rubric/dashboard implementations, unused PDF/radar implementations, old
+  scripts/assets, and obsolete agent plans/session configuration.
+- Removed 59 unused direct frontend dependency declarations and regenerated the
+  lockfile. Every retained direct dependency kept its existing version. Backend
+  development dependencies now have one declaration under `dependency-groups`.
+- Removed eight test files (179 cases) that covered only the deleted legacy code.
+  The current product suite passes all 398 frontend and 497 backend tests.
+- Removed unused bindings, fixed a dashboard test that ignored its changed input,
+  made class selection use the latest state, and fixed naive-datetime fixtures.
+  ESLint warnings decreased from 104 to 35; no rules were disabled.
+- Corrected the active API guide, stale agent references and the format-check
+  command (it now checks without rewriting files).
+- The cleaned production build passed the complete invitation, submission,
+  teacher review and publication browser workflow on a separate test database
+  (one test, 7.2 seconds including setup).

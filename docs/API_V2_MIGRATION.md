@@ -1,5 +1,9 @@
 # API v2 Migration - Environment Configuration
 
+> Historical migration notes. The current application uses `/api/v2` only.
+> `NEXT_PUBLIC_API_VERSION` and the unused `/api/auth` handlers have been removed.
+> Use the root README and `frontend/src/service/api/v2/` for current setup and calls.
+
 ## Quick Start
 
 To use API v2 (recommended):

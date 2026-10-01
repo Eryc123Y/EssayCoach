@@ -94,7 +94,7 @@ describe('taskService', () => {
         json: async () => ({ ...mockTask, task_status: 'published' as const }),
       });
 
-      const task = await taskService.publishTask(1);
+      await taskService.publishTask(1);
       expect(global.fetch).toHaveBeenCalledWith(
         expect.stringContaining('/api/v2/core/tasks/1/publish/'),
         expect.objectContaining({ method: 'POST' })
@@ -109,7 +109,7 @@ describe('taskService', () => {
         json: async () => ({ ...mockTask, task_status: 'unpublished' as const }),
       });
 
-      const task = await taskService.unpublishTask(1);
+      await taskService.unpublishTask(1);
       expect(global.fetch).toHaveBeenCalledWith(
         expect.stringContaining('/api/v2/core/tasks/1/unpublish/'),
         expect.objectContaining({ method: 'POST' })

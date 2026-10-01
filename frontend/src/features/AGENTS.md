@@ -23,7 +23,7 @@ features/
 | Task workflows | `tasks/` | watch gitignore gotcha |
 | Class workflows | `classes/` | batch enroll + invite lecturer |
 | Settings state | `settings/` | only feature with a store subtree |
-| Rubric loading/filtering | `rubrics/hooks/useRubrics.ts` | still tied to legacy rubric service |
+| Rubric loading/filtering | `rubrics/components/rubric-list.tsx` | active rubric list and actions |
 
 ## CONVENTIONS
 - Prefer co-locating feature components, hooks, tests, and small local types.

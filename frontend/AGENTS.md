@@ -20,14 +20,14 @@ frontend/
 | Route/layout behavior | `src/app/AGENTS.md` | App Router + proxy/auth shell guidance |
 | Feature work | `src/features/AGENTS.md` | main frontend implementation zone |
 | API calls/contracts | `src/service/api/v2/AGENTS.md` | typed service layer |
-| JWT + CSRF | `src/lib/auth.ts` | secure auth helpers |
+| Dashboard identity | `src/lib/server-dashboard-auth.ts` | Django validates the token and current account |
 | Backend proxy | `src/app/api/v2/[...path]/route.ts` | allowlist + cookie-derived auth |
 | Global test mocks | `src/test/setup.ts` | mocks `next/navigation` |
 
 ## CONVENTIONS
 - Package manager is `pnpm`; run frontend commands from `frontend/`.
 - New work should prefer `/api/v2` services and contracts.
-- Server-side auth verification uses `jose`; client-side user state uses localStorage/context.
+- Server-side dashboard identity is verified by Django; client user metadata uses localStorage/context.
 - `credentials: 'include'` is mandatory for cookie-backed requests.
 - The `/app/api/v2/[...path]/route.ts` proxy is a security boundary: auth comes from cookies, and forwarded headers/cookies are explicitly allowlisted.
 - `127.0.0.1` is the dev default; avoid `localhost` surprises.

@@ -24,7 +24,7 @@
 ## SHARP EDGES
 - Dual service layers exist: legacy `src/service/api/` and active `src/service/api/v2/`.
 - Rubric logic is intentionally split: CRUD in `auth.ts`, advanced rubric actions in `rubrics.ts`.
-- `useRubrics` still depends on legacy rubric service code; do not “clean up” that split casually.
+- The active rubric list still uses `src/service/api/rubric.ts`; preserve it alongside the v2 rubric action service.
 
 ## ANTI-PATTERNS
 - Do not duplicate API contract types inside features.

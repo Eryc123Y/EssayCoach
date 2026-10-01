@@ -26,9 +26,9 @@ src/app/
 
 ## CONVENTIONS
 - Treat route handlers here as security boundaries; auth comes from cookies, not client-supplied headers.
-- Dashboard redirects validate JWTs server-side with `validateAndDecodeToken` before choosing a role route.
+- Dashboard redirects call `resolveDashboardRole`, which asks Django to validate the JWT and current account before choosing a role route.
 - The overview dashboard uses parallel routes (`@bar_stats`, `@pie_stats`, `@sales`, `@submissions`, etc.); keep slot compatibility intact.
-- `api/v2/*` is the active route-handler surface. Legacy `api/auth/*` files still exist, so verify you are editing the active path.
+- `api/v2/*` is the active route-handler surface; the unused `api/auth/*` handlers were removed.
 
 ## ANTI-PATTERNS
 - Do not replace the `/api/v2/[...path]` proxy with Next rewrites.
@@ -37,5 +37,4 @@ src/app/
 - Do not trust README references to `/api/v1` or old auth flow details without checking current code.
 
 ## NOTES
-- `dashboard/page.tsx` intentionally redirects unauthenticated users to `/dashboard/overview` for client-side recovery behavior.
-- The app tree still contains both active v2 handlers and older compatibility handlers; prefer the v2 tree for new work.
+- `dashboard/page.tsx` redirects unauthenticated users to `/auth/sign-in`.

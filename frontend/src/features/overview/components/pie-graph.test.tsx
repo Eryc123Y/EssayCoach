@@ -10,13 +10,13 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { PieGraph } from './pie-graph';
 
 // Mock the chart container and related components
 vi.mock('@/components/ui/chart', () => ({
   ChartConfig: {},
-  ChartContainer: ({ children, config, className }: any) => (
+  ChartContainer: ({ children, className }: any) => (
     <div data-testid="chart-container" className={className}>
       {children}
     </div>
@@ -24,7 +24,7 @@ vi.mock('@/components/ui/chart', () => ({
   ChartTooltip: ({ children, content }: any) => (
     <div data-testid="chart-tooltip">{content}{children}</div>
   ),
-  ChartTooltipContent: ({ indicator, className, hideLabel }: any) => (
+  ChartTooltipContent: ({ className, hideLabel }: any) => (
     <div data-testid="chart-tooltip-content" className={className}>
       Tooltip Content {hideLabel && '(hideLabel)'}
     </div>
@@ -63,7 +63,7 @@ vi.mock('@/components/ui/card', () => ({
 
 // Mock recharts
 vi.mock('recharts', () => ({
-  Pie: ({ data, dataKey, nameKey, innerRadius, outerRadius, paddingAngle, label, children }: any) => (
+  Pie: ({ dataKey, nameKey, innerRadius, outerRadius, paddingAngle, label, children }: any) => (
     <div 
       data-testid="pie-chart" 
       data-datakey={dataKey}

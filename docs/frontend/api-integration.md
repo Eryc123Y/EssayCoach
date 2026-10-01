@@ -1,76 +1,50 @@
 # API Integration
 
-## Overview
+## Request flow
 
-The frontend integrates with the Django REST API using a lightweight `fetch` wrapper for authentication and error handling.
+Browser requests use relative `/api/v2/...` URLs. Next.js route handlers forward
+requests to Django at `NEXT_PUBLIC_API_URL` (locally `http://127.0.0.1:8000`).
+The proxy reads the access token from an httpOnly cookie and allows only specific
+headers. Client-supplied roles and authorization headers do not grant access.
 
-## API Client Setup
+## Service modules
 
-The frontend uses a centralized request utility that reads the base URL from environment variables.
+Use the typed services under `frontend/src/service/api/v2/`:
+
+| Module | Responsibility |
+| --- | --- |
+| `auth.ts` | Login, identity, logout and rubric CRUD |
+| `classes.ts` / `tasks.ts` | Classes and assignments |
+| `rubrics.ts` | Advanced rubric actions |
+| `client.ts` | Shared API client |
+| `types.ts` | Request and response contracts |
+
+The active rubric list also uses `frontend/src/service/api/rubric.ts`; keep this
+adapter alongside the v2 services. The unused legacy auth service was removed.
 
 ```typescript
-// frontend/src/service/request.ts
-const BASE_URL = process.env.NEXT_PUBLIC_API_URL || '';
+import { authService } from '@/service/api/v2/auth';
+
+const user = await authService.getUserInfo();
 ```
 
-### Configuration
-Ensure you have a `.env.local` file in the `frontend/` directory with the following:
-```bash
-NEXT_PUBLIC_API_URL=http://localhost:8000
-```
+## Authentication
 
-## Service Modules
+| Next.js route | Responsibility |
+| --- | --- |
+| `POST /api/v2/auth/login/` (also `login-with-jwt/`) | Authenticate and set token cookies |
+| `GET /api/v2/auth/getUserInfo/` | Check the browser session |
+| `GET/PATCH /api/v2/auth/me/` | Read or update account details |
+| `POST /api/v2/auth/refresh/` | Refresh token cookies |
+| `POST /api/v2/auth/logout/` | Revoke the session and clear cookies |
 
-### Essay Service
-```typescript
-// services/essay.service.ts
-export const essayService = {
-  async createEssay(data: CreateEssayDto) {
-    return api.post('/api/essays/', data)
-  },
-  
-  async getEssays() {
-    return api.get('/api/essays/')
-  }
-}
-```
+Keep `credentials: 'include'` and the proxy's origin/CSRF checks. Tokens remain
+in httpOnly cookies; the client stores user metadata separately. Dashboard role
+selection calls Django through `server-dashboard-auth.ts`, so revoked sessions
+and current account status are checked before redirecting.
 
-### Auth Service
-```typescript
-// frontend/src/service/api/auth.ts
-export const fetchLogin = (userName: string, password: string) =>
-  request<Api.Auth.LoginToken>({
-    url: '/auth/login',
-    method: 'POST',
-    data: { userName, password }
-  })
+## Errors
 
-export const fetchGetUserInfo = () =>
-  request<Api.Auth.UserInfo>({
-    url: '/auth/getUserInfo',
-    method: 'GET'
-  })
-```
-
-### Next.js API Routes
-
-The frontend uses Next.js API routes as a lightweight proxy layer for auth endpoints:
-
-| Route | Purpose |
-|-------|---------|
-| `POST /auth/login` | Proxy to `/api/v1/auth/login/` |
-| `GET /auth/getUserInfo` | Proxy to `/api/v1/auth/me/` |
-| `GET /auth/error` | Frontend error simulation endpoint |
-
-> `refreshToken` is intentionally deferred and not implemented yet.
-
-## Error Handling
-
-- Global error handling with toast notifications
-- Network error handling
-- Authentication error redirects
-- Validation error display
-
-## Development Notes
-
-[This section will be expanded with actual implementation details]
+Services reject failed requests. Components display the relevant error or retry
+state. Keep permission failures visible and never replace them with fabricated
+successful responses.

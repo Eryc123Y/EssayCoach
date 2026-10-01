@@ -430,43 +430,34 @@ NEXT_PUBLIC_API_URL=http://127.0.0.1:8000
 ### Optional
 
 ```bash
-# Analytics (future)
-NEXT_PUBLIC_GA_ID=your-google-analytics-id
-
-# Feature flags (future)
-NEXT_PUBLIC_ENABLE_ANALYTICS=true
+# Optional browser error tracking
+NEXT_PUBLIC_SENTRY_DSN=
+NEXT_PUBLIC_SENTRY_DISABLED=true
 ```
 
 ## 📚 API Integration
 
 ### Service Layer
 
-**Location**: `src/service/api/`
+**Location**: `src/service/api/v2/`
 
 **Pattern**: All API calls go through typed service functions
 
 **Example**:
 
 ```typescript
-// src/service/api/auth.ts
-export async function loginUser(
-  credentials: LoginRequest
-): Promise<AuthResponse> {
-  const response = await fetch('/api/v1/auth/login/', {
-    method: 'POST',
-    body: JSON.stringify(credentials)
-  });
-  return response.json();
-}
+import { authService } from '@/service/api/v2/auth';
+
+const user = await authService.getUserInfo();
 ```
 
 ### API Route Proxy
 
-**Location**: `src/app/api/v1/[...path]/route.ts`
+**Location**: `src/app/api/v2/[...path]/route.ts`
 
 **Purpose**: Forwards requests to Django backend with authentication headers
 
-**Pattern**: Catch-all route handling all `/api/v1/*` requests
+**Pattern**: Catch-all route handling all `/api/v2/*` requests
 
 ## 🎨 Styling Guidelines
 

@@ -71,8 +71,8 @@ not a feature backlog or a record of past test passes.
 - Do not remove DRF merely because endpoints use Ninja: SimpleJWT depends on
   it. Preserve the deliberate rubric CRUD/action service split and dashboard
   parallel-route slots when changing those areas.
-- Coding-agent choice is separate from EssayCoach's Dify/LangGraph provider
-  and `OPENAI_MODEL` settings. Change the product's model/provider only when
+- Coding-agent choice is separate from EssayCoach's Codex provider and
+  configured product model. Change the product's model/provider only when
   that migration is part of the requested task.
 - Read the relevant PRD and design contract for new feature/UI work; do not
   impose a full design-planning cycle on an unrelated fix.

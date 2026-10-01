@@ -165,8 +165,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           setClasses(transformedClasses);
 
           // Set first class as current if none selected
-          if (transformedClasses.length > 0 && !currentClassId) {
-            setCurrentClassId(transformedClasses[0].classId);
+          if (transformedClasses.length > 0) {
+            setCurrentClassId((selectedClassId) => selectedClassId ?? transformedClasses[0].classId);
           }
         } else if (response.status === 401) {
           // Unauthorized - redirect to login
@@ -200,7 +200,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           window.location.href = '/auth/sign-in';
       }
     }),
-    [user, classes, currentClass, currentClassId]
+    [user, classes, currentClass]
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
