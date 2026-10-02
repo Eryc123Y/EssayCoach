@@ -2,6 +2,7 @@ import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { DashboardHeader, ActivityFeed, LecturerDashboard, StudentDashboard, AdminDashboard } from '@/features/dashboard';
 import { getServerApiUrl } from '@/lib/server-api';
+import { resolveDashboardRole } from '@/lib/server-dashboard-auth';
 import type {
   AdminDashboardResponse,
   DashboardRole,
@@ -36,6 +37,16 @@ export default async function RoleDashboardPage({ params }: RoleDashboardPagePro
 
   if (!isDashboardRole(role)) {
     redirect('/dashboard');
+  }
+
+  // Send a signed-in user who opens another role's dashboard to their own one,
+  // rather than treating the backend's 403 as an expired session.
+  const accountRole = await resolveDashboardRole(access);
+  if (!accountRole) {
+    redirect('/auth/sign-in');
+  }
+  if (accountRole !== role) {
+    redirect(`/dashboard/${accountRole}`);
   }
 
   const apiUrl = getServerApiUrl();

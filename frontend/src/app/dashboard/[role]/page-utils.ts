@@ -15,8 +15,9 @@ export function isDashboardRole(role: string): role is DashboardRole {
   return role === 'student' || role === 'lecturer' || role === 'admin';
 }
 
+/** Only an invalid session sends the user to sign in; a 403 is not a session failure. */
 export function isAuthFailure(status: number): boolean {
-  return status === 401 || status === 403;
+  return status === 401;
 }
 
 export function buildDashboardUrl(apiBaseUrl: string, role: DashboardRole): string {

@@ -60,12 +60,11 @@ test.describe('permission boundaries', () => {
     await visit(page, '/dashboard/tasks/new');
     await expect(page).toHaveURL(/\/dashboard\/tasks\/?$/);
 
-    // Staff role dashboards never render for a student. The server currently
-    // treats the backend's 403 as an auth failure and bounces to sign-in even
-    // though the session stays valid (reported); accept either safe landing.
+    // Staff role dashboards never render for a student; she is sent to her own
+    // dashboard and stays signed in.
     for (const staffDashboard of ['/dashboard/lecturer', '/dashboard/admin']) {
       await visit(page, staffDashboard);
-      await expect(page).toHaveURL(/\/(auth\/sign-in|dashboard\/student)\/?$/);
+      await expect(page).toHaveURL(/\/dashboard\/student\/?$/);
     }
     expect((await apiRequest(page, 'GET', '/api/v2/auth/me/jwt/')).status).toBe(200);
 
