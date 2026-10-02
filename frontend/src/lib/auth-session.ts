@@ -6,8 +6,9 @@ import { getServerApiUrl } from '@/lib/server-api';
  * Shared cookie-session handling for the route handlers and middleware.
  *
  * The access cookie is short-lived. When it is missing or its JWT is about to
- * expire, the session is renewed with the httpOnly refresh cookie so that a
- * "remember me" sign-in lasts for the remembered window instead of one hour.
+ * expire, the middleware renews the session with the httpOnly refresh cookie
+ * so that a "remember me" sign-in lasts for the remembered window instead of
+ * one hour.
  * The backend still verifies every token; decoding `exp` here only decides
  * whether to refresh.
  */
@@ -181,14 +182,9 @@ export function applyRefreshedRequestCookies(req: NextRequest, tokens: SessionTo
   req.cookies.set('refresh_token', tokens.refresh);
 }
 
-/** Run a route handler with a fresh access token and persist any rotation. */
-export function withSession(
+/** Pass the access cookie (already renewed by the middleware) to a route handler. */
+export function withAccessToken(
   handler: (req: NextRequest, accessToken: string | undefined) => Promise<NextResponse>
 ) {
-  return async (req: NextRequest) => {
-    const session = await resolveSession(req);
-    const response = await handler(req, session.accessToken);
-    if (session.refreshed) setSessionCookies(response, session.refreshed);
-    return response;
-  };
+  return (req: NextRequest) => handler(req, req.cookies.get('access_token')?.value);
 }

@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { normalizeUserInfo } from '@/lib/user-normalization';
 import { getServerApiUrl } from '@/lib/server-api';
-import { withSession } from '@/lib/auth-session';
+import { withAccessToken } from '@/lib/auth-session';
 
 type AnyRecord = Record<string, any>;
 
@@ -115,5 +115,5 @@ async function handlePatch(req: NextRequest, token: string | undefined) {
   }
 }
 
-export const GET = withSession(handleGet);
-export const PATCH = withSession(handlePatch);
+export const GET = withAccessToken(handleGet);
+export const PATCH = withAccessToken(handlePatch);

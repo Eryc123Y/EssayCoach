@@ -54,6 +54,36 @@ describe('dashboard middleware', () => {
     expect(response.headers.get('location')).toBeNull();
   });
 
+  it('renews the session for API route handlers so only one scope rotates tokens', async () => {
+    fetchMock.mockResolvedValue({ ok: true, status: 200, json: async () => ({ access: 'api-access', refresh: 'api-refresh' }) });
+    const response = await middleware(
+      new NextRequest('http://localhost/api/v2/core/tasks/', { headers: { cookie: 'refresh_token=api-old' } })
+    );
+
+    expect(response.headers.get('location')).toBeNull();
+    expect(response.cookies.get('access_token')?.value).toBe('api-access');
+    expect(response.headers.get('x-middleware-request-cookie')).toContain('access_token=api-access');
+  });
+
+  it('lets API requests through to the backend when the refresh is refused', async () => {
+    fetchMock.mockResolvedValue({ ok: false, status: 401, json: async () => ({}) });
+    const response = await middleware(
+      new NextRequest('http://localhost/api/v2/core/tasks/', { headers: { cookie: 'refresh_token=api-revoked' } })
+    );
+
+    expect(response.headers.get('location')).toBeNull();
+    expect(response.cookies.get('refresh_token')).toBeUndefined();
+  });
+
+  it('leaves the session routes to manage their own cookies', async () => {
+    const response = await middleware(
+      new NextRequest('http://localhost/api/v2/auth/login/', { method: 'POST', headers: { cookie: 'refresh_token=r-login' } })
+    );
+
+    expect(fetchMock).not.toHaveBeenCalled();
+    expect(response.cookies.get('access_token')).toBeUndefined();
+  });
+
   it('ignores routes outside the dashboard', async () => {
     const response = await middleware(new NextRequest('http://localhost/auth/sign-in'));
 

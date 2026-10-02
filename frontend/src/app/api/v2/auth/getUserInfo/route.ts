@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { normalizeUserInfo } from '@/lib/user-normalization';
 import { getServerApiUrl } from '@/lib/server-api';
-import { withSession } from '@/lib/auth-session';
+import { withAccessToken } from '@/lib/auth-session';
 
 
 async function handleGet(_req: NextRequest, token: string | undefined) {
@@ -49,4 +49,4 @@ async function handleGet(_req: NextRequest, token: string | undefined) {
   }
 }
 
-export const GET = withSession(handleGet);
+export const GET = withAccessToken(handleGet);
