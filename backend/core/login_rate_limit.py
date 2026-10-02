@@ -9,8 +9,9 @@ stored under a salted HMAC so no email or address is kept in clear text:
   which throttles password spraying. The ceiling is well above the account
   limit because campuses often share one NAT address.
 * account: ``ACCOUNT_MAX_FAILURES`` failures from any clients lock the email.
-  It bounds distributed guessing against one account; locking a user out this
-  way needs at least ``ACCOUNT_MAX_FAILURES / MAX_FAILURES`` distinct clients.
+  It bounds distributed guessing against one account (PRD 02 §3.4); locking a
+  user out this way needs at least ``ACCOUNT_MAX_FAILURES / MAX_FAILURES``
+  distinct clients.
 
 Browser sign-ins reach Django through the Next.js route handler over loopback.
 Unless that proxy sends X-Forwarded-For, they all share its address: the
@@ -35,7 +36,8 @@ from core.models import LoginRateLimit
 
 MAX_FAILURES = 5
 CLIENT_MAX_FAILURES = 50
-ACCOUNT_MAX_FAILURES = 30
+# PRD 02 §3.4: lock the account after 10 failed attempts within 15 minutes.
+ACCOUNT_MAX_FAILURES = 10
 FAILURE_WINDOW = timedelta(minutes=15)
 
 # Requests from these peers may name the original client in X-Forwarded-For.

@@ -308,20 +308,30 @@ def refresh_jwt_token(refresh_token: str) -> JWTPair | None:
         if old_refresh.get("auth_version", 0) != user.auth_version:
             return None
 
+        from django.db import transaction
+
         from core.models import AuthSession
 
-        session = AuthSession.objects.filter(
-            pk=old_refresh.get("session_id"),
-            user=user,
-            revoked_at__isnull=True,
-            expires_at__gt=timezone.now(),
-            refresh_jti=old_jti,
-        ).first()
-        if session is None:
-            return None
+        # Lock the session row so concurrent refreshes with the same token (from
+        # separate frontend workers) rotate once: the loser re-reads the new
+        # refresh_jti after the winner commits and is refused.
+        with transaction.atomic():
+            session = (
+                AuthSession.objects.select_for_update()
+                .filter(
+                    pk=old_refresh.get("session_id"),
+                    user=user,
+                    revoked_at__isnull=True,
+                    expires_at__gt=timezone.now(),
+                    refresh_jti=old_jti,
+                )
+                .first()
+            )
+            if session is None:
+                return None
 
-        # Create BRAND NEW token pair (this ensures rotation)
-        new_pair = create_jwt_pair(user, session=session, persistent=bool(old_refresh.get("persistent", False)))
+            # Create BRAND NEW token pair (this ensures rotation)
+            new_pair = create_jwt_pair(user, session=session, persistent=bool(old_refresh.get("persistent", False)))
 
         # Blacklist the old refresh token AFTER generating new ones
         if old_jti:

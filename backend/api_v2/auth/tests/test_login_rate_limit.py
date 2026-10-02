@@ -140,7 +140,7 @@ def test_successful_login_does_not_reset_the_client_wide_counter(monkeypatch):
 
 
 @pytest.mark.django_db
-def test_account_wide_ceiling_needs_many_clients():
+def test_account_wide_ceiling_spans_clients():
     user = User.objects.create_user(user_email="distributed@example.com", password="TestPass123!")
 
     for index in range(ACCOUNT_MAX_FAILURES // MAX_FAILURES):

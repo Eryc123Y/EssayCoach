@@ -30,6 +30,15 @@ describe('auth session refresh', () => {
     expect(accessTokenNeedsRefresh(undefined)).toBe(true);
     expect(accessTokenNeedsRefresh(jwtExpiringIn(30))).toBe(true);
     expect(accessTokenNeedsRefresh(jwtExpiringIn(3600))).toBe(false);
+    expect(accessTokenNeedsRefresh('not-a-jwt')).toBe(true);
+  });
+
+  it('recovers from an undecodable access cookie with the refresh cookie', async () => {
+    fetchMock.mockResolvedValue(refreshed('recovered-access', 'recovered-refresh'));
+    const session = await resolveSession(requestWith('access_token=truncated; refresh_token=r-recover'));
+
+    expect(session.accessToken).toBe('recovered-access');
+    expect(session.refreshed?.refresh).toBe('recovered-refresh');
   });
 
   it('keeps a valid access token without calling the backend', async () => {

@@ -101,7 +101,8 @@ export function accessTokenNeedsRefresh(
 ): boolean {
   if (!token) return true;
   const exp = decodeExp(token);
-  if (exp === null) return false;
+  // A malformed or exp-less token cannot be used; let the refresh cookie recover.
+  if (exp === null) return true;
   return exp * 1000 - nowMs <= REFRESH_SKEW_SECONDS * 1000;
 }
 
