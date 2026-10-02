@@ -38,4 +38,17 @@ describe('AuthProvider cached user', () => {
     await waitFor(() => expect(fetchMock).toHaveBeenCalled());
     expect(localStorage.getItem('user_data')).not.toBeNull();
   });
+
+  it('replaces a cached user when the cookies now belong to a different account', async () => {
+    sessionStorage.setItem('user_data', JSON.stringify(cachedUser));
+    fetchMock.mockImplementation(async (url: string) =>
+      url === '/api/v2/auth/getUserInfo'
+        ? { ok: true, status: 200, json: async () => ({ success: true, data: { user_id: 9, user_email: 'other@example.com', user_role: 'lecturer' } }) }
+        : { ok: false, status: 404, json: async () => ({}) }
+    );
+    render(<AuthProvider><Probe /></AuthProvider>);
+
+    await waitFor(() => expect(screen.getByText('signed in as other@example.com')).toBeInTheDocument());
+    expect(sessionStorage.getItem('user_data')).toContain('other@example.com');
+  });
 });

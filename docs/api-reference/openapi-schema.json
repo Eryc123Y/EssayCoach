@@ -6375,9 +6375,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
-                  "title": "Response",
-                  "type": "object"
+                  "$ref": "#/components/schemas/ContentReportOut"
                 }
               }
             }
@@ -6415,8 +6413,7 @@
               "application/json": {
                 "schema": {
                   "items": {
-                    "additionalProperties": true,
-                    "type": "object"
+                    "$ref": "#/components/schemas/ContentReportOut"
                   },
                   "title": "Response",
                   "type": "array"
@@ -6458,8 +6455,7 @@
               "application/json": {
                 "schema": {
                   "items": {
-                    "additionalProperties": true,
-                    "type": "object"
+                    "$ref": "#/components/schemas/ContentReportOut"
                   },
                   "title": "Response",
                   "type": "array"
@@ -6499,9 +6495,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
-                  "title": "Response",
-                  "type": "object"
+                  "$ref": "#/components/schemas/ContentReportOut"
                 }
               }
             }
@@ -13849,6 +13843,126 @@
         ],
         "title": "SocialInteractionOut",
         "type": "object"
+      },
+      "ContentReportOut": {
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "submission_id": {
+            "title": "Submission Id",
+            "type": "integer"
+          },
+          "interaction_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Interaction Id"
+          },
+          "target_type": {
+            "$ref": "#/components/schemas/ReportTargetType"
+          },
+          "target_content": {
+            "title": "Target Content",
+            "type": "string"
+          },
+          "target_author": {
+            "title": "Target Author",
+            "type": "string"
+          },
+          "target_status": {
+            "$ref": "#/components/schemas/SocialContentStatus"
+          },
+          "reporter_id": {
+            "title": "Reporter Id",
+            "type": "integer"
+          },
+          "reason": {
+            "title": "Reason",
+            "type": "string"
+          },
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ReportStatus"
+          },
+          "decision": {
+            "title": "Decision",
+            "type": "string"
+          },
+          "resolved_by": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resolved By"
+          },
+          "resolved_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resolved At"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "submission_id",
+          "target_type",
+          "target_content",
+          "target_author",
+          "target_status",
+          "reporter_id",
+          "reason",
+          "description",
+          "status",
+          "decision",
+          "created_at"
+        ],
+        "title": "ContentReportOut",
+        "type": "object"
+      },
+      "ReportStatus": {
+        "enum": [
+          "open",
+          "investigating",
+          "resolved",
+          "dismissed"
+        ],
+        "title": "ReportStatus",
+        "type": "string"
+      },
+      "ReportTargetType": {
+        "description": "What a content report was filed against; persisted so it survives target removal.",
+        "enum": [
+          "essay",
+          "comment",
+          "feedback"
+        ],
+        "title": "ReportTargetType",
+        "type": "string"
       },
       "ContentReportIn": {
         "properties": {

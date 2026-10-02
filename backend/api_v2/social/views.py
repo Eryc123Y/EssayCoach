@@ -30,6 +30,7 @@ from core.notifications import dispatch_notification
 
 from .schemas import (
     ContentReportIn,
+    ContentReportOut,
     PostingBanIn,
     ResolveReportIn,
     SharedEssayIn,
@@ -346,7 +347,7 @@ def remove_toggle(request: HttpRequest, submission_id: int, interaction_type: st
     return {"success": True}
 
 
-@router.post("/report/", response=dict)
+@router.post("/report/", response=ContentReportOut)
 def report_content(request: HttpRequest, data: ContentReportIn):
     if data.reason not in {"spam", "offensive", "inappropriate", "other"}:
         raise HttpError(400, "Choose a report reason")
@@ -416,7 +417,7 @@ def _report_row(report: ContentReport, viewer: User) -> dict:
 _REPORT_RELATED = ("share__class_obj", "share__submission", "share__owner", "reporter", "interaction__user")
 
 
-@router.get("/reports/me/", response=list[dict])
+@router.get("/reports/me/", response=list[ContentReportOut])
 def my_reports(request: HttpRequest):
     return [
         _report_row(row, request.auth)
@@ -426,7 +427,7 @@ def my_reports(request: HttpRequest):
     ]
 
 
-@router.get("/moderation/reports/", response=list[dict])
+@router.get("/moderation/reports/", response=list[ContentReportOut])
 def moderation_reports(request: HttpRequest, status: str = "open"):
     if request.auth.user_role == "student":
         raise HttpError(403, "Teaching staff only")
@@ -440,7 +441,7 @@ def moderation_reports(request: HttpRequest, status: str = "open"):
     ]
 
 
-@router.post("/moderation/reports/{report_id}/resolve/", response=dict)
+@router.post("/moderation/reports/{report_id}/resolve/", response=ContentReportOut)
 def resolve_report(request: HttpRequest, report_id: int, data: ResolveReportIn):
     """Apply a decision to the reported target only.
 

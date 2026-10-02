@@ -38,21 +38,39 @@ type AuthContextValue = {
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
-type AuthStatus = 'authenticated' | 'unauthenticated' | 'unknown';
+type AuthCheck =
+  | { status: 'authenticated'; user: SimpleUser }
+  | { status: 'unauthenticated' }
+  | { status: 'unknown' };
 
-// We can't read httpOnly cookies directly, so we ask a server endpoint.
-// Only an explicit 401/403 counts as signed out; network errors are unknown.
-async function checkAuthStatus(): Promise<AuthStatus> {
+function toSimpleUser(data: any): SimpleUser {
+  return {
+    id: String(data.user_id || data.id),
+    email: data.user_email || data.email,
+    firstName: data.user_fname || data.first_name || '',
+    lastName: data.user_lname || data.last_name || '',
+    role: (data.user_role || data.role || 'student') as UserRole
+  };
+}
+
+// We can't read httpOnly cookies directly, so we ask a server endpoint, which
+// also says who the cookies belong to. Only an explicit 401/403 counts as
+// signed out; network errors are unknown.
+async function checkAuthStatus(): Promise<AuthCheck> {
   try {
     const response = await fetch('/api/v2/auth/getUserInfo', {
       method: 'GET',
       credentials: 'include' // Include cookies
     });
-    if (response.ok) return 'authenticated';
-    if (response.status === 401 || response.status === 403) return 'unauthenticated';
-    return 'unknown';
+    if (response.ok) {
+      const payload = await response.json();
+      const data = payload?.data ?? payload;
+      return data ? { status: 'authenticated', user: toSimpleUser(data) } : { status: 'unknown' };
+    }
+    if (response.status === 401 || response.status === 403) return { status: 'unauthenticated' };
+    return { status: 'unknown' };
   } catch {
-    return 'unknown';
+    return { status: 'unknown' };
   }
 }
 
@@ -66,14 +84,19 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const storedUser = readUserData<SimpleUser>();
 
     if (storedUser) {
-      // Render the cached user immediately, but drop it if the session is gone
-      // (for example, a session-only sign-in after the browser was closed).
+      // Render the cached user immediately, then reconcile with the cookies:
+      // drop it if the session is gone (a session-only sign-in after the
+      // browser closed) and replace it if another tab signed in as someone else.
       setUser(storedUser);
       setIsInitialized(true);
-      checkAuthStatus().then((status) => {
-        if (status === 'unauthenticated') {
+      checkAuthStatus().then((check) => {
+        if (check.status === 'unauthenticated') {
           clearUserData();
           setUser(null);
+        } else if (check.status === 'authenticated' && check.user.id !== storedUser.id) {
+          // Persistence of the other sign-in is unknown, so cache only for this tab.
+          storeUserData(check.user, false);
+          setUser(check.user);
         }
       });
       return;
@@ -81,26 +104,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     // No stored user, check whether the cookie session is valid via the server.
     checkAuthStatus()
-      .then((status) => {
-        if (status === 'authenticated') {
-          // User has valid token but no stored data, fetch user info
-          return fetch('/api/v2/core/users/me/')
-            .then((res) => res.json())
-            .then((data) => {
-              const user: SimpleUser = {
-                id: String(data.user_id || data.id),
-                email: data.user_email || data.email,
-                firstName: data.user_fname || data.first_name || '',
-                lastName: data.user_lname || data.last_name || '',
-                role: (data.user_role || data.role || 'student') as UserRole
-              };
-              setUser(user);
-              // Persistence is unknown here, so cache only for this tab.
-              storeUserData(user, false);
-            })
-            .catch(() => setUser(null));
+      .then((check) => {
+        if (check.status === 'authenticated') {
+          setUser(check.user);
+          // Persistence is unknown here, so cache only for this tab.
+          storeUserData(check.user, false);
         }
-        return undefined;
       })
       .finally(() => {
         setIsInitialized(true);

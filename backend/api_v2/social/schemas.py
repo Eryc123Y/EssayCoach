@@ -5,7 +5,7 @@ from datetime import datetime
 from ninja import Schema
 from pydantic import Field
 
-from api_v2.types.enums import InteractionType, SocialContentStatus, SocialVisibility
+from api_v2.types.enums import InteractionType, ReportStatus, ReportTargetType, SocialContentStatus, SocialVisibility
 
 
 class SharedEssayIn(Schema):
@@ -45,6 +45,25 @@ class ContentReportIn(Schema):
     interaction_id: int | None = None
     reason: str
     description: str = Field(default="", max_length=1000)
+
+
+class ContentReportOut(Schema):
+    id: int
+    submission_id: int
+    interaction_id: int | None = None
+    target_type: ReportTargetType
+    target_content: str
+    target_author: str
+    target_status: SocialContentStatus
+    reporter_id: int
+    reason: str
+    description: str
+    status: ReportStatus
+    # Empty until a moderator decides; then one of ReportDecision.
+    decision: str
+    resolved_by: int | None = None
+    resolved_at: datetime | None = None
+    created_at: datetime
 
 
 class ResolveReportIn(Schema):
