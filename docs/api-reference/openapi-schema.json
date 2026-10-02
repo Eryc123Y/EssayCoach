@@ -6258,8 +6258,7 @@
               "application/json": {
                 "schema": {
                   "items": {
-                    "additionalProperties": true,
-                    "type": "object"
+                    "$ref": "#/components/schemas/SocialInteractionOut"
                   },
                   "title": "Response",
                   "type": "array"
@@ -6508,6 +6507,7 @@
             }
           }
         },
+        "description": "Apply a decision to the reported target only.\n\nAn essay report hides or removes the shared essay. A response report hides or\nsoft-removes that one response and never changes the essay, even when the\nresponse no longer exists. Removing a response also resolves every other open\nreport on it, so no later report on that response can reach the essay.",
         "tags": [
           "Social Hub"
         ],
@@ -6521,6 +6521,43 @@
           },
           "required": true
         },
+        "security": [
+          {
+            "JWTAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v2/social/moderation/interactions/{interaction_id}/restore/": {
+      "post": {
+        "operationId": "api_v2_social_views_restore_interaction",
+        "summary": "Restore Interaction",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "interaction_id",
+            "schema": {
+              "title": "Interaction Id",
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SocialInteractionOut"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Social Hub"
+        ],
         "security": [
           {
             "JWTAuth": []
@@ -9200,6 +9237,12 @@
           "password": {
             "title": "Password",
             "type": "string"
+          },
+          "remember": {
+            "default": false,
+            "description": "Keep the session for the extended remembered window",
+            "title": "Remember",
+            "type": "boolean"
           }
         },
         "required": [
@@ -13731,6 +13774,80 @@
           "interaction_type"
         ],
         "title": "SocialInteractionIn",
+        "type": "object"
+      },
+      "SocialContentStatus": {
+        "description": "Moderation state of a shared essay or a peer response (comment/feedback).",
+        "enum": [
+          "visible",
+          "hidden",
+          "removed"
+        ],
+        "title": "SocialContentStatus",
+        "type": "string"
+      },
+      "SocialInteractionOut": {
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "submission_id": {
+            "title": "Submission Id",
+            "type": "integer"
+          },
+          "user_id": {
+            "title": "User Id",
+            "type": "integer"
+          },
+          "author": {
+            "title": "Author",
+            "type": "string"
+          },
+          "interaction_type": {
+            "$ref": "#/components/schemas/InteractionType"
+          },
+          "content": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Content"
+          },
+          "status": {
+            "$ref": "#/components/schemas/SocialContentStatus"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          },
+          "is_mine": {
+            "title": "Is Mine",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "submission_id",
+          "user_id",
+          "author",
+          "interaction_type",
+          "status",
+          "created_at",
+          "updated_at",
+          "is_mine"
+        ],
+        "title": "SocialInteractionOut",
         "type": "object"
       },
       "ContentReportIn": {
