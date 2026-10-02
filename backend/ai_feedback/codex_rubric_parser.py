@@ -14,6 +14,7 @@ import pypdf
 from openai_codex import ApprovalMode, AsyncCodex, CodexConfig, Sandbox
 
 from ai_feedback.rubric_parser import RubricParseError
+from core.observability import ai_stage
 
 _RUBRIC_SCHEMA = {
     "type": "object",
@@ -86,7 +87,8 @@ class CodexRubricParser:
             "Do not browse, run commands, or read files.\n\nPDF text:\n" + text
         )
         try:
-            return asyncio.run(self._parse_async(prompt))
+            with ai_stage("rubric_parsing", model=self.model):
+                return asyncio.run(self._parse_async(prompt))
         except RubricParseError:
             raise
         except Exception as exc:

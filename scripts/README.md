@@ -2,13 +2,28 @@
 
 This directory contains scripts for managing EssayCoach development environment.
 
-## Directory Structure
+## Supported local setup
+
+Install dependencies before invoking the local commands:
+
+```bash
+cd backend && uv sync
+cd ../frontend && pnpm install
+cd ..
+make local-setup
+make dev-local
+```
+
+`make local-setup` calls `scripts/dev/local-stack.py setup`. It creates `.env` when absent, starts a persistent project-owned PostgreSQL instance at `127.0.0.1:55432`, saves its data in `.dev_pg`, and runs migrations. It does **not** seed data. Run `make local-demo` only when explicit demonstration accounts are wanted. Use `make local-db-stop` to stop this database without deleting its data.
+
+The setup writes `frontend/.env.local` so `JWT_SECRET` matches `DJANGO_SECRET_KEY`; both must stay private. The AI worker finds `codex` from `PATH` automatically. Set `CODEX_BIN` only when the executable is elsewhere.
+
+## Directory structure
 
 ```
 scripts/
-├── db/
-│   └── postgres-manager.sh   # PostgreSQL management (Docker Compose)
 ├── dev/
+│   ├── local-stack.py        # Project-owned PostgreSQL setup and lifecycle
 │   ├── start-all.sh          # Start all services
 │   ├── start-backend.sh      # Start backend only
 │   ├── start-frontend.sh     # Start frontend only
@@ -16,9 +31,9 @@ scripts/
 └── README.md                 # This file
 ```
 
-## Database Management (`scripts/db/`)
+## Compatibility scripts
 
-Use the PostgreSQL manager to control the database:
+The older Docker-oriented scripts remain for compatibility. They are separate from the `.dev_pg` local setup:
 
 ```bash
 # Start database
@@ -59,16 +74,15 @@ Use the PostgreSQL manager to control the database:
 ./scripts/dev/health-check.sh --check-only
 ```
 
-## Alternative: Use Makefile
+## Makefile commands
 
 The Makefile provides convenient shortcuts for common commands:
 
 ```bash
-make db              # Start database
-make db-stop         # Stop database
-make db-status       # Check database status
-make db-shell        # Access database shell
-make db-reset        # Reset database
+make local-setup     # Configure .env, start project-owned PostgreSQL, run migrations
+make local-demo      # Same setup, then create explicit demonstration data
+make local-db        # Start the existing project-owned PostgreSQL instance
+make local-db-stop   # Stop it while preserving .dev_pg
 
 make dev-backend     # Start backend only
 make dev-frontend    # Start frontend only

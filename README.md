@@ -1,8 +1,8 @@
 # EssayCoach
 
-EssayCoach is being built as a private, bilingual writing platform for one institution. Staff invite students into courses. Students can practice writing with AI feedback and source checks; formal essay grades require lecturer review and course lead publication.
+EssayCoach is a private, bilingual writing platform for one institution. Staff invite students into courses. Students can practice writing with AI feedback and source checks; formal essay grades require lecturer review and course lead publication.
 
-**Development status (2026-09-25):** the one-institution private local candidate implements the requested role journeys. The reviewed [interactive prototype](docs/architecture/interactive-prototype.md) guides the interface. Real routes cover invitations, classes and assignments, practice feedback, teacher assessment and lead publication, analytics, community, administration, help, and observability. The [acceptance record](docs/development/release-acceptance.md) distinguishes verified behavior from the accessibility, source-quality, and third-language work needed for a broader pilot.
+**Development status (2026-10-01):** development and local acceptance are complete for the owner-approved, one-institution English/Chinese scope. Real routes cover invitation activation, classes, assignments, practice feedback, source evidence, teacher review and course-lead publication, analytics, community moderation, administration, help and runtime diagnostics. The reviewed [interactive prototype](docs/architecture/interactive-prototype.md) guides the interface. See the [current acceptance record](docs/development/release-acceptance-2026-10-01.md) for the requirement matrix, observed workflows and AI/accessibility limitations.
 
 ## Current architecture
 
@@ -17,13 +17,13 @@ Read the [architecture decisions](docs/architecture/product-architecture.md) for
 
 Prerequisites: Python 3.12+, `uv`, Node.js 22+, `pnpm`, PostgreSQL 16 or newer, and a signed-in Codex CLI/Desktop app for AI jobs.
 
-1. Copy `.env.example` to `.env`. Set a stable, private `DJANGO_SECRET_KEY` and your local PostgreSQL connection values.
-2. Install dependencies with `cd backend && uv sync`, then `cd ../frontend && pnpm install`.
-3. Start PostgreSQL using `make db` for Docker Compose, or start your existing local instance.
-4. Run `make migrate` and `make createsuperuser`. Invite staff and students through the application; `make seed-db` is only for disposable development fixtures.
-5. Run `make dev-local` when PostgreSQL is already running, or `make dev` to start the Docker database too. This starts the API at `http://127.0.0.1:8000`, the web app at `http://127.0.0.1:5100`, and the AI worker.
+1. Install dependencies: run `cd backend && uv sync`, then `cd ../frontend && pnpm install`.
+2. From the repository root, run `make local-setup`. It creates a private `.env` (if needed), generates `DJANGO_SECRET_KEY`, creates the frontend's `.env.local` with the same `JWT_SECRET`, starts the project-owned PostgreSQL instance, and applies migrations.
+3. Run `make createsuperuser` to create the first administrator, then `make dev-local`. The API listens on `http://127.0.0.1:8000`, the web app on `http://127.0.0.1:5100`, and the AI worker starts alongside them.
 
-The [local setup guide](docs/development/local-private-setup.md) has the worker, authentication, diagnostics, and test commands.
+`make local-setup` keeps PostgreSQL data in the ignored `.dev_pg` directory and listens on `127.0.0.1:55432`. It does not create accounts or sample data. Use `make local-demo` only when you explicitly need disposable demonstration accounts. `make local-db-stop` stops this project-owned database without deleting its data.
+
+The [local setup guide](docs/development/private-local-setup.md) has the worker, authentication, diagnostics, and test commands.
 
 ## Validation
 
@@ -34,4 +34,4 @@ cd frontend && pnpm exec tsc --noEmit
 cd frontend && pnpm build
 ```
 
-Stop `pnpm dev` before `pnpm build`, because they share `.next`. A passing suite verifies the implemented paths; the [acceptance record](docs/development/release-acceptance.md) separates verified behavior from outstanding PRD items.
+Stop `pnpm dev` before `pnpm build`, because they share `.next`. A passing suite verifies the implemented paths; the [acceptance record](docs/development/release-acceptance-2026-10-01.md) records verified behavior and the limits of this local release.

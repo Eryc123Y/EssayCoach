@@ -34,7 +34,6 @@ export function ExtendDeadlineDialog({
   onSuccess,
 }: ExtendDeadlineDialogProps) {
   const { locale } = usePreferences();
-  const zh = locale === 'zh';
   const [newDeadline, setNewDeadline] = useState('');
   const [reason, setReason] = useState('');
   const [isLoading, setIsLoading] = useState(false);
@@ -49,10 +48,16 @@ export function ExtendDeadlineDialog({
       .then(result => { if (current) { setStudents(result); setStudentLoadError(''); } })
       .catch(() => { if (current) setStudentLoadError(localized(locale, 'ui.couldNotLoadStudents')); });
     return () => { current = false; };
-  }, [open, task.task_id, zh]);
+  }, [open, task.task_id, locale]);
 
   // Format the current deadline for display
   const currentDeadline = new Date(task.task_due_datetime).toLocaleString(localized(locale, 'ui.enUs'));
+
+  // The deadline is bolded, so the sentence is split around its placeholder.
+  const [descriptionBefore, descriptionAfter = ''] = localized(locale, 'ui.extendTheDeadlineForTitleCurrentDeadline', {
+    title: task.task_title,
+    deadline: '\u0000'
+  }).split('\u0000');
 
   // Min datetime is now (can't extend to past)
   const now = new Date();
@@ -102,7 +107,7 @@ export function ExtendDeadlineDialog({
             {localized(locale, 'ui.extendDeadline')}
           </DialogTitle>
           <DialogDescription>
-            {zh ? `“${task.task_title}”当前截止时间：` : <>Extend the deadline for &ldquo;{task.task_title}&rdquo;. Current deadline: </>}<strong>{currentDeadline}</strong>.
+            {descriptionBefore}<strong>{currentDeadline}</strong>{descriptionAfter}
           </DialogDescription>
         </DialogHeader>
 

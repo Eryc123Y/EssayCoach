@@ -37,6 +37,9 @@ export type ContentReport = {
   id: number;
   submission_id: number;
   interaction_id: number | null;
+  target_type: string;
+  target_content: string;
+  target_author: string;
   reporter_id: number;
   reason: string;
   description: string;

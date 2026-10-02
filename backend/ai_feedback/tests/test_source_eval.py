@@ -202,6 +202,13 @@ def test_select_cases_with_a_limit_covers_every_label():
     assert Counter(case["expected"] for case in picked) == {label: 2 for label in EXPECTED_LABELS}
 
 
+def test_bilingual_limit_represents_each_language_and_label():
+    picked = run_source_eval.select_cases(load_cases(), None, 8)
+    assert Counter((case["language"], case["expected"]) for case in picked) == {
+        (language, label): 1 for language in ("en", "zh") for label in EXPECTED_LABELS
+    }
+
+
 def _args(tmp_path, **overrides):
     values = {
         "cases": run_source_eval.DEFAULT_CASES, "language": None, "limit": None, "model": "test-model",
@@ -221,10 +228,18 @@ def test_execute_writes_reports_and_signals_wrong_verdicts_in_the_exit_code(tmp_
     saved = json.loads((tmp_path / "out" / "results.json").read_text(encoding="utf-8"))
     assert saved["summary"]["overall"]["pass_rate"]["rate"] == 1.0
     assert saved["meta"]["model"] == "test-model" and len(saved["results"]) == len(every_case)
+    assert saved["results"][0]["evidence"][0]["source_url"] == "https://example.org"
     assert "Source-check evaluation" in (tmp_path / "out" / "report.md").read_text(encoding="utf-8")
 
     bad = FakeProvider({case["essay"]: ["supported"] for case in every_case})  # verifies everything, even opinions
     assert run_source_eval.execute(_args(tmp_path), lambda: bad, out=lambda line: None) == 1
+
+
+def test_execute_reports_provider_failures_as_incomplete(tmp_path):
+    assert run_source_eval.execute(_args(tmp_path), lambda: FakeProvider({}), out=lambda line: None) == 2
+    saved = json.loads((tmp_path / "out" / "results.json").read_text(encoding="utf-8"))
+    assert saved["summary"]["overall"]["outcomes"][ERROR] == len(load_cases())
+    assert saved["summary"]["wrong_verdicts"] == []
 
 
 def test_dry_run_and_empty_selection_never_build_the_provider(tmp_path):

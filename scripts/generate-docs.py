@@ -105,7 +105,7 @@ class DocumentationGenerator:
                 "backend/core/views.py",
             ]
 
-        for source_file in source_files:
+        for source_file in [*source_files, "scripts/generate-docs.py"]:
             source_path = self.project_root / source_file
             if source_path.exists():
                 source_mtime = source_path.stat().st_mtime
@@ -403,9 +403,8 @@ class DocumentationGenerator:
                     else:
                         null = getattr(field, "null", False)
                         field_type_str = field_type or "Field"
-                        output.append(
-                            f"        {field.name} {field_type_str} {'NULL' if null else ''}\n"
-                        )
+                        null_suffix = " NULL" if null else ""
+                        output.append(f"        {field.name} {field_type_str}{null_suffix}\n")
 
                 output.append("    }\n\n")
 

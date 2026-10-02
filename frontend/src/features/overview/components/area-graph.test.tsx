@@ -12,13 +12,13 @@
  */
 
 import { describe, it, expect, vi, beforeEach } from 'vitest';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import { AreaGraph } from './area-graph';
 
 // Mock the chart container and related components
 vi.mock('@/components/ui/chart', () => ({
   ChartConfig: {},
-  ChartContainer: ({ children, config, className }: any) => (
+  ChartContainer: ({ children, className }: any) => (
     <div data-testid="chart-container" className={className}>
       {children}
     </div>
@@ -66,7 +66,7 @@ vi.mock('@tabler/icons-react', () => ({
 
 // Mock recharts
 vi.mock('recharts', () => ({
-  Area: ({ dataKey, type, fill, stroke, strokeWidth, stackId }: any) => (
+  Area: ({ dataKey, type, stroke, strokeWidth }: any) => (
     <div 
       data-testid={`area-${dataKey}`} 
       data-type={type}
@@ -74,18 +74,18 @@ vi.mock('recharts', () => ({
       data-stroke-width={strokeWidth}
     />
   ),
-  AreaChart: ({ children, data, margin }: any) => (
+  AreaChart: ({ children }: any) => (
     <div data-testid="area-chart">
       {children}
     </div>
   ),
-  CartesianGrid: ({ vertical, strokeDasharray, strokeOpacity }: any) => (
+  CartesianGrid: ({ vertical }: any) => (
     <div 
       data-testid="cartesian-grid" 
       data-vertical={vertical}
     />
   ),
-  XAxis: ({ dataKey, tickLine, axisLine, tickMargin, minTickGap, tickFormatter }: any) => (
+  XAxis: ({ dataKey, tickMargin }: any) => (
     <div 
       data-testid="x-axis" 
       data-datakey={dataKey}

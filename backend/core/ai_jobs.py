@@ -13,6 +13,7 @@ from django.utils import timezone
 from ai_feedback.codex_provider import CodexScoringProvider, ScoringResult
 from core.assessment import AssessmentError, record_ai_proposal, rubric_snapshot_for_feedback
 from core.models import AIJob, Feedback, Submission
+from core.observability import bind_ai_job, classify_ai_error, reset_ai_job, safe_ai_error_message
 
 logger = logging.getLogger(__name__)
 LEASE_DURATION = timedelta(minutes=15)
@@ -79,6 +80,7 @@ def process_next_job(provider: ScoringProvider | None = None) -> AIJob | None:
     job = claim_next_job()
     if job is None:
         return None
+    trace_token = bind_ai_job("formal", job.pk)
     logger.info("AI job claimed job_id=%s attempt=%s", job.pk, job.attempts)
     try:
         submission = Submission.objects.select_related("task_id_task").get(pk=job.submission_id)
@@ -111,23 +113,21 @@ def process_next_job(provider: ScoringProvider | None = None) -> AIJob | None:
             )
         logger.info("AI job succeeded job_id=%s", job.pk)
     except Exception as exc:
-        category = "validation" if isinstance(exc, AssessmentError) else "provider"
+        category = "validation" if isinstance(exc, AssessmentError) else classify_ai_error(exc)
         logger.warning("AI job failed job_id=%s category=%s error_type=%s", job.pk, category, type(exc).__name__)
         with transaction.atomic():
             locked = AIJob.objects.select_for_update().get(pk=job.pk)
             if locked.status == "running" and locked.attempts == job.attempts:
                 locked.status = "failed"
                 locked.error_category = category
-                locked.error_message = (
-                    "The rubric or model result could not be validated"
-                    if category == "validation"
-                    else "The local AI provider failed; check Codex login and worker logs"
-                )
+                locked.error_message = safe_ai_error_message(category, workflow="Formal scoring")
                 locked.finished_at = timezone.now()
                 locked.lease_expires_at = None
                 locked.save(
                     update_fields=["status", "error_category", "error_message", "finished_at", "lease_expires_at"]
                 )
+    finally:
+        reset_ai_job(trace_token)
     return job
 
 

@@ -23,6 +23,16 @@ class ArticleOut(Schema):
     tags: list[str]
 
 
+class FAQOut(Schema):
+    question: str
+    answer: str
+
+
+class SupportContactOut(Schema):
+    email: str | None
+    configured: bool
+
+
 class ArticleSearchIn(Schema):
     """Input for searching articles."""
 

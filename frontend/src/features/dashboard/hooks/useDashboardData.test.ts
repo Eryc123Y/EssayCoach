@@ -488,10 +488,7 @@ describe('useDashboardData', () => {
 
       const { rerender } = renderHook(
         (props: { enabled: boolean; refreshInterval: number }) =>
-          useDashboardData('student', {
-            enabled: true,
-            refreshInterval: 30000
-          }),
+          useDashboardData('student', props),
         { initialProps: { enabled: true, refreshInterval: 30000 } }
       );
 

@@ -5,6 +5,15 @@ import { getServerApiUrl } from '@/lib/server-api';
 type LoginRequestBody = {
   email?: string;
   password?: string;
+  remember?: boolean;
+};
+
+const persistentCookieAge = 60 * 60 * 24 * 7;
+const secureCookieOptions = {
+  httpOnly: true,
+  sameSite: 'strict' as const,
+  secure: process.env.NODE_ENV === 'production',
+  path: '/',
 };
 
 export async function POST(req: NextRequest) {
@@ -12,6 +21,8 @@ export async function POST(req: NextRequest) {
     const body = (await req.json().catch(() => ({}))) as LoginRequestBody;
     const email = body?.email;
     const password = body?.password;
+    // Missing values preserve the long-lived behavior used by existing clients.
+    const remember = body?.remember !== false;
 
     if (!email || !password) {
       return NextResponse.json(
@@ -44,70 +55,38 @@ export async function POST(req: NextRequest) {
     const normalizedUser = normalizeUserInfo(user);
 
     const res = NextResponse.json({
-      access: token,
-      refresh,
       expiresAt: expires_at,
       user: normalizedUser
     });
 
     // Set access token cookie
     res.cookies.set('access_token', token, {
-      httpOnly: true,
-      sameSite: 'strict',
-      secure: process.env.NODE_ENV === 'production',
-      path: '/',
-      maxAge: 60 * 60 // 1 hour
+      ...secureCookieOptions,
+      ...(remember ? { maxAge: 60 * 60 } : {}),
     });
 
     // Set refresh token cookie - longer expiry for refresh token
     res.cookies.set('refresh_token', refresh, {
-      httpOnly: true,
-      sameSite: 'strict',
-      secure: process.env.NODE_ENV === 'production',
-      path: '/',
-      maxAge: 60 * 60 * 24 * 7 // 7 days
+      ...secureCookieOptions,
+      ...(remember ? { maxAge: persistentCookieAge } : {}),
+    });
+
+    res.cookies.set('session_persistence', remember ? 'persistent' : 'session', {
+      ...secureCookieOptions,
+      ...(remember ? { maxAge: persistentCookieAge } : {}),
     });
 
     // Store user info in HttpOnly cookies for security (prevents client-side tampering)
     // Frontend should read user data from the response body, not cookies
-    res.cookies.set('user_email', normalizedUser.user_email || '', {
-      httpOnly: true,
-      sameSite: 'strict',
-      secure: process.env.NODE_ENV === 'production',
-      path: '/',
-      maxAge: 60 * 60 * 24
-    });
-    res.cookies.set('user_first_name', normalizedUser.user_fname || '', {
-      httpOnly: true,
-      sameSite: 'strict',
-      secure: process.env.NODE_ENV === 'production',
-      path: '/',
-      maxAge: 60 * 60 * 24
-    });
-    res.cookies.set('user_last_name', normalizedUser.user_lname || '', {
-      httpOnly: true,
-      sameSite: 'strict',
-      secure: process.env.NODE_ENV === 'production',
-      path: '/',
-      maxAge: 60 * 60 * 24
-    });
-    res.cookies.set('user_role', normalizedUser.user_role, {
-      httpOnly: true,
-      sameSite: 'strict',
-      secure: process.env.NODE_ENV === 'production',
-      path: '/',
-      maxAge: 60 * 60 * 24
-    });
+    const userCookieOptions = { ...secureCookieOptions, ...(remember ? { maxAge: 60 * 60 * 24 } : {}) };
+    res.cookies.set('user_email', normalizedUser.user_email || '', userCookieOptions);
+    res.cookies.set('user_first_name', normalizedUser.user_fname || '', userCookieOptions);
+    res.cookies.set('user_last_name', normalizedUser.user_lname || '', userCookieOptions);
+    res.cookies.set('user_role', normalizedUser.user_role, userCookieOptions);
     res.cookies.set(
       'user_id',
       String(normalizedUser.user_id || ''),
-      {
-        httpOnly: true,
-        sameSite: 'strict',
-        secure: process.env.NODE_ENV === 'production',
-        path: '/',
-        maxAge: 60 * 60 * 24
-      }
+      userCookieOptions
     );
 
     return res;

@@ -88,4 +88,16 @@ describe('PracticeStudio draft history', () => {
     });
     expect(screen.getByText('Revision 2')).toBeInTheDocument();
   });
+
+  it('opens an older saved draft beyond the five most recent drafts', async () => {
+    service.listEssays.mockResolvedValue(Array.from({ length: 6 }, (_, index) => essay(String(index), `Essay ${index + 1}`)));
+    service.listRuns.mockImplementation((id: string) => Promise.resolve([run(id, Number(id) + 1)]));
+    const user = userEvent.setup();
+    render(<PracticeStudio />);
+
+    await user.click(await screen.findByRole('button', { name: 'Essay 6' }));
+
+    expect(await screen.findByText('Revision 6')).toBeInTheDocument();
+    expect(screen.getByLabelText('What are you trying to write?')).toHaveValue('Essay 6');
+  });
 });

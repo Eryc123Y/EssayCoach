@@ -41,6 +41,9 @@ export const adminUsersService = {
   action(id: number, action: 'disable_user' | 'enable_user' | 'force_logout', reason = ''): Promise<{ success: boolean }> {
     return request({ url: `${BASE}/${id}/action/`, method: 'POST', data: { action, reason } });
   },
+  delete(id: number): Promise<{ success: boolean }> {
+    return request({ url: `/api/v2/core/users/${id}/`, method: 'DELETE' });
+  },
   issuePasswordReset(id: number): Promise<{ token: string; email: string; expires_at: string }> {
     return request({ url: `${BASE}/${id}/password-reset/`, method: 'POST' });
   },

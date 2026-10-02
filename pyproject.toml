@@ -5,7 +5,7 @@
 #
 # For development:
 #   make install        # Install all dependencies
-#   cd backend && uv pip install -e .  # Install backend dependencies
+#   cd backend && uv sync  # Install backend dependencies
 
 [tool.ruff]
 target-version = "py312"
@@ -19,9 +19,3 @@ strict = true
 [tool.black]
 line-length = 100
 target-version = ['py312']
-
-[dependency-groups]
-dev = [
-    "pytest>=9.0.2",
-    "pytest-django>=4.11.1",
-]

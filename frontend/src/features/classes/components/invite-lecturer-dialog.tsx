@@ -28,7 +28,6 @@ export function InviteLecturerDialog({ unitId, unitName, open, onOpenChange, onS
   const [working, setWorking] = useState(false);
   const [result, setResult] = useState<InvitationCreateResult | null>(null);
   const [error, setError] = useState('');
-  const zh = locale === 'zh';
 
   function close() {
     onOpenChange(false);
@@ -88,7 +87,7 @@ export function InviteLecturerDialog({ unitId, unitName, open, onOpenChange, onS
                   onCheckedChange={(checked) => setCourseLead(checked === true)}
                 />
                 <div className='space-y-1'>
-                  <Label htmlFor='course-lead'>{zh ? `设为 ${unitName} 的课程负责人` : `Make course lead for ${unitName}`}</Label>
+                  <Label htmlFor='course-lead'>{localized(locale, 'ui.makeCourseLeadForUnit', { unit: unitName })}</Label>
                   <p className='text-muted-foreground text-xs'>
                     {localized(locale, 'ui.courseLeadsCanConfirmAndPublishFormalGrades')}
                   </p>
@@ -106,7 +105,7 @@ export function InviteLecturerDialog({ unitId, unitName, open, onOpenChange, onS
         ) : (
           <>
             <p className='text-sm' role='status'>
-              {zh ? `已为 ${result.email} 创建邀请链接。` : `Invitation link created for ${result.email}.`}
+              {localized(locale, 'ui.invitationLinkCreatedForEmail', { email: result.email })}
             </p>
             <div className='space-y-2'>
               <Label htmlFor='lecturer-invitation-link'>{localized(locale, 'ui.invitationLink')}</Label>

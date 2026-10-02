@@ -33,6 +33,36 @@ def test_only_admin_can_change_single_institution_branding():
 
 
 @pytest.mark.django_db
+def test_branding_is_public_but_exposes_only_the_display_fields():
+    OrganizationSettings.objects.update_or_create(
+        pk=1,
+        defaults={"name": "School of Writing", "logo_url": "https://example.edu/logo.png", "primary_color": "#aabbcc"},
+    )
+
+    response = Client().get("/api/v2/organization/branding/")  # no token: shown on sign-in and the landing page
+
+    assert response.status_code == 200
+    assert response.json() == {
+        "name": "School of Writing",
+        "logo_url": "https://example.edu/logo.png",
+        "primary_color": "#aabbcc",
+    }
+
+
+@pytest.mark.django_db
+def test_public_branding_never_returns_an_unsafe_logo_or_colour():
+    OrganizationSettings.objects.update_or_create(
+        pk=1,
+        defaults={"name": "School", "logo_url": "javascript:alert(1)", "primary_color": "#1;}a{b"},
+    )
+
+    body = Client().get("/api/v2/organization/branding/").json()
+
+    assert body["logo_url"] == ""
+    assert body["primary_color"] == "#0f766e"
+
+
+@pytest.mark.django_db
 def test_jwt_sessions_revoke_other_device_and_persist_refresh_rotation():
     user = User.objects.create_user(user_email="session-user@example.com", password="TestPass123!")
     first = create_jwt_pair(user)

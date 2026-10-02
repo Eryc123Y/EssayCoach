@@ -19,6 +19,7 @@ export type OperationsOverview = {
   worker_last_seen_at: string | null;
   worker_processed_jobs: number;
   codex_binary_found: boolean;
+  codex_login_status: 'valid' | 'not_logged_in' | 'runtime_unavailable' | 'unknown_timeout' | 'unknown_error';
   counts: Record<'formal' | 'practice' | 'chat', Record<string, number>>;
   jobs: JobState[];
 };

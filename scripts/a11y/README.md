@@ -19,5 +19,21 @@ Environment variables: `BASE_URL` (default `http://127.0.0.1:5100`),
 `--no-sandbox` when running as root in a container.
 
 The scan covers the pages listed at the top of the script in their seeded state.
-It does not open dialogs, submit forms, or read a generated practice report, and
-it cannot judge focus order or screen-reader wording.
+It does not read a generated practice report, and it cannot judge focus order or
+screen-reader wording.
+
+## Dialogs, confirmations and form errors
+
+`axe-states.mjs` opens the states the page scan never reaches: the assignment
+and class dialogs, the invite and share dialogs, the native delete confirmation,
+empty-submit errors on the assignment and class forms, the password form, and
+the student submission confirmation. Each is opened in English and Chinese. For
+every dialog it also checks that focus lands inside, that Esc closes it, and that
+focus returns to something on the page rather than `<body>`.
+
+    node axe-states.mjs out.json                  # all states
+    node axe-states.mjs out.json users-invite     # selected state ids
+
+It takes the same environment variables as the page scan. The output JSON keeps
+the dialog text, so two runs can be diffed to confirm a copy change altered only
+what it meant to.

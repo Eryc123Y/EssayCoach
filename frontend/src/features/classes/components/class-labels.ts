@@ -1,11 +1,14 @@
+import { localized } from '@/locales';
+
+const TERM_LABEL_IDS: Record<string, string> = {
+  semester1: 'ui.termSemester1',
+  semester2: 'ui.termSemester2',
+  term1: 'ui.termTerm1',
+  term2: 'ui.termTerm2',
+  full_year: 'ui.termFullYear'
+};
+
 export function classTermLabel(term: string, locale: 'en' | 'zh'): string {
-  const labels: Record<string, [string, string]> = {
-    semester1: ['Semester 1', '第一学期'],
-    semester2: ['Semester 2', '第二学期'],
-    term1: ['Term 1', '第一学段'],
-    term2: ['Term 2', '第二学段'],
-    full_year: ['Full year', '全年'],
-  };
-  const pair = labels[term];
-  return pair ? pair[locale === 'zh' ? 1 : 0] : term;
+  const id = TERM_LABEL_IDS[term];
+  return id ? localized(locale, id) : term;
 }

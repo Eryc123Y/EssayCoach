@@ -191,13 +191,14 @@ export default function SettingsWorkspace() {
   );
 }
 
+const SECTION_DESCRIPTION_IDS: Record<SettingsSection, string> = {
+  account: 'ui.updateYourProfileInformationAndPassword',
+  security: 'ui.manageYourSessionsAndViewLoginHistory',
+  notifications: 'ui.chooseHowYouReceiveNotifications',
+  display: 'ui.chooseTheInterfaceLanguageAndAppearance',
+  organization: 'ui.manageInstitutionBrandingAndEnrollmentSettings'
+};
+
 function getSectionDescription(section: SettingsSection, locale: 'en' | 'zh'): string {
-  const descriptions: Record<SettingsSection, [string, string]> = {
-    account: ['Update your profile information and password.', '更新个人资料和密码。'],
-    security: ['Manage your sessions and view login history.', '管理会话并查看登录记录。'],
-    notifications: ['Choose how you receive notifications.', '选择通知的接收方式。'],
-    display: ['Choose the interface language and appearance.', '选择界面语言和外观。'],
-    organization: ['Manage institution branding and enrollment settings.', '管理机构品牌和加入设置。'],
-  };
-  return descriptions[section][locale === 'zh' ? 1 : 0];
+  return localized(locale, SECTION_DESCRIPTION_IDS[section]);
 }

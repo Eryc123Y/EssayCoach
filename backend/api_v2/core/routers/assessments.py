@@ -52,6 +52,7 @@ class AssessmentOut(Schema):
     published_by: int | None
     published_at: datetime | None
     can_publish: bool
+    can_review: bool
 
 
 class AssessmentAuditOut(Schema):
@@ -103,6 +104,7 @@ def _serialize(feedback: Feedback, *, actor: User) -> AssessmentOut:
         reviewed_at=feedback.reviewed_at,
         published_by=feedback.published_by_id,
         published_at=feedback.published_at,
+        can_review=actor.user_role == "lecturer",
         can_publish=not student and CourseLeadAssignment.objects.filter(
             user_id_user=actor,
             unit_id_unit_id=feedback.submission_id_submission.task_id_task.unit_id_unit_id,

@@ -20,12 +20,15 @@ from ai_feedback.source_retrieval import (
     WikimediaSourceSearch,
 )
 from core.models import PracticeRevision
+from core.observability import ai_stage
 
 logger = logging.getLogger(__name__)
 
 
 class PracticeProviderError(RuntimeError):
-    pass
+    def __init__(self, message: str, *, category: str = "provider") -> None:
+        super().__init__(message)
+        self.category = category
 
 
 @dataclass(frozen=True)
@@ -161,7 +164,7 @@ class CodexPracticeProvider:
         self.codex_bin = codex_bin or os.environ.get("CODEX_BIN") or shutil.which("codex")
         self.timeout_seconds = timeout_seconds
         if not self.codex_bin:
-            raise PracticeProviderError("Codex runtime was not found; set CODEX_BIN")
+            raise PracticeProviderError("Codex runtime was not found; set CODEX_BIN", category="runtime_unavailable")
 
     def analyze(self, revision: PracticeRevision) -> PracticeAnalysisResult:
         return asyncio.run(self._analyze_async(revision))
@@ -173,15 +176,15 @@ class CodexPracticeProvider:
         except TimeoutError as exc:
             with suppress(Exception):
                 await asyncio.wait_for(turn.interrupt(), timeout=10)
-            raise PracticeProviderError("Codex practice turn timed out") from exc
+            raise PracticeProviderError("Codex practice turn timed out", category="timeout") from exc
         if getattr(result.status, "value", result.status) != "completed" or not result.final_response:
-            raise PracticeProviderError("Codex practice turn did not complete")
+            raise PracticeProviderError("Codex practice turn did not complete", category="provider")
         try:
             payload = json.loads(result.final_response)
         except json.JSONDecodeError as exc:
-            raise PracticeProviderError("Codex returned invalid structured output") from exc
+            raise PracticeProviderError("Codex returned invalid structured output", category="model_output") from exc
         if not isinstance(payload, dict):
-            raise PracticeProviderError("Codex returned invalid structured output")
+            raise PracticeProviderError("Codex returned invalid structured output", category="model_output")
         usage = result.usage.model_dump(mode="json") if result.usage is not None else None
         return payload, usage
 
@@ -205,21 +208,27 @@ class CodexPracticeProvider:
             async with AsyncCodex(CodexConfig(codex_bin=self.codex_bin)) as codex:
                 account = (await codex.account()).account
                 if account is None or getattr(account.root, "type", None) != "chatgpt":
-                    raise PracticeProviderError("ChatGPT subscription login is required for practice feedback")
+                    raise PracticeProviderError(
+                        "ChatGPT subscription login is required for practice feedback",
+                        category="subscription_login",
+                    )
                 thread = await codex.thread_start(
                     cwd=workdir, model=self.model, sandbox=Sandbox.read_only,
                     approval_mode=ApprovalMode.deny_all, ephemeral=True,
                     config={"web_search": "disabled"},
                 )
-                report, analysis_usage = await self._turn(thread, prompt, _ANALYSIS_SCHEMA)
+                with ai_stage("practice_feedback_generation", model=self.model):
+                    report, analysis_usage = await self._turn(thread, prompt, _ANALYSIS_SCHEMA)
                 self._validate_report(report, revision)
-                discovered, discovery_usage = await self._discover_sources(
-                    codex, workdir, report["claims"][:3], revision.language
-                )
-                evidence, verification_usage = await self._verify_claims(
-                    thread, report["claims"][:3], revision.language,
-                    discovered_sources=discovered,
-                )
+                with ai_stage("practice_source_discovery", model=self.model):
+                    discovered, discovery_usage = await self._discover_sources(
+                        codex, workdir, report["claims"][:3], revision.language
+                    )
+                with ai_stage("practice_source_verification", model=self.model):
+                    evidence, verification_usage = await self._verify_claims(
+                        thread, report["claims"][:3], revision.language,
+                        discovered_sources=discovered,
+                    )
                 return PracticeAnalysisResult(
                     report={key: value for key, value in report.items() if key != "claims"},
                     evidence=evidence, model=self.model, provider_thread_id=thread.id,
@@ -298,9 +307,10 @@ class CodexPracticeProvider:
                 if len(sources.get(index, [])) >= 2:
                     continue
                 try:
-                    source = await asyncio.to_thread(
-                        self.source_fetcher.fetch, url, query=str(claims[index].get("search_query", ""))
-                    )
+                    with ai_stage("practice_source_retrieval", model=self.model):
+                        source = await asyncio.to_thread(
+                            self.source_fetcher.fetch, url, query=str(claims[index].get("search_query", ""))
+                        )
                 except SourceRetrievalError:
                     logger.warning("Discovered practice source could not be independently fetched")
                     continue
@@ -326,7 +336,8 @@ class CodexPracticeProvider:
             sources = (discovered_sources or {}).get(claim_index, [])
             if not sources:
                 try:
-                    sources = await asyncio.to_thread(self.source_search.search, query, language=language, limit=2)
+                    with ai_stage("practice_source_retrieval", model=self.model):
+                        sources = await asyncio.to_thread(self.source_search.search, query, language=language, limit=2)
                 except SourceRetrievalError:
                     logger.warning("Practice source retrieval failed query_length=%s", len(query))
                     sources = []
@@ -425,16 +436,22 @@ class CodexPracticeChatProvider(CodexPracticeProvider):
             async with AsyncCodex(CodexConfig(codex_bin=self.codex_bin)) as codex:
                 account = (await codex.account()).account
                 if account is None or getattr(account.root, "type", None) != "chatgpt":
-                    raise PracticeProviderError("ChatGPT subscription login is required for practice chat")
+                    raise PracticeProviderError(
+                        "ChatGPT subscription login is required for practice chat",
+                        category="subscription_login",
+                    )
                 thread = await codex.thread_start(
                     cwd=workdir, model=self.model, sandbox=Sandbox.read_only,
                     approval_mode=ApprovalMode.deny_all, ephemeral=True,
                     config={"web_search": "disabled"},
                 )
-                result, usage = await self._turn(thread, prompt, schema)
+                with ai_stage("practice_chat_generation", model=self.model):
+                    result, usage = await self._turn(thread, prompt, schema)
                 answer = result.get("reply")
                 if not isinstance(answer, str) or not answer.strip() or len(answer) > 12000:
-                    raise PracticeProviderError("Codex returned an invalid practice chat answer")
+                    raise PracticeProviderError(
+                        "Codex returned an invalid practice chat answer", category="model_output"
+                    )
                 return PracticeChatResult(
                     answer=answer.strip(), model=self.model, provider_thread_id=thread.id, usage=usage
                 )

@@ -3,7 +3,7 @@
 - Status: local candidate implemented, 2026-09-25; pilot-quality limits remain in the acceptance record
 - Goal: convert all 14 PRDs and the reviewed bilingual prototype into a usable, private local product
 - Architecture baseline: [product-architecture.md](product-architecture.md)
-- Observed product checks and remaining gates: [release-acceptance.md](../development/release-acceptance.md)
+- Current product checks: [2026-10-01 acceptance record](../development/release-acceptance-2026-10-01.md); the checkpoints below retain the implementation history.
 
 The stages below are ordered by dependency, not by page number. A stage is complete only when the named behavior uses persisted data, server-side permissions, Chinese and English copy, relevant automated checks, and a browser journey. Fixture-only prototype interactions do not count as product completion.
 

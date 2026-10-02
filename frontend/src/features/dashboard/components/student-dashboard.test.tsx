@@ -18,7 +18,7 @@ import {
   StudentDashboard,
   StudentDashboardSkeleton,
 } from '@/features/dashboard/components/student-dashboard';
-import type { StudentDashboardResponse, StudentEssay } from '@/service/api/v2/types';
+import type { StudentDashboardResponse } from '@/service/api/v2/types';
 
 vi.mock('@/components/layout/preference-provider', () => ({
   usePreferences: () => ({ locale: 'en' }),
@@ -57,7 +57,7 @@ vi.mock('@/components/ui/select', () => ({
 }));
 vi.mock('@/components/ui/button', () => ({
   Button: ({ children, className, asChild, size, variant, onClick, ...props }: any) => (
-    <button className={className} data-size={size} data-variant={variant} onClick={onClick} {...props}>
+    <button className={className} data-as-child={asChild} data-size={size} data-variant={variant} onClick={onClick} {...props}>
       {children}
     </button>
   ),

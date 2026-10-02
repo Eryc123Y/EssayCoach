@@ -180,14 +180,15 @@ describe('AdminDashboard', () => {
     it('should display overall health badge', () => {
       render(<AdminDashboard data={mockAdminData} />);
 
-      expect(screen.getByText('Healthy')).toBeInTheDocument();
+      // The overall-health badge comes first; the database row may show the same word.
+      expect(screen.getAllByText('Healthy')[0]).toBeInTheDocument();
     });
 
     it('should display database health', () => {
       render(<AdminDashboard data={mockAdminData} />);
 
       expect(screen.getByText('Database')).toBeInTheDocument();
-      expect(screen.getAllByText('healthy')[0]).toBeInTheDocument();
+      expect(screen.getAllByText('Healthy')[0]).toBeInTheDocument();
     });
 
     it('should display API server health', () => {
@@ -200,7 +201,7 @@ describe('AdminDashboard', () => {
       render(<AdminDashboard data={mockAdminData} />);
 
       expect(screen.getByText('Feedback Processing')).toBeInTheDocument();
-      expect(screen.getByText('active')).toBeInTheDocument();
+      expect(screen.getByText('Active')).toBeInTheDocument();
     });
 
     it('should show idle status when no feedbacks in 24h', () => {
@@ -214,7 +215,7 @@ describe('AdminDashboard', () => {
 
       render(<AdminDashboard data={idleData} />);
 
-      expect(screen.getByText('idle')).toBeInTheDocument();
+      expect(screen.getByText('Idle')).toBeInTheDocument();
     });
 
     it('should display activity stats card', () => {
@@ -261,7 +262,8 @@ describe('AdminDashboard', () => {
 
       render(<AdminDashboard data={healthyData} />);
 
-      expect(screen.getByText('Healthy')).toBeInTheDocument();
+      // The overall-health badge comes first; the database row may show the same word.
+      expect(screen.getAllByText('Healthy')[0]).toBeInTheDocument();
     });
 
     it('should show degraded status with amber styling', () => {
@@ -275,7 +277,8 @@ describe('AdminDashboard', () => {
 
       render(<AdminDashboard data={degradedData} />);
 
-      expect(screen.getByText('Degraded')).toBeInTheDocument();
+      // The overall-health badge comes first; the database row may show the same word.
+      expect(screen.getAllByText('Degraded')[0]).toBeInTheDocument();
     });
 
     it('should show critical status with red styling', () => {
@@ -293,7 +296,8 @@ describe('AdminDashboard', () => {
 
       render(<AdminDashboard data={criticalData} />);
 
-      expect(screen.getByText('Critical')).toBeInTheDocument();
+      // The overall-health badge comes first; the database row may show the same word.
+      expect(screen.getAllByText('Critical')[0]).toBeInTheDocument();
     });
   });
 

@@ -25,7 +25,9 @@ from .auth.views import router as auth_router
 from .core.views import router as core_router
 from .help.views import router as help_router
 from .notifications.views import router as notifications_router
+from .observability.views import health_router
 from .observability.views import router as observability_router
+from .organization.views import public_router as organization_public_router
 from .organization.views import router as organization_router
 from .social.views import router as social_router
 from .users_admin.views import router as users_admin_router
@@ -68,5 +70,7 @@ api_v2.add_router("/analytics/", analytics_router)
 api_v2.add_router("/admin/users/", users_admin_router)
 api_v2.add_router("/help/", help_router)
 api_v2.add_router("/admin/organization/", organization_router)
+api_v2.add_router("/organization/", organization_public_router)
 api_v2.add_router("/admin/observability/", observability_router)
+api_v2.add_router("/observability/", health_router)
 api_v2.add_router("/notifications/", notifications_router)

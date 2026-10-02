@@ -9,7 +9,19 @@ from statistics import mean
 from django.db.models import Count, Q
 from django.utils import timezone
 
-from core.models import AIJob, Class, Enrollment, Feedback, FeedbackItem, Submission, Task, User
+from core.models import (
+    AIJob,
+    Class,
+    CourseLeadAssignment,
+    Enrollment,
+    Feedback,
+    FeedbackItem,
+    LoginEvent,
+    Submission,
+    Task,
+    TeachingAssn,
+    User,
+)
 
 
 def _date_filter(queryset, field: str, start_date: date | None, end_date: date | None):
@@ -120,6 +132,14 @@ def student_report(user: User, *, start_date: date | None = None, end_date: date
 def class_report(class_obj: Class, *, start_date: date | None = None, end_date: date | None = None) -> dict:
     students = list(User.objects.filter(enrollment__class_id_class=class_obj).distinct().order_by("user_id"))
     student_ids = [user.pk for user in students]
+    staff_ids = set(TeachingAssn.objects.filter(class_id_class=class_obj).values_list("user_id_user_id", flat=True))
+    lead_ids = CourseLeadAssignment.objects.filter(unit_id_unit=class_obj.unit_id_unit).values_list(
+        "user_id_user_id", flat=True
+    )
+    visible_user_ids = set(student_ids).union(staff_ids, lead_ids)
+    login_events = _date_filter(
+        LoginEvent.objects.filter(user_id__in=visible_user_ids), "created_at", start_date, end_date
+    )
     tasks = list(
         Task.objects.filter(task_status__in=["published", "unpublished"])
         .filter(Q(class_id_class=class_obj) | Q(class_id_class__isnull=True, unit_id_unit=class_obj.unit_id_unit))
@@ -197,6 +217,8 @@ def class_report(class_obj: Class, *, start_date: date | None = None, end_date: 
         "published_count": len(feedbacks),
         "average_score": _average(scores),
         "completion_rate": round(unique_submissions / possible * 100, 2) if possible else 0,
+        "login_count": login_events.count(),
+        "login_users": login_events.values("user_id").distinct().count(),
         "distribution": distribution,
         "trend": _trend(feedbacks),
         "criteria": _criterion_performance(feedbacks),
@@ -215,6 +237,7 @@ def institution_report(*, start_date: date | None = None, end_date: date | None 
     review_events = _date_filter(
         Feedback.objects.filter(reviewed_by__isnull=False), "reviewed_at", start_date, end_date
     )
+    login_events = _date_filter(LoginEvent.objects.all(), "created_at", start_date, end_date)
     lecturer_activity = [
         {"user_id": row["reviewed_by_id"], "reviews": row["count"]}
         for row in review_events.values("reviewed_by_id").annotate(count=Count("feedback_id")).order_by("-count")
@@ -224,6 +247,8 @@ def institution_report(*, start_date: date | None = None, end_date: date | None 
         "active_students": User.objects.filter(user_status="active", is_active=True, user_role="student").count(),
         "active_lecturers": User.objects.filter(user_status="active", is_active=True, user_role="lecturer").count(),
         "active_classes": len(classes),
+        "login_count": login_events.count(),
+        "login_users": login_events.exclude(user__isnull=True).values("user_id").distinct().count(),
         "submission_count": submissions.count(),
         "published_count": len(feedbacks),
         "average_score": _average([float(feedback.final_score) for feedback in feedbacks]),

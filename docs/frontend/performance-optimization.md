@@ -567,7 +567,7 @@ export function MyComponent() { ... }
 
 ---
 
-*This document follows the [EssayCoach Documentation Standards](../CONTRIBUTING.md)*
+*This document follows the [EssayCoach Documentation Standards](../development/contributing.md)*
 
 ## Performance Rules Applied
 

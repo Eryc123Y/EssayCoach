@@ -13,10 +13,13 @@ from dataclasses import dataclass
 from openai_codex import ApprovalMode, AsyncCodex, CodexConfig, Sandbox
 
 from core.models import Submission
+from core.observability import ai_stage
 
 
 class CodexProviderError(RuntimeError):
-    pass
+    def __init__(self, message: str, *, category: str = "provider") -> None:
+        super().__init__(message)
+        self.category = category
 
 
 @dataclass(frozen=True)
@@ -57,7 +60,7 @@ class CodexScoringProvider:
         self.codex_bin = codex_bin or os.environ.get("CODEX_BIN") or shutil.which("codex")
         self.timeout_seconds = timeout_seconds
         if not self.codex_bin:
-            raise CodexProviderError("Codex runtime was not found; set CODEX_BIN")
+            raise CodexProviderError("Codex runtime was not found; set CODEX_BIN", category="runtime_unavailable")
         if timeout_seconds <= 0:
             raise ValueError("timeout_seconds must be positive")
 
@@ -77,14 +80,18 @@ class CodexScoringProvider:
             "browse, or use tools.\n\n"
             + json.dumps(context, ensure_ascii=False)
         )
-        return asyncio.run(self._score_async(prompt))
+        with ai_stage("formal_feedback_generation", model=self.model):
+            return asyncio.run(self._score_async(prompt))
 
     async def _score_async(self, prompt: str) -> ScoringResult:
         with tempfile.TemporaryDirectory(prefix="essaycoach-ai-") as workdir:
             async with AsyncCodex(CodexConfig(codex_bin=self.codex_bin)) as codex:
                 account = (await codex.account()).account
                 if account is None or getattr(account.root, "type", None) != "chatgpt":
-                    raise CodexProviderError("ChatGPT subscription login is required for the local AI worker")
+                    raise CodexProviderError(
+                        "ChatGPT subscription login is required for the local AI worker",
+                        category="subscription_login",
+                    )
                 thread = await codex.thread_start(
                     cwd=workdir,
                     model=self.model,
@@ -98,15 +105,17 @@ class CodexScoringProvider:
                 except TimeoutError as exc:
                     with suppress(Exception):
                         await asyncio.wait_for(turn.interrupt(), timeout=10)
-                    raise CodexProviderError("Codex scoring timed out") from exc
+                    raise CodexProviderError("Codex scoring timed out", category="timeout") from exc
                 if getattr(result.status, "value", result.status) != "completed" or not result.final_response:
-                    raise CodexProviderError("Codex scoring turn did not complete")
+                    raise CodexProviderError("Codex scoring turn did not complete", category="provider")
                 try:
                     payload = json.loads(result.final_response)
                 except json.JSONDecodeError as exc:
-                    raise CodexProviderError("Codex returned invalid structured output") from exc
+                    raise CodexProviderError(
+                        "Codex returned invalid structured output", category="model_output"
+                    ) from exc
                 if not isinstance(payload, dict) or not isinstance(payload.get("items"), list):
-                    raise CodexProviderError("Codex returned an invalid scoring result")
+                    raise CodexProviderError("Codex returned an invalid scoring result", category="model_output")
                 usage = result.usage.model_dump(mode="json") if result.usage is not None else None
                 return ScoringResult(
                     items=payload["items"],

@@ -1,4 +1,4 @@
-.PHONY: install dev dev-local dev-worker dev-backend dev-frontend health health-check test test-performance lint clean db docs docs-generate docs-erd
+.PHONY: install dev dev-local dev-worker dev-backend dev-frontend local-setup local-demo local-db local-db-stop health health-check test test-performance lint clean db docs docs-generate docs-erd
 
 BACKEND_PYTHON := backend/.venv/bin/python
 MKDOCS_CMD := uv run --with mkdocs==1.6.1 --with mkdocs-material==9.5.50 --with mkdocs-mermaid2-plugin==1.2.1 --with mkdocs-minify-plugin==0.8.0 mkdocs
@@ -18,13 +18,25 @@ dev: db
 dev-local: migrate
 	@$(MAKE) -j3 dev-backend dev-frontend dev-worker
 
+# Persistent native PostgreSQL, kept in this checkout's ignored .dev_pg directory.
+local-setup:
+	@$(BACKEND_PYTHON) scripts/dev/local-stack.py setup
+
+local-demo:
+	@$(BACKEND_PYTHON) scripts/dev/local-stack.py setup --demo
+
+local-db:
+	@$(BACKEND_PYTHON) scripts/dev/local-stack.py db-start
+
+local-db-stop:
+	@$(BACKEND_PYTHON) scripts/dev/local-stack.py db-stop
+
 dev-worker:
 	@cd backend && .venv/bin/python manage.py run_ai_worker
 
 # Start backend only
 dev-backend:
 	@echo "Starting Django backend on http://127.0.0.1:8000..."
-	@echo "📚 API v1 Docs: http://127.0.0.1:8000/api/docs/"
 	@echo "📚 API v2 Docs: http://127.0.0.1:8000/api/v2/docs/"
 	@cd backend && .venv/bin/python manage.py runserver 127.0.0.1:8000
 

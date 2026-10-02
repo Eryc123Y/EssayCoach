@@ -13,6 +13,8 @@ export type HelpArticle = {
 };
 
 export type ArticleVote = { helpful: boolean | null; helpful_count: number; unhelpful_count: number };
+export type HelpFAQ = { question: string; answer: string };
+export type SupportContact = { email: string | null; configured: boolean };
 
 export type SupportTicket = {
   id: number;
@@ -29,6 +31,8 @@ export type SupportTicket = {
 const BASE = '/api/v2/help';
 
 export const helpService = {
+  listFaqs(language: HelpLanguage): Promise<HelpFAQ[]> { return request({ url: `${BASE}/faqs/`, params: { language } }); },
+  getSupportContact(): Promise<SupportContact> { return request({ url: `${BASE}/support/contact/` }); },
   listArticles(language: HelpLanguage, query = '', category = ''): Promise<HelpArticle[]> {
     return request({ url: `${BASE}/articles/`, params: { language, query, category: category || undefined } });
   },

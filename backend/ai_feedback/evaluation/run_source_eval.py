@@ -66,6 +66,12 @@ def run_cases(
                 outcome=classify(case["expected"], verdicts),
                 claims=[item.get("claim", "") for item in analysis.evidence],
                 sources=[item.get("source_url", "") for item in analysis.evidence if item.get("source_url")],
+                evidence=[{
+                    key: item.get(key, "")
+                    for key in (
+                        "claim", "verdict", "rationale", "source_title", "source_url", "supporting_quote",
+                    )
+                } for item in analysis.evidence],
             )
         except Exception as exc:  # a provider failure is a result, not a crash of the whole run
             row.update(verdicts=[], outcome=ERROR, error=f"{type(exc).__name__}: {str(exc)[:200]}")
@@ -80,13 +86,15 @@ def select_cases(cases: list[dict[str, Any]], language: str | None, limit: int |
     chosen = [case for case in cases if language in (None, case["language"])]
     if limit is None:
         return chosen
-    # Take the first `limit` cases per expected label so a small run still covers every kind.
-    per_label = max(1, limit // 4)
-    counts: dict[str, int] = {}
+    # Keep every language/label represented, even when the file groups English first.
+    groups = {(case["language"], case["expected"]) for case in chosen}
+    per_group = max(1, limit // len(groups)) if groups else 1
+    counts: dict[tuple[str, str], int] = {}
     picked = []
     for case in chosen:
-        if counts.get(case["expected"], 0) < per_label:
-            counts[case["expected"]] = counts.get(case["expected"], 0) + 1
+        group = (case["language"], case["expected"])
+        if counts.get(group, 0) < per_group:
+            counts[group] = counts.get(group, 0) + 1
             picked.append(case)
     return picked
 
@@ -94,7 +102,9 @@ def select_cases(cases: list[dict[str, Any]], language: str | None, limit: int |
 def add_arguments(parser: argparse.ArgumentParser) -> None:
     parser.add_argument("--cases", type=Path, default=DEFAULT_CASES)
     parser.add_argument("--language", choices=["en", "zh"])
-    parser.add_argument("--limit", type=int, help="Approximate case count, balanced across expected labels")
+    parser.add_argument(
+        "--limit", type=int, help="Approximate case count, with at least one per language and expected label"
+    )
     parser.add_argument("--model", default=os.environ.get("EVAL_MODEL", "gpt-6-luna"))
     parser.add_argument("--timeout", type=float, default=180, help="Seconds allowed per Codex turn")
     parser.add_argument("--out", type=Path, default=Path("source-eval-results"))
@@ -102,7 +112,7 @@ def add_arguments(parser: argparse.ArgumentParser) -> None:
 
 
 def execute(args: argparse.Namespace, provider_factory: Callable[[], Analyzer] | None = None, out=print) -> int:
-    """Run the evaluation; returns the process exit code (1 when a wrong verdict was verified)."""
+    """Return 1 for wrong verification, 2 for an incomplete run, otherwise 0."""
     if args.limit is not None and args.limit < 1:
         out("--limit must be at least 1")
         return 2
@@ -141,4 +151,6 @@ def execute(args: argparse.Namespace, provider_factory: Callable[[], Analyzer] |
     (args.out / "report.md").write_text(report, encoding="utf-8")
     out("\n" + report)
     out(f"Wrote {args.out / 'results.json'} and {args.out / 'report.md'}")
-    return 1 if summary["wrong_verdicts"] else 0
+    if summary["wrong_verdicts"]:
+        return 1
+    return 2 if summary["errors"] else 0

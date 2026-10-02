@@ -3,12 +3,12 @@
 from __future__ import annotations
 
 import logging
-import os
 
 from django.conf import settings
 from django.core.mail import send_mail
 from django.db import transaction
 
+from core.app_url import app_base_url
 from core.models import (
     CourseLeadAssignment,
     Enrollment,
@@ -26,8 +26,7 @@ logger = logging.getLogger(__name__)
 
 def _send_email(user: User, title: str, body: str, link: str) -> None:
     try:
-        app_url = os.environ.get("ESSAYCOACH_APP_URL", "http://127.0.0.1:5100").rstrip("/")
-        send_mail(title, f"{body}\n\n{app_url}{link}", settings.DEFAULT_FROM_EMAIL, [user.user_email])
+        send_mail(title, f"{body}\n\n{app_base_url()}{link}", settings.DEFAULT_FROM_EMAIL, [user.user_email])
     except Exception as exc:
         logger.warning("Notification email failed user_id=%s error_type=%s", user.pk, type(exc).__name__)
 

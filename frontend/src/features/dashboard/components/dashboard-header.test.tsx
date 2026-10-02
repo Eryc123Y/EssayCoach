@@ -13,6 +13,7 @@
 
 import { describe, it, expect, beforeEach, vi, afterEach } from 'vitest';
 import { render, screen } from '@testing-library/react';
+import { renderToString } from 'react-dom/server';
 import { DashboardHeader } from '@/features/dashboard/components/dashboard-header';
 import type { DashboardUserInfo, DashboardStats } from '@/service/api/v2/types';
 
@@ -78,6 +79,21 @@ describe('DashboardHeader', () => {
     vi.restoreAllMocks();
   });
 
+  it('renders identical server markup at different times before client hydration', () => {
+    vi.useFakeTimers();
+    try {
+      vi.setSystemTime(new Date('2026-10-01T08:00:00Z'));
+      const morning = renderToString(<DashboardHeader user={mockAdminUser} stats={mockStats} role="admin" />);
+      vi.setSystemTime(new Date('2026-10-01T20:00:00Z'));
+      const evening = renderToString(<DashboardHeader user={mockAdminUser} stats={mockStats} role="admin" />);
+
+      expect(morning).toBe(evening);
+      expect(morning).toContain('Welcome, Admin');
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   describe('Greeting Display', () => {
     it('should render personalized greeting with user name', () => {
       render(
@@ -131,7 +147,7 @@ describe('DashboardHeader', () => {
         />
       );
 
-      expect(screen.getByText('student')).toBeInTheDocument();
+      expect(screen.getByText('Student')).toBeInTheDocument();
     });
 
     it('should display lecturer role badge', () => {
@@ -143,7 +159,7 @@ describe('DashboardHeader', () => {
         />
       );
 
-      expect(screen.getByText('lecturer')).toBeInTheDocument();
+      expect(screen.getByText('Lecturer')).toBeInTheDocument();
     });
 
     it('should display admin role badge', () => {
@@ -155,7 +171,7 @@ describe('DashboardHeader', () => {
         />
       );
 
-      expect(screen.getByText('admin')).toBeInTheDocument();
+      expect(screen.getByText('Admin')).toBeInTheDocument();
     });
 
     it('should not display role badge when role is undefined', () => {
@@ -445,7 +461,7 @@ describe('DashboardHeader', () => {
         />
       );
 
-      const roleBadge = screen.getByText('student');
+      const roleBadge = screen.getByText('Student');
       expect(roleBadge).toBeInTheDocument();
     });
   });
@@ -474,7 +490,7 @@ describe('DashboardHeader', () => {
         />
       );
 
-      const studentBadge = screen.getByText('student');
+      const studentBadge = screen.getByText('Student');
       expect(studentBadge.className).toContain('blue');
     });
   });

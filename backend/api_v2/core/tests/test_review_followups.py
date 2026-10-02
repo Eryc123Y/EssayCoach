@@ -286,3 +286,15 @@ def test_an_account_with_no_records_can_still_be_deleted():
 
     assert response.status_code == 200, response.content
     assert not User.objects.filter(pk=lonely.pk).exists()
+
+
+@pytest.mark.django_db
+def test_assessment_tells_the_client_who_can_review(assessment):  # noqa: F811
+    teacher, submission, feedback, body = _ai_draft(assessment)
+    admin = User.objects.create_user(
+        user_email="can-review-admin@example.com", password="pw-12345678", user_role="admin"
+    )
+    path = f"/api/v2/core/assessments/{submission.pk}/"
+
+    assert _client(teacher).get(path).json()["can_review"] is True
+    assert _client(admin).get(path).json()["can_review"] is False

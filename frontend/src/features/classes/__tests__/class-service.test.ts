@@ -89,7 +89,7 @@ describe('classService', () => {
         json: async () => mockClass,
       });
 
-      const cls = await classService.joinClass('ENG101');
+      await classService.joinClass('ENG101');
       expect(global.fetch).toHaveBeenCalledWith(
         expect.stringContaining('join_code=ENG101'),
         expect.objectContaining({ method: 'POST' })

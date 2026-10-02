@@ -17,7 +17,7 @@ import { BarGraph } from './bar-graph';
 // Mock the chart container and related components
 vi.mock('@/components/ui/chart', () => ({
   ChartConfig: {},
-  ChartContainer: ({ children, config, className }: any) => (
+  ChartContainer: ({ children, className }: any) => (
     <div data-testid="chart-container" className={className}>
       {children}
     </div>
@@ -53,27 +53,27 @@ vi.mock('@/components/ui/card', () => ({
 
 // Mock recharts
 vi.mock('recharts', () => ({
-  Bar: ({ children, dataKey, name, fill, radius, barSize }: any) => (
+  Bar: ({ children, dataKey, name, fill }: any) => (
     <div data-testid={`bar-${dataKey}`} data-name={name} data-fill={fill}>
       {children}
     </div>
   ),
-  BarChart: ({ children, data, layout, margin }: any) => (
+  BarChart: ({ children, layout }: any) => (
     <div data-testid="bar-chart" data-layout={layout}>
       {children}
     </div>
   ),
-  CartesianGrid: ({ horizontal, strokeDasharray, strokeOpacity }: any) => (
+  CartesianGrid: ({ horizontal, strokeDasharray }: any) => (
     <div 
       data-testid="cartesian-grid" 
       data-horizontal={horizontal}
       data-stroke-dasharray={strokeDasharray}
     />
   ),
-  XAxis: ({ type, hide, dataKey }: any) => (
+  XAxis: ({ type, hide }: any) => (
     <div data-testid="x-axis" data-type={type} data-hide={hide} />
   ),
-  YAxis: ({ dataKey, type, tickLine, axisLine, width }: any) => (
+  YAxis: ({ dataKey, type }: any) => (
     <div data-testid="y-axis" data-datakey={dataKey} data-type={type} />
   ),
 }));

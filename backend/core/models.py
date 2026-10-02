@@ -255,7 +255,8 @@ class HelpArticleVote(models.Model):
 class AdminAuditEvent(models.Model):
     event_id = models.BigAutoField(primary_key=True)
     actor = models.ForeignKey("User", models.SET_NULL, null=True, related_name="admin_actions")
-    target = models.ForeignKey("User", models.CASCADE, related_name="admin_history")
+    target = models.ForeignKey("User", models.SET_NULL, null=True, related_name="admin_history")
+    target_email = models.EmailField(blank=True, default="")
     action = models.CharField(max_length=40)
     reason = models.TextField(blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
@@ -916,6 +917,32 @@ class AuthSession(models.Model):
     class Meta:
         db_table = "auth_session"
         indexes = [models.Index(fields=["user", "expires_at"], name="auth_session_user_idx")]
+
+
+class LoginEvent(models.Model):
+    """A successful interactive sign-in used for institution usage reporting."""
+
+    event_id = models.BigAutoField(primary_key=True)
+    # Keep the aggregate audit trail if an otherwise empty account is deleted.
+    # A deleted account is deliberately absent from later class-level joins.
+    user = models.ForeignKey("User", models.SET_NULL, null=True, related_name="login_events")
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        db_table = "login_event"
+        indexes = [models.Index(fields=["created_at"], name="login_event_created_idx")]
+
+
+class LoginRateLimit(models.Model):
+    """A privacy-preserving, database-backed login failure counter."""
+
+    account_hash = models.CharField(max_length=64, unique=True)
+    failure_count = models.PositiveSmallIntegerField(default=0)
+    window_started_at = models.DateTimeField()
+    locked_until = models.DateTimeField(null=True, blank=True)
+
+    class Meta:
+        db_table = "login_rate_limit"
 
 
 class WorkerHeartbeat(models.Model):

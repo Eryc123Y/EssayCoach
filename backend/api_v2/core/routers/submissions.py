@@ -32,6 +32,7 @@ from core.models import (
     User,
 )
 from core.notifications import notify_submission
+from core.observability import bind_ai_job, reset_ai_job
 
 from ..schemas import (
     FeedbackFilterParams,
@@ -175,7 +176,9 @@ def create_submission(request: HttpRequest, data: SubmissionIn):
             # Legacy tasks may lack a usable rubric. The durable job records a
             # validation failure instead of fabricating a score.
             pass
-        AIJob.objects.create(submission=submission)
+        job = AIJob.objects.create(submission=submission)
+        trace_token = bind_ai_job("formal", job.pk)
+        reset_ai_job(trace_token)
         award_submission_milestones(request_user)
         notify_submission(submission)
         return submission

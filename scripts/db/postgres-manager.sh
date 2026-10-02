@@ -4,11 +4,11 @@ set -euo pipefail
 # PostgreSQL Manager for EssayCoach
 # This script manages PostgreSQL via Docker Compose
 
-export PGDATA="$PWD/.dev_pg"
-export PGHOST="127.0.0.1"  # Explicit IPv4
-export PGPORT=5432
-export PGDATABASE=essaycoach
-export PGUSER=postgres
+SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ROOT_DIR="$(cd "$SCRIPT_DIR/../.." && pwd)"
+cd "$ROOT_DIR"
+PGPORT=5432
+PGDATABASE=essaycoach
 
 show_help() {
     cat << EOF
@@ -33,18 +33,6 @@ EOF
 }
 
 start_pg() {
-    echo "[pg] Checking for existing processes on port $PGPORT..."
-    if lsof -ti:$PGPORT >/dev/null 2>&1; then
-        echo "[pg] Found process(es) on port $PGPORT. Killing them..."
-        lsof -ti:$PGPORT | xargs kill -9 2>/dev/null || true
-        sleep 2
-    fi
-
-    if [ ! -d "$PGDATA" ]; then
-        echo "[pg] Initializing PostgreSQL data directory..."
-        mkdir -p "$PGDATA"
-    fi
-
     if ! docker compose -f docker-compose.yml ps postgres 2>/dev/null | grep -q "Up"; then
         echo "[pg] Starting PostgreSQL..."
         if ! docker compose -f docker-compose.yml up -d postgres; then
@@ -81,7 +69,7 @@ start_pg() {
 stop_pg() {
     if docker compose -f docker-compose.yml ps postgres 2>/dev/null | grep -q "Up"; then
         echo "[pg] Stopping PostgreSQL..."
-        docker compose -f docker-compose.yml down
+        docker compose -f docker-compose.yml stop postgres
         echo "[pg] PostgreSQL stopped"
     else
         echo "[pg] PostgreSQL is not running"

@@ -16,6 +16,24 @@ ARTICLES = [
         },
     },
     {
+        "slug": "student-first-steps", "category": "getting_started", "roles": ["student"],
+        "tags": ["student", "onboarding"],
+        "title": {"en": "Your first steps as a student", "zh": "学生快速入门"},
+        "content": {"en": "Open your class from the dashboard, read the assignment requirements and rubric, then draft and review your essay before submitting. After submission, wait for your teacher to release the result.", "zh": "从首页打开班级，阅读作业要求和评分量规，再起草并检查作文后提交。提交后请等待教师发布结果。"},
+    },
+    {
+        "slug": "lecturer-first-steps", "category": "getting_started", "roles": ["lecturer"],
+        "tags": ["lecturer", "onboarding"],
+        "title": {"en": "Your first steps as a lecturer", "zh": "讲师快速入门"},
+        "content": {"en": "Open one of your assigned classes, prepare a rubric, publish an assignment, invite enrolled students, then review submissions and save your grading recommendations.", "zh": "打开所负责的班级，准备评分量规并发布作业，邀请已选课学生，然后复核提交并保存评分建议。"},
+    },
+    {
+        "slug": "admin-first-steps", "category": "getting_started", "roles": ["admin"],
+        "tags": ["admin", "onboarding"],
+        "title": {"en": "Your first steps as an administrator", "zh": "管理员快速入门"},
+        "content": {"en": "Invite teaching staff, check their roles and class assignments, and help users resolve access issues. Public registration is disabled.", "zh": "邀请教职员工，核对角色和班级分配，并协助用户解决访问问题。公开注册已关闭。"},
+    },
+    {
         "slug": "practice-and-sources",
         "category": "essays",
         "roles": ["student", "lecturer", "admin"],

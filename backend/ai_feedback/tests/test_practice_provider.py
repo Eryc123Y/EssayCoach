@@ -123,9 +123,10 @@ def test_practice_turn_timeout_interrupts_the_turn():
         async def turn(self, prompt, *, output_schema):
             return HangingTurn()
 
-    with pytest.raises(PracticeProviderError, match="timed out"):
+    with pytest.raises(PracticeProviderError, match="timed out") as error:
         asyncio.run(_practice_provider(timeout_seconds=0.01)._turn(Thread(), "prompt", {}))
     assert interrupted == [True]
+    assert error.value.category == "timeout"
 
 
 def test_practice_turn_returns_payload_and_null_usage_when_unreported():
@@ -144,8 +145,9 @@ def test_practice_turn_returns_payload_and_null_usage_when_unreported():
     ],
 )
 def test_practice_turn_rejects_unusable_model_output(status, final_response, message):
-    with pytest.raises(PracticeProviderError, match=message):
+    with pytest.raises(PracticeProviderError, match=message) as error:
         _practice_turn(_practice_provider(), status=status, final_response=final_response)
+    assert error.value.category in {"provider", "model_output"}
 
 
 # --- the per-criterion breakdown must match the rubric the student chose ---------------------

@@ -95,7 +95,7 @@ export function PortfolioWorkspace({ profileId }: { profileId?: number }) {
             {profile.avatar_url ? <img src={profile.avatar_url} alt={profile.name} className='h-full w-full object-cover' /> : profile.name.slice(0, 1).toUpperCase()}
             {own && <label className='absolute inset-x-0 bottom-0 flex cursor-pointer items-center justify-center bg-slate-950/75 py-1 text-white' aria-label={t('ui.uploadAvatar')}><IconCamera size={16} /><input type='file' accept='image/png,image/jpeg' onChange={(event) => { void upload(event.target.files?.[0]); }} className='sr-only' /></label>}
           </div>
-          <div className='min-w-0 flex-1 pt-3'><p className='text-xs font-bold uppercase tracking-widest text-teal-700 dark:text-teal-300'>{profile.role}</p><h2 className='mt-1 text-2xl font-semibold'>{profile.name}</h2><p className='mt-2 max-w-2xl text-sm text-slate-600 dark:text-slate-300'>{profile.bio || t('ui.aStoryStillTakingShape')}</p><p className='mt-2 text-xs text-slate-500'>{t('ui.joined')} {new Date(profile.joined_at).toLocaleDateString()}</p></div>
+          <div className='min-w-0 flex-1 pt-3'><p className='text-xs font-bold uppercase tracking-widest text-teal-700 dark:text-teal-300'>{t(`ui.${profile.role}`)}</p><h2 className='mt-1 text-2xl font-semibold'>{profile.name}</h2><p className='mt-2 max-w-2xl text-sm text-slate-600 dark:text-slate-300'>{profile.bio || t('ui.aStoryStillTakingShape')}</p><p className='mt-2 text-xs text-slate-500'>{t('ui.joined')} {new Date(profile.joined_at).toLocaleDateString()}</p></div>
           {own && <button type='button' onClick={() => setEditing(!editing)} className='mt-3 inline-flex items-center gap-2 rounded-full border border-slate-300 px-4 py-2 text-sm font-semibold dark:border-slate-600'><IconPencil size={16} />{editing ? t('ui.closeEditor') : t('ui.editProfile')}</button>}
         </div>
       </section>
@@ -113,6 +113,7 @@ export function PortfolioWorkspace({ profileId }: { profileId?: number }) {
       </section>
 
       {profile.role === 'lecturer' && <section className='grid gap-4 sm:grid-cols-2 xl:grid-cols-4'><Stat label={t('ui.classesTaught')} value={profile.classes.length} /><Stat label={t('ui.studentsTaught')} value={profile.students_taught} /><Stat label={t('ui.rubricsCreated')} value={profile.rubrics_created} /><Stat label={t('ui.reviewsCompleted')} value={profile.reviews_completed} /></section>}
+      {profile.role === 'lecturer' && <section className='rounded-2xl border border-slate-200 bg-white p-5 dark:border-slate-700 dark:bg-slate-900'><h2 className='text-lg font-semibold'>{t('ui.classesTaught')}</h2>{profile.classes.length ? <ul className='mt-3 grid gap-2 sm:grid-cols-2'>{profile.classes.map((item) => <li key={item.id}><Link href={`/dashboard/classes/${item.id}`} className='block rounded-xl border border-slate-200 p-3 text-sm font-semibold text-teal-800 hover:border-teal-500 dark:border-slate-700 dark:text-teal-300'>{item.name}</Link></li>)}</ul> : <p className='mt-3 text-sm text-slate-500'>{t('ui.noClassesCurrentlyAssigned')}</p>}</section>}
 
       <section className='rounded-2xl border border-slate-200 bg-white shadow-sm dark:border-slate-700 dark:bg-slate-900'>
         <div className='flex gap-2 overflow-x-auto border-b border-slate-200 px-4 pt-4 dark:border-slate-700' role='tablist' aria-label={t('ui.profileSections')}>

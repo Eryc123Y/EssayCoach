@@ -2,6 +2,7 @@
 import React from 'react';
 import { ActiveThemeProvider } from '../active-theme';
 import { AuthProvider } from '@/components/layout/simple-auth-context';
+import { BrandingProvider } from '@/components/layout/branding-provider';
 
 export default function Providers({
   activeThemeValue,
@@ -13,7 +14,9 @@ export default function Providers({
   return (
     <>
       <ActiveThemeProvider initialTheme={activeThemeValue}>
-        <AuthProvider>{children}</AuthProvider>
+        <BrandingProvider>
+          <AuthProvider>{children}</AuthProvider>
+        </BrandingProvider>
       </ActiveThemeProvider>
     </>
   );

@@ -36,9 +36,9 @@ const LANGUAGES = [
 ];
 
 const THEMES = [
-  { value: 'light', label: 'Light', icon: IconSun },
-  { value: 'dark', label: 'Dark', icon: IconMoon },
-  { value: 'system', label: 'System', icon: IconDeviceLaptop },
+  { value: 'light', labelId: 'ui.themeLight', icon: IconSun },
+  { value: 'dark', labelId: 'ui.themeDark', icon: IconMoon },
+  { value: 'system', labelId: 'ui.themeSystem', icon: IconDeviceLaptop },
 ] as const;
 
 type ThemeValue = 'light' | 'dark' | 'system';
@@ -180,7 +180,7 @@ export function DisplaySection({
                       isSelected ? 'text-primary' : 'text-muted-foreground'
                     }`}
                   >
-                    {locale === 'zh' ? { light: '浅色', dark: '深色', system: '跟随系统' }[theme.value] : theme.label}
+                    {localized(locale, theme.labelId)}
                   </span>
                 </button>
               );

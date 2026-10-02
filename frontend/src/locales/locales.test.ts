@@ -1,9 +1,41 @@
 import { describe, expect, it } from 'vitest';
+import { readdirSync, readFileSync } from 'node:fs';
+import { join, relative } from 'node:path';
+import ts from 'typescript';
 import { en } from './en';
 import { zh } from './zh';
 import { localized } from './index';
 
 const placeholders = (text: string) => new Set([...text.matchAll(/\{(\w+)\}/g)].map((match) => match[1]));
+
+function sourceFiles(directory: string): string[] {
+  return readdirSync(directory, { withFileTypes: true }).flatMap((entry) => {
+    const file = join(directory, entry.name);
+    if (entry.isDirectory()) return entry.name === 'locales' ? [] : sourceFiles(file);
+    return /\.(ts|tsx)$/.test(entry.name) && !/\.test\.(ts|tsx)$/.test(entry.name) ? [file] : [];
+  });
+}
+
+function missingStaticCatalogIds(): string[] {
+  const ids = new Set(Object.keys(en));
+  const missing: string[] = [];
+  for (const file of sourceFiles('src')) {
+    const source = ts.createSourceFile(file, readFileSync(file, 'utf8'), ts.ScriptTarget.Latest, true);
+    const visit = (node: ts.Node) => {
+      if (ts.isCallExpression(node) && ts.isIdentifier(node.expression)) {
+        const name = node.expression.text;
+        const argument = name === 'localized' ? node.arguments[1] : (name === 't' || name === 'message' ? node.arguments[0] : undefined);
+        if (argument && ts.isStringLiteral(argument) && /^(ui|community)\./.test(argument.text) && !ids.has(argument.text)) {
+          const { line } = source.getLineAndCharacterOfPosition(argument.getStart(source));
+          missing.push(`${relative('.', file)}:${line + 1} ${argument.text}`);
+        }
+      }
+      ts.forEachChild(node, visit);
+    };
+    visit(source);
+  }
+  return missing;
+}
 
 describe('localized', () => {
   it('returns the catalog text for the selected locale', () => {
@@ -48,5 +80,9 @@ describe('locale catalogs', () => {
   it('never introduces a Chinese placeholder that the English text lacks', () => {
     const unknown = ids.filter((id) => [...placeholders(zh[id])].some((name) => !placeholders(en[id]).has(name)));
     expect(unknown).toEqual([]);
+  });
+
+  it('contains every static UI ID used by the application source', () => {
+    expect(missingStaticCatalogIds()).toEqual([]);
   });
 });

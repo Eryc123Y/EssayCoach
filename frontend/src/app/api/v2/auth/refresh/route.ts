@@ -1,12 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerApiUrl } from '@/lib/server-api';
 
+const persistentCookieAge = 60 * 60 * 24 * 7;
+const secureCookieOptions = {
+  httpOnly: true,
+  sameSite: 'strict' as const,
+  secure: process.env.NODE_ENV === 'production',
+  path: '/',
+};
+
 export async function POST(req: NextRequest) {
   try {
     // Prefer refresh token from HttpOnly cookie; fall back to request body for compatibility.
     const body = await req.json().catch(() => ({}));
     const refreshToken =
       req.cookies.get('refresh_token')?.value || body?.refresh;
+    // The marker is deliberately independent from the token itself. Missing
+    // markers are from older logins and keep their existing persistent behavior.
+    const remember = req.cookies.get('session_persistence')?.value !== 'session';
 
     if (!refreshToken) {
       return NextResponse.json(
@@ -36,27 +47,23 @@ export async function POST(req: NextRequest) {
     const { access, refresh: newRefresh, expires_at } = payload;
 
     const res = NextResponse.json({
-      access,
-      refresh: newRefresh,
       expiresAt: expires_at
     });
 
     // Set new access token cookie
     res.cookies.set('access_token', access, {
-      httpOnly: true,
-      sameSite: 'strict',
-      secure: process.env.NODE_ENV === 'production',
-      path: '/',
-      maxAge: 60 * 60 // 1 hour
+      ...secureCookieOptions,
+      ...(remember ? { maxAge: 60 * 60 } : {}),
     });
 
     // Set new refresh token cookie (token rotation - new refresh token issued)
     res.cookies.set('refresh_token', newRefresh, {
-      httpOnly: true,
-      sameSite: 'strict',
-      secure: process.env.NODE_ENV === 'production',
-      path: '/',
-      maxAge: 60 * 60 * 24 * 7 // 7 days
+      ...secureCookieOptions,
+      ...(remember ? { maxAge: persistentCookieAge } : {}),
+    });
+    res.cookies.set('session_persistence', remember ? 'persistent' : 'session', {
+      ...secureCookieOptions,
+      ...(remember ? { maxAge: persistentCookieAge } : {}),
     });
 
     return res;

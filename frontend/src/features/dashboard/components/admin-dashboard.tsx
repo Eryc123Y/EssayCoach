@@ -113,6 +113,20 @@ function PlatformStats({ data }: { data: AdminDashboardResponse }) {
 // System Health Component
 // ——————————————————————————————————————————————————————————————————————————————
 
+const HEALTH_LABEL_IDS: Record<string, string> = {
+  Healthy: 'ui.healthy',
+  Degraded: 'ui.statusDegraded',
+  Critical: 'ui.statusCritical'
+};
+
+const STATUS_LABEL_IDS: Record<string, string> = {
+  healthy: 'ui.healthy',
+  degraded: 'ui.statusDegraded',
+  active: 'ui.statusActive',
+  idle: 'ui.statusIdle',
+  critical: 'ui.statusCritical'
+};
+
 function SystemHealth({
   status,
   health,
@@ -138,7 +152,7 @@ function SystemHealth({
               <span className="font-medium">{t('ui.overallHealth')}</span>
             </div>
             <Badge variant={healthConfig.variant} className={healthConfig.className}>
-              {locale === 'zh' ? { Healthy: '正常', Degraded: '降级', Critical: '严重' }[healthConfig.label] || healthConfig.label : healthConfig.label}
+              {HEALTH_LABEL_IDS[healthConfig.label] ? localized(locale, HEALTH_LABEL_IDS[healthConfig.label]) : healthConfig.label}
             </Badge>
           </div>
 
@@ -210,7 +224,7 @@ function HealthItem({
             isGood ? 'bg-emerald-500' : 'bg-amber-500'
           }`}
         />
-        <span className="text-sm font-medium capitalize">{locale === 'zh' ? { healthy: '正常', degraded: '降级', active: '活跃', idle: '空闲', critical: '严重' }[status] || status : status}</span>
+        <span className="text-sm font-medium capitalize">{STATUS_LABEL_IDS[status] ? localized(locale, STATUS_LABEL_IDS[status]) : status}</span>
       </div>
     </div>
   );

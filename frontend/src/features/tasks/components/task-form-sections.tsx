@@ -68,7 +68,6 @@ export function TaskTextFieldsSection({ formData, setFormData }: SectionProps) {
 
 function TaskUnitRubricSection({ formData, setFormData, classes, units, rubrics }: SectionProps) {
   const { locale } = usePreferences();
-  const zh = locale === 'zh';
   const availableUnits = Array.from(new Map([
     ...classes.map((item) => [item.unit_id_unit, { id: item.unit_id_unit, name: item.unit_id_unit }] as const),
     ...units.map((unit) => [unit.unit_id, { id: unit.unit_id, name: unit.unit_name }] as const),
@@ -104,7 +103,7 @@ function TaskUnitRubricSection({ formData, setFormData, classes, units, rubrics 
           <SelectContent>
             {rubrics.map((rubric) => (
               <SelectItem key={rubric.rubric_id} value={String(rubric.rubric_id)}>
-                {rubric.rubric_desc || (zh ? `量表 #${rubric.rubric_id}` : `Rubric #${rubric.rubric_id}`)}
+                {rubric.rubric_desc || localized(locale, 'ui.rubricNumber', { id: rubric.rubric_id })}
               </SelectItem>
             ))}
           </SelectContent>

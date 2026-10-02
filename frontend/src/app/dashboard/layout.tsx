@@ -41,10 +41,10 @@ export default async function DashboardLayout({
     <PreferenceProvider initialLocale={initialLocale} initialTheme={initialTheme} hasInitialPreferences={hasInitialPreferences}><KBar>
       <SidebarProvider defaultOpen={defaultOpen}>
         <AppSidebar />
-        <SidebarInset className='flex h-svh flex-col'>
+        <SidebarInset data-dashboard-print-shell className='flex h-svh flex-col'>
           <Header />
           {/* page main content */}
-          <div className='flex-1 overflow-y-auto'>{children}</div>
+          <div data-dashboard-print-content className='flex-1 overflow-y-auto'>{children}</div>
           {/* page main content ends */}
         </SidebarInset>
       </SidebarProvider>

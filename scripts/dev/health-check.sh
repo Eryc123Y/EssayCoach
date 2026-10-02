@@ -20,7 +20,7 @@ BACKEND_PORT="8000"
 FRONTEND_HOST="127.0.0.1"
 FRONTEND_PORT="5100"
 
-BACKEND_HEALTH_URL="http://${BACKEND_HOST}:${BACKEND_PORT}/api/v2/docs/"
+BACKEND_HEALTH_URL="http://${BACKEND_HOST}:${BACKEND_PORT}/api/v2/observability/health/"
 FRONTEND_HEALTH_URL="http://${FRONTEND_HOST}:${FRONTEND_PORT}/auth/sign-in/"
 
 BACKEND_LOG="${ROOT_DIR}/backend/logs/dev-backend.log"
@@ -115,8 +115,8 @@ check_frontend() {
     return 1
   fi
 
-  # Basic content sanity check.
-  grep -q "Sign In" "${FRONTEND_HEALTH_TMP}"
+  # Check the form itself, regardless of the selected interface language.
+  grep -q 'type="email"' "${FRONTEND_HEALTH_TMP}" && grep -q 'type="password"' "${FRONTEND_HEALTH_TMP}"
 }
 
 start_backend() {

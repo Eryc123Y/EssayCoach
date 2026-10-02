@@ -31,7 +31,6 @@ interface TaskCardProps {
 export function TaskCard({ task, className, userRole, onUpdate }: TaskCardProps) {
   const router = useRouter();
   const { locale } = usePreferences();
-  const zh = locale === 'zh';
   const [isDeleting, setIsDeleting] = useState(false);
   const [duplicateOpen, setDuplicateOpen] = useState(false);
   const [extendOpen, setExtendOpen] = useState(false);
@@ -68,7 +67,7 @@ export function TaskCard({ task, className, userRole, onUpdate }: TaskCardProps)
   };
 
   const handleDelete = async () => {
-    if (!confirm(zh ? `确定永久删除“${task.task_title}”吗？` : `Permanently delete “${task.task_title}”?`)) return;
+    if (!confirm(localized(locale, 'ui.permanentlyDeleteTitle', { title: task.task_title }))) return;
     
     setIsDeleting(true);
     try {

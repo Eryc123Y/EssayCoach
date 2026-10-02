@@ -6,9 +6,12 @@ from django.test import Client
 from api_v2.utils.jwt_auth import create_jwt_pair
 from core.models import (
     AdminAuditEvent,
+    AuthSession,
     Class,
     CourseLeadAssignment,
+    EmailChangeGrant,
     Enrollment,
+    LoginEvent,
     MarkingRubric,
     PasswordResetGrant,
     Submission,
@@ -118,6 +121,75 @@ def test_account_with_course_records_cannot_be_cascade_deleted():
     response = _client(admin).delete(f"/api/v2/core/users/{student.pk}/")
     assert response.status_code == 409
     assert Submission.objects.filter(pk=submission.pk).exists()
+
+
+@pytest.mark.django_db
+def test_admin_can_delete_a_disabled_account_without_course_records_but_not_itself():
+    admin = User.objects.create_user(
+        user_email="delete-self-admin@example.com", password="TestPass123!", user_role="admin"
+    )
+    disabled = User.objects.create_user(
+        user_email="delete-disabled@example.com",
+        password="TestPass123!",
+        user_status="suspended",
+        is_active=False,
+    )
+    client = _client(admin)
+
+    deleted = client.delete(f"/api/v2/core/users/{disabled.pk}/")
+    assert deleted.status_code == 200
+    assert not User.objects.filter(pk=disabled.pk).exists()
+
+    own_account = client.delete(f"/api/v2/core/users/{admin.pk}/")
+    assert own_account.status_code == 403
+    assert "own account" in own_account.json()["detail"]
+
+
+@pytest.mark.django_db
+def test_empty_activated_account_deletion_cleans_credentials_and_preserves_audits():
+    from datetime import timedelta
+
+    from django.utils import timezone
+
+    admin = User.objects.create_user(user_email="delete-audit-admin@example.com", user_role="admin")
+    target = User.objects.create_user(user_email="delete-activated@example.com", password="TestPass123!")
+    create_jwt_pair(target)
+    login = LoginEvent.objects.create(user=target)
+    audit = AdminAuditEvent.objects.create(actor=admin, target=target, action="disable_user")
+    expires = timezone.now() + timedelta(hours=1)
+    reset = PasswordResetGrant.objects.create(user=target, issued_by=admin, token_hash="a" * 64, expires_at=expires)
+    email_grant = EmailChangeGrant.objects.create(
+        user=target, old_email=target.user_email, new_email="changed@example.com", token_hash="b" * 64,
+        expires_at=expires,
+    )
+    target_id = target.pk
+    response = _client(admin).delete(f"/api/v2/core/users/{target_id}/")
+    assert response.status_code == 200
+    assert not User.objects.filter(pk=target_id).exists()
+    assert not AuthSession.objects.filter(user_id=target_id).exists()
+    assert not PasswordResetGrant.objects.filter(pk=reset.pk).exists()
+    assert not EmailChangeGrant.objects.filter(pk=email_grant.pk).exists()
+    login.refresh_from_db()
+    audit.refresh_from_db()
+    assert login.user_id is None
+    assert audit.target_id is None
+    assert audit.target_email == "delete-activated@example.com"
+    assert AdminAuditEvent.objects.filter(target_email=audit.target_email, action="delete_user").count() == 1
+
+
+@pytest.mark.django_db
+def test_linked_account_delete_does_not_partially_remove_its_credentials():
+    admin = User.objects.create_user(user_email="delete-atomic-admin@example.com", user_role="admin")
+    target = User.objects.create_user(user_email="delete-linked@example.com", password="TestPass123!")
+    unit = Unit.objects.create(unit_id="DELATOMIC", unit_name="Writing")
+    class_obj = Class.objects.create(unit_id_unit=unit, class_name="Seminar")
+    enrollment = Enrollment.objects.create(user_id_user=target, class_id_class=class_obj, unit_id_unit=unit)
+    create_jwt_pair(target)
+    assert AuthSession.objects.filter(user=target).exists()
+    response = _client(admin).delete(f"/api/v2/core/users/{target.pk}/")
+    assert response.status_code == 409
+    assert Enrollment.objects.filter(pk=enrollment.pk).exists()
+    assert AuthSession.objects.filter(user=target).exists()
 
 
 @pytest.mark.django_db

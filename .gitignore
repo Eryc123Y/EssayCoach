@@ -220,6 +220,8 @@ nitro.json
 # oh-my-codex / OMX local state
 .omc/
 .omx/
+.sisyphus/
+.superset/
 
 # Test screenshots
 *.png
@@ -254,3 +256,7 @@ backend/api_v1/
 
 # Source-check evaluation output
 backend/source-eval-results/
+
+# Browser acceptance output
+frontend/test-results/
+frontend/playwright-report/

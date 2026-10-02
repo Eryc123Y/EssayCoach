@@ -14,6 +14,7 @@ from ninja.files import UploadedFile
 
 from api_v2.utils.auth import JWTAuth
 from core.models import MarkingRubric, PracticeChatTurn, PracticeEssay, PracticeRun
+from core.observability import bind_ai_job, reset_ai_job
 from core.practice import PracticeError, retry_run, start_analysis
 from core.practice_chat import PracticeChatError, create_chat_turn, retry_chat_turn
 from core.practice_import import PracticeImportError, extract_practice_text
@@ -245,6 +246,8 @@ def analyze_essay(request: HttpRequest, essay_id: UUID, data: StartAnalysisIn):
         run = start_analysis(essay_id, student.pk, expected_version=data.expected_version)
     except PracticeError as exc:
         raise HttpError(409, str(exc)) from exc
+    trace_token = bind_ai_job("practice", run.pk)
+    reset_ai_job(trace_token)
     return _serialize_run(run)
 
 
@@ -274,6 +277,8 @@ def retry_analysis(request: HttpRequest, run_id: UUID):
         run = retry_run(run_id, student.pk)
     except PracticeError as exc:
         raise HttpError(409, str(exc)) from exc
+    trace_token = bind_ai_job("practice", run.pk)
+    reset_ai_job(trace_token)
     return _serialize_run(run)
 
 
@@ -293,6 +298,8 @@ def ask_coach(request: HttpRequest, run_id: UUID, data: PracticeChatIn):
         turn = create_chat_turn(run_id, student.pk, data.question)
     except PracticeChatError as exc:
         raise HttpError(409, str(exc)) from exc
+    trace_token = bind_ai_job("chat", turn.pk)
+    reset_ai_job(trace_token)
     return Status(201, _serialize_chat(turn))
 
 
@@ -303,4 +310,6 @@ def retry_coach(request: HttpRequest, turn_id: UUID):
         turn = retry_chat_turn(turn_id, student.pk)
     except PracticeChatError as exc:
         raise HttpError(409, str(exc)) from exc
+    trace_token = bind_ai_job("chat", turn.pk)
+    reset_ai_job(trace_token)
     return _serialize_chat(turn)

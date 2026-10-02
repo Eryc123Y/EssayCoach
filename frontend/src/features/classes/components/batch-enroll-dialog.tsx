@@ -29,7 +29,6 @@ export function BatchEnrollDialog({ classId, className, open, onOpenChange, onSu
   const [result, setResult] = useState<BatchStudentInvitationResult | null>(null);
   const [error, setError] = useState('');
   const emails = parseEmails(raw);
-  const zh = locale === 'zh';
 
   function close() {
     onOpenChange(false);
@@ -59,8 +58,7 @@ export function BatchEnrollDialog({ classId, className, open, onOpenChange, onSu
         <DialogHeader>
           <DialogTitle>{localized(locale, 'ui.inviteStudents')}</DialogTitle>
           <DialogDescription>
-            {zh ? `为「${className}」创建一次性邀请链接。学生接受后才会加入班级；目前请自行复制并分享链接。` :
-              `Create one-time links for ${className}. Students join after accepting; copy and share the links yourself.`}
+            {localized(locale, 'ui.createOneTimeLinksForClassNameStudentsJoinAfterAccepting', { name: className })}
           </DialogDescription>
         </DialogHeader>
         {!result ? (
@@ -81,8 +79,7 @@ export function BatchEnrollDialog({ classId, className, open, onOpenChange, onSu
         ) : (
           <>
             <p className='text-sm text-muted-foreground' role='status'>
-              {zh ? `已创建 ${result.created.length} 个链接，${result.failed.length} 个失败。` :
-                `${result.created.length} links created; ${result.failed.length} failed.`}
+              {localized(locale, 'ui.linksCreatedAndFailed', { created: result.created.length, failed: result.failed.length })}
             </p>
             <div className='max-h-72 space-y-3 overflow-y-auto'>
               {result.created.map((invitation) => (

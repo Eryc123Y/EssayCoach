@@ -15,6 +15,7 @@ from core.models import (
     MarkingRubric,
     Notification,
     SharedEssay,
+    SocialInteraction,
     Submission,
     Task,
     TeachingAssn,
@@ -104,17 +105,21 @@ def test_share_visibility_interactions_and_moderation(social):
         content_type="application/json",
     )
     assert report.status_code == 200
+    assert report.json()["target_type"] == "feedback"
+    assert report.json()["target_content"] == "Try a more specific example."
     assert peer_client.get(f"{base}moderation/reports/").status_code == 403
-    assert teacher_client.get(f"{base}moderation/reports/").json()[0]["id"] == report.json()["id"]
+    moderation_row = teacher_client.get(f"{base}moderation/reports/").json()[0]
+    assert moderation_row["id"] == report.json()["id"]
+    assert moderation_row["target_content"] == "Try a more specific example."
+    assert peer_client.delete(f"{base}interactions/{comment.json()['id']}/").status_code == 409
     resolution = teacher_client.post(
         f"{base}moderation/reports/{report.json()['id']}/resolve/",
-        {"decision": "hide"},
+        {"decision": "remove"},
         content_type="application/json",
     )
     assert resolution.status_code == 200
     assert ContentReport.objects.get(pk=report.json()["id"]).status == "resolved"
-    assert peer_client.get(f"{base}feed/").json() == []
-    assert teacher_client.post(f"{base}moderation/{submission.pk}/restore/").status_code == 200
+    assert not SocialInteraction.objects.filter(pk=comment.json()["id"]).exists()
     assert len(peer_client.get(f"{base}feed/").json()) == 1
 
     updated = owner_client.put(

@@ -2,17 +2,19 @@
 
 ## OVERVIEW
 `backend/ai_feedback/` is the provider-facing essay-analysis integration layer.
-Read `agent_factory.py` and the API caller to determine the selected provider;
-the Dify and optional LangGraph paths are product behavior, separate from Codex.
+The product providers are Codex (`codex_provider.py`, `practice_provider.py`,
+`codex_rubric_parser.py`). The earlier Dify and LangGraph clients were removed
+because nothing called them; restore them from git history only if a task
+explicitly brings those providers back.
 
 ## WHERE TO LOOK
 | Task | Location | Notes |
 |---|---|---|
-| Provider selection | `agent_factory.py` | configured essay-analysis backend |
-| Dify provider client | `dify_client.py` | provider-specific implementation |
+| Codex provider | `codex_provider.py` | formal assessment drafts and source checks |
+| Practice provider | `practice_provider.py` | practice-studio reports and chat |
 | Abstraction contracts | `interfaces.py` | provider-neutral workflow interfaces |
 | Error model | `exceptions.py` | unified exception hierarchy |
-| Output shaping | `response_transformer.py` | provider response normalization |
+| Source retrieval | `source_retrieval.py` | public-only HTTPS fetching for citation checks |
 | Rubric ingestion | `rubric_parser.py` | PDF parsing + provider interactions |
 
 ## CONVENTIONS
@@ -23,8 +25,8 @@ the Dify and optional LangGraph paths are product behavior, separate from Codex.
 
 ## MIGRATION CONTEXT
 - Do not treat an old migration priority as authorization to change providers or models.
-- Existing API shape should remain stable for the frontend while internals change from Dify to custom agents.
-- If adding new agent code, make the transition path obvious from current Dify behaviors to future provider-neutral abstractions.
+- Keep the API shape stable for the frontend when provider internals change.
+- New provider code should sit behind the interfaces in `interfaces.py`.
 
 ## ANTI-PATTERNS
 - Do not leak provider-specific response shapes across the API boundary.

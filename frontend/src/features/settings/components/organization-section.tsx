@@ -5,6 +5,7 @@ import { localized } from '@/locales';
 import { useEffect, useState } from 'react';
 import { request } from '@/service/request';
 import { usePreferences } from '@/components/layout/preference-provider';
+import { useUpdateBranding } from '@/components/layout/branding-provider';
 
 type Organization = {
   name: string;
@@ -17,6 +18,7 @@ const url = '/api/v2/admin/organization/';
 
 export function OrganizationSection() {
   const { locale: language, changeLocale: setLanguage } = usePreferences();
+  const updateBranding = useUpdateBranding();
   const [value, setValue] = useState<Organization>();
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
@@ -36,6 +38,7 @@ export function OrganizationSection() {
         data: { name: value.name.trim(), logo_url: value.logo_url.trim(), primary_color: value.primary_color },
       });
       setValue(updated);
+      updateBranding(updated);
       setError('');
       setSuccess(true);
     } catch (cause) { setError(cause instanceof Error ? cause.message : String(cause)); setSuccess(false); }

@@ -16,7 +16,8 @@ from ninja.files import UploadedFile
 
 from core.email_change import EmailChangeError, complete_email_change, issue_email_change, preview_email_change
 from core.invitations import InvitationError, InviteRole, accept_invitation, issue_invitation, preview_invitation
-from core.models import AuthSession, Class, Unit, User
+from core.login_rate_limit import LoginRateLimitError, assert_login_allowed, clear_login_failures, record_login_failure
+from core.models import AuthSession, Class, LoginEvent, Unit, User
 from core.password_reset import PasswordResetError, complete_password_reset, preview_password_reset
 
 from ..utils.auth import TokenAuth
@@ -76,6 +77,37 @@ def _user_to_schema(user: User) -> UserOut:
         status=user.user_status or "active",
         date_joined=user.date_joined.isoformat() if user.date_joined else "",
     )
+
+
+def _record_successful_login(user: User) -> None:
+    """Record an interactive authentication, never a token refresh or failed attempt."""
+    LoginEvent.objects.create(user=user)
+
+
+def _authenticate_login(request: HttpRequest, data: UserLoginIn) -> User:
+    """Apply the shared account limiter, then authenticate one interactive login."""
+    try:
+        assert_login_allowed(data.email)
+    except LoginRateLimitError as exc:
+        raise HttpError(429, str(exc)) from exc
+
+    user = authenticate(request, username=data.email, password=data.password)
+    if not user:
+        try:
+            existing_user = User.objects.get(user_email=data.email)
+            if existing_user.check_password(data.password) and not existing_user.is_active:
+                raise HttpError(423, "Account is locked. Please contact administrator.")
+        except User.DoesNotExist:
+            pass
+        if record_login_failure(data.email):
+            raise HttpError(429, "Too many login attempts. Please try again later.")
+        raise HttpError(401, "Invalid email or password")
+
+    if user.user_status != "active":
+        raise HttpError(423, "Account is not active. Please contact an administrator.")
+
+    clear_login_failures(data.email)
+    return cast(User, user)
 
 
 @router.post("/invitations/", response=InvitationCreateOut, auth=JWTAuth())
@@ -176,6 +208,7 @@ def register(request: HttpRequest, data: UserRegistrationIn) -> AuthResponseWith
         raise HttpError(exc.status, str(exc)) from exc
 
     jwt_pair = create_jwt_pair(user, request=request)
+    _record_successful_login(user)
 
     return AuthResponseWithRefresh(
         data={
@@ -190,21 +223,10 @@ def register(request: HttpRequest, data: UserRegistrationIn) -> AuthResponseWith
 
 @router.post("/login/", response=AuthResponseWithRefresh)
 def login(request: HttpRequest, data: UserLoginIn) -> AuthResponseWithRefresh:
-    user = authenticate(request, username=data.email, password=data.password)
-
-    if not user:
-        try:
-            existing_user = User.objects.get(user_email=data.email)
-            if existing_user.check_password(data.password) and not existing_user.is_active:
-                raise HttpError(423, "Account is locked. Please contact administrator.")
-        except User.DoesNotExist:
-            pass
-        raise HttpError(401, "Invalid email or password")
-
-    if user.user_status != "active":
-        raise HttpError(423, "Account is not active. Please contact an administrator.")
+    user = _authenticate_login(request, data)
 
     jwt_pair = create_jwt_pair(user, request=request)
+    _record_successful_login(user)
 
     return AuthResponseWithRefresh(
         data={
@@ -318,22 +340,11 @@ def login_with_jwt(request: HttpRequest, data: UserLoginIn) -> AuthResponseWithR
 
     This endpoint returns both access and refresh tokens for use with JWT authentication.
     """
-    user = authenticate(request, username=data.email, password=data.password)
-
-    if not user:
-        try:
-            existing_user = User.objects.get(user_email=data.email)
-            if existing_user.check_password(data.password) and not existing_user.is_active:
-                raise HttpError(423, "Account is locked. Please contact administrator.")
-        except User.DoesNotExist:
-            pass
-        raise HttpError(401, "Invalid email or password")
-
-    if user.user_status != "active":
-        raise HttpError(423, "Account is not active. Please contact an administrator.")
+    user = _authenticate_login(request, data)
 
     # Create JWT token pair
     jwt_pair = create_jwt_pair(user, request=request)
+    _record_successful_login(user)
 
     return AuthResponseWithRefresh(
         data={
