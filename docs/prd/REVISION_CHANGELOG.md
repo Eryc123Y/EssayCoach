@@ -5,6 +5,12 @@
 
 ---
 
+## 2026-10-02 — Sign-in rate limits (02-sign-in.md §3.4)
+
+The per-IP limit now counts failures per account from one client IP (5), plus a separate client-wide ceiling of 50 failures across all accounts. A literal 5-attempts-per-IP limit would let five typos from one shared campus NAT address lock a whole classroom out. The account lockout after 10 failures is unchanged. Owner-approved; implemented in `backend/core/login_rate_limit.py`.
+
+---
+
 ## Summary
 
 This revision updates all PRD files to reflect the actual implementation in the codebase, fixing terminology mismatches and incorrect API references.
