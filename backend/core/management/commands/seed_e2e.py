@@ -128,7 +128,8 @@ class Command(BaseCommand):
     def handle(self, *args, **options) -> None:
         database_name = settings.DATABASES["default"]["NAME"]
         # Parallel runs may use suffixed copies such as essaycoach_e2e_a.
-        if not str(database_name).removeprefix("test_").startswith(E2E_DATABASE_NAME):
+        name = str(database_name)
+        if not (name.startswith(E2E_DATABASE_NAME) or name.removeprefix("test_").startswith(E2E_DATABASE_NAME)):
             raise CommandError(
                 f"seed_e2e only runs against {E2E_DATABASE_NAME}* databases; current database is {database_name!r}"
             )
