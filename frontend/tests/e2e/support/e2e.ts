@@ -117,3 +117,28 @@ export function trackPageErrors(page: Page) {
     },
   };
 }
+
+/**
+ * `signIn`, but only after the sign-in form has hydrated. Values typed into the
+ * server-rendered form before hydration are reset by React, leaving an empty,
+ * invalid form. The auth provider's mount-time session check is the first
+ * request issued after hydration, so wait for it before typing.
+ */
+export async function signInAfterHydration(page: Page, credentials: Credentials, { remember = true } = {}) {
+  const hydrated = page
+    .waitForResponse((response) => response.url().includes('/api/v2/auth/getUserInfo'), { timeout: 10_000 })
+    .catch(() => undefined);
+  await visit(page, '/auth/sign-in');
+  await hydrated;
+  const email = page.getByLabel(/email address/i);
+  const password = page.locator('input[type="password"]');
+  await email.fill(credentials.email);
+  await password.fill(credentials.password);
+  await expect(email).toHaveValue(credentials.email);
+  await expect(password).toHaveValue(credentials.password);
+  const rememberBox = page.getByRole('checkbox', { name: /remember me/i });
+  if ((await rememberBox.isChecked()) !== remember) await rememberBox.click();
+  await expect(rememberBox).toBeChecked({ checked: remember });
+  await page.getByRole('button', { name: /sign in/i }).click();
+  await page.waitForURL(/\/dashboard/, { waitUntil: 'domcontentloaded' });
+}
