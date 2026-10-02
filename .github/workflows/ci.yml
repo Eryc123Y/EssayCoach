@@ -178,7 +178,7 @@ jobs:
         run: |
           cd backend && uv run python manage.py migrate --noinput
           uv run python manage.py runserver 127.0.0.1:8000 > ../backend-e2e.log 2>&1 &
-          cd ../frontend && pnpm exec next start -H 127.0.0.1 -p 5100 > ../frontend-e2e.log 2>&1 &
+          cd ../frontend && pnpm start -H 127.0.0.1 -p 5100 > ../frontend-e2e.log 2>&1 &
           for attempt in {1..40}; do
             if curl --fail --silent --show-error --location http://127.0.0.1:8000/api/v2/observability/health/ > /dev/null && \
               curl --fail --silent --show-error --location http://127.0.0.1:5100/auth/sign-in/ > /dev/null; then

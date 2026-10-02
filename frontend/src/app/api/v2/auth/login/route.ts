@@ -1,7 +1,13 @@
+import { timingSafeEqual } from 'node:crypto';
 import { NextRequest, NextResponse } from 'next/server';
 import { normalizeUserInfo } from '@/lib/user-normalization';
 import { getServerApiUrl } from '@/lib/server-api';
 import { authCookieOptions, setSessionCookies } from '@/lib/auth-session';
+import {
+  CLIENT_IP_HEADER,
+  CLIENT_IP_SECRET_ENV,
+  CLIENT_IP_SECRET_HEADER
+} from '@/lib/client-ip-headers.mjs';
 
 type LoginRequestBody = {
   email?: string;
@@ -12,17 +18,20 @@ type LoginRequestBody = {
 /**
  * The browser's address for the backend's per-client login limits.
  *
- * A client can put anything in x-forwarded-for when it reaches Next directly
- * (Next only fills the header from the socket when it is absent), so the
- * address is forwarded only when TRUST_PROXY_FORWARDED_FOR=true says a reverse
- * proxy in front of Next sets it. The proxy's own entry is the right-most one.
- * Without it the backend counts failures per account only.
+ * Only `server.mjs` (the `pnpm start` entry point) knows the real client
+ * address; it passes it with a per-process secret. Caller-supplied headers,
+ * including X-Forwarded-For, are never trusted here. Without the server (for
+ * example `next dev` on 127.0.0.1) nothing is forwarded and the backend counts
+ * failures per account only.
  */
 function clientAddress(req: NextRequest): string | undefined {
-  if (process.env.TRUST_PROXY_FORWARDED_FOR !== 'true') return undefined;
-  const forwarded = req.headers.get('x-forwarded-for');
-  const address = forwarded?.split(',').pop()?.trim();
-  return address || undefined;
+  const expected = process.env[CLIENT_IP_SECRET_ENV];
+  const provided = req.headers.get(CLIENT_IP_SECRET_HEADER);
+  if (!expected || !provided) return undefined;
+  const a = Buffer.from(provided);
+  const b = Buffer.from(expected);
+  if (a.length !== b.length || !timingSafeEqual(a, b)) return undefined;
+  return req.headers.get(CLIENT_IP_HEADER)?.trim() || undefined;
 }
 
 export async function POST(req: NextRequest) {
