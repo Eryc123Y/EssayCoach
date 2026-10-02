@@ -15,6 +15,7 @@ from datetime import timedelta
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
+from django.db.models import Q
 from django.utils import timezone
 
 from ai_feedback.codex_provider import ScoringResult
@@ -23,11 +24,13 @@ from core.ai_jobs import process_next_job
 from core.assessment import task_rubric_snapshot
 from core.models import (
     Class,
+    ContentReport,
     CourseLeadAssignment,
     Enrollment,
     MarkingRubric,
     RubricItem,
     RubricLevelDesc,
+    SharedEssay,
     Task,
     TeachingAssn,
     Unit,
@@ -143,7 +146,13 @@ class Command(BaseCommand):
     def _seed(self) -> None:
         with transaction.atomic():
             # The E2E database is disposable. Limit cleanup to named fixture
-            # records so a mistaken invocation stays narrowly scoped.
+            # records so a mistaken invocation stays narrowly scoped. Shared
+            # essays and content reports PROTECT their owners and reporters, so
+            # clear E2E community rows before the accounts.
+            ContentReport.objects.filter(
+                Q(reporter__user_email__endswith=E2E_DOMAIN) | Q(share__owner__user_email__endswith=E2E_DOMAIN)
+            ).delete()
+            SharedEssay.objects.filter(owner__user_email__endswith=E2E_DOMAIN).delete()
             User.objects.filter(user_email__endswith=E2E_DOMAIN).delete()
             Class.objects.filter(
                 class_name__in=(E2E_BOOTSTRAP_CLASS, E2E_WORKFLOW_CLASS, E2E_JOURNEY_CLASS, E2E_OTHER_CLASS),
