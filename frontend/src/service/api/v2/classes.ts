@@ -101,13 +101,6 @@ export const classService = {
     });
   },
 
-  async addStudentToClass(classId: number, userId: number): Promise<StudentInfo> {
-    return request<StudentInfo>({
-      url: `${BASE_URL}/core/classes/${classId}/students/?user_id=${userId}`,
-      method: 'POST',
-    });
-  },
-
   async removeStudentFromClass(classId: number, userId: number): Promise<{ success: boolean }> {
     return request<{ success: boolean }>({
       url: `${BASE_URL}/core/classes/${classId}/students/${userId}/`,
