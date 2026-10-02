@@ -1,9 +1,11 @@
-"""Inputs for the institution's moderated peer learning feed."""
+"""Schemas for the institution's moderated peer learning feed."""
+
+from datetime import datetime
 
 from ninja import Schema
 from pydantic import Field
 
-from api_v2.types.enums import InteractionType, SocialVisibility
+from api_v2.types.enums import InteractionType, SocialContentStatus, SocialVisibility
 
 
 class SharedEssayIn(Schema):
@@ -23,6 +25,19 @@ class ShareUpdateIn(Schema):
 class SocialInteractionIn(Schema):
     interaction_type: InteractionType
     content: str | None = Field(default=None, max_length=3000)
+
+
+class SocialInteractionOut(Schema):
+    id: int
+    submission_id: int
+    user_id: int
+    author: str
+    interaction_type: InteractionType
+    content: str | None = None
+    status: SocialContentStatus
+    created_at: datetime
+    updated_at: datetime
+    is_mine: bool
 
 
 class ContentReportIn(Schema):

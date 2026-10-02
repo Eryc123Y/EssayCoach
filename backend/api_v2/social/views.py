@@ -28,7 +28,15 @@ from core.models import (
 )
 from core.notifications import dispatch_notification
 
-from .schemas import ContentReportIn, PostingBanIn, ResolveReportIn, SharedEssayIn, ShareUpdateIn, SocialInteractionIn
+from .schemas import (
+    ContentReportIn,
+    PostingBanIn,
+    ResolveReportIn,
+    SharedEssayIn,
+    ShareUpdateIn,
+    SocialInteractionIn,
+    SocialInteractionOut,
+)
 
 router = Router(tags=["Social Hub"], auth=JWTAuth())
 
@@ -299,7 +307,7 @@ def _interaction_row(item: SocialInteraction, viewer: User) -> dict:
     }
 
 
-@router.get("/{submission_id}/interactions/", response=list[dict])
+@router.get("/{submission_id}/interactions/", response=list[SocialInteractionOut])
 def list_interactions(request: HttpRequest, submission_id: int):
     share = _require_share(request.auth, submission_id)
     can_moderate = _can_moderate(request.auth, share)
@@ -497,7 +505,7 @@ def resolve_report(request: HttpRequest, report_id: int, data: ResolveReportIn):
     return _report_row(report, request.auth)
 
 
-@router.post("/moderation/interactions/{interaction_id}/restore/", response=dict)
+@router.post("/moderation/interactions/{interaction_id}/restore/", response=SocialInteractionOut)
 def restore_interaction(request: HttpRequest, interaction_id: int):
     item = get_object_or_404(SocialInteraction.objects.select_related("share__class_obj", "user"), pk=interaction_id)
     _require_moderator(request.auth, item.share)

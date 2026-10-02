@@ -37,13 +37,21 @@ describe('dashboard middleware', () => {
     expect(response.headers.get('x-middleware-request-cookie')).toContain('access_token=mw-access');
   });
 
-  it('signs out and clears cookies when the refresh token is refused', async () => {
+  it('redirects without clearing cookies when the refresh token is refused', async () => {
     fetchMock.mockResolvedValue({ ok: false, status: 401, json: async () => ({}) });
     const response = await middleware(dashboardRequest('refresh_token=mw-revoked; session_persistence=persistent'));
 
     expect(response.headers.get('location')).toContain('/auth/sign-in');
-    expect(response.cookies.get('refresh_token')?.maxAge).toBe(0);
-    expect(response.cookies.get('session_persistence')?.maxAge).toBe(0);
+    // A losing concurrent rotation must not erase the winner's new cookies.
+    expect(response.cookies.get('refresh_token')).toBeUndefined();
+  });
+
+  it('lets a request that lost a rotation race through while its access token is still valid', async () => {
+    fetchMock.mockResolvedValue({ ok: false, status: 401, json: async () => ({}) });
+    const payload = Buffer.from(JSON.stringify({ exp: Math.floor(Date.now() / 1000) + 30 })).toString('base64url');
+    const response = await middleware(dashboardRequest(`access_token=h.${payload}.s; refresh_token=mw-rotated`));
+
+    expect(response.headers.get('location')).toBeNull();
   });
 
   it('ignores routes outside the dashboard', async () => {

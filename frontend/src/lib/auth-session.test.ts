@@ -63,6 +63,19 @@ describe('auth session refresh', () => {
     expect(first.refreshed?.remember).toBe(false);
   });
 
+  it('never replays a settled rotation for a spent refresh token', async () => {
+    fetchMock
+      .mockResolvedValueOnce(refreshed('first-access', 'first-refresh'))
+      .mockResolvedValueOnce({ ok: false, status: 401, json: async () => ({}) });
+    const first = await resolveSession(requestWith('refresh_token=r-spent'));
+    const replay = await resolveSession(requestWith('refresh_token=r-spent'));
+
+    expect(first.refreshed?.access).toBe('first-access');
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(replay.refreshed).toBeUndefined();
+    expect(replay.rejected).toBe(true);
+  });
+
   it('marks a refused refresh token as rejected', async () => {
     fetchMock.mockResolvedValue({ ok: false, status: 401, json: async () => ({}) });
     const session = await resolveSession(requestWith('refresh_token=r-revoked'));

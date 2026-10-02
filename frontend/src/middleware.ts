@@ -2,19 +2,16 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import {
   applyRefreshedRequestCookies,
-  clearSessionCookies,
   resolveSession,
   setSessionCookies
 } from '@/lib/auth-session';
 
-function redirectToSignIn(request: NextRequest, clearCookies: boolean) {
+function redirectToSignIn(request: NextRequest) {
   const url = request.nextUrl.clone();
   url.pathname = '/auth/sign-in';
   url.search = '';
   url.searchParams.set('callbackUrl', request.nextUrl.pathname);
-  const response = NextResponse.redirect(url);
-  if (clearCookies) clearSessionCookies(response);
-  return response;
+  return NextResponse.redirect(url);
 }
 
 export default async function middleware(request: NextRequest) {
@@ -31,8 +28,11 @@ export default async function middleware(request: NextRequest) {
     return response;
   }
 
-  if (!session.accessToken || session.rejected) {
-    return redirectToSignIn(request, Boolean(session.rejected));
+  // A refused refresh can mean a concurrent request already rotated the token,
+  // so cookies are never cleared here: that response could race and erase the
+  // winner's new cookies. Signing in again overwrites stale ones.
+  if (!session.accessToken) {
+    return redirectToSignIn(request);
   }
 
   return NextResponse.next();

@@ -27,7 +27,8 @@ frontend/
 ## CONVENTIONS
 - Package manager is `pnpm`; run frontend commands from `frontend/`.
 - New work should prefer `/api/v2` services and contracts.
-- Server-side dashboard identity is verified by Django; client user metadata uses localStorage/context.
+- Server-side dashboard identity is verified by Django; client user metadata uses `src/lib/user-data-storage.ts` (sessionStorage for session-only sign-ins, localStorage when remembered) and context.
+- Expired access cookies are renewed from the refresh cookie by `src/lib/auth-session.ts` (middleware, proxy and auth route handlers); never clear session cookies on a refused refresh outside logout.
 - `credentials: 'include'` is mandatory for cookie-backed requests.
 - The `/app/api/v2/[...path]/route.ts` proxy is a security boundary: auth comes from cookies, and forwarded headers/cookies are explicitly allowlisted.
 - `127.0.0.1` is the dev default; avoid `localhost` surprises.

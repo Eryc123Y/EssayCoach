@@ -1,4 +1,5 @@
 import type { NextRequest, NextResponse } from 'next/server';
+import { decodeJwt } from 'jose';
 import { getServerApiUrl } from '@/lib/server-api';
 
 /**
@@ -15,8 +16,6 @@ export const ACCESS_COOKIE_MAX_AGE = 60 * 60;
 export const REMEMBERED_SESSION_MAX_AGE = 60 * 60 * 24 * 30;
 
 const REFRESH_SKEW_SECONDS = 60;
-// Requests that race on the same rotated refresh token share one result.
-const REFRESH_RESULT_TTL_MS = 30_000;
 
 export const SESSION_COOKIE_NAMES = [
   'access_token',
@@ -87,13 +86,10 @@ export function clearSessionCookies(res: NextResponse) {
 }
 
 function decodeExp(token: string): number | null {
-  const part = token.split('.')[1];
-  if (!part) return null;
   try {
-    const base64 = part.replace(/-/g, '+').replace(/_/g, '/');
-    const padded = base64 + '='.repeat((4 - (base64.length % 4)) % 4);
-    const payload = JSON.parse(atob(padded)) as { exp?: unknown };
-    return typeof payload.exp === 'number' ? payload.exp : null;
+    // Unverified decode only decides when to refresh; Django verifies every token.
+    const { exp } = decodeJwt(token);
+    return typeof exp === 'number' ? exp : null;
   } catch {
     return null;
   }
@@ -109,10 +105,10 @@ export function accessTokenNeedsRefresh(
   return exp * 1000 - nowMs <= REFRESH_SKEW_SECONDS * 1000;
 }
 
-const pendingRefreshes = new Map<
-  string,
-  { promise: Promise<RefreshResult>; expiresAt: number }
->();
+// Requests that race on the same refresh token share one in-flight rotation.
+// Settled results are never kept: replaying a spent token must not return the
+// credentials that replaced it.
+const pendingRefreshes = new Map<string, Promise<RefreshResult>>();
 
 async function requestRefresh(
   refreshToken: string,
@@ -149,22 +145,13 @@ export function refreshSessionTokens(
   refreshToken: string,
   remember: boolean
 ): Promise<RefreshResult> {
-  const now = Date.now();
-  for (const [key, entry] of pendingRefreshes) {
-    if (entry.expiresAt <= now) pendingRefreshes.delete(key);
-  }
-  const existing = pendingRefreshes.get(refreshToken);
-  if (existing) return existing.promise;
+  const pending = pendingRefreshes.get(refreshToken);
+  if (pending) return pending;
 
-  const promise = requestRefresh(refreshToken, remember).then((result) => {
-    // Transient failures should not be replayed to later requests.
-    if (result.status === 'error') pendingRefreshes.delete(refreshToken);
-    return result;
+  const promise = requestRefresh(refreshToken, remember).finally(() => {
+    pendingRefreshes.delete(refreshToken);
   });
-  pendingRefreshes.set(refreshToken, {
-    promise,
-    expiresAt: now + REFRESH_RESULT_TTL_MS
-  });
+  pendingRefreshes.set(refreshToken, promise);
   return promise;
 }
 
