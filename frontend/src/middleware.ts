@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import {
   applyRefreshedRequestCookies,
+  authCookieOptions,
   resolveSession,
   setSessionCookies,
   type SessionTokens
@@ -23,12 +24,55 @@ function forwardRefreshed(request: NextRequest, tokens: SessionTokens) {
   return response;
 }
 
+// Set while a page load retries once after its refresh token was refused.
+const RETRY_COOKIE = 'session_refresh_retry';
+// Rotations in flight are shared, so a refused page load means another request
+// already finished rotating; give its Set-Cookie response time to reach the
+// browser before this one is reloaded.
+const RETRY_DELAY_MS = 300;
+
+/**
+ * Build a redirect on the host the browser used. request.nextUrl carries
+ * Next's internal host (localhost), so a URL built from it would send users on
+ * any other host to the wrong origin. Next's middleware adapter needs an
+ * absolute Location, so a relative one is not an option. X-Forwarded-Host and
+ * -Proto are honoured only when TRUST_PROXY_FORWARDED_FOR=true declares a
+ * reverse proxy that sets them; otherwise a caller could choose the redirect
+ * target. Next still rewrites loopback hosts (127.0.0.1, ::1) to localhost.
+ */
+function redirectOnRequestHost(request: NextRequest, location: string) {
+  const firstValue = (header: string) => request.headers.get(header)?.split(',')[0]?.trim();
+  const trustProxy = process.env.TRUST_PROXY_FORWARDED_FOR === 'true';
+  const host = (trustProxy && firstValue('x-forwarded-host')) || firstValue('host');
+  // Next fills nextUrl.protocol from X-Forwarded-Proto itself, so it cannot be
+  // used untrusted; without a proxy the Node server only speaks plain HTTP.
+  const protocol = trustProxy
+    ? firstValue('x-forwarded-proto') || request.nextUrl.protocol.replace(/:$/, '')
+    : 'http';
+  let base = request.nextUrl.origin;
+  if (host && /^[A-Za-z0-9.\-\[\]:]+$/.test(host) && (protocol === 'http' || protocol === 'https')) {
+    base = `${protocol}://${host}`;
+  }
+  return NextResponse.redirect(new URL(location, base), 307);
+}
+
 function redirectToSignIn(request: NextRequest) {
-  const url = request.nextUrl.clone();
-  url.pathname = '/auth/sign-in';
-  url.search = '';
-  url.searchParams.set('callbackUrl', request.nextUrl.pathname);
-  return NextResponse.redirect(url);
+  const query = new URLSearchParams({ callbackUrl: request.nextUrl.pathname });
+  const response = redirectOnRequestHost(request, `/auth/sign-in/?${query.toString()}`);
+  response.cookies.set(RETRY_COOKIE, '', { ...authCookieOptions, maxAge: 0 });
+  return response;
+}
+
+/**
+ * Reload the same page once. A background request may have rotated the
+ * refresh token a moment before this navigation, which still carried the old
+ * one; after a short delay the browser follows this redirect with the new cookies.
+ */
+async function retryOnce(request: NextRequest) {
+  await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS));
+  const response = redirectOnRequestHost(request, `${request.nextUrl.pathname}${request.nextUrl.search}`);
+  response.cookies.set(RETRY_COOKIE, '1', { ...authCookieOptions, maxAge: 10 });
+  return response;
 }
 
 /**
@@ -54,17 +98,26 @@ export default async function middleware(request: NextRequest) {
   const session = await resolveSession(request);
 
   if (session.refreshed) {
-    return forwardRefreshed(request, session.refreshed);
+    const response = forwardRefreshed(request, session.refreshed);
+    if (request.cookies.get(RETRY_COOKIE)) {
+      response.cookies.set(RETRY_COOKIE, '', { ...authCookieOptions, maxAge: 0 });
+    }
+    return response;
   }
 
   // A refused refresh can mean a concurrent request already rotated the token,
   // so cookies are never cleared here: that response could race and erase the
   // winner's new cookies. Signing in again overwrites stale ones.
   if (!session.accessToken) {
+    if (session.rejected && !request.cookies.get(RETRY_COOKIE)) return retryOnce(request);
     return redirectToSignIn(request);
   }
 
-  return NextResponse.next();
+  const response = NextResponse.next();
+  if (request.cookies.get(RETRY_COOKIE)) {
+    response.cookies.set(RETRY_COOKIE, '', { ...authCookieOptions, maxAge: 0 });
+  }
+  return response;
 }
 
 export const config = {

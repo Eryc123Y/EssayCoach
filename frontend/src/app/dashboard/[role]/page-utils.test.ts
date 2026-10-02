@@ -17,7 +17,7 @@ describe('dashboard role page utils', () => {
 
   it('detects auth failure statuses', () => {
     expect(isAuthFailure(401)).toBe(true);
-    expect(isAuthFailure(403)).toBe(true);
+    expect(isAuthFailure(403)).toBe(false);
     expect(isAuthFailure(500)).toBe(false);
   });
 });

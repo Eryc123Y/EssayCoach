@@ -21,7 +21,7 @@ describe('dashboard middleware', () => {
     const response = await middleware(dashboardRequest());
 
     expect(response.status).toBe(307);
-    expect(response.headers.get('location')).toBe('http://localhost/auth/sign-in?callbackUrl=%2Fdashboard%2Ftasks');
+    expect(response.headers.get('location')).toBe('http://localhost/auth/sign-in/?callbackUrl=%2Fdashboard%2Ftasks');
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
@@ -37,13 +37,22 @@ describe('dashboard middleware', () => {
     expect(response.headers.get('x-middleware-request-cookie')).toContain('access_token=mw-access');
   });
 
-  it('redirects without clearing cookies when the refresh token is refused', async () => {
+  it('retries a page load once when its refresh token is refused, then signs in', async () => {
     fetchMock.mockResolvedValue({ ok: false, status: 401, json: async () => ({}) });
-    const response = await middleware(dashboardRequest('refresh_token=mw-revoked; session_persistence=persistent'));
+    const first = await middleware(dashboardRequest('refresh_token=mw-rotated; session_persistence=persistent'));
 
-    expect(response.headers.get('location')).toContain('/auth/sign-in');
+    // Another request may have just rotated the token; reload once with the newest cookies.
+    expect(first.headers.get('location')).toBe('http://localhost/dashboard/tasks');
+    expect(first.cookies.get('session_refresh_retry')?.value).toBe('1');
     // A losing concurrent rotation must not erase the winner's new cookies.
-    expect(response.cookies.get('refresh_token')).toBeUndefined();
+    expect(first.cookies.get('refresh_token')).toBeUndefined();
+
+    const second = await middleware(
+      dashboardRequest('refresh_token=mw-revoked; session_persistence=persistent; session_refresh_retry=1')
+    );
+    expect(second.headers.get('location')).toContain('/auth/sign-in');
+    expect(second.cookies.get('session_refresh_retry')?.maxAge).toBe(0);
+    expect(second.cookies.get('refresh_token')).toBeUndefined();
   });
 
   it('lets a request that lost a rotation race through while its access token is still valid', async () => {
@@ -82,6 +91,32 @@ describe('dashboard middleware', () => {
 
     expect(fetchMock).not.toHaveBeenCalled();
     expect(response.cookies.get('access_token')).toBeUndefined();
+  });
+
+  it('redirects on the Host the browser used, not Next\'s internal host', async () => {
+    const response = await middleware(
+      new NextRequest('http://localhost/dashboard', { headers: { host: 'essays.example.edu' } })
+    );
+
+    expect(response.headers.get('location')).toBe('http://essays.example.edu/auth/sign-in/?callbackUrl=%2Fdashboard');
+  });
+
+  it('ignores forwarded host and proto unless a reverse proxy is trusted', async () => {
+    const forged = () =>
+      new NextRequest('http://localhost/dashboard', {
+        headers: { host: 'essays.example.edu', 'x-forwarded-host': 'attacker.example', 'x-forwarded-proto': 'https' },
+      });
+
+    const direct = await middleware(forged());
+    expect(direct.headers.get('location')).toBe('http://essays.example.edu/auth/sign-in/?callbackUrl=%2Fdashboard');
+
+    vi.stubEnv('TRUST_PROXY_FORWARDED_FOR', 'true');
+    try {
+      const proxied = await middleware(forged());
+      expect(proxied.headers.get('location')).toBe('https://attacker.example/auth/sign-in/?callbackUrl=%2Fdashboard');
+    } finally {
+      vi.unstubAllEnvs();
+    }
   });
 
   it('ignores routes outside the dashboard', async () => {

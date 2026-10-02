@@ -1,21 +1,43 @@
 """Create deterministic data and scores for the local Playwright acceptance gate.
 
 This command is deliberately scoped to the disposable ``essaycoach_e2e``
-database.  ``--process-job`` drives the ordinary durable queue with a local
-test double; it never starts Codex or calls a remote model.
+database.  ``--process-job`` and ``--process-practice`` drive the ordinary
+durable queues with local test doubles; they never start Codex or call a
+remote model.  ``--fixtures`` adds ready-made accounts, classes and an
+assignment for the journey specs that do not exercise invitations.
 """
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
+from datetime import timedelta
 
 from django.conf import settings
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
+from django.db.models import Q
+from django.utils import timezone
 
 from ai_feedback.codex_provider import ScoringResult
+from ai_feedback.practice_provider import PracticeAnalysisResult
 from core.ai_jobs import process_next_job
-from core.models import Class, MarkingRubric, RubricItem, RubricLevelDesc, Unit, User
+from core.assessment import task_rubric_snapshot
+from core.models import (
+    Class,
+    ContentReport,
+    CourseLeadAssignment,
+    Enrollment,
+    MarkingRubric,
+    RubricItem,
+    RubricLevelDesc,
+    SharedEssay,
+    Task,
+    TeachingAssn,
+    Unit,
+    User,
+)
+from core.practice import process_next_run
 
 E2E_DOMAIN = "@e2e.essaycoach.example.com"
 E2E_ADMIN_EMAIL = "admin" + E2E_DOMAIN
@@ -25,6 +47,18 @@ E2E_BOOTSTRAP_CLASS = "E2E invitation staging class"
 E2E_WORKFLOW_CLASS = "E2E Composition Workshop"
 E2E_RUBRIC_NAME = "E2E Argument Rubric"
 E2E_DATABASE_NAME = "essaycoach_e2e"
+
+# Ready-made journey fixtures (``--fixtures``). Every account shares E2E_PASSWORD.
+E2E_JOURNEY_CLASS = "E2E Journeys Class"
+E2E_OTHER_CLASS = "E2E Other Lecturer Class"
+E2E_JOURNEY_TASK = "E2E Journey Assignment"
+E2E_FIXTURE_USERS = {
+    "lead": ("lead" + E2E_DOMAIN, "lecturer", "Lena", "Lead"),
+    "reviewer": ("reviewer" + E2E_DOMAIN, "lecturer", "Rory", "Reviewer"),
+    "outsider": ("outsider" + E2E_DOMAIN, "lecturer", "Owen", "Outsider"),
+    "alice": ("alice" + E2E_DOMAIN, "student", "Alice", "Author"),
+    "bob": ("bob" + E2E_DOMAIN, "student", "Bob", "Peer"),
+}
 
 
 @dataclass(frozen=True)
@@ -50,29 +84,83 @@ class DeterministicE2EScoringProvider:
         )
 
 
+@dataclass(frozen=True)
+class DeterministicE2EPracticeProvider:
+    """A practice-queue test double returning a fixed, schema-valid report."""
+
+    model: str = "e2e-deterministic-practice-v1"
+
+    def analyze(self, revision) -> PracticeAnalysisResult:
+        report = {
+            "overall_score": 74,
+            "headline": "E2E deterministic practice feedback",
+            "general_feedback": "The claim is clear; add one more piece of evidence.",
+            "strengths": ["Clear claim"],
+            "next_steps": ["Support the claim with a cited source"],
+            "skills": {"grammar": 80, "logic": 72, "tone": 75, "structure": 70, "vocabulary": 73},
+            "annotations": [],
+            "rubric_results": [],
+            "claims": [],
+        }
+        return PracticeAnalysisResult(
+            report=report, evidence=[], model=self.model, provider_thread_id="e2e-practice-thread", usage=None
+        )
+
+
+class FailingE2EPracticeProvider:
+    """Fails like an unavailable provider so the retry path can be exercised."""
+
+    def analyze(self, revision) -> PracticeAnalysisResult:
+        raise RuntimeError("E2E simulated provider outage")
+
+
 class Command(BaseCommand):
     help = "Seed the disposable E2E database or process one formal job with a deterministic test double"
 
     def add_arguments(self, parser) -> None:
         parser.add_argument("--process-job", metavar="JOB_ID", help="Process this pending E2E AI job without Codex")
+        parser.add_argument("--fixtures", action="store_true", help="Also create the ready-made journey fixtures")
+        parser.add_argument(
+            "--process-practice",
+            choices=["succeed", "fail"],
+            help="Process the next pending practice run with a deterministic test double",
+        )
 
     def handle(self, *args, **options) -> None:
         database_name = settings.DATABASES["default"]["NAME"]
-        if database_name not in {E2E_DATABASE_NAME, f"test_{E2E_DATABASE_NAME}"}:
-            raise CommandError(f"seed_e2e only runs against {E2E_DATABASE_NAME}; current database is {database_name!r}")
+        # The exact disposable database, pytest's test_ copy, or an explicitly
+        # suffixed parallel copy such as essaycoach_e2e_a.
+        allowed = re.compile(rf"^(test_)?{re.escape(E2E_DATABASE_NAME)}(_[a-z0-9]+)?$")
+        if not allowed.match(str(database_name)):
+            raise CommandError(
+                f"seed_e2e only runs against {E2E_DATABASE_NAME} or {E2E_DATABASE_NAME}_<suffix>; "
+                f"current database is {database_name!r}"
+            )
         job_id = options.get("process_job")
         if job_id:
             self._process_job(job_id)
             return
+        if options.get("process_practice"):
+            self._process_practice(options["process_practice"])
+            return
         self._seed()
+        if options.get("fixtures"):
+            self._seed_fixtures()
 
     def _seed(self) -> None:
         with transaction.atomic():
             # The E2E database is disposable. Limit cleanup to named fixture
-            # records so a mistaken invocation stays narrowly scoped.
+            # records so a mistaken invocation stays narrowly scoped. Shared
+            # essays and content reports PROTECT their owners and reporters, so
+            # clear E2E community rows before the accounts.
+            ContentReport.objects.filter(
+                Q(reporter__user_email__endswith=E2E_DOMAIN) | Q(share__owner__user_email__endswith=E2E_DOMAIN)
+            ).delete()
+            SharedEssay.objects.filter(owner__user_email__endswith=E2E_DOMAIN).delete()
             User.objects.filter(user_email__endswith=E2E_DOMAIN).delete()
             Class.objects.filter(
-                class_name__in=(E2E_BOOTSTRAP_CLASS, E2E_WORKFLOW_CLASS), unit_id_unit_id=E2E_UNIT_ID
+                class_name__in=(E2E_BOOTSTRAP_CLASS, E2E_WORKFLOW_CLASS, E2E_JOURNEY_CLASS, E2E_OTHER_CLASS),
+                unit_id_unit_id=E2E_UNIT_ID,
             ).delete()
             MarkingRubric.objects.filter(rubric_desc=E2E_RUBRIC_NAME).delete()
 
@@ -109,6 +197,61 @@ class Command(BaseCommand):
                 level_desc="A clear claim supported with relevant evidence.",
             )
         self.stdout.write(self.style.SUCCESS("Seeded deterministic E2E admin, course, staging class, and rubric."))
+
+    def _seed_fixtures(self) -> None:
+        with transaction.atomic():
+            unit = Unit.objects.get(unit_id=E2E_UNIT_ID)
+            admin = User.objects.get(user_email=E2E_ADMIN_EMAIL)
+            users = {
+                key: User.objects.create_user(
+                    user_email=email,
+                    password=E2E_PASSWORD,
+                    user_fname=first,
+                    user_lname=last,
+                    user_role=role,
+                    user_status="active",
+                )
+                for key, (email, role, first, last) in E2E_FIXTURE_USERS.items()
+            }
+            journeys = Class.objects.create(
+                unit_id_unit=unit, class_name=E2E_JOURNEY_CLASS, class_desc="Ready-made journey fixture."
+            )
+            other = Class.objects.create(
+                unit_id_unit=unit, class_name=E2E_OTHER_CLASS, class_desc="Taught only by the outsider lecturer."
+            )
+            TeachingAssn.objects.create(user_id_user=users["lead"], class_id_class=journeys)
+            TeachingAssn.objects.create(user_id_user=users["reviewer"], class_id_class=journeys)
+            TeachingAssn.objects.create(user_id_user=users["outsider"], class_id_class=other)
+            CourseLeadAssignment.objects.create(user_id_user=users["lead"], unit_id_unit=unit, assigned_by=admin)
+            for student in (users["alice"], users["bob"]):
+                Enrollment.objects.create(user_id_user=student, class_id_class=journeys, unit_id_unit=unit)
+            journeys.class_size = 2
+            journeys.save(update_fields=["class_size"])
+            rubric = MarkingRubric.objects.get(rubric_desc=E2E_RUBRIC_NAME)
+            Task.objects.create(
+                unit_id_unit=unit,
+                class_id_class=journeys,
+                rubric_id_marking_rubric=rubric,
+                rubric_snapshot=task_rubric_snapshot(rubric),
+                rubric_version=1,
+                task_title=E2E_JOURNEY_TASK,
+                task_desc="A ready-made assignment for journey specs.",
+                task_instructions="State a claim and support it with evidence.",
+                task_due_datetime=timezone.now() + timedelta(days=30),
+                task_status="published",
+            )
+        self.stdout.write(self.style.SUCCESS("Seeded E2E journey fixtures."))
+
+    def _process_practice(self, outcome: str) -> None:
+        provider = DeterministicE2EPracticeProvider() if outcome == "succeed" else FailingE2EPracticeProvider()
+        run = process_next_run(provider)
+        if run is None:
+            raise CommandError("No pending E2E practice run was found")
+        run.refresh_from_db()
+        expected = "succeeded" if outcome == "succeed" else "failed"
+        if run.status != expected:
+            raise CommandError(f"E2E practice run ended {run.status}, expected {expected}")
+        self.stdout.write(self.style.SUCCESS(f"Processed E2E practice run {run.pk}: {run.status}."))
 
     def _process_job(self, job_id: str) -> None:
         from core.models import AIJob
