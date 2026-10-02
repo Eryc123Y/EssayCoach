@@ -250,7 +250,7 @@ def remove_share(request: HttpRequest, submission_id: int):
     return {"success": True}
 
 
-@router.post("/{submission_id}/interact/", response=dict)
+@router.post("/{submission_id}/interact/", response=SocialInteractionOut)
 def interact_with_essay(request: HttpRequest, submission_id: int, data: SocialInteractionIn):
     share = _require_share(request.auth, submission_id)
     if share.status != "visible":
@@ -508,12 +508,18 @@ def resolve_report(request: HttpRequest, report_id: int, data: ResolveReportIn):
 
 @router.post("/moderation/interactions/{interaction_id}/restore/", response=SocialInteractionOut)
 def restore_interaction(request: HttpRequest, interaction_id: int):
-    item = get_object_or_404(SocialInteraction.objects.select_related("share__class_obj", "user"), pk=interaction_id)
-    _require_moderator(request.auth, item.share)
-    if item.status != SocialContentStatus.HIDDEN:
-        raise HttpError(409, "Only hidden responses can be restored")
-    item.status = SocialContentStatus.VISIBLE
-    item.save(update_fields=["status", "updated_at"])
+    # Lock the response the same way resolve_report does, so a concurrent
+    # "remove" decision cannot be overwritten by this restore.
+    with transaction.atomic():
+        item = get_object_or_404(
+            SocialInteraction.objects.select_for_update(of=("self",)).select_related("share__class_obj", "user"),
+            pk=interaction_id,
+        )
+        _require_moderator(request.auth, item.share)
+        if item.status != SocialContentStatus.HIDDEN:
+            raise HttpError(409, "Only hidden responses can be restored")
+        item.status = SocialContentStatus.VISIBLE
+        item.save(update_fields=["status", "updated_at"])
     return _interaction_row(item, request.auth)
 
 

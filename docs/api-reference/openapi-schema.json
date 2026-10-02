@@ -6208,9 +6208,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
-                  "title": "Response",
-                  "type": "object"
+                  "$ref": "#/components/schemas/SocialInteractionOut"
                 }
               }
             }
@@ -13746,30 +13744,6 @@
         "title": "InteractionType",
         "type": "string"
       },
-      "SocialInteractionIn": {
-        "properties": {
-          "interaction_type": {
-            "$ref": "#/components/schemas/InteractionType"
-          },
-          "content": {
-            "anyOf": [
-              {
-                "maxLength": 3000,
-                "type": "string"
-              },
-              {
-                "type": "null"
-              }
-            ],
-            "title": "Content"
-          }
-        },
-        "required": [
-          "interaction_type"
-        ],
-        "title": "SocialInteractionIn",
-        "type": "object"
-      },
       "SocialContentStatus": {
         "description": "Moderation state of a shared essay or a peer response (comment/feedback).",
         "enum": [
@@ -13842,6 +13816,30 @@
           "is_mine"
         ],
         "title": "SocialInteractionOut",
+        "type": "object"
+      },
+      "SocialInteractionIn": {
+        "properties": {
+          "interaction_type": {
+            "$ref": "#/components/schemas/InteractionType"
+          },
+          "content": {
+            "anyOf": [
+              {
+                "maxLength": 3000,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Content"
+          }
+        },
+        "required": [
+          "interaction_type"
+        ],
+        "title": "SocialInteractionIn",
         "type": "object"
       },
       "ContentReportOut": {
