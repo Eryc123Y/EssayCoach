@@ -302,13 +302,29 @@ def test_migration_backfills_report_targets(social):
     response = SocialInteraction.objects.create(share=share, user=peer, interaction_type="feedback", content="Note")
     on_response = ContentReport.objects.create(share=share, interaction=response, reporter=student, reason="spam")
     on_essay = ContentReport.objects.create(share=share, reporter=peer, reason="spam", target_type="comment")
+    # The old resolver deleted a removed response and cleared the link, leaving the essay visible.
+    removed_response = ContentReport.objects.create(
+        share=share, reporter=teacher, reason="spam", status="resolved", decision="remove", target_type="essay"
+    )
     migration = importlib.import_module("core.migrations.0037_social_report_target_interaction_status")
     migration.backfill_report_targets(apps, None)
     on_response.refresh_from_db()
     on_essay.refresh_from_db()
+    removed_response.refresh_from_db()
     assert (on_response.target_type, on_response.target_content, on_response.target_author) == (
         "feedback",
         "Note",
         peer.user_email,
     )
     assert on_essay.target_type == "essay"
+    assert removed_response.target_type == "comment"
+
+    # An essay "remove" set the essay itself to removed; that history stays an essay report.
+    share.status = "removed"
+    share.save(update_fields=["status"])
+    removed_essay = ContentReport.objects.create(
+        share=share, reporter=teacher, reason="spam", status="resolved", decision="remove", target_type="comment"
+    )
+    migration.backfill_report_targets(apps, None)
+    removed_essay.refresh_from_db()
+    assert removed_essay.target_type == "essay"
