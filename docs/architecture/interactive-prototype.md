@@ -1,6 +1,6 @@
 # EssayCoach interactive prototype — phase 1
 
-Status: phase 1 implemented and browser-reviewed (2026-09-25).
+Status: retired. Phase 1 was implemented and browser-reviewed on 2026-09-25; the `/prototype` route was removed on 2026-10-02 once the real pages were accepted. This page is kept as the design record.
 
 ## Goal and boundary
 
