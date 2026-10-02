@@ -26,6 +26,10 @@ function forwardRefreshed(request: NextRequest, tokens: SessionTokens) {
 
 // Set while a page load retries once after its refresh token was refused.
 const RETRY_COOKIE = 'session_refresh_retry';
+// Rotations in flight are shared, so a refused page load means another request
+// already finished rotating; give its Set-Cookie response time to reach the
+// browser before this one is reloaded.
+const RETRY_DELAY_MS = 300;
 
 /**
  * Build a redirect on the host the browser used. request.nextUrl carries
@@ -62,9 +66,10 @@ function redirectToSignIn(request: NextRequest) {
 /**
  * Reload the same page once. A background request may have rotated the
  * refresh token a moment before this navigation, which still carried the old
- * one; by the time the browser follows this redirect it holds the new cookies.
+ * one; after a short delay the browser follows this redirect with the new cookies.
  */
-function retryOnce(request: NextRequest) {
+async function retryOnce(request: NextRequest) {
+  await new Promise((resolve) => setTimeout(resolve, RETRY_DELAY_MS));
   const response = redirectOnRequestHost(request, `${request.nextUrl.pathname}${request.nextUrl.search}`);
   response.cookies.set(RETRY_COOKIE, '1', { ...authCookieOptions, maxAge: 10 });
   return response;
