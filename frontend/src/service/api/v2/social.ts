@@ -30,6 +30,8 @@ export type SocialInteraction = {
   author: string;
   interaction_type: 'like' | 'bookmark' | 'comment' | 'feedback';
   content: string;
+  /** Hidden responses reach only their author and the class's teaching staff. */
+  status: 'visible' | 'hidden' | 'removed';
   created_at: string;
   is_mine: boolean;
 };
@@ -37,9 +39,11 @@ export type ContentReport = {
   id: number;
   submission_id: number;
   interaction_id: number | null;
-  target_type: string;
+  /** What was reported; moderation decisions apply to this target only. */
+  target_type: 'essay' | 'comment' | 'feedback';
   target_content: string;
   target_author: string;
+  target_status: 'visible' | 'hidden' | 'removed';
   reporter_id: number;
   reason: string;
   description: string;
@@ -82,6 +86,9 @@ export const socialService = {
   },
   resolve(reportId: number, decision: 'keep' | 'hide' | 'remove') {
     return request<ContentReport>({ url: `${base}/moderation/reports/${reportId}/resolve/`, method: 'POST', data: { decision } });
+  },
+  restoreInteraction(interactionId: number) {
+    return request<SocialInteraction>({ url: `${base}/moderation/interactions/${interactionId}/restore/`, method: 'POST' });
   },
   hide(submissionId: number) { return request({ url: `${base}/moderation/${submissionId}/hide/`, method: 'POST' }); },
   restore(submissionId: number) { return request({ url: `${base}/moderation/${submissionId}/restore/`, method: 'POST' }); },

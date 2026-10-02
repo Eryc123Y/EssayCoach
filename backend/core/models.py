@@ -814,6 +814,11 @@ class SocialInteraction(models.Model):
         choices=[("like", "Like"), ("bookmark", "Bookmark"), ("comment", "Comment"), ("feedback", "Feedback")],
     )
     content = models.TextField(blank=True)
+    # Moderation state (SocialContentStatus). "removed" is a soft delete so that
+    # content reports keep pointing at the response they were filed against.
+    status = models.CharField(
+        max_length=12, choices=[("visible", "Visible"), ("hidden", "Hidden"), ("removed", "Removed")], default="visible"
+    )
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
 
@@ -823,6 +828,9 @@ class SocialInteraction(models.Model):
             CheckConstraint(
                 check=Q(interaction_type__in=["like", "bookmark", "comment", "feedback"]),
                 name="social_interaction_type_ck",
+            ),
+            CheckConstraint(
+                check=Q(status__in=["visible", "hidden", "removed"]), name="social_interaction_status_ck"
             ),
             UniqueConstraint(
                 fields=["share", "user", "interaction_type"],
@@ -836,6 +844,15 @@ class ContentReport(models.Model):
     report_id = models.BigAutoField(primary_key=True)
     share = models.ForeignKey(SharedEssay, models.PROTECT, related_name="reports")
     interaction = models.ForeignKey(SocialInteraction, models.SET_NULL, null=True, blank=True)
+    # The reported target (ReportTargetType) and a snapshot of a reported response,
+    # kept so the report still describes what was reported if the response is deleted.
+    target_type = models.CharField(
+        max_length=12,
+        choices=[("essay", "Essay"), ("comment", "Comment"), ("feedback", "Feedback")],
+        default="essay",
+    )
+    target_content = models.TextField(blank=True)
+    target_author = models.CharField(max_length=255, blank=True)
     reporter = models.ForeignKey("User", models.PROTECT, related_name="social_reports")
     reason = models.CharField(
         max_length=20,
@@ -868,6 +885,9 @@ class ContentReport(models.Model):
             ),
             CheckConstraint(
                 check=Q(status__in=["open", "investigating", "resolved", "dismissed"]), name="social_report_status_ck"
+            ),
+            CheckConstraint(
+                check=Q(target_type__in=["essay", "comment", "feedback"]), name="social_report_target_type_ck"
             ),
         ]
 
