@@ -20,6 +20,7 @@ import * as z from 'zod';
 import { localized } from '@/locales';
 import { usePreferences } from '@/components/layout/preference-provider';
 import { safeInternalCallbackUrl } from '../auth-navigation';
+import { storeUserData } from '@/lib/user-data-storage';
 
 type UserFormValue = { email: string; password: string };
 
@@ -75,7 +76,7 @@ export default function UserAuthForm() {
             | 'lecturer'
             | 'admin'
         };
-        localStorage.setItem('user_data', JSON.stringify(userData));
+        storeUserData(userData, rememberMe);
         window.dispatchEvent(new Event('essaycoach:user-updated'));
       }
 

@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/react';
+import { render, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
@@ -16,6 +16,8 @@ describe('UserAuthForm', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     vi.stubGlobal('fetch', fetchMock);
+    localStorage.clear();
+    sessionStorage.clear();
   });
 
   it('toggles password visibility with an accessible pressed button', async () => {
@@ -64,6 +66,23 @@ describe('UserAuthForm', () => {
     expect(fetchMock).toHaveBeenCalledWith('/api/v2/auth/login', expect.objectContaining({
       body: JSON.stringify({ email: 'student@example.com', password: 'password', remember: false }),
     }));
+    // A session-only sign-in must not leave user metadata in persistent storage.
+    await waitFor(() => expect(sessionStorage.getItem('user_data')).toContain('student@example.com'));
+    expect(localStorage.getItem('user_data')).toBeNull();
+  });
+
+  it('keeps remembered sign-ins in persistent storage', async () => {
+    const user = userEvent.setup();
+    sessionStorage.setItem('user_data', JSON.stringify({ email: 'previous@example.com' }));
+    fetchMock.mockResolvedValue({ ok: true, json: async () => ({ user: { id: 8, email: 'lecturer@example.com' } }) });
+    render(<UserAuthForm />);
+
+    await user.type(screen.getByLabelText('Email address'), 'lecturer@example.com');
+    await user.type(screen.getByPlaceholderText('••••••••'), 'password');
+    await user.click(screen.getByRole('button', { name: 'Sign in' }));
+
+    await waitFor(() => expect(localStorage.getItem('user_data')).toContain('lecturer@example.com'));
+    expect(sessionStorage.getItem('user_data')).toBeNull();
   });
 
   it('shows a localized wait message for a rate-limited login', async () => {

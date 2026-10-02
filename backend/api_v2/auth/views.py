@@ -225,7 +225,7 @@ def register(request: HttpRequest, data: UserRegistrationIn) -> AuthResponseWith
 def login(request: HttpRequest, data: UserLoginIn) -> AuthResponseWithRefresh:
     user = _authenticate_login(request, data)
 
-    jwt_pair = create_jwt_pair(user, request=request)
+    jwt_pair = create_jwt_pair(user, request=request, persistent=data.remember)
     _record_successful_login(user)
 
     return AuthResponseWithRefresh(
@@ -343,7 +343,7 @@ def login_with_jwt(request: HttpRequest, data: UserLoginIn) -> AuthResponseWithR
     user = _authenticate_login(request, data)
 
     # Create JWT token pair
-    jwt_pair = create_jwt_pair(user, request=request)
+    jwt_pair = create_jwt_pair(user, request=request, persistent=data.remember)
     _record_successful_login(user)
 
     return AuthResponseWithRefresh(

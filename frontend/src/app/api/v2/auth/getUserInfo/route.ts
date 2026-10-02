@@ -1,12 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { normalizeUserInfo } from '@/lib/user-normalization';
 import { getServerApiUrl } from '@/lib/server-api';
+import { withSession } from '@/lib/auth-session';
 
 
-export async function GET(req: NextRequest) {
+async function handleGet(_req: NextRequest, token: string | undefined) {
   try {
-    // Get the token from HttpOnly cookie
-    const token = req.cookies.get('access_token')?.value;
 
     if (!token) {
       return NextResponse.json(
@@ -49,3 +48,5 @@ export async function GET(req: NextRequest) {
     );
   }
 }
+
+export const GET = withSession(handleGet);

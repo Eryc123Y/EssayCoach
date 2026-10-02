@@ -1,19 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { normalizeUserInfo } from '@/lib/user-normalization';
 import { getServerApiUrl } from '@/lib/server-api';
+import { authCookieOptions, setSessionCookies } from '@/lib/auth-session';
 
 type LoginRequestBody = {
   email?: string;
   password?: string;
   remember?: boolean;
-};
-
-const persistentCookieAge = 60 * 60 * 24 * 7;
-const secureCookieOptions = {
-  httpOnly: true,
-  sameSite: 'strict' as const,
-  secure: process.env.NODE_ENV === 'production',
-  path: '/',
 };
 
 export async function POST(req: NextRequest) {
@@ -37,7 +30,7 @@ export async function POST(req: NextRequest) {
     const response = await fetch(`${apiUrl}/api/v2/auth/login-with-jwt/`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password })
+      body: JSON.stringify({ email, password, remember })
     });
 
     if (!response.ok) {
@@ -59,26 +52,11 @@ export async function POST(req: NextRequest) {
       user: normalizedUser
     });
 
-    // Set access token cookie
-    res.cookies.set('access_token', token, {
-      ...secureCookieOptions,
-      ...(remember ? { maxAge: 60 * 60 } : {}),
-    });
-
-    // Set refresh token cookie - longer expiry for refresh token
-    res.cookies.set('refresh_token', refresh, {
-      ...secureCookieOptions,
-      ...(remember ? { maxAge: persistentCookieAge } : {}),
-    });
-
-    res.cookies.set('session_persistence', remember ? 'persistent' : 'session', {
-      ...secureCookieOptions,
-      ...(remember ? { maxAge: persistentCookieAge } : {}),
-    });
+    setSessionCookies(res, { access: token, refresh, expiresAt: expires_at, remember });
 
     // Store user info in HttpOnly cookies for security (prevents client-side tampering)
     // Frontend should read user data from the response body, not cookies
-    const userCookieOptions = { ...secureCookieOptions, ...(remember ? { maxAge: 60 * 60 * 24 } : {}) };
+    const userCookieOptions = { ...authCookieOptions, ...(remember ? { maxAge: 60 * 60 * 24 } : {}) };
     res.cookies.set('user_email', normalizedUser.user_email || '', userCookieOptions);
     res.cookies.set('user_first_name', normalizedUser.user_fname || '', userCookieOptions);
     res.cookies.set('user_last_name', normalizedUser.user_lname || '', userCookieOptions);

@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { POST as login } from './login/route';
 import { POST as refresh } from './refresh/route';
+import { POST as logout } from './logout/route';
 
 const fetchMock = vi.fn();
 
@@ -30,9 +31,10 @@ describe('auth cookie persistence', () => {
       method: 'POST', body: JSON.stringify({ email: 'student@example.com', password: 'password' }),
     }));
 
-    expect(response.cookies.get('refresh_token')?.maxAge).toBe(60 * 60 * 24 * 7);
+    expect(response.cookies.get('refresh_token')?.maxAge).toBe(60 * 60 * 24 * 30);
     expect(response.cookies.get('session_persistence')?.value).toBe('persistent');
-    expect(response.cookies.get('session_persistence')?.maxAge).toBe(60 * 60 * 24 * 7);
+    expect(response.cookies.get('session_persistence')?.maxAge).toBe(60 * 60 * 24 * 30);
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toMatchObject({ remember: true });
     const payload = await response.json();
     expect(payload).toMatchObject({
       expiresAt: '2026-10-01T12:00:00Z',
@@ -55,12 +57,13 @@ describe('auth cookie persistence', () => {
     expect(response.cookies.get('user_email')?.maxAge).toBeUndefined();
     expect(response.cookies.get('session_persistence')?.value).toBe('session');
     expect(response.cookies.get('session_persistence')?.maxAge).toBeUndefined();
+    expect(JSON.parse(fetchMock.mock.calls[0][1].body)).toMatchObject({ remember: false });
   });
 
   it('keeps session-only cookies session-only after a token refresh', async () => {
     fetchMock.mockResolvedValue({ ok: true, json: async () => ({ data: { access: 'new-access', refresh: 'new-refresh' } }) });
     const response = await refresh(new NextRequest('http://localhost/api/v2/auth/refresh', {
-      method: 'POST', headers: { cookie: 'refresh_token=old-refresh; session_persistence=session' },
+      method: 'POST', headers: { cookie: 'refresh_token=old-refresh-session; session_persistence=session' },
     }));
 
     expect(response.cookies.get('access_token')?.maxAge).toBeUndefined();
@@ -77,10 +80,32 @@ describe('auth cookie persistence', () => {
   it('treats refreshes from older logins without a marker as persistent', async () => {
     fetchMock.mockResolvedValue({ ok: true, json: async () => ({ data: { access: 'new-access', refresh: 'new-refresh' } }) });
     const response = await refresh(new NextRequest('http://localhost/api/v2/auth/refresh', {
-      method: 'POST', headers: { cookie: 'refresh_token=old-refresh' },
+      method: 'POST', headers: { cookie: 'refresh_token=old-refresh-legacy' },
     }));
 
-    expect(response.cookies.get('refresh_token')?.maxAge).toBe(60 * 60 * 24 * 7);
+    expect(response.cookies.get('refresh_token')?.maxAge).toBe(60 * 60 * 24 * 30);
     expect(response.cookies.get('session_persistence')?.value).toBe('persistent');
+  });
+
+  it('reports a refused refresh token as unauthorized', async () => {
+    fetchMock.mockResolvedValue({ ok: false, status: 401, json: async () => ({}) });
+    const response = await refresh(new NextRequest('http://localhost/api/v2/auth/refresh', {
+      method: 'POST', headers: { cookie: 'refresh_token=revoked-refresh' },
+    }));
+
+    expect(response.status).toBe(401);
+    expect(response.cookies.get('access_token')).toBeUndefined();
+  });
+
+  it('clears every session cookie on logout, including the persistence marker', async () => {
+    fetchMock.mockResolvedValue({ ok: true, json: async () => ({}) });
+    const response = await logout(new NextRequest('http://localhost/api/v2/auth/logout', {
+      method: 'POST', headers: { cookie: 'access_token=x.e30.y; refresh_token=r; session_persistence=persistent' },
+    }));
+
+    for (const name of ['access_token', 'refresh_token', 'session_persistence', 'user_role']) {
+      expect(response.cookies.get(name)?.value).toBe('');
+      expect(response.cookies.get(name)?.maxAge).toBe(0);
+    }
   });
 });

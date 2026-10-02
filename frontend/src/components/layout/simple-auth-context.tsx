@@ -8,6 +8,7 @@ import React, {
   useCallback,
   useState
 } from 'react';
+import { clearUserData, readUserData, storeUserData } from '@/lib/user-data-storage';
 
 export type UserRole = 'student' | 'lecturer' | 'admin';
 
@@ -37,38 +38,21 @@ type AuthContextValue = {
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
-// Helper functions for localStorage (for httpOnly cookie compatibility)
-function setUserData(user: SimpleUser | null) {
-  if (typeof window === 'undefined') return;
-  if (user) {
-    localStorage.setItem('user_data', JSON.stringify(user));
-  } else {
-    localStorage.removeItem('user_data');
-  }
-}
+type AuthStatus = 'authenticated' | 'unauthenticated' | 'unknown';
 
-function getUserData(): SimpleUser | null {
-  if (typeof window === 'undefined') return null;
-  const data = localStorage.getItem('user_data');
-  if (!data) return null;
-  try {
-    return JSON.parse(data);
-  } catch {
-    return null;
-  }
-}
-
-// Check if user is authenticated by verifying access_token cookie exists
-// We can't read httpOnly cookies directly, so we use a server endpoint
-async function checkAuthStatus(): Promise<boolean> {
+// We can't read httpOnly cookies directly, so we ask a server endpoint.
+// Only an explicit 401/403 counts as signed out; network errors are unknown.
+async function checkAuthStatus(): Promise<AuthStatus> {
   try {
     const response = await fetch('/api/v2/auth/getUserInfo', {
       method: 'GET',
       credentials: 'include' // Include cookies
     });
-    return response.ok;
+    if (response.ok) return 'authenticated';
+    if (response.status === 401 || response.status === 403) return 'unauthenticated';
+    return 'unknown';
   } catch {
-    return false;
+    return 'unknown';
   }
 }
 
@@ -79,18 +63,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isInitialized, setIsInitialized] = useState(false);
 
   const syncUserFromStorage = useCallback(() => {
-    const storedUser = getUserData();
+    const storedUser = readUserData<SimpleUser>();
 
     if (storedUser) {
+      // Render the cached user immediately, but drop it if the session is gone
+      // (for example, a session-only sign-in after the browser was closed).
       setUser(storedUser);
       setIsInitialized(true);
+      checkAuthStatus().then((status) => {
+        if (status === 'unauthenticated') {
+          clearUserData();
+          setUser(null);
+        }
+      });
       return;
     }
 
-    // No stored user, check if access_token cookie exists via server endpoint
+    // No stored user, check whether the cookie session is valid via the server.
     checkAuthStatus()
-      .then((isLoggedIn) => {
-        if (isLoggedIn) {
+      .then((status) => {
+        if (status === 'authenticated') {
           // User has valid token but no stored data, fetch user info
           return fetch('/api/v2/core/users/me/')
             .then((res) => res.json())
@@ -103,7 +95,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
                 role: (data.user_role || data.role || 'student') as UserRole
               };
               setUser(user);
-              setUserData(user); // Cache in localStorage
+              // Persistence is unknown here, so cache only for this tab.
+              storeUserData(user, false);
             })
             .catch(() => setUser(null));
         }
@@ -114,8 +107,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
   }, []);
 
-  // Read user info from localStorage - run on mount
-  // Note: We use localStorage because user cookies are now httpOnly for security
+  // Read cached user info on mount; auth cookies are httpOnly.
   useEffect(() => {
     syncUserFromStorage();
   }, [syncUserFromStorage]);
@@ -195,7 +187,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setCurrentClass: (classId: number) => setCurrentClassId(classId),
       logout: async () => {
         await fetch('/api/v2/auth/logout', { method: 'POST' });
-        setUserData(null); // Clear localStorage
+        clearUserData();
         if (typeof window !== 'undefined')
           window.location.href = '/auth/sign-in';
       }

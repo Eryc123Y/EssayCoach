@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { emailChangeService } from '@/service/api/v2/email-change';
 import { usePreferences } from '@/components/layout/preference-provider';
 import { parseFragmentToken } from '@/lib/fragment-token';
+import { clearUserData } from '@/lib/user-data-storage';
 
 export default function VerifyEmailPage() {
   const { locale, applyLocale } = usePreferences();
@@ -50,6 +51,7 @@ export default function VerifyEmailPage() {
         method: 'POST',
         credentials: 'include'
       });
+      clearUserData();
       setDone(true);
       setToken('');
       setError('');

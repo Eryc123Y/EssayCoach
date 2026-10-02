@@ -125,6 +125,8 @@ JWT_SECRET_KEY = SECRET_KEY
 JWT_ALGORITHM = "HS256"
 JWT_ACCESS_TOKEN_LIFETIME_HOURS = 24
 JWT_REFRESH_TOKEN_LIFETIME_DAYS = 7
+# "Remember me" sign-ins keep a sliding refresh window of this many days (PRD 02).
+JWT_REMEMBERED_REFRESH_TOKEN_LIFETIME_DAYS = 30
 JWT_ISSUER = os.environ.get("JWT_ISSUER", "essaycoach-backend")
 JWT_AUDIENCE = os.environ.get("JWT_AUDIENCE", "essaycoach-frontend")
 

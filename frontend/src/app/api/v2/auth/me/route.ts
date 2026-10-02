@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { normalizeUserInfo } from '@/lib/user-normalization';
 import { getServerApiUrl } from '@/lib/server-api';
+import { withSession } from '@/lib/auth-session';
 
 type AnyRecord = Record<string, any>;
 
@@ -26,9 +27,8 @@ async function fetchCurrentUser(token: string) {
   });
 }
 
-export async function GET(req: NextRequest) {
+async function handleGet(_req: NextRequest, token: string | undefined) {
   try {
-    const token = req.cookies.get('access_token')?.value;
     if (!token) {
       return NextResponse.json({ message: 'Authentication required' }, { status: 401 });
     }
@@ -50,9 +50,8 @@ export async function GET(req: NextRequest) {
   }
 }
 
-export async function PATCH(req: NextRequest) {
+async function handlePatch(req: NextRequest, token: string | undefined) {
   try {
-    const token = req.cookies.get('access_token')?.value;
     if (!token) {
       return NextResponse.json({ message: 'Authentication required' }, { status: 401 });
     }
@@ -115,3 +114,6 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ message: 'Internal server error' }, { status: 500 });
   }
 }
+
+export const GET = withSession(handleGet);
+export const PATCH = withSession(handlePatch);

@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerApiUrl } from '@/lib/server-api';
+import { resolveSession, setSessionCookies } from '@/lib/auth-session';
 
 const DJANGO_API_URL = getServerApiUrl();
 
@@ -59,7 +60,10 @@ async function proxy(
 
   const targetUrl = `${backendUrl.origin}/api/v2/${pathString}/${querySuffix}`;
 
-  const token = req.cookies.get('access_token')?.value;
+  // Never clear cookies here: a refused refresh may only mean a concurrent
+  // request already rotated the token. Page navigation handles real expiry.
+  const session = await resolveSession(req);
+  const token = session.accessToken;
   const headers = buildProxyHeaders(req, backendUrl.host);
 
   if (token) {
@@ -81,11 +85,13 @@ async function proxy(
     responseHeaders.delete('content-encoding');
     responseHeaders.delete('content-length');
 
-    return new NextResponse(response.body, {
+    const proxied = new NextResponse(response.body, {
       status: response.status,
       statusText: response.statusText,
       headers: responseHeaders
     });
+    if (session.refreshed) setSessionCookies(proxied, session.refreshed);
+    return proxied;
   } catch (error) {
     return NextResponse.json(
       { error: 'Backend service unavailable' },
