@@ -44,9 +44,10 @@ def test_seed_e2e_fixtures_are_repeatable_after_community_activity(monkeypatch):
     assert User.objects.filter(user_email__endswith="@e2e.essaycoach.example.com").count() == 6
 
 
-def test_seed_e2e_refuses_other_databases(monkeypatch):
+@pytest.mark.parametrize("name", ["essaycoach", "essaycoach_e2evil", "test_essaycoach_e2eproduction", "e2e"])
+def test_seed_e2e_refuses_other_databases(monkeypatch, name):
     from django.core.management.base import CommandError
 
-    monkeypatch.setattr(seed_e2e.settings, "DATABASES", {"default": {"NAME": "essaycoach"}})
+    monkeypatch.setattr(seed_e2e.settings, "DATABASES", {"default": {"NAME": name}})
     with pytest.raises(CommandError):
         call_command("seed_e2e")

@@ -31,14 +31,20 @@ const RETRY_COOKIE = 'session_refresh_retry';
  * Build a redirect on the host the browser used. request.nextUrl carries
  * Next's internal host (localhost), so a URL built from it would send users on
  * any other host to the wrong origin. Next's middleware adapter needs an
- * absolute Location, so a relative one is not an option. Next still rewrites
- * loopback hosts (127.0.0.1, ::1) to localhost in redirects; real hostnames and
- * proxy-supplied hosts are kept.
+ * absolute Location, so a relative one is not an option. X-Forwarded-Host and
+ * -Proto are honoured only when TRUST_PROXY_FORWARDED_FOR=true declares a
+ * reverse proxy that sets them; otherwise a caller could choose the redirect
+ * target. Next still rewrites loopback hosts (127.0.0.1, ::1) to localhost.
  */
 function redirectOnRequestHost(request: NextRequest, location: string) {
   const firstValue = (header: string) => request.headers.get(header)?.split(',')[0]?.trim();
-  const host = firstValue('x-forwarded-host') || firstValue('host');
-  const protocol = firstValue('x-forwarded-proto') || request.nextUrl.protocol.replace(/:$/, '');
+  const trustProxy = process.env.TRUST_PROXY_FORWARDED_FOR === 'true';
+  const host = (trustProxy && firstValue('x-forwarded-host')) || firstValue('host');
+  // Next fills nextUrl.protocol from X-Forwarded-Proto itself, so it cannot be
+  // used untrusted; without a proxy the Node server only speaks plain HTTP.
+  const protocol = trustProxy
+    ? firstValue('x-forwarded-proto') || request.nextUrl.protocol.replace(/:$/, '')
+    : 'http';
   let base = request.nextUrl.origin;
   if (host && /^[A-Za-z0-9.\-\[\]:]+$/.test(host) && (protocol === 'http' || protocol === 'https')) {
     base = `${protocol}://${host}`;

@@ -141,15 +141,16 @@ test('signing out through the user menu ends the session', async ({ page }) => {
 
 test('the signed-out dashboard redirect stays on the host the browser used', async ({ page }) => {
   // Next's internal request URL says localhost; the middleware must build its
-  // redirect from the Host the browser (or a reverse proxy) supplied instead.
+  // redirect from the Host the browser sent, and must ignore forwarded-host
+  // headers from a caller unless a reverse proxy is declared trusted.
   // Next itself rewrites loopback hosts to localhost, so use a real hostname.
   const response = await page.request.get('/dashboard/', {
     maxRedirects: 0,
-    headers: { 'x-forwarded-host': 'essays.example.edu', 'x-forwarded-proto': 'https' },
+    headers: { host: 'essays.example.edu', 'x-forwarded-host': 'attacker.example', 'x-forwarded-proto': 'https' },
   });
   expect(response.status()).toBe(307);
   const location = new URL(response.headers().location);
-  expect(location.origin).toBe('https://essays.example.edu');
+  expect(location.origin).toBe('http://essays.example.edu');
   expect(location.pathname).toBe('/auth/sign-in/');
 });
 

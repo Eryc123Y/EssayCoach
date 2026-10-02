@@ -93,14 +93,30 @@ describe('dashboard middleware', () => {
     expect(response.cookies.get('access_token')).toBeUndefined();
   });
 
-  it('redirects on the host the browser used, not Next\'s internal host', async () => {
+  it('redirects on the Host the browser used, not Next\'s internal host', async () => {
     const response = await middleware(
-      new NextRequest('http://localhost/dashboard', {
-        headers: { host: 'essays.example.edu', 'x-forwarded-proto': 'https' },
-      })
+      new NextRequest('http://localhost/dashboard', { headers: { host: 'essays.example.edu' } })
     );
 
-    expect(response.headers.get('location')).toBe('https://essays.example.edu/auth/sign-in/?callbackUrl=%2Fdashboard');
+    expect(response.headers.get('location')).toBe('http://essays.example.edu/auth/sign-in/?callbackUrl=%2Fdashboard');
+  });
+
+  it('ignores forwarded host and proto unless a reverse proxy is trusted', async () => {
+    const forged = () =>
+      new NextRequest('http://localhost/dashboard', {
+        headers: { host: 'essays.example.edu', 'x-forwarded-host': 'attacker.example', 'x-forwarded-proto': 'https' },
+      });
+
+    const direct = await middleware(forged());
+    expect(direct.headers.get('location')).toBe('http://essays.example.edu/auth/sign-in/?callbackUrl=%2Fdashboard');
+
+    vi.stubEnv('TRUST_PROXY_FORWARDED_FOR', 'true');
+    try {
+      const proxied = await middleware(forged());
+      expect(proxied.headers.get('location')).toBe('https://attacker.example/auth/sign-in/?callbackUrl=%2Fdashboard');
+    } finally {
+      vi.unstubAllEnvs();
+    }
   });
 
   it('ignores routes outside the dashboard', async () => {

@@ -9,6 +9,7 @@ assignment for the journey specs that do not exercise invitations.
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass
 from datetime import timedelta
 
@@ -127,11 +128,13 @@ class Command(BaseCommand):
 
     def handle(self, *args, **options) -> None:
         database_name = settings.DATABASES["default"]["NAME"]
-        # Parallel runs may use suffixed copies such as essaycoach_e2e_a.
-        name = str(database_name)
-        if not (name.startswith(E2E_DATABASE_NAME) or name.removeprefix("test_").startswith(E2E_DATABASE_NAME)):
+        # The exact disposable database, pytest's test_ copy, or an explicitly
+        # suffixed parallel copy such as essaycoach_e2e_a.
+        allowed = re.compile(rf"^(test_)?{re.escape(E2E_DATABASE_NAME)}(_[a-z0-9]+)?$")
+        if not allowed.match(str(database_name)):
             raise CommandError(
-                f"seed_e2e only runs against {E2E_DATABASE_NAME}* databases; current database is {database_name!r}"
+                f"seed_e2e only runs against {E2E_DATABASE_NAME} or {E2E_DATABASE_NAME}_<suffix>; "
+                f"current database is {database_name!r}"
             )
         job_id = options.get("process_job")
         if job_id:
