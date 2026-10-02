@@ -4,52 +4,52 @@
  * Remembered sign-ins use localStorage so new tabs render immediately.
  * Session-only sign-ins use sessionStorage so nothing outlives the browser
  * session on a shared machine. Authorization never relies on this cache.
+ *
+ * Every storage call is guarded: storage can be missing or throw (blocked
+ * site data, privacy modes, sandboxed frames), and a cache failure must never
+ * turn a successful sign-in or sign-out into an error.
  */
 
 export const USER_DATA_KEY = 'user_data';
 
-function storages(): Storage[] {
-  if (typeof window === 'undefined') return [];
-  const result: Storage[] = [];
+type StorageKind = 'sessionStorage' | 'localStorage';
+
+function attempt<T>(operation: () => T, fallback: T): T {
   try {
-    result.push(window.sessionStorage);
+    return operation();
   } catch {
-    // Storage can be unavailable in private modes.
+    return fallback;
   }
-  try {
-    result.push(window.localStorage);
-  } catch {
-    // Storage can be unavailable in private modes.
-  }
-  return result;
+}
+
+function storage(kind: StorageKind): Storage | null {
+  if (typeof window === 'undefined') return null;
+  return attempt(() => window[kind], null);
 }
 
 export function storeUserData(user: unknown, persistent: boolean) {
-  if (typeof window === 'undefined') return;
   clearUserData();
-  try {
-    const target = persistent ? window.localStorage : window.sessionStorage;
-    target.setItem(USER_DATA_KEY, JSON.stringify(user));
-  } catch {
-    // Ignore quota or availability errors; the server session is authoritative.
-  }
+  const target = storage(persistent ? 'localStorage' : 'sessionStorage');
+  attempt(() => target?.setItem(USER_DATA_KEY, JSON.stringify(user)), undefined);
 }
 
 export function readUserData<T>(): T | null {
-  for (const storage of storages()) {
-    const raw = storage.getItem(USER_DATA_KEY);
+  for (const kind of ['sessionStorage', 'localStorage'] as const) {
+    const store = storage(kind);
+    const raw = attempt(() => store?.getItem(USER_DATA_KEY) ?? null, null);
     if (!raw) continue;
     try {
       return JSON.parse(raw) as T;
     } catch {
-      storage.removeItem(USER_DATA_KEY);
+      attempt(() => store?.removeItem(USER_DATA_KEY), undefined);
     }
   }
   return null;
 }
 
 export function clearUserData() {
-  for (const storage of storages()) {
-    storage.removeItem(USER_DATA_KEY);
+  for (const kind of ['sessionStorage', 'localStorage'] as const) {
+    const store = storage(kind);
+    attempt(() => store?.removeItem(USER_DATA_KEY), undefined);
   }
 }
