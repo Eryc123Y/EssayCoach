@@ -7,7 +7,7 @@
 ```text
 core/
 ├── models.py                    # central ORM model file
-├── services.py                  # shared aggregation/business logic
+├── services.py                  # task/rubric business actions
 ├── rubric_manager.py            # rubric helper logic
 ├── management/commands/seed_db.py # local test-account bootstrap
 └── migrations/                  # schema history
@@ -17,7 +17,8 @@ core/
 | Task | Location | Notes |
 |---|---|---|
 | User/class/task/rubric schema | `models.py` | most domain entities live in one file |
-| Dashboard aggregation | `services.py` | `DashboardService` is the hotspot |
+| Dashboard aggregation | `../api_v2/core/routers/dashboard.py` | role payloads are built in the router |
+| Task/rubric duplication, deadline extensions | `services.py` | `TaskService`, `RubricService` |
 | Seed accounts / starter data | `management/commands/seed_db.py` | admin/lecturer/student bootstrap |
 | Rubric helper behavior | `rubric_manager.py` | narrower helper module |
 | Behavioral verification | `../api_v2/core/tests/` | API-facing tests validate many core rules |

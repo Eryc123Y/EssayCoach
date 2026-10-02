@@ -63,7 +63,7 @@ The first local deployment stays a **modular monolith**. Existing Next.js, Djang
 
 ## Localization and interface integration
 
-- The prototype's visual tokens and journeys guide the real route components. Connect one vertical slice at a time to typed v2 API services, replacing fixture arrays and local-only state. Keep `/prototype` as a design reference until every real page is accepted, then decide whether to remove it.
+- The prototype's visual tokens and journeys guide the real route components. Connect one vertical slice at a time to typed v2 API services, replacing fixture arrays and local-only state. The `/prototype` route was removed on 2026-10-02 after the real pages were accepted.
 - Put interface text, validation messages, email/link copy, and status labels in locale catalogs keyed by stable message IDs. English and Simplified Chinese ship together; the active locale lives in a user preference with a browser fallback. The current implementation moved all static two-argument copy calls in active pages into 809 matching catalog entries; 19 calls with dynamic values and some older code remain inline. User-authored essays and stored rubric text are never automatically translated by switching the interface. New locale catalogs can be added without changing domain records, though the two-language preference contract must also be extended.
 - The same design system must work for keyboard use, narrow screens, long Chinese text, empty/loading/error states, and all four experiences.
 

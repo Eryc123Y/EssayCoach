@@ -16,7 +16,6 @@ Usage:
 
 from ninja import NinjaAPI
 
-from .advanced.views import router as advanced_router
 from .ai_feedback.jobs import router as ai_jobs_router
 from .ai_feedback.practice import router as practice_router
 from .ai_feedback.views import router as ai_feedback_router
@@ -64,7 +63,6 @@ api_v2.add_router("/ai-feedback/", ai_jobs_router)
 api_v2.add_router("/practice/", practice_router)
 api_v2.add_router("/auth/", auth_router)
 api_v2.add_router("/core/", core_router)
-api_v2.add_router("/advanced/", advanced_router)
 api_v2.add_router("/social/", social_router)
 api_v2.add_router("/analytics/", analytics_router)
 api_v2.add_router("/admin/users/", users_admin_router)

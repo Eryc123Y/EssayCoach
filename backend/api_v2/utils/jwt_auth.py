@@ -61,8 +61,10 @@ def get_token_lifetime() -> timedelta:
     return timedelta(hours=hours)
 
 
-def get_refresh_token_lifetime() -> timedelta:
-    """Get refresh token lifetime from settings."""
+def get_refresh_token_lifetime(persistent: bool = False) -> timedelta:
+    """Get refresh token lifetime from settings; remembered sessions get the longer window."""
+    if persistent:
+        return timedelta(days=getattr(settings, "JWT_REMEMBERED_REFRESH_TOKEN_LIFETIME_DAYS", 30))
     days = getattr(settings, "JWT_REFRESH_TOKEN_LIFETIME_DAYS", 7)
     return timedelta(days=days)
 
@@ -83,7 +85,7 @@ class JWTPair:
         self.expires_at = expires_at
 
 
-def create_jwt_pair(user: User, *, request=None, session=None) -> JWTPair:
+def create_jwt_pair(user: User, *, request=None, session=None, persistent: bool = False) -> JWTPair:
     """
     Create a JWT token pair for a user.
 
@@ -91,6 +93,8 @@ def create_jwt_pair(user: User, *, request=None, session=None) -> JWTPair:
 
     Args:
         user: User instance
+        persistent: True for "remember me" sessions, which use the longer refresh window.
+            The flag is carried in the refresh token so rotation keeps it.
 
     Returns:
         JWTPair containing access token, refresh token, and expiration
@@ -102,11 +106,14 @@ def create_jwt_pair(user: User, *, request=None, session=None) -> JWTPair:
             user=user,
             device=(request.META.get("HTTP_USER_AGENT", "Unknown device")[:200] if request else "Test or API client"),
             ip_address=(request.META.get("REMOTE_ADDR") if request else None),
-            expires_at=timezone.now() + get_refresh_token_lifetime(),
+            expires_at=timezone.now() + get_refresh_token_lifetime(persistent),
         )
+
+    refresh_lifetime = get_refresh_token_lifetime(persistent)
 
     # Use DRF SimpleJWT's built-in token generation
     refresh = RefreshToken.for_user(user)
+    refresh.set_exp(lifetime=refresh_lifetime)
 
     # Set custom claims
     refresh["user_id"] = user.user_id
@@ -116,8 +123,9 @@ def create_jwt_pair(user: User, *, request=None, session=None) -> JWTPair:
     refresh["user_role"] = role
     refresh["auth_version"] = user.auth_version
     refresh["session_id"] = str(session.pk)
+    refresh["persistent"] = persistent
     session.refresh_jti = str(refresh["jti"])
-    session.expires_at = timezone.now() + get_refresh_token_lifetime()
+    session.expires_at = timezone.now() + refresh_lifetime
     session.save(update_fields=["refresh_jti", "expires_at", "last_activity"])
 
     # Get access token from refresh token
@@ -300,20 +308,30 @@ def refresh_jwt_token(refresh_token: str) -> JWTPair | None:
         if old_refresh.get("auth_version", 0) != user.auth_version:
             return None
 
+        from django.db import transaction
+
         from core.models import AuthSession
 
-        session = AuthSession.objects.filter(
-            pk=old_refresh.get("session_id"),
-            user=user,
-            revoked_at__isnull=True,
-            expires_at__gt=timezone.now(),
-            refresh_jti=old_jti,
-        ).first()
-        if session is None:
-            return None
+        # Lock the session row so concurrent refreshes with the same token (from
+        # separate frontend workers) rotate once: the loser re-reads the new
+        # refresh_jti after the winner commits and is refused.
+        with transaction.atomic():
+            session = (
+                AuthSession.objects.select_for_update()
+                .filter(
+                    pk=old_refresh.get("session_id"),
+                    user=user,
+                    revoked_at__isnull=True,
+                    expires_at__gt=timezone.now(),
+                    refresh_jti=old_jti,
+                )
+                .first()
+            )
+            if session is None:
+                return None
 
-        # Create BRAND NEW token pair (this ensures rotation)
-        new_pair = create_jwt_pair(user, session=session)
+            # Create BRAND NEW token pair (this ensures rotation)
+            new_pair = create_jwt_pair(user, session=session, persistent=bool(old_refresh.get("persistent", False)))
 
         # Blacklist the old refresh token AFTER generating new ones
         if old_jti:

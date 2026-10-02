@@ -137,11 +137,12 @@ class TestAPIStructure:
         core_paths = [p for p in schema["paths"].keys() if p.startswith("/core/")]
         assert len(core_paths) >= 30  # Updated for dashboard endpoint
 
-    def test_advanced_endpoints_registered(self):
+    def test_generic_batch_endpoints_are_not_exposed(self):
+        """Unscoped batch update/delete/import/export must not be reachable by any role."""
         from ninja.openapi.schema import get_schema
 
         from api_v2.api import api_v2
 
         schema = get_schema(api_v2)
         advanced_paths = [p for p in schema["paths"].keys() if p.startswith("/advanced/")]
-        assert len(advanced_paths) == 4
+        assert advanced_paths == []

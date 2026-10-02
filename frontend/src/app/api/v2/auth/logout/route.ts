@@ -1,17 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerApiUrl } from '@/lib/server-api';
+import { clearSessionCookies, resolveSession } from '@/lib/auth-session';
 
 export async function POST(req: NextRequest) {
-  // Call Django backend to invalidate token
-  const apiUrl = getServerApiUrl();
-  const token = req.cookies.get('access_token')?.value;
-  
-  if (token) {
+  // Revoke the backend session even when only the refresh cookie is left.
+  const { accessToken } = await resolveSession(req);
+
+  if (accessToken) {
     try {
-      await fetch(`${apiUrl}/api/v2/auth/logout/`, {
+      await fetch(`${getServerApiUrl()}/api/v2/auth/logout/`, {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${token}`,
+          'Authorization': `Bearer ${accessToken}`,
           'Content-Type': 'application/json'
         }
       });
@@ -22,24 +22,6 @@ export async function POST(req: NextRequest) {
   }
 
   const res = NextResponse.json({ success: true });
-  res.cookies.set('access_token', '', { httpOnly: true, path: '/', maxAge: 0 });
-  res.cookies.set('refresh_token', '', {
-    httpOnly: true,
-    path: '/',
-    maxAge: 0
-  });
-  res.cookies.set('user_email', '', { httpOnly: true, path: '/', maxAge: 0 });
-  res.cookies.set('user_first_name', '', {
-    httpOnly: true,
-    path: '/',
-    maxAge: 0
-  });
-  res.cookies.set('user_last_name', '', {
-    httpOnly: true,
-    path: '/',
-    maxAge: 0
-  });
-  res.cookies.set('user_role', '', { httpOnly: true, path: '/', maxAge: 0 });
-  res.cookies.set('user_id', '', { httpOnly: true, path: '/', maxAge: 0 });
+  clearSessionCookies(res);
   return res;
 }

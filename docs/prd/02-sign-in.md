@@ -77,8 +77,9 @@ So that I can regain access to my account.
 
 | Requirement | Description | Priority |
 |-------------|-------------|----------|
-| Login Attempts | Max 5 attempts per 15 minutes per IP | Required |
-| Account Lockout | Lock after 10 failed attempts (15 min) | Required |
+| Login Attempts | Max 5 failed attempts per account from one client IP per 15 minutes | Required |
+| Client Spraying Limit | Max 50 failed attempts per client IP across all accounts per 15 minutes (sized for a shared campus NAT address) | Required |
+| Account Lockout | Lock after 10 failed attempts from any clients (15 min) | Required |
 
 ---
 

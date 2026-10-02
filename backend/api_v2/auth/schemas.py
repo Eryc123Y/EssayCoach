@@ -79,6 +79,7 @@ class EmailChangeCompleteIn(Schema):
 class UserLoginIn(Schema):
     email: str = Field(...)
     password: str = Field(...)
+    remember: bool = Field(False, description="Keep the session for the extended remembered window")
 
 
 class UserOut(Schema):

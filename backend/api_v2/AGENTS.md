@@ -9,7 +9,6 @@ api_v2/
 ├── auth/         # login, JWT refresh, settings, sessions
 ├── core/         # classes, tasks, rubrics, submissions, dashboard, users
 ├── ai_feedback/  # essay analysis + chat endpoints
-├── advanced/     # batch/advanced operations
 ├── social/       # PRD-11 stubs
 ├── analytics/    # PRD-12 stubs
 ├── users_admin/  # PRD-13 stubs

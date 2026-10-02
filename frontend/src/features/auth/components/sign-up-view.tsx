@@ -7,6 +7,7 @@ import { useEffect, useState, type FormEvent } from 'react';
 import { toast } from 'sonner';
 import { localized } from '@/locales';
 import { usePreferences } from '@/components/layout/preference-provider';
+import { storeUserData } from '@/lib/user-data-storage';
 
 type Preview = {
   email: string;
@@ -88,15 +89,16 @@ export default function SignUpViewPage() {
           result?.message || t('ui.authInvitationActivationFailed')
         );
       if (result.user) {
-        localStorage.setItem(
-          'user_data',
-          JSON.stringify({
+        storeUserData(
+          {
             id: String(result.user.user_id || result.user.id),
             email: result.user.user_email || result.user.email,
             firstName: result.user.user_fname || result.user.first_name || '',
             lastName: result.user.user_lname || result.user.last_name || '',
             role: result.user.user_role || result.user.role
-          })
+          },
+          // Activation sets persistent cookies, matching a remembered sign-in.
+          true
         );
         window.dispatchEvent(new Event('essaycoach:user-updated'));
       }

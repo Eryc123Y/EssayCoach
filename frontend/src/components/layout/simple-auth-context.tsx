@@ -8,6 +8,7 @@ import React, {
   useCallback,
   useState
 } from 'react';
+import { clearUserData, readUserData, storeUserData } from '@/lib/user-data-storage';
 
 export type UserRole = 'student' | 'lecturer' | 'admin';
 
@@ -37,38 +38,39 @@ type AuthContextValue = {
 
 const AuthContext = createContext<AuthContextValue | undefined>(undefined);
 
-// Helper functions for localStorage (for httpOnly cookie compatibility)
-function setUserData(user: SimpleUser | null) {
-  if (typeof window === 'undefined') return;
-  if (user) {
-    localStorage.setItem('user_data', JSON.stringify(user));
-  } else {
-    localStorage.removeItem('user_data');
-  }
+type AuthCheck =
+  | { status: 'authenticated'; user: SimpleUser }
+  | { status: 'unauthenticated' }
+  | { status: 'unknown' };
+
+function toSimpleUser(data: any): SimpleUser {
+  return {
+    id: String(data.user_id || data.id),
+    email: data.user_email || data.email,
+    firstName: data.user_fname || data.first_name || '',
+    lastName: data.user_lname || data.last_name || '',
+    role: (data.user_role || data.role || 'student') as UserRole
+  };
 }
 
-function getUserData(): SimpleUser | null {
-  if (typeof window === 'undefined') return null;
-  const data = localStorage.getItem('user_data');
-  if (!data) return null;
-  try {
-    return JSON.parse(data);
-  } catch {
-    return null;
-  }
-}
-
-// Check if user is authenticated by verifying access_token cookie exists
-// We can't read httpOnly cookies directly, so we use a server endpoint
-async function checkAuthStatus(): Promise<boolean> {
+// We can't read httpOnly cookies directly, so we ask a server endpoint, which
+// also says who the cookies belong to. Only an explicit 401/403 counts as
+// signed out; network errors are unknown.
+async function checkAuthStatus(): Promise<AuthCheck> {
   try {
     const response = await fetch('/api/v2/auth/getUserInfo', {
       method: 'GET',
       credentials: 'include' // Include cookies
     });
-    return response.ok;
+    if (response.ok) {
+      const payload = await response.json();
+      const data = payload?.data ?? payload;
+      return data ? { status: 'authenticated', user: toSimpleUser(data) } : { status: 'unknown' };
+    }
+    if (response.status === 401 || response.status === 403) return { status: 'unauthenticated' };
+    return { status: 'unknown' };
   } catch {
-    return false;
+    return { status: 'unknown' };
   }
 }
 
@@ -79,43 +81,42 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [isInitialized, setIsInitialized] = useState(false);
 
   const syncUserFromStorage = useCallback(() => {
-    const storedUser = getUserData();
+    const storedUser = readUserData<SimpleUser>();
 
     if (storedUser) {
+      // Render the cached user immediately, then reconcile with the cookies:
+      // drop it if the session is gone (a session-only sign-in after the
+      // browser closed) and replace it if another tab signed in as someone else.
       setUser(storedUser);
       setIsInitialized(true);
+      checkAuthStatus().then((check) => {
+        if (check.status === 'unauthenticated') {
+          clearUserData();
+          setUser(null);
+        } else if (check.status === 'authenticated' && check.user.id !== storedUser.id) {
+          // Persistence of the other sign-in is unknown, so cache only for this tab.
+          storeUserData(check.user, false);
+          setUser(check.user);
+        }
+      });
       return;
     }
 
-    // No stored user, check if access_token cookie exists via server endpoint
+    // No stored user, check whether the cookie session is valid via the server.
     checkAuthStatus()
-      .then((isLoggedIn) => {
-        if (isLoggedIn) {
-          // User has valid token but no stored data, fetch user info
-          return fetch('/api/v2/core/users/me/')
-            .then((res) => res.json())
-            .then((data) => {
-              const user: SimpleUser = {
-                id: String(data.user_id || data.id),
-                email: data.user_email || data.email,
-                firstName: data.user_fname || data.first_name || '',
-                lastName: data.user_lname || data.last_name || '',
-                role: (data.user_role || data.role || 'student') as UserRole
-              };
-              setUser(user);
-              setUserData(user); // Cache in localStorage
-            })
-            .catch(() => setUser(null));
+      .then((check) => {
+        if (check.status === 'authenticated') {
+          setUser(check.user);
+          // Persistence is unknown here, so cache only for this tab.
+          storeUserData(check.user, false);
         }
-        return undefined;
       })
       .finally(() => {
         setIsInitialized(true);
       });
   }, []);
 
-  // Read user info from localStorage - run on mount
-  // Note: We use localStorage because user cookies are now httpOnly for security
+  // Read cached user info on mount; auth cookies are httpOnly.
   useEffect(() => {
     syncUserFromStorage();
   }, [syncUserFromStorage]);
@@ -195,7 +196,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setCurrentClass: (classId: number) => setCurrentClassId(classId),
       logout: async () => {
         await fetch('/api/v2/auth/logout', { method: 'POST' });
-        setUserData(null); // Clear localStorage
+        clearUserData();
         if (typeof window !== 'undefined')
           window.location.href = '/auth/sign-in';
       }

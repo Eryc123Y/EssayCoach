@@ -9,7 +9,7 @@
   "scripts": {
     "dev": "next dev -H 127.0.0.1 -p 5100",
     "build": "next build",
-    "start": "next start",
+    "start": "node server.mjs",
     "lint": "eslint src",
     "lint:fix": "eslint src --fix && pnpm format",
     "lint:strict": "eslint --max-warnings=0 src",

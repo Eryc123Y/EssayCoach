@@ -92,6 +92,15 @@ CSRF_TRUSTED_ORIGINS = [
     "http://127.0.0.1:3000",
 ]
 
+# Peers (IPs or CIDRs) whose right-most X-Forwarded-For entry names the login
+# client for rate limiting. Loopback covers the co-located Next.js proxy; every
+# other peer is identified by REMOTE_ADDR alone.
+LOGIN_RATE_LIMIT_TRUSTED_PROXIES: list[str] = [
+    entry.strip()
+    for entry in os.environ.get("LOGIN_RATE_LIMIT_TRUSTED_PROXIES", "127.0.0.1,::1").split(",")
+    if entry.strip()
+]
+
 # JWT settings for djangorestframework-simplejwt
 
 SIMPLE_JWT = {
@@ -125,6 +134,8 @@ JWT_SECRET_KEY = SECRET_KEY
 JWT_ALGORITHM = "HS256"
 JWT_ACCESS_TOKEN_LIFETIME_HOURS = 24
 JWT_REFRESH_TOKEN_LIFETIME_DAYS = 7
+# "Remember me" sign-ins keep a sliding refresh window of this many days (PRD 02).
+JWT_REMEMBERED_REFRESH_TOKEN_LIFETIME_DAYS = 30
 JWT_ISSUER = os.environ.get("JWT_ISSUER", "essaycoach-backend")
 JWT_AUDIENCE = os.environ.get("JWT_AUDIENCE", "essaycoach-frontend")
 

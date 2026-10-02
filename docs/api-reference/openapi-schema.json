@@ -5904,168 +5904,6 @@
         ]
       }
     },
-    "/api/v2/advanced/batch-delete/": {
-      "post": {
-        "operationId": "api_v2_advanced_views_batch_delete",
-        "summary": "Batch Delete",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BatchOperationOut"
-                }
-              }
-            }
-          }
-        },
-        "description": "Batch delete resources by IDs.",
-        "tags": [
-          "Advanced"
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/BatchDeleteIn"
-              }
-            }
-          },
-          "required": true
-        },
-        "security": [
-          {
-            "JWTAuth": []
-          }
-        ]
-      }
-    },
-    "/api/v2/advanced/batch-update/": {
-      "post": {
-        "operationId": "api_v2_advanced_views_batch_update",
-        "summary": "Batch Update",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/BatchOperationOut"
-                }
-              }
-            }
-          }
-        },
-        "description": "Batch update resources by IDs.",
-        "tags": [
-          "Advanced"
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/BatchUpdateIn"
-              }
-            }
-          },
-          "required": true
-        },
-        "security": [
-          {
-            "JWTAuth": []
-          }
-        ]
-      }
-    },
-    "/api/v2/advanced/import/": {
-      "post": {
-        "operationId": "api_v2_advanced_views_import_data",
-        "summary": "Import Data",
-        "parameters": [],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ImportOut"
-                }
-              }
-            }
-          }
-        },
-        "description": "Import data from CSV/JSON format.\n\nSupports importing Users, Classes, Units, Rubrics, Tasks, and other models.\nData is validated before import and bulk operations are used for efficiency.",
-        "tags": [
-          "Advanced"
-        ],
-        "requestBody": {
-          "content": {
-            "application/json": {
-              "schema": {
-                "$ref": "#/components/schemas/ImportIn"
-              }
-            }
-          },
-          "required": true
-        },
-        "security": [
-          {
-            "JWTAuth": []
-          }
-        ]
-      }
-    },
-    "/api/v2/advanced/export/": {
-      "get": {
-        "operationId": "api_v2_advanced_views_export_data",
-        "summary": "Export Data",
-        "parameters": [
-          {
-            "in": "query",
-            "name": "resource",
-            "schema": {
-              "title": "Resource",
-              "type": "string"
-            },
-            "required": true
-          },
-          {
-            "in": "query",
-            "name": "format",
-            "schema": {
-              "default": "json",
-              "title": "Format",
-              "type": "string"
-            },
-            "required": false
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "$ref": "#/components/schemas/ExportOut"
-                }
-              }
-            }
-          }
-        },
-        "description": "Export data to CSV/JSON format.",
-        "tags": [
-          "Advanced"
-        ],
-        "security": [
-          {
-            "JWTAuth": []
-          }
-        ]
-      }
-    },
     "/api/v2/social/feed/": {
       "get": {
         "operationId": "api_v2_social_views_get_social_feed",
@@ -6370,9 +6208,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
-                  "title": "Response",
-                  "type": "object"
+                  "$ref": "#/components/schemas/SocialInteractionOut"
                 }
               }
             }
@@ -6420,8 +6256,7 @@
               "application/json": {
                 "schema": {
                   "items": {
-                    "additionalProperties": true,
-                    "type": "object"
+                    "$ref": "#/components/schemas/SocialInteractionOut"
                   },
                   "title": "Response",
                   "type": "array"
@@ -6538,9 +6373,7 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
-                  "title": "Response",
-                  "type": "object"
+                  "$ref": "#/components/schemas/ContentReportOut"
                 }
               }
             }
@@ -6578,8 +6411,7 @@
               "application/json": {
                 "schema": {
                   "items": {
-                    "additionalProperties": true,
-                    "type": "object"
+                    "$ref": "#/components/schemas/ContentReportOut"
                   },
                   "title": "Response",
                   "type": "array"
@@ -6621,8 +6453,7 @@
               "application/json": {
                 "schema": {
                   "items": {
-                    "additionalProperties": true,
-                    "type": "object"
+                    "$ref": "#/components/schemas/ContentReportOut"
                   },
                   "title": "Response",
                   "type": "array"
@@ -6662,14 +6493,13 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "additionalProperties": true,
-                  "title": "Response",
-                  "type": "object"
+                  "$ref": "#/components/schemas/ContentReportOut"
                 }
               }
             }
           }
         },
+        "description": "Apply a decision to the reported target only.\n\nAn essay report hides or removes the shared essay. A response report hides or\nsoft-removes that one response and never changes the essay, even when the\nresponse no longer exists. Removing a response also resolves every other open\nreport on it, so no later report on that response can reach the essay.",
         "tags": [
           "Social Hub"
         ],
@@ -6683,6 +6513,43 @@
           },
           "required": true
         },
+        "security": [
+          {
+            "JWTAuth": []
+          }
+        ]
+      }
+    },
+    "/api/v2/social/moderation/interactions/{interaction_id}/restore/": {
+      "post": {
+        "operationId": "api_v2_social_views_restore_interaction",
+        "summary": "Restore Interaction",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "interaction_id",
+            "schema": {
+              "title": "Interaction Id",
+              "type": "integer"
+            },
+            "required": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/SocialInteractionOut"
+                }
+              }
+            }
+          }
+        },
+        "tags": [
+          "Social Hub"
+        ],
         "security": [
           {
             "JWTAuth": []
@@ -9362,6 +9229,12 @@
           "password": {
             "title": "Password",
             "type": "string"
+          },
+          "remember": {
+            "default": false,
+            "description": "Keep the session for the extended remembered window",
+            "title": "Remember",
+            "type": "boolean"
           }
         },
         "required": [
@@ -13780,167 +13653,6 @@
         "title": "UnitIn",
         "type": "object"
       },
-      "BatchOperationOut": {
-        "properties": {
-          "success": {
-            "default": true,
-            "title": "Success",
-            "type": "boolean"
-          },
-          "message": {
-            "title": "Message",
-            "type": "string"
-          },
-          "affected_count": {
-            "default": 0,
-            "title": "Affected Count",
-            "type": "integer"
-          }
-        },
-        "required": [
-          "message"
-        ],
-        "title": "BatchOperationOut",
-        "type": "object"
-      },
-      "BatchDeleteIn": {
-        "properties": {
-          "resource": {
-            "description": "Resource type (users, classes, etc.)",
-            "title": "Resource",
-            "type": "string"
-          },
-          "ids": {
-            "description": "List of IDs to delete",
-            "items": {
-              "type": "integer"
-            },
-            "title": "Ids",
-            "type": "array"
-          }
-        },
-        "required": [
-          "resource",
-          "ids"
-        ],
-        "title": "BatchDeleteIn",
-        "type": "object"
-      },
-      "BatchUpdateIn": {
-        "properties": {
-          "resource": {
-            "description": "Resource type (users, classes, etc.)",
-            "title": "Resource",
-            "type": "string"
-          },
-          "ids": {
-            "description": "List of IDs to update",
-            "items": {
-              "type": "integer"
-            },
-            "title": "Ids",
-            "type": "array"
-          },
-          "fields": {
-            "additionalProperties": true,
-            "description": "Fields to update",
-            "title": "Fields",
-            "type": "object"
-          }
-        },
-        "required": [
-          "resource",
-          "ids",
-          "fields"
-        ],
-        "title": "BatchUpdateIn",
-        "type": "object"
-      },
-      "ImportOut": {
-        "properties": {
-          "success": {
-            "title": "Success",
-            "type": "boolean"
-          },
-          "message": {
-            "title": "Message",
-            "type": "string"
-          },
-          "imported_count": {
-            "title": "Imported Count",
-            "type": "integer"
-          },
-          "errors": {
-            "items": {
-              "type": "string"
-            },
-            "title": "Errors",
-            "type": "array"
-          }
-        },
-        "required": [
-          "success",
-          "message",
-          "imported_count"
-        ],
-        "title": "ImportOut",
-        "type": "object"
-      },
-      "ImportIn": {
-        "properties": {
-          "resource": {
-            "title": "Resource",
-            "type": "string"
-          },
-          "format": {
-            "default": "json",
-            "title": "Format",
-            "type": "string"
-          },
-          "data": {
-            "items": {
-              "additionalProperties": true,
-              "type": "object"
-            },
-            "title": "Data",
-            "type": "array"
-          }
-        },
-        "required": [
-          "resource",
-          "data"
-        ],
-        "title": "ImportIn",
-        "type": "object"
-      },
-      "ExportOut": {
-        "properties": {
-          "success": {
-            "title": "Success",
-            "type": "boolean"
-          },
-          "message": {
-            "title": "Message",
-            "type": "string"
-          },
-          "download_url": {
-            "title": "Download Url",
-            "type": "string"
-          },
-          "format": {
-            "title": "Format",
-            "type": "string"
-          }
-        },
-        "required": [
-          "success",
-          "message",
-          "download_url",
-          "format"
-        ],
-        "title": "ExportOut",
-        "type": "object"
-      },
       "SharedEssayIn": {
         "properties": {
           "submission_id": {
@@ -14032,6 +13744,80 @@
         "title": "InteractionType",
         "type": "string"
       },
+      "SocialContentStatus": {
+        "description": "Moderation state of a shared essay or a peer response (comment/feedback).",
+        "enum": [
+          "visible",
+          "hidden",
+          "removed"
+        ],
+        "title": "SocialContentStatus",
+        "type": "string"
+      },
+      "SocialInteractionOut": {
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "submission_id": {
+            "title": "Submission Id",
+            "type": "integer"
+          },
+          "user_id": {
+            "title": "User Id",
+            "type": "integer"
+          },
+          "author": {
+            "title": "Author",
+            "type": "string"
+          },
+          "interaction_type": {
+            "$ref": "#/components/schemas/InteractionType"
+          },
+          "content": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Content"
+          },
+          "status": {
+            "$ref": "#/components/schemas/SocialContentStatus"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "updated_at": {
+            "format": "date-time",
+            "title": "Updated At",
+            "type": "string"
+          },
+          "is_mine": {
+            "title": "Is Mine",
+            "type": "boolean"
+          }
+        },
+        "required": [
+          "id",
+          "submission_id",
+          "user_id",
+          "author",
+          "interaction_type",
+          "status",
+          "created_at",
+          "updated_at",
+          "is_mine"
+        ],
+        "title": "SocialInteractionOut",
+        "type": "object"
+      },
       "SocialInteractionIn": {
         "properties": {
           "interaction_type": {
@@ -14055,6 +13841,144 @@
         ],
         "title": "SocialInteractionIn",
         "type": "object"
+      },
+      "ContentReportOut": {
+        "properties": {
+          "id": {
+            "title": "Id",
+            "type": "integer"
+          },
+          "submission_id": {
+            "title": "Submission Id",
+            "type": "integer"
+          },
+          "interaction_id": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Interaction Id"
+          },
+          "target_type": {
+            "$ref": "#/components/schemas/ReportTargetType"
+          },
+          "target_content": {
+            "title": "Target Content",
+            "type": "string"
+          },
+          "target_author": {
+            "title": "Target Author",
+            "type": "string"
+          },
+          "target_status": {
+            "$ref": "#/components/schemas/SocialContentStatus"
+          },
+          "reporter_id": {
+            "title": "Reporter Id",
+            "type": "integer"
+          },
+          "reason": {
+            "title": "Reason",
+            "type": "string"
+          },
+          "description": {
+            "title": "Description",
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/ReportStatus"
+          },
+          "decision": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ReportDecision"
+              },
+              {
+                "const": "",
+                "type": "string"
+              }
+            ],
+            "title": "Decision"
+          },
+          "resolved_by": {
+            "anyOf": [
+              {
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resolved By"
+          },
+          "resolved_at": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Resolved At"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "submission_id",
+          "target_type",
+          "target_content",
+          "target_author",
+          "target_status",
+          "reporter_id",
+          "reason",
+          "description",
+          "status",
+          "decision",
+          "created_at"
+        ],
+        "title": "ContentReportOut",
+        "type": "object"
+      },
+      "ReportDecision": {
+        "description": "Moderator decision on a content report; applies only to the reported target.",
+        "enum": [
+          "keep",
+          "hide",
+          "remove"
+        ],
+        "title": "ReportDecision",
+        "type": "string"
+      },
+      "ReportStatus": {
+        "enum": [
+          "open",
+          "investigating",
+          "resolved",
+          "dismissed"
+        ],
+        "title": "ReportStatus",
+        "type": "string"
+      },
+      "ReportTargetType": {
+        "description": "What a content report was filed against; persisted so it survives target removal.",
+        "enum": [
+          "essay",
+          "comment",
+          "feedback"
+        ],
+        "title": "ReportTargetType",
+        "type": "string"
       },
       "ContentReportIn": {
         "properties": {

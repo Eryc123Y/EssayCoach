@@ -219,7 +219,8 @@ def test_suspended_account_cannot_login_or_use_existing_jwt(school):
     login = _post(
         client, "/api/v2/auth/login-with-jwt/", {"email": student.user_email, "password": "StudentPass123!"}
     )
-    assert login.status_code == 423
+    # Indistinguishable from a wrong password so the response cannot confirm it.
+    assert login.status_code == 401
     client.defaults["HTTP_AUTHORIZATION"] = f"Bearer {token}"
     assert client.get("/api/v2/auth/me/jwt/").status_code == 401
 

@@ -16,7 +16,13 @@ from ninja.files import UploadedFile
 
 from core.email_change import EmailChangeError, complete_email_change, issue_email_change, preview_email_change
 from core.invitations import InvitationError, InviteRole, accept_invitation, issue_invitation, preview_invitation
-from core.login_rate_limit import LoginRateLimitError, assert_login_allowed, clear_login_failures, record_login_failure
+from core.login_rate_limit import (
+    LoginRateLimitError,
+    assert_login_allowed,
+    clear_login_failures,
+    login_client,
+    record_login_failure,
+)
 from core.models import AuthSession, Class, LoginEvent, Unit, User
 from core.password_reset import PasswordResetError, complete_password_reset, preview_password_reset
 
@@ -85,29 +91,25 @@ def _record_successful_login(user: User) -> None:
 
 
 def _authenticate_login(request: HttpRequest, data: UserLoginIn) -> User:
-    """Apply the shared account limiter, then authenticate one interactive login."""
+    """Apply the shared login limiter, then authenticate one interactive login."""
+    client = login_client(request)
     try:
-        assert_login_allowed(data.email)
+        assert_login_allowed(data.email, client)
     except LoginRateLimitError as exc:
         raise HttpError(429, str(exc)) from exc
 
-    user = authenticate(request, username=data.email, password=data.password)
-    if not user:
-        try:
-            existing_user = User.objects.get(user_email=data.email)
-            if existing_user.check_password(data.password) and not existing_user.is_active:
-                raise HttpError(423, "Account is locked. Please contact administrator.")
-        except User.DoesNotExist:
-            pass
-        if record_login_failure(data.email):
+    # ModelBackend runs one password hash for every attempt (a dummy one for an
+    # unknown email) and returns None for is_active=False. Inactive or suspended
+    # accounts must look exactly like a wrong password, including the failure
+    # count, so a response never confirms that a guessed password is correct.
+    user = cast(User | None, authenticate(request, username=data.email, password=data.password))
+    if user is None or not user.is_active or user.user_status != "active":
+        if record_login_failure(data.email, client):
             raise HttpError(429, "Too many login attempts. Please try again later.")
         raise HttpError(401, "Invalid email or password")
 
-    if user.user_status != "active":
-        raise HttpError(423, "Account is not active. Please contact an administrator.")
-
-    clear_login_failures(data.email)
-    return cast(User, user)
+    clear_login_failures(data.email, client)
+    return user
 
 
 @router.post("/invitations/", response=InvitationCreateOut, auth=JWTAuth())
@@ -225,7 +227,7 @@ def register(request: HttpRequest, data: UserRegistrationIn) -> AuthResponseWith
 def login(request: HttpRequest, data: UserLoginIn) -> AuthResponseWithRefresh:
     user = _authenticate_login(request, data)
 
-    jwt_pair = create_jwt_pair(user, request=request)
+    jwt_pair = create_jwt_pair(user, request=request, persistent=data.remember)
     _record_successful_login(user)
 
     return AuthResponseWithRefresh(
@@ -343,7 +345,7 @@ def login_with_jwt(request: HttpRequest, data: UserLoginIn) -> AuthResponseWithR
     user = _authenticate_login(request, data)
 
     # Create JWT token pair
-    jwt_pair = create_jwt_pair(user, request=request)
+    jwt_pair = create_jwt_pair(user, request=request, persistent=data.remember)
     _record_successful_login(user)
 
     return AuthResponseWithRefresh(

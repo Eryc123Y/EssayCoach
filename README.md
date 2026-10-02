@@ -2,7 +2,7 @@
 
 EssayCoach is a private, bilingual writing platform for one institution. Staff invite students into courses. Students can practice writing with AI feedback and source checks; formal essay grades require lecturer review and course lead publication.
 
-**Development status (2026-10-01):** development and local acceptance are complete for the owner-approved, one-institution English/Chinese scope. Real routes cover invitation activation, classes, assignments, practice feedback, source evidence, teacher review and course-lead publication, analytics, community moderation, administration, help and runtime diagnostics. The reviewed [interactive prototype](docs/architecture/interactive-prototype.md) guides the interface. See the [current acceptance record](docs/development/release-acceptance-2026-10-01.md) for the requirement matrix, observed workflows and AI/accessibility limitations.
+**Development status (2026-10-01):** development and local acceptance are complete for the owner-approved, one-institution English/Chinese scope. Real routes cover invitation activation, classes, assignments, practice feedback, source evidence, teacher review and course-lead publication, analytics, community moderation, administration, help and runtime diagnostics. The retired [interactive prototype](docs/architecture/interactive-prototype.md) records the interface design. See the [current acceptance record](docs/development/release-acceptance-2026-10-01.md) for the requirement matrix, observed workflows and AI/accessibility limitations.
 
 ## Current architecture
 

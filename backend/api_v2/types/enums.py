@@ -165,6 +165,30 @@ class ReportStatus(StrEnum):
     DISMISSED = "dismissed"
 
 
+class SocialContentStatus(StrEnum):
+    """Moderation state of a shared essay or a peer response (comment/feedback)."""
+
+    VISIBLE = "visible"
+    HIDDEN = "hidden"
+    REMOVED = "removed"
+
+
+class ReportTargetType(StrEnum):
+    """What a content report was filed against; persisted so it survives target removal."""
+
+    ESSAY = "essay"
+    COMMENT = "comment"
+    FEEDBACK = "feedback"
+
+
+class ReportDecision(StrEnum):
+    """Moderator decision on a content report; applies only to the reported target."""
+
+    KEEP = "keep"
+    HIDE = "hide"
+    REMOVE = "remove"
+
+
 # =============================================================================
 # PRD-12: Analytics Enums
 # =============================================================================

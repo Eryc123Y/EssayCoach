@@ -59,6 +59,7 @@ async function proxy(
 
   const targetUrl = `${backendUrl.origin}/api/v2/${pathString}/${querySuffix}`;
 
+  // The middleware has already renewed an expired access cookie.
   const token = req.cookies.get('access_token')?.value;
   const headers = buildProxyHeaders(req, backendUrl.host);
 

@@ -1,6 +1,13 @@
+import { timingSafeEqual } from 'node:crypto';
 import { NextRequest, NextResponse } from 'next/server';
 import { normalizeUserInfo } from '@/lib/user-normalization';
 import { getServerApiUrl } from '@/lib/server-api';
+import { authCookieOptions, setSessionCookies } from '@/lib/auth-session';
+import {
+  CLIENT_IP_HEADER,
+  CLIENT_IP_SECRET_ENV,
+  CLIENT_IP_SECRET_HEADER
+} from '@/lib/client-ip-headers.mjs';
 
 type LoginRequestBody = {
   email?: string;
@@ -8,13 +15,24 @@ type LoginRequestBody = {
   remember?: boolean;
 };
 
-const persistentCookieAge = 60 * 60 * 24 * 7;
-const secureCookieOptions = {
-  httpOnly: true,
-  sameSite: 'strict' as const,
-  secure: process.env.NODE_ENV === 'production',
-  path: '/',
-};
+/**
+ * The browser's address for the backend's per-client login limits.
+ *
+ * Only `server.mjs` (the `pnpm start` entry point) knows the real client
+ * address; it passes it with a per-process secret. Caller-supplied headers,
+ * including X-Forwarded-For, are never trusted here. Without the server (for
+ * example `next dev` on 127.0.0.1) nothing is forwarded and the backend counts
+ * failures per account only.
+ */
+function clientAddress(req: NextRequest): string | undefined {
+  const expected = process.env[CLIENT_IP_SECRET_ENV];
+  const provided = req.headers.get(CLIENT_IP_SECRET_HEADER);
+  if (!expected || !provided) return undefined;
+  const a = Buffer.from(provided);
+  const b = Buffer.from(expected);
+  if (a.length !== b.length || !timingSafeEqual(a, b)) return undefined;
+  return req.headers.get(CLIENT_IP_HEADER)?.trim() || undefined;
+}
 
 export async function POST(req: NextRequest) {
   try {
@@ -34,10 +52,14 @@ export async function POST(req: NextRequest) {
     // Call the real Django backend with JWT endpoint
     // Force 127.0.0.1 to avoid Node.js ipv6 resolution issues
     const apiUrl = getServerApiUrl();
+    const forwardedFor = clientAddress(req);
     const response = await fetch(`${apiUrl}/api/v2/auth/login-with-jwt/`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email, password })
+      headers: {
+        'Content-Type': 'application/json',
+        ...(forwardedFor ? { 'X-Forwarded-For': forwardedFor } : {})
+      },
+      body: JSON.stringify({ email, password, remember })
     });
 
     if (!response.ok) {
@@ -59,26 +81,11 @@ export async function POST(req: NextRequest) {
       user: normalizedUser
     });
 
-    // Set access token cookie
-    res.cookies.set('access_token', token, {
-      ...secureCookieOptions,
-      ...(remember ? { maxAge: 60 * 60 } : {}),
-    });
-
-    // Set refresh token cookie - longer expiry for refresh token
-    res.cookies.set('refresh_token', refresh, {
-      ...secureCookieOptions,
-      ...(remember ? { maxAge: persistentCookieAge } : {}),
-    });
-
-    res.cookies.set('session_persistence', remember ? 'persistent' : 'session', {
-      ...secureCookieOptions,
-      ...(remember ? { maxAge: persistentCookieAge } : {}),
-    });
+    setSessionCookies(res, { access: token, refresh, expiresAt: expires_at, remember });
 
     // Store user info in HttpOnly cookies for security (prevents client-side tampering)
     // Frontend should read user data from the response body, not cookies
-    const userCookieOptions = { ...secureCookieOptions, ...(remember ? { maxAge: 60 * 60 * 24 } : {}) };
+    const userCookieOptions = { ...authCookieOptions, ...(remember ? { maxAge: 60 * 60 * 24 } : {}) };
     res.cookies.set('user_email', normalizedUser.user_email || '', userCookieOptions);
     res.cookies.set('user_first_name', normalizedUser.user_fname || '', userCookieOptions);
     res.cookies.set('user_last_name', normalizedUser.user_lname || '', userCookieOptions);
