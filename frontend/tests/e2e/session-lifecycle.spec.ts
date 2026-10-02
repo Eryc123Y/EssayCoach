@@ -139,15 +139,18 @@ test('signing out through the user menu ends the session', async ({ page }) => {
   expect((await cookieMap(page)).has('access_token')).toBe(false);
 });
 
-test('the signed-out dashboard redirect stays on the requesting origin', async ({ page, baseURL }) => {
-  const origin = new URL(baseURL ?? 'http://127.0.0.1').origin;
-  // The middleware answers with a relative Location, so the browser stays on
-  // whichever host it used (Next's internal request URL says localhost).
-  const response = await page.request.get('/dashboard/', { maxRedirects: 0 });
+test('the signed-out dashboard redirect stays on the host the browser used', async ({ page }) => {
+  // Next's internal request URL says localhost; the middleware must build its
+  // redirect from the Host the browser (or a reverse proxy) supplied instead.
+  // Next itself rewrites loopback hosts to localhost, so use a real hostname.
+  const response = await page.request.get('/dashboard/', {
+    maxRedirects: 0,
+    headers: { 'x-forwarded-host': 'essays.example.edu', 'x-forwarded-proto': 'https' },
+  });
   expect(response.status()).toBe(307);
-  const location = new URL(response.headers().location, origin);
+  const location = new URL(response.headers().location);
+  expect(location.origin).toBe('https://essays.example.edu');
   expect(location.pathname).toBe('/auth/sign-in/');
-  expect(location.origin).toBe(origin);
 });
 
 test('changing the password signs the user out and the new password works', async ({ page }) => {

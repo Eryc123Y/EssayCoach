@@ -21,8 +21,7 @@ describe('dashboard middleware', () => {
     const response = await middleware(dashboardRequest());
 
     expect(response.status).toBe(307);
-    // Relative, so it stays on whatever host the browser used.
-    expect(response.headers.get('location')).toBe('/auth/sign-in?callbackUrl=%2Fdashboard%2Ftasks');
+    expect(response.headers.get('location')).toBe('http://localhost/auth/sign-in/?callbackUrl=%2Fdashboard%2Ftasks');
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
@@ -43,7 +42,7 @@ describe('dashboard middleware', () => {
     const first = await middleware(dashboardRequest('refresh_token=mw-rotated; session_persistence=persistent'));
 
     // Another request may have just rotated the token; reload once with the newest cookies.
-    expect(first.headers.get('location')).toBe('/dashboard/tasks');
+    expect(first.headers.get('location')).toBe('http://localhost/dashboard/tasks');
     expect(first.cookies.get('session_refresh_retry')?.value).toBe('1');
     // A losing concurrent rotation must not erase the winner's new cookies.
     expect(first.cookies.get('refresh_token')).toBeUndefined();
@@ -92,6 +91,16 @@ describe('dashboard middleware', () => {
 
     expect(fetchMock).not.toHaveBeenCalled();
     expect(response.cookies.get('access_token')).toBeUndefined();
+  });
+
+  it('redirects on the host the browser used, not Next\'s internal host', async () => {
+    const response = await middleware(
+      new NextRequest('http://localhost/dashboard', {
+        headers: { host: 'essays.example.edu', 'x-forwarded-proto': 'https' },
+      })
+    );
+
+    expect(response.headers.get('location')).toBe('https://essays.example.edu/auth/sign-in/?callbackUrl=%2Fdashboard');
   });
 
   it('ignores routes outside the dashboard', async () => {

@@ -28,17 +28,27 @@ function forwardRefreshed(request: NextRequest, tokens: SessionTokens) {
 const RETRY_COOKIE = 'session_refresh_retry';
 
 /**
- * Redirect with a relative Location. request.nextUrl carries Next's internal
- * host (localhost), so an absolute URL built from it would send users on any
- * other host to the wrong origin.
+ * Build a redirect on the host the browser used. request.nextUrl carries
+ * Next's internal host (localhost), so a URL built from it would send users on
+ * any other host to the wrong origin. Next's middleware adapter needs an
+ * absolute Location, so a relative one is not an option. Next still rewrites
+ * loopback hosts (127.0.0.1, ::1) to localhost in redirects; real hostnames and
+ * proxy-supplied hosts are kept.
  */
-function relativeRedirect(location: string) {
-  return new NextResponse(null, { status: 307, headers: { Location: location } });
+function redirectOnRequestHost(request: NextRequest, location: string) {
+  const firstValue = (header: string) => request.headers.get(header)?.split(',')[0]?.trim();
+  const host = firstValue('x-forwarded-host') || firstValue('host');
+  const protocol = firstValue('x-forwarded-proto') || request.nextUrl.protocol.replace(/:$/, '');
+  let base = request.nextUrl.origin;
+  if (host && /^[A-Za-z0-9.\-\[\]:]+$/.test(host) && (protocol === 'http' || protocol === 'https')) {
+    base = `${protocol}://${host}`;
+  }
+  return NextResponse.redirect(new URL(location, base), 307);
 }
 
 function redirectToSignIn(request: NextRequest) {
   const query = new URLSearchParams({ callbackUrl: request.nextUrl.pathname });
-  const response = relativeRedirect(`/auth/sign-in?${query.toString()}`);
+  const response = redirectOnRequestHost(request, `/auth/sign-in/?${query.toString()}`);
   response.cookies.set(RETRY_COOKIE, '', { ...authCookieOptions, maxAge: 0 });
   return response;
 }
@@ -49,7 +59,7 @@ function redirectToSignIn(request: NextRequest) {
  * one; by the time the browser follows this redirect it holds the new cookies.
  */
 function retryOnce(request: NextRequest) {
-  const response = relativeRedirect(`${request.nextUrl.pathname}${request.nextUrl.search}`);
+  const response = redirectOnRequestHost(request, `${request.nextUrl.pathname}${request.nextUrl.search}`);
   response.cookies.set(RETRY_COOKIE, '1', { ...authCookieOptions, maxAge: 10 });
   return response;
 }
