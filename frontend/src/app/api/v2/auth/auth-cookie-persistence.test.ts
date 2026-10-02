@@ -109,14 +109,30 @@ describe('auth cookie persistence', () => {
     }
   });
 
-  it('forwards only the right-most client address to the backend login limiter', async () => {
+  it('ignores a caller-supplied forwarded address unless a reverse proxy is trusted', async () => {
     fetchMock.mockResolvedValue(backendLoginResponse());
     await login(new NextRequest('http://localhost/api/v2/auth/login', {
       method: 'POST',
-      headers: { 'x-forwarded-for': '198.51.100.7, 203.0.113.9' },
+      headers: { 'x-forwarded-for': '203.0.113.9' },
       body: JSON.stringify({ email: 'student@example.com', password: 'password' }),
     }));
 
-    expect(fetchMock.mock.calls[0][1].headers).toMatchObject({ 'X-Forwarded-For': '203.0.113.9' });
+    expect(fetchMock.mock.calls[0][1].headers).not.toHaveProperty('X-Forwarded-For');
+  });
+
+  it('forwards only the right-most address written by a trusted reverse proxy', async () => {
+    vi.stubEnv('TRUST_PROXY_FORWARDED_FOR', 'true');
+    try {
+      fetchMock.mockResolvedValue(backendLoginResponse());
+      await login(new NextRequest('http://localhost/api/v2/auth/login', {
+        method: 'POST',
+        headers: { 'x-forwarded-for': '198.51.100.7, 203.0.113.9' },
+        body: JSON.stringify({ email: 'student@example.com', password: 'password' }),
+      }));
+
+      expect(fetchMock.mock.calls[0][1].headers).toMatchObject({ 'X-Forwarded-For': '203.0.113.9' });
+    } finally {
+      vi.unstubAllEnvs();
+    }
   });
 });

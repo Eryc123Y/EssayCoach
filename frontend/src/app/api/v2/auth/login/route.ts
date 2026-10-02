@@ -11,12 +11,15 @@ type LoginRequestBody = {
 
 /**
  * The browser's address for the backend's per-client login limits.
- * Next fills x-forwarded-for from the socket when it is absent; a reverse
- * proxy that appends to it writes the right-most entry, so only that one is
- * forwarded. When Next is exposed directly a client can still forge it, which
- * the backend's per-account ceiling bounds.
+ *
+ * A client can put anything in x-forwarded-for when it reaches Next directly
+ * (Next only fills the header from the socket when it is absent), so the
+ * address is forwarded only when TRUST_PROXY_FORWARDED_FOR=true says a reverse
+ * proxy in front of Next sets it. The proxy's own entry is the right-most one.
+ * Without it the backend counts failures per account only.
  */
 function clientAddress(req: NextRequest): string | undefined {
+  if (process.env.TRUST_PROXY_FORWARDED_FOR !== 'true') return undefined;
   const forwarded = req.headers.get('x-forwarded-for');
   const address = forwarded?.split(',').pop()?.trim();
   return address || undefined;
