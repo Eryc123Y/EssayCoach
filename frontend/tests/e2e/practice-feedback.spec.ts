@@ -1,5 +1,5 @@
 import { expect, test } from '@playwright/test';
-import { accounts, apiRequest, runSeed, signInAfterHydration, trackPageErrors, visit } from './support/e2e';
+import { accounts, apiRequest, runSeed, signIn, trackPageErrors, visit } from './support/e2e';
 
 type PracticeRun = {
   run_id: string;
@@ -24,7 +24,7 @@ let runId = '';
 
 test('a student recovers from a failed practice analysis and reads the report', async ({ page }) => {
   const errors = trackPageErrors(page);
-  await signInAfterHydration(page, accounts.alice);
+  await signIn(page, accounts.alice);
   await visit(page, '/dashboard/essay-analysis');
   await expect(page.getByRole('heading', { name: 'Writing studio' })).toBeVisible();
 
@@ -86,7 +86,7 @@ test('a student recovers from a failed practice analysis and reads the report', 
 
 test('another student cannot read or retry the practice run', async ({ page }) => {
   expect(runId, 'the first test must have created a run').not.toBe('');
-  await signInAfterHydration(page, accounts.bob);
+  await signIn(page, accounts.bob);
 
   const run = await apiRequest(page, 'GET', `/api/v2/practice/runs/${runId}/`);
   expect(run.status).toBe(404);

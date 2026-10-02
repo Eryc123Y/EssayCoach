@@ -1,5 +1,5 @@
 import { expect, test, type Page } from '@playwright/test';
-import { accounts, apiRequest, runSeed, signInAfterHydration, trackPageErrors, visit } from './support/e2e';
+import { accounts, apiRequest, runSeed, signIn, trackPageErrors, visit } from './support/e2e';
 
 const AUTH_COOKIES = [
   'access_token',
@@ -32,7 +32,7 @@ test.beforeAll(() => {
 });
 
 test('a session-only sign-in keeps tokens in browser-session cookies', async ({ page }) => {
-  await signInAfterHydration(page, accounts.alice, { remember: false });
+  await signIn(page, accounts.alice, { remember: false });
 
   const cookies = await cookieMap(page);
   for (const name of ['access_token', 'refresh_token']) {
@@ -51,7 +51,7 @@ test('a session-only sign-in keeps tokens in browser-session cookies', async ({ 
 });
 
 test('a remembered sign-in keeps the refresh cookie for 30 days', async ({ page }) => {
-  await signInAfterHydration(page, accounts.alice, { remember: true });
+  await signIn(page, accounts.alice, { remember: true });
   const now = Date.now() / 1000;
 
   const cookies = await cookieMap(page);
@@ -73,7 +73,7 @@ test('a remembered sign-in keeps the refresh cookie for 30 days', async ({ page 
 
 test('a missing access cookie is renewed from the refresh cookie', async ({ page }) => {
   const errors = trackPageErrors(page);
-  await signInAfterHydration(page, accounts.alice, { remember: false });
+  await signIn(page, accounts.alice, { remember: false });
   const before = await cookieMap(page);
   const oldRefresh = before.get('refresh_token')?.value;
   expect(oldRefresh).toBeTruthy();
@@ -114,7 +114,7 @@ test('a missing access cookie is renewed from the refresh cookie', async ({ page
 });
 
 test('signing out through the user menu ends the session', async ({ page }) => {
-  await signInAfterHydration(page, accounts.alice);
+  await signIn(page, accounts.alice);
   await visit(page, '/dashboard/essay-analysis');
   await expect(page.getByRole('heading', { name: 'Writing studio' })).toBeVisible();
   const refreshCookie = (await cookieMap(page)).get('refresh_token');
@@ -141,11 +141,8 @@ test('signing out through the user menu ends the session', async ({ page }) => {
 
 test('the signed-out dashboard redirect stays on the requesting origin', async ({ page, baseURL }) => {
   const origin = new URL(baseURL ?? 'http://127.0.0.1').origin;
-  test.skip(new URL(origin).hostname === 'localhost', 'the faulty target coincides with this origin');
-  // Known product bug: the middleware builds its sign-in redirect from Next's
-  // internal request URL, so the Location is http://localhost:<port>/... no
-  // matter which host the browser used. Remove test.fail() once it is fixed.
-  test.fail();
+  // The middleware answers with a relative Location, so the browser stays on
+  // whichever host it used (Next's internal request URL says localhost).
   const response = await page.request.get('/dashboard/', { maxRedirects: 0 });
   expect(response.status()).toBe(307);
   const location = new URL(response.headers().location, origin);
@@ -155,7 +152,7 @@ test('the signed-out dashboard redirect stays on the requesting origin', async (
 
 test('changing the password signs the user out and the new password works', async ({ page }) => {
   const newPassword = 'E2ENewPass456!';
-  await signInAfterHydration(page, accounts.bob);
+  await signIn(page, accounts.bob);
   await visit(page, '/dashboard/settings');
   await expect(page.getByRole('heading', { name: 'Settings', level: 1 })).toBeVisible();
 
@@ -188,7 +185,7 @@ test('changing the password signs the user out and the new password works', asyn
   await expect(page.getByText('Sign in failed. Check your email and password, then try again.')).toBeVisible();
   await expect(page).toHaveURL(/\/auth\/sign-in/);
 
-  await signInAfterHydration(page, { email: accounts.bob.email, password: newPassword });
+  await signIn(page, { email: accounts.bob.email, password: newPassword });
   await visit(page, '/dashboard/settings');
   await expect(page.getByRole('heading', { name: 'Settings', level: 1 })).toBeVisible();
 });

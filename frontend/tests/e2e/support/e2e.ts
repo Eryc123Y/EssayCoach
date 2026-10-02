@@ -45,17 +45,6 @@ export async function visit(page: Page, url: string) {
   await page.goto(url, { waitUntil: 'domcontentloaded' });
 }
 
-/** Sign in through the real form; `remember` mirrors the Remember me checkbox. */
-export async function signIn(page: Page, credentials: Credentials, { remember = true } = {}) {
-  await visit(page, '/auth/sign-in');
-  await page.getByLabel(/email address/i).fill(credentials.email);
-  await page.locator('input[type="password"]').fill(credentials.password);
-  const rememberBox = page.getByRole('checkbox', { name: /remember me/i });
-  if ((await rememberBox.isChecked()) !== remember) await rememberBox.click();
-  await page.getByRole('button', { name: /sign in/i }).click();
-  await page.waitForURL(/\/dashboard/, { waitUntil: 'domcontentloaded' });
-}
-
 /** Drop the browser session without using the UI (use the UI where logout itself is tested). */
 export async function clearSession(page: Page) {
   await page.context().clearCookies();
@@ -119,12 +108,11 @@ export function trackPageErrors(page: Page) {
 }
 
 /**
- * `signIn`, but only after the sign-in form has hydrated. Values typed into the
- * server-rendered form before hydration are reset by React, leaving an empty,
- * invalid form. The auth provider's mount-time session check is the first
- * request issued after hydration, so wait for it before typing.
+ * Sign in through the real form; `remember` mirrors the Remember me checkbox.
+ * Waits for the page's first session check: typing before the form hydrates
+ * lets React reset the fields.
  */
-export async function signInAfterHydration(page: Page, credentials: Credentials, { remember = true } = {}) {
+export async function signIn(page: Page, credentials: Credentials, { remember = true } = {}) {
   const hydrated = page
     .waitForResponse((response) => response.url().includes('/api/v2/auth/getUserInfo'), { timeout: 10_000 })
     .catch(() => undefined);

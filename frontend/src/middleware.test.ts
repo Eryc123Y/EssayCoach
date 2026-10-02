@@ -21,7 +21,8 @@ describe('dashboard middleware', () => {
     const response = await middleware(dashboardRequest());
 
     expect(response.status).toBe(307);
-    expect(response.headers.get('location')).toBe('http://localhost/auth/sign-in?callbackUrl=%2Fdashboard%2Ftasks');
+    // Relative, so it stays on whatever host the browser used.
+    expect(response.headers.get('location')).toBe('/auth/sign-in?callbackUrl=%2Fdashboard%2Ftasks');
     expect(fetchMock).not.toHaveBeenCalled();
   });
 
@@ -37,13 +38,22 @@ describe('dashboard middleware', () => {
     expect(response.headers.get('x-middleware-request-cookie')).toContain('access_token=mw-access');
   });
 
-  it('redirects without clearing cookies when the refresh token is refused', async () => {
+  it('retries a page load once when its refresh token is refused, then signs in', async () => {
     fetchMock.mockResolvedValue({ ok: false, status: 401, json: async () => ({}) });
-    const response = await middleware(dashboardRequest('refresh_token=mw-revoked; session_persistence=persistent'));
+    const first = await middleware(dashboardRequest('refresh_token=mw-rotated; session_persistence=persistent'));
 
-    expect(response.headers.get('location')).toContain('/auth/sign-in');
+    // Another request may have just rotated the token; reload once with the newest cookies.
+    expect(first.headers.get('location')).toBe('/dashboard/tasks');
+    expect(first.cookies.get('session_refresh_retry')?.value).toBe('1');
     // A losing concurrent rotation must not erase the winner's new cookies.
-    expect(response.cookies.get('refresh_token')).toBeUndefined();
+    expect(first.cookies.get('refresh_token')).toBeUndefined();
+
+    const second = await middleware(
+      dashboardRequest('refresh_token=mw-revoked; session_persistence=persistent; session_refresh_retry=1')
+    );
+    expect(second.headers.get('location')).toContain('/auth/sign-in');
+    expect(second.cookies.get('session_refresh_retry')?.maxAge).toBe(0);
+    expect(second.cookies.get('refresh_token')).toBeUndefined();
   });
 
   it('lets a request that lost a rotation race through while its access token is still valid', async () => {

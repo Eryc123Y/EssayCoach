@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 import {
   applyRefreshedRequestCookies,
+  authCookieOptions,
   resolveSession,
   setSessionCookies,
   type SessionTokens
@@ -23,12 +24,34 @@ function forwardRefreshed(request: NextRequest, tokens: SessionTokens) {
   return response;
 }
 
+// Set while a page load retries once after its refresh token was refused.
+const RETRY_COOKIE = 'session_refresh_retry';
+
+/**
+ * Redirect with a relative Location. request.nextUrl carries Next's internal
+ * host (localhost), so an absolute URL built from it would send users on any
+ * other host to the wrong origin.
+ */
+function relativeRedirect(location: string) {
+  return new NextResponse(null, { status: 307, headers: { Location: location } });
+}
+
 function redirectToSignIn(request: NextRequest) {
-  const url = request.nextUrl.clone();
-  url.pathname = '/auth/sign-in';
-  url.search = '';
-  url.searchParams.set('callbackUrl', request.nextUrl.pathname);
-  return NextResponse.redirect(url);
+  const query = new URLSearchParams({ callbackUrl: request.nextUrl.pathname });
+  const response = relativeRedirect(`/auth/sign-in?${query.toString()}`);
+  response.cookies.set(RETRY_COOKIE, '', { ...authCookieOptions, maxAge: 0 });
+  return response;
+}
+
+/**
+ * Reload the same page once. A background request may have rotated the
+ * refresh token a moment before this navigation, which still carried the old
+ * one; by the time the browser follows this redirect it holds the new cookies.
+ */
+function retryOnce(request: NextRequest) {
+  const response = relativeRedirect(`${request.nextUrl.pathname}${request.nextUrl.search}`);
+  response.cookies.set(RETRY_COOKIE, '1', { ...authCookieOptions, maxAge: 10 });
+  return response;
 }
 
 /**
@@ -54,17 +77,26 @@ export default async function middleware(request: NextRequest) {
   const session = await resolveSession(request);
 
   if (session.refreshed) {
-    return forwardRefreshed(request, session.refreshed);
+    const response = forwardRefreshed(request, session.refreshed);
+    if (request.cookies.get(RETRY_COOKIE)) {
+      response.cookies.set(RETRY_COOKIE, '', { ...authCookieOptions, maxAge: 0 });
+    }
+    return response;
   }
 
   // A refused refresh can mean a concurrent request already rotated the token,
   // so cookies are never cleared here: that response could race and erase the
   // winner's new cookies. Signing in again overwrites stale ones.
   if (!session.accessToken) {
+    if (session.rejected && !request.cookies.get(RETRY_COOKIE)) return retryOnce(request);
     return redirectToSignIn(request);
   }
 
-  return NextResponse.next();
+  const response = NextResponse.next();
+  if (request.cookies.get(RETRY_COOKIE)) {
+    response.cookies.set(RETRY_COOKIE, '', { ...authCookieOptions, maxAge: 0 });
+  }
+  return response;
 }
 
 export const config = {
