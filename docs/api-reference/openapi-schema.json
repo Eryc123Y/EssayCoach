@@ -13893,8 +13893,16 @@
             "$ref": "#/components/schemas/ReportStatus"
           },
           "decision": {
-            "title": "Decision",
-            "type": "string"
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ReportDecision"
+              },
+              {
+                "const": "",
+                "type": "string"
+              }
+            ],
+            "title": "Decision"
           },
           "resolved_by": {
             "anyOf": [
@@ -13941,6 +13949,16 @@
         ],
         "title": "ContentReportOut",
         "type": "object"
+      },
+      "ReportDecision": {
+        "description": "Moderator decision on a content report; applies only to the reported target.",
+        "enum": [
+          "keep",
+          "hide",
+          "remove"
+        ],
+        "title": "ReportDecision",
+        "type": "string"
       },
       "ReportStatus": {
         "enum": [

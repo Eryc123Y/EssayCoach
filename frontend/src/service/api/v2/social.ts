@@ -48,7 +48,8 @@ export type ContentReport = {
   reason: string;
   description: string;
   status: string;
-  decision: string;
+  /** Empty until a moderator decides. */
+  decision: 'keep' | 'hide' | 'remove' | '';
   resolved_by: number | null;
   resolved_at: string | null;
   created_at: string;

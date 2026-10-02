@@ -1,11 +1,19 @@
 """Schemas for the institution's moderated peer learning feed."""
 
 from datetime import datetime
+from typing import Literal
 
 from ninja import Schema
 from pydantic import Field
 
-from api_v2.types.enums import InteractionType, ReportStatus, ReportTargetType, SocialContentStatus, SocialVisibility
+from api_v2.types.enums import (
+    InteractionType,
+    ReportDecision,
+    ReportStatus,
+    ReportTargetType,
+    SocialContentStatus,
+    SocialVisibility,
+)
 
 
 class SharedEssayIn(Schema):
@@ -59,8 +67,8 @@ class ContentReportOut(Schema):
     reason: str
     description: str
     status: ReportStatus
-    # Empty until a moderator decides; then one of ReportDecision.
-    decision: str
+    # Empty until a moderator decides.
+    decision: ReportDecision | Literal[""]
     resolved_by: int | None = None
     resolved_at: datetime | None = None
     created_at: datetime
