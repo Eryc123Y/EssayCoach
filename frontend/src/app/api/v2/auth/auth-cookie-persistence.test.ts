@@ -108,4 +108,15 @@ describe('auth cookie persistence', () => {
       expect(response.cookies.get(name)?.maxAge).toBe(0);
     }
   });
+
+  it('forwards only the right-most client address to the backend login limiter', async () => {
+    fetchMock.mockResolvedValue(backendLoginResponse());
+    await login(new NextRequest('http://localhost/api/v2/auth/login', {
+      method: 'POST',
+      headers: { 'x-forwarded-for': '198.51.100.7, 203.0.113.9' },
+      body: JSON.stringify({ email: 'student@example.com', password: 'password' }),
+    }));
+
+    expect(fetchMock.mock.calls[0][1].headers).toMatchObject({ 'X-Forwarded-For': '203.0.113.9' });
+  });
 });

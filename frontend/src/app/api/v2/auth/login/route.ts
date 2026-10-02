@@ -9,6 +9,19 @@ type LoginRequestBody = {
   remember?: boolean;
 };
 
+/**
+ * The browser's address for the backend's per-client login limits.
+ * Next fills x-forwarded-for from the socket when it is absent; a reverse
+ * proxy that appends to it writes the right-most entry, so only that one is
+ * forwarded. When Next is exposed directly a client can still forge it, which
+ * the backend's per-account ceiling bounds.
+ */
+function clientAddress(req: NextRequest): string | undefined {
+  const forwarded = req.headers.get('x-forwarded-for');
+  const address = forwarded?.split(',').pop()?.trim();
+  return address || undefined;
+}
+
 export async function POST(req: NextRequest) {
   try {
     const body = (await req.json().catch(() => ({}))) as LoginRequestBody;
@@ -27,9 +40,13 @@ export async function POST(req: NextRequest) {
     // Call the real Django backend with JWT endpoint
     // Force 127.0.0.1 to avoid Node.js ipv6 resolution issues
     const apiUrl = getServerApiUrl();
+    const forwardedFor = clientAddress(req);
     const response = await fetch(`${apiUrl}/api/v2/auth/login-with-jwt/`, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
+      headers: {
+        'Content-Type': 'application/json',
+        ...(forwardedFor ? { 'X-Forwarded-For': forwardedFor } : {})
+      },
       body: JSON.stringify({ email, password, remember })
     });
 
